@@ -1,0 +1,9 @@
+{
+  "name": "@visotalk/exporter",
+  "version": "0.2.0",
+  "description": "VisoTalk exporter: deterministic capture in chrome-headless-shell, media extraction, audio mix",
+  "license": "MIT",
+  "type": "module",
+  "exports": {".": "./src/index.ts"},
+  "dependencies": {"@visotalk/ir": "workspace:*", "puppeteer-core": "23.6.0"}
+}

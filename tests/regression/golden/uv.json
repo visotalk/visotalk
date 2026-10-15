@@ -1,0 +1,204 @@
+{
+ "doc": "uv",
+ "chrome": "HeadlessChrome/157.0.8080.0",
+ "fps": 30,
+ "frames": 2640,
+ "voice": {
+  "h1l": 4.1813,
+  "h2l": 11.2853,
+  "h3l": 6.2507,
+  "s1l": 5.1413,
+  "s2l": 8.2987,
+  "s3l": 5.3973,
+  "s4l": 4.7573,
+  "p1l": 4.032,
+  "p2l": 8.3413,
+  "p3l": 5.824,
+  "p4l": 4.8
+ },
+ "samples": [
+  {
+   "frame": 12,
+   "at": "tools@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 37,
+   "at": "tools/h1@0.25",
+   "hash": "3f8d3f439ae4af98"
+  },
+  {
+   "frame": 74,
+   "at": "tools/h1@0.50",
+   "hash": "b6c31adfa39f1e6d"
+  },
+  {
+   "frame": 111,
+   "at": "tools/h1@0.75",
+   "hash": "b6c31adfa39f1e6d"
+  },
+  {
+   "frame": 244,
+   "at": "tools/h2@0.25",
+   "hash": "b8636cdd9914bf78"
+  },
+  {
+   "frame": 341,
+   "at": "tools/h2@0.50",
+   "hash": "dd70994f5eec5ecb"
+  },
+  {
+   "frame": 437,
+   "at": "tools/h2@0.75",
+   "hash": "a8ab9ca1376b1f5c"
+  },
+  {
+   "frame": 604,
+   "at": "tools/h3@0.25",
+   "hash": "fa37a0e063ae0069"
+  },
+  {
+   "frame": 676,
+   "at": "tools/h3@0.50",
+   "hash": "55714fea419be497"
+  },
+  {
+   "frame": 748,
+   "at": "tools/h3@0.75",
+   "hash": "c97f533ef2bac7ba"
+  },
+  {
+   "frame": 831,
+   "at": "speed@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 876,
+   "at": "speed/s1@0.25",
+   "hash": "6d9ea7be64282c88"
+  },
+  {
+   "frame": 933,
+   "at": "speed/s1@0.50",
+   "hash": "ee4d9fec67c7da68"
+  },
+  {
+   "frame": 989,
+   "at": "speed/s1@0.75",
+   "hash": "5bbd35463089d40d"
+  },
+  {
+   "frame": 1119,
+   "at": "speed/s2@0.25",
+   "hash": "9055202af3e3de1c"
+  },
+  {
+   "frame": 1193,
+   "at": "speed/s2@0.50",
+   "hash": "0e8f4c6d4b8672cc"
+  },
+  {
+   "frame": 1266,
+   "at": "speed/s2@0.75",
+   "hash": "b7035587dbceb1fb"
+  },
+  {
+   "frame": 1395,
+   "at": "speed/s3@0.25",
+   "hash": "2b5aa1cf6cfbffb6"
+  },
+  {
+   "frame": 1451,
+   "at": "speed/s3@0.50",
+   "hash": "cea856c9998d422a"
+  },
+  {
+   "frame": 1506,
+   "at": "speed/s3@0.75",
+   "hash": "e57ee98a7bb6b553"
+  },
+  {
+   "frame": 1622,
+   "at": "speed/s4@0.25",
+   "hash": "14425b8b4af8b58a"
+  },
+  {
+   "frame": 1682,
+   "at": "speed/s4@0.50",
+   "hash": "14425b8b4af8b58a"
+  },
+  {
+   "frame": 1742,
+   "at": "speed/s4@0.75",
+   "hash": "5a93b904278ce6cb"
+  },
+  {
+   "frame": 1815,
+   "at": "project@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 1839,
+   "at": "project/p1@0.25",
+   "hash": "e285bf555cf13f8a"
+  },
+  {
+   "frame": 1875,
+   "at": "project/p1@0.50",
+   "hash": "9793f41e366005cc"
+  },
+  {
+   "frame": 1911,
+   "at": "project/p1@0.75",
+   "hash": "9793f41e366005cc"
+  },
+  {
+   "frame": 2013,
+   "at": "project/p2@0.25",
+   "hash": "eca66e316a394550"
+  },
+  {
+   "frame": 2079,
+   "at": "project/p2@0.50",
+   "hash": "38baff66b70d5123"
+  },
+  {
+   "frame": 2145,
+   "at": "project/p2@0.75",
+   "hash": "cd39c25b8c2dc2c8"
+  },
+  {
+   "frame": 2257,
+   "at": "project/p3@0.25",
+   "hash": "96debbea62ee51b1"
+  },
+  {
+   "frame": 2304,
+   "at": "project/p3@0.50",
+   "hash": "96debbea62ee51b1"
+  },
+  {
+   "frame": 2350,
+   "at": "project/p3@0.75",
+   "hash": "e1cd00b074104855"
+  },
+  {
+   "frame": 2457,
+   "at": "project/p4@0.25",
+   "hash": "c61ba0deb7de1d9f"
+  },
+  {
+   "frame": 2518,
+   "at": "project/p4@0.50",
+   "hash": "c61ba0deb7de1d9f"
+  },
+  {
+   "frame": 2579,
+   "at": "project/p4@0.75",
+   "hash": "557ceabefb437691"
+  }
+ ],
+ "qa": [
+  "reveal.late:uvtxt@tools/h3l"
+ ]
+}

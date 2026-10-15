@@ -1,0 +1,8 @@
+{
+  "name": "@visotalk/ir",
+  "version": "0.2.0",
+  "description": "VisoTalk IR: types, validator, safe expressions, time solver, migrations",
+  "license": "MIT",
+  "type": "module",
+  "exports": {".": "./src/index.ts"}
+}

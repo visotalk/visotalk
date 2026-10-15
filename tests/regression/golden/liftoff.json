@@ -1,0 +1,413 @@
+{
+ "doc": "liftoff",
+ "chrome": "HeadlessChrome/157.0.8080.0",
+ "fps": 30,
+ "frames": 4929,
+ "voice": {
+  "h1": 7.168,
+  "h2": 4.3733,
+  "h3": 5.952,
+  "b1": 10.3893,
+  "b2": 9.8133,
+  "o1": 1.536,
+  "o2": 7.9573,
+  "o3": 5.4827,
+  "i1": 8.1707,
+  "i2": 7.296,
+  "f1": 5.824,
+  "f2": 10.1333,
+  "f3": 6.464,
+  "f0": 1.8773,
+  "g1": 4.9067,
+  "g2": 3.904,
+  "g3": 5.8667,
+  "a1": 9.4507,
+  "a2": 7.7013,
+  "w1": 7.4453,
+  "w2": 5.7387,
+  "c1": 3.7333
+ },
+ "samples": [
+  {
+   "frame": 12,
+   "at": "hook@0.4s",
+   "hash": "0c7c91e85f9bd5f8"
+  },
+  {
+   "frame": 94,
+   "at": "hook/launch@0.25",
+   "hash": "d9925d4035944416"
+  },
+  {
+   "frame": 189,
+   "at": "hook/launch@0.50",
+   "hash": "8478102c63832d63"
+  },
+  {
+   "frame": 284,
+   "at": "hook/launch@0.75",
+   "hash": "feea9f5bbf8c213e"
+  },
+  {
+   "frame": 432,
+   "at": "hook/title@0.25",
+   "hash": "96cb03e0207bde2d"
+  },
+  {
+   "frame": 486,
+   "at": "hook/title@0.50",
+   "hash": "96cb03e0207bde2d"
+  },
+  {
+   "frame": 540,
+   "at": "hook/title@0.75",
+   "hash": "96cb03e0207bde2d"
+  },
+  {
+   "frame": 606,
+   "at": "book@0.4s",
+   "hash": "77a3bb88cba46967"
+  },
+  {
+   "frame": 677,
+   "at": "book/what@0.25",
+   "hash": "02a683dc8c896264"
+  },
+  {
+   "frame": 761,
+   "at": "book/what@0.50",
+   "hash": "aaf7b1f6743df326"
+  },
+  {
+   "frame": 845,
+   "at": "book/what@0.75",
+   "hash": "aaf7b1f6743df326"
+  },
+  {
+   "frame": 1011,
+   "at": "book/who@0.25",
+   "hash": "84181549c043230b"
+  },
+  {
+   "frame": 1094,
+   "at": "book/who@0.50",
+   "hash": "9eaa768e2a2f3e21"
+  },
+  {
+   "frame": 1177,
+   "at": "book/who@0.75",
+   "hash": "9eaa768e2a2f3e21"
+  },
+  {
+   "frame": 1272,
+   "at": "odds@0.4s",
+   "hash": "9f2fbadb0ad14391"
+  },
+  {
+   "frame": 1277,
+   "at": "odds/absurd@0.25",
+   "hash": "9eb502ddc3062269"
+  },
+  {
+   "frame": 1295,
+   "at": "odds/absurd@0.50",
+   "hash": "8ea9095b67b3c64e"
+  },
+  {
+   "frame": 1312,
+   "at": "odds/absurd@0.75",
+   "hash": "8ea9095b67b3c64e"
+  },
+  {
+   "frame": 1392,
+   "at": "odds/big@0.25",
+   "hash": "1db901254d975d07"
+  },
+  {
+   "frame": 1455,
+   "at": "odds/big@0.50",
+   "hash": "1db901254d975d07"
+  },
+  {
+   "frame": 1518,
+   "at": "odds/big@0.75",
+   "hash": "1db901254d975d07"
+  },
+  {
+   "frame": 1631,
+   "at": "odds/small@0.25",
+   "hash": "aed3c3a77b7da440"
+  },
+  {
+   "frame": 1681,
+   "at": "odds/small@0.50",
+   "hash": "aed3c3a77b7da440"
+  },
+  {
+   "frame": 1731,
+   "at": "odds/small@0.75",
+   "hash": "aed3c3a77b7da440"
+  },
+  {
+   "frame": 1793,
+   "at": "island@0.4s",
+   "hash": "a7464dbeaed185b9"
+  },
+  {
+   "frame": 1848,
+   "at": "island/where@0.25",
+   "hash": "a6f8d2166ae25a02"
+  },
+  {
+   "frame": 1915,
+   "at": "island/where@0.50",
+   "hash": "a53f2fb4e7d4d5e0"
+  },
+  {
+   "frame": 1982,
+   "at": "island/where@0.75",
+   "hash": "95c42fcadcc5c6a3"
+  },
+  {
+   "frame": 2113,
+   "at": "island/life@0.25",
+   "hash": "00ca4c29c72934af"
+  },
+  {
+   "frame": 2177,
+   "at": "island/life@0.50",
+   "hash": "902510707096fa85"
+  },
+  {
+   "frame": 2241,
+   "at": "island/life@0.75",
+   "hash": "74b535cd069e4909"
+  },
+  {
+   "frame": 2317,
+   "at": "failures@0.4s",
+   "hash": "c2c81118d9087a1b"
+  },
+  {
+   "frame": 2354,
+   "at": "failures/flight1@0.25",
+   "hash": "7e48ad40402a289e"
+  },
+  {
+   "frame": 2404,
+   "at": "failures/flight1@0.50",
+   "hash": "121b6a7f6236d8be"
+  },
+  {
+   "frame": 2454,
+   "at": "failures/flight1@0.75",
+   "hash": "b61f3ba032f3b765"
+  },
+  {
+   "frame": 2583,
+   "at": "failures/flight2@0.25",
+   "hash": "8e557b3fc9855b10"
+  },
+  {
+   "frame": 2662,
+   "at": "failures/flight2@0.50",
+   "hash": "ef215b68da6a22a2"
+  },
+  {
+   "frame": 2741,
+   "at": "failures/flight2@0.75",
+   "hash": "425cf0c275197497"
+  },
+  {
+   "frame": 2871,
+   "at": "failures/flight3@0.25",
+   "hash": "70165aa8f040b2f9"
+  },
+  {
+   "frame": 2923,
+   "at": "failures/flight3@0.50",
+   "hash": "027ff1aa11ad38dd"
+  },
+  {
+   "frame": 2974,
+   "at": "failures/flight3@0.75",
+   "hash": "38241f2628870f98"
+  },
+  {
+   "frame": 3049,
+   "at": "failures/tally@0.25",
+   "hash": "25a1ecc2fcbb15bf"
+  },
+  {
+   "frame": 3072,
+   "at": "failures/tally@0.50",
+   "hash": "4a12297e40f6381c"
+  },
+  {
+   "frame": 3095,
+   "at": "failures/tally@0.75",
+   "hash": "300c511c028f1f5e"
+  },
+  {
+   "frame": 3130,
+   "at": "flight4@0.4s",
+   "hash": "7328c88a77b28051"
+  },
+  {
+   "frame": 3160,
+   "at": "flight4/last@0.25",
+   "hash": "e086d591ad4c6fca"
+  },
+  {
+   "frame": 3203,
+   "at": "flight4/last@0.50",
+   "hash": "a4b690c80e86bd55"
+  },
+  {
+   "frame": 3246,
+   "at": "flight4/last@0.75",
+   "hash": "d473699f28c51ee8"
+  },
+  {
+   "frame": 3321,
+   "at": "flight4/orbit@0.25",
+   "hash": "dbc51c1940e9ee02"
+  },
+  {
+   "frame": 3353,
+   "at": "flight4/orbit@0.50",
+   "hash": "e285292a2a7afe3c"
+  },
+  {
+   "frame": 3385,
+   "at": "flight4/orbit@0.75",
+   "hash": "4df92e9d974baa7f"
+  },
+  {
+   "frame": 3471,
+   "at": "flight4/first@0.25",
+   "hash": "66ecc1b7e961a558"
+  },
+  {
+   "frame": 3524,
+   "at": "flight4/first@0.50",
+   "hash": "8f2236d122acaaf4"
+  },
+  {
+   "frame": 3577,
+   "at": "flight4/first@0.75",
+   "hash": "1c3850ac67ebcd3a"
+  },
+  {
+   "frame": 3642,
+   "at": "after@0.4s",
+   "hash": "61e5581eaf56869f"
+  },
+  {
+   "frame": 3707,
+   "at": "after/contract@0.25",
+   "hash": "713826915da3189d"
+  },
+  {
+   "frame": 3784,
+   "at": "after/contract@0.50",
+   "hash": "15f873afb2c6c825"
+  },
+  {
+   "frame": 3861,
+   "at": "after/contract@0.75",
+   "hash": "c719a14e380ce4a2"
+  },
+  {
+   "frame": 4004,
+   "at": "after/path@0.25",
+   "hash": "927a8089097fc378"
+  },
+  {
+   "frame": 4071,
+   "at": "after/path@0.50",
+   "hash": "88314457950e6c05"
+  },
+  {
+   "frame": 4138,
+   "at": "after/path@0.75",
+   "hash": "e68c43383cd4a1ef"
+  },
+  {
+   "frame": 4217,
+   "at": "why@0.4s",
+   "hash": "ebccd3b683c01748"
+  },
+  {
+   "frame": 4266,
+   "at": "why/portrait@0.25",
+   "hash": "adecc4195a5c238c"
+  },
+  {
+   "frame": 4328,
+   "at": "why/portrait@0.50",
+   "hash": "96a9b727813cb6c7"
+  },
+  {
+   "frame": 4390,
+   "at": "why/portrait@0.75",
+   "hash": "96a9b727813cb6c7"
+  },
+  {
+   "frame": 4504,
+   "at": "why/today@0.25",
+   "hash": "eb3ff0e7d2f2a3fa"
+  },
+  {
+   "frame": 4556,
+   "at": "why/today@0.50",
+   "hash": "eb3ff0e7d2f2a3fa"
+  },
+  {
+   "frame": 4608,
+   "at": "why/today@0.75",
+   "hash": "eb3ff0e7d2f2a3fa"
+  },
+  {
+   "frame": 4673,
+   "at": "outro@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 4728,
+   "at": "outro/credits@0.25",
+   "hash": "228cf958ee2f2ef5"
+  },
+  {
+   "frame": 4795,
+   "at": "outro/credits@0.50",
+   "hash": "44b27cc0e9bbdc1f"
+  },
+  {
+   "frame": 4862,
+   "at": "outro/credits@0.75",
+   "hash": "44b27cc0e9bbdc1f"
+  }
+ ],
+ "qa": [
+  "reveal.early:c-deadlines@island/i2",
+  "reveal.early:c-heat@island/i2",
+  "reveal.early:c-isolation@island/i2",
+  "reveal.early:c-salt@island/i2",
+  "reveal.early:cover@book/b1",
+  "reveal.early:not-bio@why/w1",
+  "reveal.early:path-2@after/a2",
+  "reveal.number-early:credits-title@outro/c1",
+  "reveal.number-early:f4-date@flight4/g2",
+  "reveal.number-early:facts@book/b1",
+  "reveal.number-early:flights#f1@failures/f1",
+  "reveal.number-early:flights#f2@failures/f2",
+  "reveal.number-early:flights#f3@failures/f3",
+  "reveal.number-early:iss-note@after/a2",
+  "reveal.number-early:path-3@after/a2",
+  "reveal.number-early:spacex@odds/o3",
+  "reveal.number-early:why-1@failures/f1",
+  "reveal.number-early:why-2@failures/f2",
+  "reveal.number-early:why-3@failures/f3"
+ ]
+}

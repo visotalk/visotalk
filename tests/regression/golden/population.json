@@ -1,0 +1,255 @@
+{
+ "doc": "population",
+ "chrome": "HeadlessChrome/157.0.8080.0",
+ "fps": 30,
+ "frames": 2418,
+ "voice": {
+  "p1": 4.2667,
+  "p2": 7.1467,
+  "p3": 4.992,
+  "p4": 3.2427,
+  "p5": 3.2427,
+  "p6": 2.4533,
+  "p7": 4.3307,
+  "p8": 5.12,
+  "p9": 4.2453,
+  "p10": 5.632,
+  "p11": 4.6507,
+  "p12": 4.928,
+  "p13": 4.7147,
+  "p14": 1.2373
+ },
+ "samples": [
+  {
+   "frame": 12,
+   "at": "intro@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 59,
+   "at": "intro/bp1@0.25",
+   "hash": "7cbc173bfd656a18"
+  },
+  {
+   "frame": 119,
+   "at": "intro/bp1@0.50",
+   "hash": "3fdcf5512a61a814"
+  },
+  {
+   "frame": 179,
+   "at": "intro/bp1@0.75",
+   "hash": "e187c52b6019c2c1"
+  },
+  {
+   "frame": 251,
+   "at": "waits@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 298,
+   "at": "waits/bp2@0.25",
+   "hash": "73646159eb637256"
+  },
+  {
+   "frame": 358,
+   "at": "waits/bp2@0.50",
+   "hash": "c0df4bb3ecbbbb9d"
+  },
+  {
+   "frame": 417,
+   "at": "waits/bp2@0.75",
+   "hash": "3507f5a47d357a50"
+  },
+  {
+   "frame": 517,
+   "at": "waits/bp3@0.25",
+   "hash": "892da50b96e1ad4c"
+  },
+  {
+   "frame": 558,
+   "at": "waits/bp3@0.50",
+   "hash": "50b11c713d15a043"
+  },
+  {
+   "frame": 598,
+   "at": "waits/bp3@0.75",
+   "hash": "62a7545b6a9c72f4"
+  },
+  {
+   "frame": 666,
+   "at": "waits/bp4@0.25",
+   "hash": "087b495830c490d2"
+  },
+  {
+   "frame": 693,
+   "at": "waits/bp4@0.50",
+   "hash": "b9aa6697b4bdaaf4"
+  },
+  {
+   "frame": 720,
+   "at": "waits/bp4@0.75",
+   "hash": "deda2aab5f79732a"
+  },
+  {
+   "frame": 775,
+   "at": "waits/bp5@0.25",
+   "hash": "51e7c51519ccd394"
+  },
+  {
+   "frame": 803,
+   "at": "waits/bp5@0.50",
+   "hash": "fd71e70a347fa9ba"
+  },
+  {
+   "frame": 830,
+   "at": "waits/bp5@0.75",
+   "hash": "ed31d326890057df"
+  },
+  {
+   "frame": 879,
+   "at": "waits/bp6@0.25",
+   "hash": "7d58d039d522a653"
+  },
+  {
+   "frame": 900,
+   "at": "waits/bp6@0.50",
+   "hash": "0e65c4fe64ed9e4e"
+  },
+  {
+   "frame": 921,
+   "at": "waits/bp6@0.75",
+   "hash": "3fba9c7ed08ca059"
+  },
+  {
+   "frame": 978,
+   "at": "waits/bp7@0.25",
+   "hash": "14e9b82970756f5c"
+  },
+  {
+   "frame": 1013,
+   "at": "waits/bp7@0.50",
+   "hash": "0611f074eb6ac0f2"
+  },
+  {
+   "frame": 1049,
+   "at": "waits/bp7@0.75",
+   "hash": "b31058723e8f636b"
+  },
+  {
+   "frame": 1126,
+   "at": "waits/bp8@0.25",
+   "hash": "a28b7bef62b42e65"
+  },
+  {
+   "frame": 1168,
+   "at": "waits/bp8@0.50",
+   "hash": "c7d9e47553c67e77"
+  },
+  {
+   "frame": 1209,
+   "at": "waits/bp8@0.75",
+   "hash": "d709f2803f708ef6"
+  },
+  {
+   "frame": 1294,
+   "at": "waits/bp9@0.25",
+   "hash": "2a4d62cb8883f20e"
+  },
+  {
+   "frame": 1337,
+   "at": "waits/bp9@0.50",
+   "hash": "7120054ffa6ddadf"
+  },
+  {
+   "frame": 1380,
+   "at": "waits/bp9@0.75",
+   "hash": "338fd7ec1e05e024"
+  },
+  {
+   "frame": 1490,
+   "at": "waits/bp10@0.25",
+   "hash": "7aab127156ecd1d9"
+  },
+  {
+   "frame": 1557,
+   "at": "waits/bp10@0.50",
+   "hash": "95c73cb6d5bbffdb"
+  },
+  {
+   "frame": 1624,
+   "at": "waits/bp10@0.75",
+   "hash": "1dd0a8d0bfd3f2bf"
+  },
+  {
+   "frame": 1703,
+   "at": "peak@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 1732,
+   "at": "peak/bp11@0.25",
+   "hash": "741adad32b057421"
+  },
+  {
+   "frame": 1773,
+   "at": "peak/bp11@0.50",
+   "hash": "022d4f71d5ff09a7"
+  },
+  {
+   "frame": 1814,
+   "at": "peak/bp11@0.75",
+   "hash": "6857786dfd0224db"
+  },
+  {
+   "frame": 1916,
+   "at": "peak/bp12@0.25",
+   "hash": "3fa9b42a0eb573ff"
+  },
+  {
+   "frame": 1978,
+   "at": "peak/bp12@0.50",
+   "hash": "5dd6708ebe18a388"
+  },
+  {
+   "frame": 2040,
+   "at": "peak/bp12@0.75",
+   "hash": "7b00e10ade1c8527"
+  },
+  {
+   "frame": 2114,
+   "at": "why@0.4s",
+   "hash": "28913ba450ea1db4"
+  },
+  {
+   "frame": 2143,
+   "at": "why/bp13@0.25",
+   "hash": "c6ff707593b59d3d"
+  },
+  {
+   "frame": 2184,
+   "at": "why/bp13@0.50",
+   "hash": "4cc9a1f45ff19b03"
+  },
+  {
+   "frame": 2225,
+   "at": "why/bp13@0.75",
+   "hash": "815a4a84427af3af"
+  },
+  {
+   "frame": 2304,
+   "at": "why/bp14@0.25",
+   "hash": "da43011b783c12e0"
+  },
+  {
+   "frame": 2342,
+   "at": "why/bp14@0.50",
+   "hash": "8621ca88405d4dfa"
+  },
+  {
+   "frame": 2380,
+   "at": "why/bp14@0.75",
+   "hash": "8621ca88405d4dfa"
+  }
+ ],
+ "qa": []
+}

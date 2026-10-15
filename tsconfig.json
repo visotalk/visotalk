@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": ["node"],
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "paths": {"@visotalk/runtime": ["./packages/runtime/src/index.ts"], "@visotalk/jsx": ["./packages/jsx/index.d.ts"]}
+  },
+  "include": ["spec/ir/0.4", "packages/*/src", "packages/jsx", "tests", "examples/**/*.ts"]
+}

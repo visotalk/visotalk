@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {"jsx": "react-jsx", "jsxImportSource": "@visotalk/jsx", "paths": {"@visotalk/jsx": ["../packages/jsx/index.d.ts"], "@visotalk/jsx/jsx-runtime": ["../packages/jsx/jsx-runtime.d.ts"], "@visotalk/runtime": ["../packages/runtime/src/timed.ts"]}},
+  "include": ["**/doc.tsx", "../packages/jsx"]
+}
