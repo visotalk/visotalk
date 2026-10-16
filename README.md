@@ -7,6 +7,10 @@
 A VisoTalk video is a document: the narration, the objects it talks about, and the words each object appears on. The engine owns time,
 layout and rendering, so the same document renders to the same frames every time, and an agent edits a sentence instead of a timeline.
 
+<p><a href="https://visotalk.dev/examples/moon-phases/"><img src="https://visotalk.dev/examples/moon-phases/preview.gif" alt="A VisoTalk video about the phases of the Moon" width="640"></a></p>
+
+[Play it live, with sound, on visotalk.dev](https://visotalk.dev/examples/moon-phases/): the video is a document, and the same document renders to MP4.
+
 ## Use it with your agent
 
 ```sh
@@ -15,7 +19,7 @@ npx visotalk@latest doctor --fix           # once per machine: Chrome, the narra
 ```
 
 Then ask: *"Use the visotalk skill to make a 30-second explainer about how a hash table works."* The agent writes `doc.tsx`, designs each scene,
-looks at full-size stills, and renders `final.mp4`. About 3 seconds of rendering per second of video; the voice (Kokoro), the word timing and the rendering all run on your machine.
+looks at full-size stills, and renders `final.mp4`. Rendering takes roughly 4 to 8 seconds per second of video on four cores; the voice (Kokoro), the word timing and the rendering all run on your machine.
 
 You need Node.js 20 or later, `ffmpeg` and Python 3.9 or later. `visotalk doctor` shows what is missing; [packages/cli](packages/cli/README.md) has the details.
 
@@ -34,14 +38,38 @@ only tags and literals.
 
 ## Examples
 
-| Example | |
-|---|---|
-| [uv](examples/uv/doc.tsx) | A tool walkthrough with terminals and command output |
-| [population](examples/population/doc.tsx) | Eight billion people as one drawn picture, with its own component |
-| [moon-phases](examples/moon-phases/doc.tsx) | Why the Moon has phases: one picture that continues across scenes |
-| [micrograd](examples/micrograd/doc.tsx) · [backward pass](examples/micrograd-backward/doc.tsx) | Code and graphs; the second is interactive in the web player |
-| [liftoff](examples/liftoff/doc.tsx) | A book explainer with photographs and credits |
-| [shape-sketch](examples/shape-sketch/doc.tsx) · [component-skeleton](examples/component-skeleton/doc.tsx) · [moon-component](examples/moon-component/doc.tsx) | Drawing with shapes, and writing a component the document places and times |
+The video above is [moon-phases](examples/moon-phases/doc.tsx). Each of these plays live on [visotalk.dev](https://visotalk.dev/examples/).
+
+<table>
+  <tr>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/liftoff/"><img src="https://visotalk.dev/examples/liftoff/preview.gif" alt="Liftoff, by Eric Berger: a book explainer" width="400"></a><br>
+      <b>Liftoff, by Eric Berger: a book explainer</b><br>Real photographs and video, credited per shot · <a href="examples/liftoff/doc.tsx">source</a>
+    </td>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/uv/"><img src="https://visotalk.dev/examples/uv/preview.gif" alt="uv, the one tool for Python projects" width="400"></a><br>
+      <b>uv, the one tool for Python projects</b><br>A tool walkthrough with terminals and output · <a href="examples/uv/doc.tsx">source</a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/population/"><img src="https://visotalk.dev/examples/population/preview.gif" alt="The eight billion" width="400"></a><br>
+      <b>The eight billion</b><br>One drawn picture, with its own component · <a href="examples/population/doc.tsx">source</a>
+    </td>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/micrograd-backward/"><img src="https://visotalk.dev/examples/micrograd-backward/preview.gif" alt="micrograd: the backward pass" width="400"></a><br>
+      <b>micrograd: the backward pass</b><br>Code and graphs; interactive in the web player · <a href="examples/micrograd-backward/doc.tsx">source</a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top" colspan="2" align="center">
+      <a href="https://visotalk.dev/examples/shape-sketch/"><img src="https://visotalk.dev/examples/shape-sketch/preview.gif" alt="A picture from shapes" width="400"></a><br>
+      <b>A picture from shapes</b><br>Drawing with shapes · <a href="examples/shape-sketch/doc.tsx">source</a>
+    </td>
+  </tr>
+</table>
+
+There are more in [examples](examples): [micrograd](examples/micrograd/doc.tsx) and the component examples ([component-skeleton](examples/component-skeleton/doc.tsx), [moon-component](examples/moon-component/doc.tsx)).
 
 Run one: `npx visotalk@latest render examples/moon-phases/doc.tsx`.
 
@@ -61,7 +89,7 @@ Run one: `npx visotalk@latest render examples/moon-phases/doc.tsx`.
 
 ```sh
 pnpm install
-pnpm tsc:engine && pnpm test:engine
+pnpm tsc && pnpm test && pnpm build
 pnpm visotalk validate examples/moon-phases/doc.tsx
 pnpm regression
 ```

@@ -26,7 +26,7 @@ How to use the objects. What a scene must show is in `SKILL.md`.
 - It has `look={{fill, stroke, strokeWidth, radius, size, color}}` and a centred `text`; each shape is its own object, so a word anchors it and `qa` checks it, its `text` included (`reveal.early` / `reveal.late`).
 - A shape with a `text` has a panel fill and border by default: for plain words set `fill` and `stroke` to `"transparent"`.
 - **Place shapes from the data they show.** When shapes draw numbers (bars, a ruler, a curve), write down the few numbers every position comes from (origin, scale per unit, row pitch) and compute the coordinates from them, the pointers and labels too: then an arrow can be aimed at a place in the picture (the end of a bar, a gap between two) and a label put beside it, so that the connection reads at once. Coordinates guessed one by one are how a pointer ends up aimed at empty space.
-- Use shapes to build a picture without writing component code; `examples/shape-sketch` is one.
+- Use shapes to build a picture without writing component code; [`examples/shape-sketch`](https://github.com/visotalk/visotalk/tree/main/examples/shape-sketch) is one.
 
 ## Icons and drawings
 

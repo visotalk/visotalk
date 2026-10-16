@@ -145,9 +145,11 @@ export const Orb = defineComponent<Props>({
           }
           g.globalAlpha = 1;
           const ox2 = f > 0.5 ? 0 : (bx - ex) / R, oy2 = f > 0.5 ? 1 : (by - cyc) / R;
-          const side = Math.abs(ox2) > 0.5 && f < 0.5;
-          const lx = side ? bx + Math.sign(ox2) * (r + 14) : bx, ly = side ? by : by + (oy2 >= 0 ? 1 : -1) * (r + 34);
-          const lal: CanvasTextAlign = side ? (ox2 > 0 ? 'left' : 'right') : 'center';
+          const bottom = oy2 >= 0 && by + r + 34 > H - 24; // no room below: the label would touch the bottom edge
+          const side = (Math.abs(ox2) > 0.5 && f < 0.5) || bottom;
+          const dir = ox2 !== 0 && !bottom ? Math.sign(ox2) : 1;
+          const lx = side ? bx + dir * (r + 14) : bx, ly = side ? by : by + (oy2 >= 0 ? 1 : -1) * (r + 34);
+          const lal: CanvasTextAlign = side ? (dir > 0 ? 'left' : 'right') : 'center';
           label('Moon', lx, ly, p.tagMoon * (1 - clamp(p.tagPos)), CREAM, 32, lal);
           if (p.tagPos > 0) {
             const k = ease(p.tagPos);

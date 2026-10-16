@@ -4,7 +4,7 @@
  */
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, cpSync} from 'node:fs';
+import {copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {basename, dirname, extname, join, resolve} from 'node:path';
 import {build as esbuild} from 'esbuild';
 import {parseMarkup, parseSay, sayOf, validate, wordSpans, type Issue, type Loc, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
@@ -166,9 +166,9 @@ export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManif
   const words = alignWords(p.doc.meta.lang, speak, wavDir, manifestPath);
   const voice: VoiceManifest = {};
   for (const [id, m] of Object.entries(manifest)) {
-    const ogg = m.file.replace('.wav', '.ogg');
-    if (!existsSync(join(audioDir, ogg))) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(wavDir, m.file), '-c:a', 'libopus', '-b:a', '48k', join(audioDir, ogg)]);
-    voice[id] = {duration: m.duration, audio: `audio/${ogg}`, ...(words[id] && {words: words[id]})};
+    const aac = m.file.replace('.wav', '.m4a'); // AAC plays everywhere; Ogg Opus does not play on every iPhone
+    if (!existsSync(join(audioDir, aac))) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(wavDir, m.file), '-c:a', 'aac', '-b:a', '64k', join(audioDir, aac)]);
+    voice[id] = {duration: m.duration, audio: `audio/${aac}`, ...(words[id] && {words: words[id]})};
   }
   writeFileSync(voicePath, JSON.stringify(voice, null, 1));
   return voice;
@@ -260,7 +260,13 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
     jsx: 'automatic', loader: {'.woff2': 'file', '.woff': 'file', '.ttf': 'file'}, assetNames: 'fonts/[name]-[hash]',
     alias: {'@visotalk/runtime': RUNTIME, '@visotalk/ir': IR}, define: {'process.env.NODE_ENV': '"production"'}, logLevel: 'warning',
   });
-  if (existsSync(join(p.work, 'audio'))) cpSync(join(p.work, 'audio'), join(dist, 'audio'), {recursive: true});
+  // only the clips this document's voice manifest names: the work directory also holds those of earlier versions of the lines
+  const voice = JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest;
+  for (const v of Object.values(voice)) {
+    if (!v.audio) continue;
+    mkdirSync(dirname(join(dist, v.audio)), {recursive: true});
+    copyFileSync(join(p.work, v.audio), join(dist, v.audio));
+  }
   const title = p.doc.meta.title.replace(/</g, '&lt;');
   writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="app.css" />\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div><script type="module" src="app.js"></script></body>\n</html>\n`);
   return dist;

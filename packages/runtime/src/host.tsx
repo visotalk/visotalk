@@ -107,7 +107,8 @@ export function mount(opts: MountOptions) {
       : undefined;
     root.render(
       <RuntimeProvider runtime={runtime}>
-        <Player clock={runtime.clock} width={preset.width} height={preset.height} narration={narration} assetBase={assetBase} hint={hint}>
+        <Player clock={runtime.clock} width={preset.width} height={preset.height} narration={narration} assetBase={assetBase} hint={hint}
+          autoplay={params.has('autoplay')} loop={params.has('loop')}>
           {stage}
         </Player>
       </RuntimeProvider>,
