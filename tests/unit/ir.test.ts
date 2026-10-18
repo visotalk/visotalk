@@ -1,310 +1,250 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readdirSync, readFileSync} from 'node:fs';
-import {PINNED_CHROME} from '../../packages/exporter/src/chrome.ts';
-import {alignmentIssues, evaluate, identifiers, parseMarkup, parseSay, sayOf, snap, solve, staticQa, validate, wordTime, type VisoDoc} from '../../packages/ir/src/index.ts';
+import {alignmentIssues, markPhrase, occurrences, parseMarkup, phraseContexts, presenceAt, propAt, sampleFrames, sayOf, solve, snap, staticQa, themeTokens, validate, wordTime, type VisoDoc, type VoiceManifest} from '../../packages/ir/src/index.ts';
 
-const example = (): VisoDoc => parseMarkup(readFileSync('examples/micrograd-backward/doc.tsx', 'utf8')).doc;
-const voice = {l1: {duration: 3.5, audio: 'a1.ogg'}, l2: {duration: 4.6, audio: 'a2.ogg'}, l3: {duration: 3.7, audio: 'a3.ogg'}};
+const doc = (scenes: string, head = ''): VisoDoc => parseMarkup(`export default <Doc id="d" title="t" lang="en" ${head}>${scenes}</Doc>;`).doc;
+/** every line 2 s long, no word times */
+const voice = (d: VisoDoc, words?: VoiceManifest[string]['words']): VoiceManifest =>
+  Object.fromEntries(d.scenes.flatMap((s) => s.lines).map((l) => [l.id, {duration: 2, audio: `${l.id}.wav`, ...(words && {words})}]));
+const codes = (d: VisoDoc) => validate(d).map((i) => i.code);
 
-test('expressions: arithmetic, functions, ternary, no unknown names', () => {
-  assert.equal(evaluate('x * y + 1', {x: 2, y: -3}), -5);
-  assert.equal(evaluate("fmt(x / 3, '0.00')", {x: 2}), '0.67');
-  assert.equal(evaluate('x > 0 ? 1 : -1', {x: -2}), -1);
-  assert.equal(evaluate('round(clamp(x, 0, 1) * 100, 1)', {x: 0.12345}), 12.3);
-  assert.deepEqual(identifiers('max(a, b * c) - 2'), ['a', 'b', 'c']);
-  assert.throws(() => evaluate('x', {}), /unknown name/);
-  assert.throws(() => evaluate('alert(1)', {}), /unknown function/);
-  assert.throws(() => evaluate('x.constructor', {x: 1}), /unexpected/);
+const BASIC = doc(`
+  <Scene id="a"><Line id="l1">The server sends a tag. The tag is small.</Line><Line id="l2" hold={1}>Then it waits.</Line>
+    <Part id="p"/><Animation><Appear on="p" line="l1" word="sends"/></Animation></Scene>
+  <Scene id="b"><Line id="l3">Next.</Line></Scene>`);
+
+test('validator: a clean document has no issues', () => {
+  assert.deepEqual(validate(BASIC), []);
 });
 
-test('validator: example is valid', () => {
-  assert.deepEqual(validate(example()), []);
+test('validator: seeded mistakes, each with its code and a fix', () => {
+  const bad = (inner: string) => validate(doc(inner));
+  assert.ok(codes(doc('<Scene id="Bad"><Line id="l">x</Line></Scene>')).includes('id.format'));
+  assert.ok(codes(doc('<Scene id="a"><Line id="l">x</Line></Scene><Scene id="a"><Line id="m">x</Line></Scene>')).includes('id.duplicate'));
+  assert.ok(codes(doc('<Scene id="a"><Line id="l">x</Line></Scene><Scene id="b"><Line id="l">y</Line></Scene>')).includes('id.duplicate'), 'line ids are document-wide');
+  assert.deepEqual(codes(doc('<Scene id="a"/>')), ['scene.duration']);
+  assert.deepEqual(codes(doc('<Scene id="a"><Line id="l">x</Line><Part id="p"/><Part id="p"/><Animation><Appear on="p" at="start"/></Animation></Scene>')), ['id.duplicate']);
+  const anchors = bad('<Scene id="a"><Line id="l">a b a</Line><Animation><Appear on="p" line="zz"/><Appear on="p" line="l" word="nope"/><Appear on="p" line="l" word="a"/><Appear on="p" line="l" word="a" nth={3}/><Appear on="p" line="l" word="a" nth={2}/><Appear on="p" at={-1}/></Animation></Scene>');
+  assert.deepEqual(anchors.map((i) => i.code), ['anchor.line', 'anchor.word', 'anchor.ambiguous', 'anchor.nth', 'anchor.at']);
+  assert.match(anchors[2].fix!, /nth/);
+  const m = bad('<Scene id="a"><Line id="l">x y</Line><Animation><Tween on="p" at="start"/><Set on="p" at="start"/><Appear on="p" at="start" easing="bouncy"/><Appear on="p" at="start" dur={-1}/></Animation></Scene>');
+  assert.deepEqual(m.map((i) => i.code), ['motion.tween', 'motion.set', 'motion.easing', 'motion.time']);
+  assert.ok(m.every((i) => i.fix));
 });
 
-test('validator: seeded mistakes', () => {
-  const cases: Array<[(d: any) => void, string]> = [
-    [(d) => (d.scenes[0].beats[0].actions[0].at.word = 'sideways'), 'anchor.word'],
-    [(d) => (d.objects.g.nodes[3].fields[0].value = {$expr: 'x * w'}), 'expr.unknown'],
-    [(d) => (d.scenes[0].beats[1].actions[0].target = 'g#q.grad'), 'ref.path'],
-    [(d) => (d.scenes[0].beats[1].actions[0].at = {line: 'l1'}), 'anchor.line'],
-    [(d) => delete d.overrides[0].preset, 'override.preset'],
-    [(d) => delete d.overrides[0].keys[0].at.ref, 'override.anchor'],
-    [(d) => (d.overrides[0].keys[0].at.ref = 'backward/nope'), 'ref.beat'],
-    [(d) => (d.scenes[0].beats[1].interactions[0].do[0].setParam = 'q'), 'ref.param'],
-    [(d) => (d.objects.g.nodes[0].fields[0].value = {$expr: 'x *'}), 'expr.parse'],
-    [(d) => (d.scenes[0].beats[1].lines[0].live = 'z is {x * k}'), 'expr.unknown'],
-    [(d) => (d.spec = '0.1.0'), 'spec.version'],
-  ];
-  for (const [mutate, code] of cases) {
-    const d = example();
-    mutate(d);
-    assert.ok(validate(d).some((i) => i.code === code), `expected ${code}`);
-  }
+test('validator: a part is shown by an appear; scene parts have their own ids, global parts are shown by any scene', () => {
+  const s = (scene: string, head = '') => codes(doc(scene, head));
+  assert.deepEqual(s('<Scene id="a"><Line id="l">x</Line><Part id="p"/></Scene>'), ['part.appear'], 'a part nobody appears is never seen');
+  assert.deepEqual(s('<Scene id="a"><Line id="l">x</Line><Part id="p"/><Animation><Appear on="p" at="start"/></Animation></Scene><Scene id="b"><Line id="m">y</Line><Part id="p"/><Animation><Appear on="p" at="start"/></Animation></Scene>'), [], 'the same id in two scenes: each scene has its own part');
+  assert.deepEqual(s('<Scene id="a"><Line id="l">x</Line><Part id="p"/></Scene><Scene id="b"><Line id="m">y</Line><Animation><Appear on="p" at="start"/></Animation></Scene>'), ['part.appear'], 'an appear in another scene does not show it');
+  assert.deepEqual(s('<Part id="g"/><Scene id="a"><Line id="l">x</Line></Scene><Scene id="b"><Line id="m">y</Line><Animation><Appear on="g" at="start"/></Animation></Scene>'), [], 'a global part is shown by an appear in any scene');
+  assert.deepEqual(s('<Part id="g"/><Scene id="a"><Line id="l">x</Line></Scene>'), ['part.appear']);
+  assert.deepEqual(s('<Part id="g"/><Scene id="a"><Line id="l">x</Line><Part id="g"/><Animation><Appear on="g" at="start"/></Animation></Scene>'), ['id.duplicate'], 'a scene part cannot reuse a global part\'s id');
 });
 
-test('solver: pacing, beats, anchors', () => {
-  const c = solve(example(), voice);
-  const [forward, grads] = c.scenes[0].beats;
-  assert.equal(forward.lines[0].from, 0.4); // default lead
-  assert.equal(grads.from, forward.end);
-  assert.ok(Math.abs(forward.end - (0.4 + 3.5 + 0.4)) < 1e-9); // lead + line + hold
-  const d2 = example();
-  d2.pacing = {lead: 1, hold: 0};
-  const c2 = solve(d2, voice);
-  assert.equal(c2.scenes[0].beats[0].lines[0].from, 1);
-  assert.ok(Math.abs(c2.scenes[0].beats[0].end - 4.5) < 1e-9);
-  // staggered flow actions keep their order
-  const flows = c.actions.filter((a) => a.motion === 'flow').map((a) => a.path);
-  assert.deepEqual(flows, ['g#e3', 'g#e1', 'g#e2']);
+test('validator: after names an action, has no cycle, no duplicate id, no reach before its head', () => {
+  const s = (anims: string) => doc(`<Scene id="a"><Line id="l">x y</Line><Animation>${anims}</Animation></Scene>`);
+  assert.deepEqual(codes(s('<Appear id="h" on="p" line="l"/><Appear on="q" after="h" offset={-0.5}/>')), ['anchor.after-negative']);
+  assert.deepEqual(codes(s('<Appear id="h" on="p" line="l"/><Appear on="q" after="h" offset={-0.2}/>')), [], 'within the head\'s 0.45 s');
+  assert.deepEqual(codes(s('<Appear on="q" after="nope"/>')), ['anchor.action']);
+  assert.deepEqual(codes(s('<Appear id="x" on="p" after="y"/><Appear id="y" on="q" after="x"/>')).sort(), ['anchor.cycle']);
+  assert.deepEqual(codes(s('<Appear id="x" on="p" line="l"/><Appear id="x" on="q" line="l"/>')), ['action.id']);
 });
 
-test('solver: word timings from alignment beat the character estimate', () => {
-  const line = {id: 'l', text: 'a b', say: 'first the forward pass', from: 10, duration: 4,
-    words: [{w: 'first', t0: 0, t1: 0.5}, {w: 'the', t0: 0.6, t1: 0.7}, {w: 'forward', t0: 2, t1: 2.4}, {w: 'pass', t0: 2.5, t1: 3}]};
-  assert.equal(wordTime(line, 'forward pass', 'start'), 12);
-  assert.equal(wordTime(line, 'forward pass', 'end'), 13);
-  const estimated = {...line, words: undefined};
-  assert.ok(Math.abs(wordTime(estimated, 'forward', 'start') - (10 + (4 * 10) / 22)) < 1e-9);
+test('solver: pacing, lines, scene edges', () => {
+  const c = solve(BASIC, voice(BASIC), 30);
+  // lead 0.4, then each line + hold (0.4 by default, l2 holds 1), then tail 0.8
+  assert.deepEqual(c.scenes.map((s) => [s.id, s.from, s.end]), [['a', 0, snap(30, 0.4 + 2 + 0.4 + 2 + 1 + 0.8)], ['b', snap(30, 6.6), snap(30, 6.6 + 0.4 + 2 + 0.4 + 0.8)]]);
+  assert.deepEqual(c.scenes[0].lines.map((l) => [l.id, l.from]), [['l1', 0.4], ['l2', 2.8]]);
+  assert.equal(c.duration, c.scenes[1].end);
+  const silent = doc('<Scene id="s" duration={3}/><Scene id="t"><Line id="l">x</Line></Scene>');
+  assert.deepEqual(solve(silent, voice(silent), 30).scenes.map((s) => [s.from, s.end]), [[0, 3], [3, snap(30, 3 + 0.4 + 2 + 0.4 + 0.8)]]);
+  assert.throws(() => solve(BASIC, {}, 30), /no voice entry for line "l1"/);
 });
 
-test('solver: word anchors match non-Latin words and phrases that span several aligned words', () => {
-  // Chinese, written as escapes: source files stay free of CJK (see CLAUDE.md, Language)
-  const zh: any = {from: 10, duration: 4, say: '\u68af\u5ea6 \u4e0b\u964d \u5f88 \u6709\u7528',
-    words: [{w: '\u68af\u5ea6', t0: 0, t1: 1}, {w: '\u4e0b\u964d', t0: 1, t1: 2}, {w: '\u5f88', t0: 2, t1: 2.5}, {w: '\u6709\u7528', t0: 2.5, t1: 4}]};
-  assert.equal(wordTime(zh, '\u6709\u7528', 'start'), 12.5);
-  assert.equal(wordTime(zh, '\u4e0b\u964d', 'end'), 12);
-  // a phrase written without spaces covers two aligned words
-  assert.equal(wordTime(zh, '\u5f88\u6709\u7528', 'start'), 12);
-  assert.equal(wordTime(zh, '\u5f88\u6709\u7528', 'end'), 14);
-  // per-character alignment: one phrase, three aligned units
-  const chars: any = {from: 0, duration: 3, say: '\u68af\u5ea6\u4e0b\u964d', words: [{w: '\u68af', t0: 0, t1: 1}, {w: '\u5ea6', t0: 1, t1: 2}, {w: '\u4e0b', t0: 2, t1: 3}]};
-  assert.equal(wordTime(chars, '\u5ea6\u4e0b', 'start'), 1);
-  assert.equal(wordTime(chars, '\u5ea6\u4e0b', 'end'), 3);
-  // accents and apostrophes keep working
-  const fr: any = {from: 0, duration: 4, say: "a café isn't open", words: [{w: 'a', t0: 0, t1: 1}, {w: 'café', t0: 1, t1: 2}, {w: "isn't", t0: 2, t1: 3}, {w: 'open', t0: 3, t1: 4}]};
-  assert.equal(wordTime(fr, 'café', 'start'), 1);
-  assert.equal(wordTime(fr, "isn't open", 'end'), 4);
+test('markPhrase: shows which words and which occurrence an anchor finds', () => {
+  assert.equal(markPhrase('one hundred and one', 'one'), '[one] hundred and one');
+  assert.equal(markPhrase('one hundred and one', 'one', 2), 'one hundred and [one]');
+  assert.equal(markPhrase('one hundred and one', 'one hundred'), '[one hundred] and one');
+  assert.equal(markPhrase('a b', 'zz'), undefined);
 });
 
-test('solver: word times come from the line, else the voice manifest, else the estimate', () => {
-  const words = [{w: 'first', t0: 0, t1: 0.5}, {w: 'the', t0: 0.6, t1: 0.7}, {w: 'forward', t0: 2, t1: 2.4}, {w: 'pass', t0: 2.5, t1: 3}];
-  const aligned = {...voice, l1: {...voice.l1, words}};
-  const at = (v: typeof voice, mutate?: (d: VisoDoc) => void) => {
-    const d = example();
-    // the example anchors on marks; this test is about a phrase, so anchor the drawIn on the phrase
-    d.scenes[0].beats[0].actions!.find((a) => a.target === 'g' && a.motion === 'drawIn')!.at = {line: 'l1', word: 'forward pass'};
-    mutate?.(d);
-    const c = solve(d, v);
-    return {from: c.scenes[0].beats[0].lines[0].from, start: c.actions.find((a) => a.path === 'g' && a.motion === 'drawIn')!.start};
-  };
-  const m = at(aligned);
-  assert.equal(m.start, m.from + 2); // "forward pass" starts at the aligned word, not at its character position
-  const own = at(aligned, (d) => (d.scenes[0].beats[0].lines![0].words = words.map((w) => ({...w, t0: w.t0 + 1, t1: w.t1 + 1}))));
-  assert.equal(own.start, own.from + 3); // a document's own word times win over the manifest's
-  const est = at(voice);
-  assert.notEqual(est.start, est.from + 2);
+test('phrases: words where words have spaces, characters where they do not; the full-width pauses weigh more', () => {
+  const zh = '世界人口增长得越来越快。人口从十亿增长到八十亿。';
+  const n = (say: string, w: string) => occurrences({say, words: undefined}, w);
+  assert.deepEqual(['人口', '十亿', '增长', '人口从'].map((w) => n(zh, w)), [2, 2, 2, 1], '十亿 is also inside 八十亿: with no spaces any characters match, so the error lists the occurrences');
+  assert.equal(n(zh, '口增'), 1, 'any run of characters: there is no space to split on');
+  assert.equal(n('one money', 'one'), 1);
+  assert.equal(n('honey money', 'one'), 0, 'with spaces a phrase is whole words');
+  assert.equal(n('iPhone手机很贵', '手机'), 1, 'Latin and Chinese in one sentence');
+  assert.equal(markPhrase(zh, '人口', 2), '世界人口增长得越来越快。[人口]从十亿增长到八十亿。');
+  assert.deepEqual(phraseContexts('The curve keeps rising and the curve is steep', 'curve', 8), ['The [curve] keeps r…', '…and the [curve] is stee…']);
+  // estimated time of a Chinese phrase: characters, with 。 weighing 4 more: the second sentence starts later than its character position says
+  const d = doc('<Scene id="a"><Line id="l">一二三四五。六七八九十。</Line></Scene>');
+  const line = solve(d, voice(d), 30).scenes[0].lines[0];
+  assert.equal(wordTime(line, '六七', 'start'), line.from + (line.duration * (6 + 4)) / (12 + 8), 'character 6 plus the rest of the first sentence');
+  assert.equal(wordTime(line, '一二', 'start'), line.from);
+  // aligned words do not change how a Chinese phrase counts or times: the same document validates before and after synthesis
+  const zhWords = [{w: '一二三', t0: 0, t1: 0.5}, {w: '四五', t0: 0.5, t1: 1}];
+  assert.equal(occurrences({say: '一二三四五', words: zhWords}, '三四'), 1);
+  assert.equal(occurrences({say: 'one two', words: [{w: 'one', t0: 0, t1: 1}, {w: 'two', t0: 1, t1: 2}]}, 'two'), 1, 'a spaced language keeps counting in the aligner\'s words');
+  assert.deepEqual(codes(doc('<Scene id="a"><Line id="l">人口增长，人口下降。</Line><Animation><Appear on="p" line="l" word="人口"/></Animation></Scene>')), ['anchor.ambiguous']);
+  assert.match(validate(doc('<Scene id="a"><Line id="l">人口增长，人口下降。</Line><Animation><Appear on="p" line="l" word="人口"/></Animation></Scene>'))[0].message, /\[人口\]增长，人口下降。 · 人口增长，\[人口\]下降。/);
 });
 
-test('solver: interaction scope (until)', () => {
-  const d = example();
-  const scene = solve(d, voice).scenes[0];
-  assert.equal(solve(d, voice).interactions[0].to, scene.from + scene.duration);
-  d.scenes[0].beats[1].interactions![0].until = 'beat';
-  assert.equal(solve(d, voice).interactions[0].to, solve(d, voice).scenes[0].beats[1].end);
+test('solver: word anchors use aligned words, else the character estimate; nth picks the occurrence', () => {
+  const d = doc('<Scene id="a"><Line id="l">The tag and the tag</Line></Scene>');
+  const words = [['the', 0, 0.2], ['tag', 0.3, 0.6], ['and', 0.7, 0.9], ['the', 1.0, 1.2], ['tag', 1.3, 1.7]].map(([w, t0, t1]) => ({w: w as string, t0: t0 as number, t1: t1 as number}));
+  const aligned = solve(d, voice(d, words), 30).scenes[0].lines[0];
+  assert.equal(wordTime(aligned, 'tag', 'start'), 0.4 + 0.3);
+  assert.equal(wordTime(aligned, 'tag', 'start', 2), 0.4 + 1.3);
+  assert.equal(wordTime(aligned, 'tag', 'end', 2), 0.4 + 1.7);
+  assert.equal(wordTime(aligned, undefined, 'end'), 0.4 + 2);
+  const estimated = solve(d, voice(d), 30).scenes[0].lines[0];
+  assert.equal(wordTime(estimated, 'tag', 'start'), 0.4 + (2 * 4) / 19);
+  assert.equal(wordTime(estimated, 'tag', 'start', 2), 0.4 + (2 * 16) / 19);
+  assert.throws(() => wordTime(estimated, 'tag', 'start', 3), /occurrence 3/);
+  // a phrase spans several aligned words, in any script
+  // "wo men", "kan", "yue liang" (escapes: the language gate keeps CJK out of source)
+  const [women, kan, yueliang] = ['\u6211\u4eec', '\u770b', '\u6708\u4eae'];
+  const zh = doc(`<Scene id="a"><Line id="l">${women} ${kan} ${yueliang}</Line></Scene>`);
+  const zhw = [[women, 0, 0.4], [kan, 0.5, 0.7], [yueliang, 0.8, 1.2]].map(([w, t0, t1]) => ({w: w as string, t0: t0 as number, t1: t1 as number}));
+  assert.equal(wordTime(solve(zh, voice(zh, zhw), 30).scenes[0].lines[0], `${kan}${yueliang}`, 'start'), 0.4 + 0.5);
 });
 
-test('qa: reveals are checked against the word that names them', () => {
-  // one line, three words each 1 s apart: "alpha" at 0-1 s, "beta" at 1-2 s, "gamma delta" at 2-4 s (from the lead, +0.4 s)
-  const words = [{w: 'alpha', t0: 0, t1: 1}, {w: 'beta', t0: 1, t1: 2}, {w: 'gamma', t0: 2, t1: 3}, {w: 'delta', t0: 3, t1: 4}];
-  const doc = (objects: any, actions: any[], pattern: any = {kind: 'grid', slots: {items: Object.keys(objects)}}): VisoDoc => ({
-    spec: '0.4.0', meta: {id: 'qa', title: 'qa', lang: 'en'}, canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, theme: {id: 'visotalk/dark'},
-    objects, scenes: [{id: 's', pattern, beats: [{id: 'b', lines: [{id: 'l', text: 'alpha beta gamma delta', say: 'alpha beta gamma delta'}], actions}]}],
-  } as any);
-  const issues = (d: VisoDoc) => staticQa(d, solve(d, {l: {duration: 4, audio: 'l.ogg', words}})).filter((i) => i.code.startsWith('reveal.'));
-  const chip = (text: string, style?: string) => ({type: 'chip', text, ...(style ? {style} : {})});
-
-  // an entrance on the word: in sync
-  assert.deepEqual(issues(doc({a: chip('beta')}, [{target: 'a', motion: 'appear', at: {line: 'l', word: 'beta'}}])), []);
-  // an entrance anchored on the noun of a longer label is in sync
-  assert.deepEqual(issues(doc({a: chip('gamma delta')}, [{target: 'a', motion: 'appear', at: {line: 'l', word: 'delta'}}])), []);
-  // no entrance at all: on screen from the start of the scene, two seconds before the word
-  const early = issues(doc({a: chip('gamma')}, [{target: 'a', motion: 'highlight', at: {line: 'l', word: 'gamma'}}]));
-  assert.deepEqual(early.map((i) => [i.code, i.objects[0]]), [['reveal.early', 'a']]);
-  // an entrance well after the word
-  const late = issues(doc({a: chip('alpha')}, [{target: 'a', motion: 'appear', at: {line: 'l', word: 'gamma'}}]));
-  assert.deepEqual(late.map((i) => i.code), ['reveal.late']);
-  // a label the narration does not say makes no claim
-  assert.deepEqual(issues(doc({a: chip('omega')}, [{target: 'a', motion: 'appear', at: {line: 'l', word: 'delta'}}])), []);
-  // headings frame a scene: not checked
-  assert.deepEqual(issues(doc({a: {type: 'text', text: 'gamma', style: 'kicker'}}, [{target: 'a', motion: 'appear', at: {line: 'l', word: 'alpha'}}])), []);
-  // a steps item dimmed until highlighted is in sync when highlighted on its word, and a bright one is not
-  const steps = (dimInactive?: boolean) => doc({s: {type: 'steps', dimInactive, items: [{id: 'g', title: 'gamma'}]}}, [{target: 's#g', motion: 'highlight', at: {line: 'l', word: 'gamma'}}],
-    {kind: 'board', slots: {main: 's'}});
-  assert.deepEqual(issues(steps()), []);
-  assert.deepEqual(issues(steps(false)).map((i) => i.code), ['reveal.early']);
-});
-
-test('validate: morph on a graph node needs a target position', () => {
-  const doc = (params?: object): VisoDoc => ({
-    spec: '0.4.0', meta: {id: 'm', title: 'm', lang: 'en'}, canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, theme: {id: 'visotalk/dark'},
-    objects: {g: {type: 'graph', layout: 'manual', nodes: [{id: 'a', kind: 'box', label: 'a'}], edges: [], positions: {a: [0.1, 0.1]}}},
-    scenes: [{id: 's', pattern: {kind: 'full', slots: {main: 'g'}}, beats: [{id: 'b', duration: 2, actions: [{target: 'g#a', motion: 'morph', at: {beat: 'start'}, ...(params ? {params} : {})}]}]}],
-  } as any);
-  assert.ok(validate(doc()).some((i) => i.code === 'motion.morph'));
-  assert.ok(validate(doc({to: [0.5]})).some((i) => i.code === 'motion.morph'));
-  assert.deepEqual(validate(doc({to: [0.5, 0.2]})), []);
-});
-
-test('qa: graph nodes and edges are checked against the words in `says`', () => {
-  const words = [{w: 'alpha', t0: 0, t1: 1}, {w: 'beta', t0: 1, t1: 2}, {w: 'gamma', t0: 2, t1: 3}, {w: 'delta', t0: 3, t1: 4}];
-  const doc = (actions: any[]): VisoDoc => ({
-    spec: '0.4.0', meta: {id: 'qa', title: 'qa', lang: 'en'}, canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, theme: {id: 'visotalk/dark'},
-    objects: {g: {type: 'graph', layout: 'manual', nodes: [{id: 'a', kind: 'box', label: 'x1'}, {id: 'b', kind: 'box', label: 'x2', says: 'delta'}], edges: [{id: 'e', from: 'b', to: 'a', says: 'beta'}], positions: {a: [0.1, 0.5], b: [0.8, 0.5]}}},
-    scenes: [{id: 's', pattern: {kind: 'full', slots: {main: 'g'}}, beats: [{id: 'b', lines: [{id: 'l', text: 'alpha beta gamma delta', say: 'alpha beta gamma delta'}], actions}]}],
-  } as any);
-  const issues = (d: VisoDoc) => staticQa(d, solve(d, {l: {duration: 4, audio: 'l.ogg', words}})).filter((i) => i.code.startsWith('reveal.')).map((i) => [i.code, i.objects[0]]);
-  const on = (target: string, word: string) => ({target, motion: 'appear', at: {line: 'l', word}});
-  assert.deepEqual(issues(doc([on('g#a', 'alpha'), on('g#b', 'delta'), on('g#e', 'beta')])), []);
-  // an edge drawn with its node, a line before it is named; a node on screen from the start
-  assert.deepEqual(issues(doc([on('g#a', 'alpha'), on('g#b', 'alpha'), on('g#e', 'alpha')])), [['reveal.early', 'g#b'], ['reveal.early', 'g#e']]);
-  assert.deepEqual(issues(doc([on('g#a', 'alpha'), on('g#e', 'beta')])), [['reveal.early', 'g#b']]);
-});
-
-test('qa: a figure on screen before it is spoken', () => {
-  // "the second billion took 123 years in 1927": the card shows 123 and 1927 from the word "second"
-  const say = 'second billion took one hundred and twenty three years in nineteen twenty seven';
-  const ws = say.split(' ').map((w, i) => ({w, t0: i * 0.5, t1: i * 0.5 + 0.5}));
-  const doc = (word: string): VisoDoc => ({
-    spec: '0.4.0', meta: {id: 'qa', title: 'qa', lang: 'en'}, canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, theme: {id: 'visotalk/dark'},
-    objects: {c: {type: 'card', title: '2nd - 1927', body: '123'}, d: {type: 'chip', text: 'x'}},
-    scenes: [{id: 's', pattern: {kind: 'grid', slots: {items: ['c', 'd']}}, beats: [{id: 'b', lines: [{id: 'l', text: 'second billion took 123 years in 1927', say}],
-      actions: [{target: 'c', motion: 'appear', at: {line: 'l', word}}, {target: 'd', motion: 'appear', at: {line: 'l', word: 'years', offset: 3}}]}]}],
-  } as any);
-  const codes = (d: VisoDoc) => staticQa(d, solve(d, {l: {duration: 6.5, audio: 'l.ogg', words: ws}})).filter((i) => i.code === 'reveal.number-early').map((i) => i.objects[0]);
-  assert.deepEqual(codes(doc('second')), ['c']);
-  assert.deepEqual(codes(doc('hundred')), []);
-});
-
-test('marks: parsed out of say, bound to words, and rejected when malformed', () => {
-  const ok = parseSay('Bro has {#gel}hair gel{/gel} more than {@t}trophies.');
-  assert.equal(ok.say, 'Bro has hair gel more than trophies.');
-  assert.deepEqual(ok.marks, [{name: 'gel', kind: 'range', from: 2, to: 3}, {name: 't', kind: 'point', from: 6, to: 6}]);
-  assert.deepEqual(ok.errors, []);
-  // nested and overlapping ranges of different names are fine
-  assert.deepEqual(parseSay('{#a}one {#b}two{/a} three{/b}').marks.map((m) => [m.name, m.from, m.to]), [['a', 0, 1], ['b', 1, 2]]);
-  const bad = (raw: string) => parseSay(raw).errors.join(' | ');
-  assert.match(bad('a {#x}b'), /never closed/);
-  assert.match(bad('{/x}a'), /not opened/);
-  assert.match(bad('ge{@m}l is'), /inside a word/);
-  assert.match(bad('{#a}{/a} z'), /no word/);
-  assert.match(bad('{@p}a {@p}b'), /defined twice/);
-  assert.match(bad('He said {@p}'), /no word after/);
-  // braces that are not marks stay as they are
-  assert.equal(parseSay('set {x} to 1').say, 'set {x} to 1');
-});
-
-test('marks: anchors and `during` resolve on the words they name', () => {
-  // "one" 0-1 s, "two" 1-2, "three" 2-3, "four" 3-4 (the line starts at 0.4 s, the pacing lead)
-  const words = [{w: 'one', t0: 0, t1: 1}, {w: 'two', t0: 1, t1: 2}, {w: 'three', t0: 2, t1: 3}, {w: 'four', t0: 3, t1: 4}];
-  const make = (say: string, actions: any[], extra: any = {}): VisoDoc => ({
-    spec: '0.4.0', meta: {id: 'm', title: 'm', lang: 'en'}, canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, theme: {id: 'visotalk/dark'},
-    objects: {a: {type: 'chip', text: 'a'}}, scenes: [{id: 's', pattern: {kind: 'grid', slots: {items: ['a']}}, beats: [{id: 'b', lines: [{id: 'l', text: 'one two three four', say, ...extra}], actions}]}],
-  } as any);
-  const solved = (d: VisoDoc) => solve(d, {l: {duration: 4, audio: 'l.ogg', words}});
-  const say = 'one {#mid}two three{/mid} {@end}four';
-  const d = make(say, [{target: 'a', motion: 'appear', at: {line: 'l', mark: 'mid'}, during: true}]);
+test('solver: the estimate finds the words the validator counted, not a piece of another word', () => {
+  const d = doc('<Scene id="a"><Line id="l">Another tag. The tag.</Line><Line id="m">Go home. Then sleep.</Line><Animation><Appear on="p" line="l" word="the"/><Appear on="q" line="m" word="home then"/></Animation></Scene>');
   assert.deepEqual(validate(d), []);
-  const c = solved(d);
-  const start = c.scenes[0].beats[0].lines[0].from;
-  assert.equal(sayOf(d, d.scenes[0].beats[0].lines![0]), 'one two three four');
-  assert.equal(c.actions.find((a) => a.motion === 'appear')!.start, snap(30, start + 1));
-  assert.equal(c.actions.find((a) => a.motion === 'disappear')!.start, snap(30, start + 3));
-  const point = solved(make(say, [{target: 'a', motion: 'appear', at: {line: 'l', mark: 'end'}}]));
-  assert.equal(point.actions[0].start, snap(30, start + 3));
-  const edge = solved(make(say, [{target: 'a', motion: 'appear', at: {line: 'l', mark: 'mid', edge: 'end', offset: 0.1}}]));
-  assert.equal(edge.actions[0].start, snap(30, start + 3.1));
-  // without aligned words the position in the text decides
-  const est = solve(d, {l: {duration: 4, audio: 'l.ogg'}});
-  assert.equal(est.actions.find((a) => a.motion === 'appear')!.start, snap(30, start + (4 * 4) / 18));
+  const c = solve(d, voice(d), 30);
+  const [l, m] = c.scenes[0].lines;
+  assert.equal(c.actions.find((a) => a.on === 'p')!.start, snap(30, wordTime(l, 'the', 'start')));
+  assert.equal(wordTime(l, 'the', 'start'), l.from + (2 * 13) / 21, '"The" of "The tag", not the "the" inside "Another"');
+  assert.equal(wordTime(m, 'home then', 'end'), m.from + (2 * 13) / 20);
+});
 
-  const codes = (x: VisoDoc) => validate(x).map((i) => i.code);
-  assert.deepEqual(codes(make(say, [{target: 'a', motion: 'appear', at: {line: 'l', mark: 'nope'}}])), ['anchor.mark']);
-  assert.deepEqual(codes(make(say, [{target: 'a', motion: 'appear', at: {line: 'l', mark: 'mid', word: 'two'}}])), ['anchor.both']);
-  assert.deepEqual(codes(make(say, [{target: 'a', motion: 'appear', at: {line: 'l', mark: 'end'}, during: true}])), ['action.during']);
-  assert.deepEqual(codes(make(say, [{target: 'a', motion: 'highlight', at: {line: 'l', mark: 'mid'}, during: true}])), ['action.during']);
-  assert.deepEqual(codes(make('one {#mid}two', [])), ['mark.syntax']);
-  // a translation carries the same marks
-  const tr = (tsay: string) => codes(make(say, [], {i18n: {fr: {text: 'un deux trois quatre', say: tsay}}}));
-  assert.deepEqual(tr('un {#mid}deux trois{/mid} {@end}quatre'), []);
-  assert.deepEqual(tr('un deux trois quatre'), ['mark.i18n']);
+test('validator: seconds are numbers, an action has targets, a head with a stagger reaches back to its first target', () => {
+  const bad = doc('<Scene id="a"><Line id="l">x</Line></Scene>');
+  (bad.scenes[0].lines[0] as {hold: unknown}).hold = '1';
+  (bad as {pacing: unknown}).pacing = {lead: '1'};
+  assert.deepEqual(codes(bad), ['motion.time', 'motion.time']);
+  const s = (anims: string) => doc(`<Scene id="a"><Line id="l">x y</Line><Animation>${anims}</Animation></Scene>`);
+  assert.deepEqual(codes(s('<Appear on={[]} line="l"/>')), ['action.on']);
+  assert.deepEqual(codes(s('<Appear id="h" on={["p","q","r"]} stagger={1} line="l"/><Appear on="z" after="h" offset={-1.5}/>')), [], 'the head ends 2.45 s after its first target');
+  assert.deepEqual(codes(s('<Appear id="h" on={["p","q","r"]} stagger={1} line="l"/><Appear on="z" after="h" offset={-3}/>')), ['anchor.after-negative']);
+  assert.deepEqual(codes(doc('<Scene id="a" duration={1}/>', 'theme="constructor"')), ['theme.unknown']);
+  assert.deepEqual(codes(doc('<Canvas/><Scene id="a" duration={1}/>')), ['canvas.presets']);
+});
+
+test('lexicon: whole words, symbols at the edge, other scripts, and a replacement is taken literally', () => {
+  const d = doc('<Scene id="a" duration={1}/>', 'voice="v" lexicon={{"C++": "see plus plus", USD: "US$&", "\\u6708\\u4eae": "moon"}}');
+  assert.equal(sayOf(d, {id: 'l', text: 'C++ costs 5 USD; USDA stays'}), 'see plus plus costs 5 US$&; USDA stays');
+  assert.equal(sayOf(d, {id: 'l', text: '\u6211\u770b\u6708\u4eae'}), '\u6211\u770bmoon');
 });
 
 test('solver: every event sits on the frame grid, so a frame number is the whole of a time', () => {
-  const d = example();
+  const d = doc('<Scene id="a"><Line id="l">one two three four</Line><Part id="p"/><Animation><Appear on="p" line="l" word="three" offset={0.013}/><Tween on={["p","q"]} stagger={0.0333} x={5} after="x1"/><Appear id="x1" on="p" at={0.123}/></Animation></Scene>');
   for (const fps of [24, 30, 60]) {
-    const c = solve(d, voice, fps);
-    const onGrid = (t: number) => t === snap(fps, t);
-    assert.equal(c.fps, fps);
-    assert.ok(onGrid(c.duration));
-    for (const sc of c.scenes) {
-      assert.ok(onGrid(sc.from) && onGrid(sc.end));
-      for (const b of sc.beats) assert.ok(onGrid(b.from) && onGrid(b.end) && b.from >= sc.from && b.end <= sc.end);
-    }
-    for (const a of c.actions) assert.ok(onGrid(a.start), `action on ${a.path} starts off the grid: ${a.start}`);
-    // the frame count is whole, and the frame that ends one scene starts the next
-    assert.equal(c.duration * fps, Math.round(c.duration * fps));
-    for (let i = 1; i < c.scenes.length; i++) assert.equal(c.scenes[i].from, c.scenes[i - 1].end);
+    const c = solve(d, voice(d, [{w: 'one', t0: 0.01, t1: 0.3}, {w: 'two', t0: 0.41, t1: 0.7}, {w: 'three', t0: 0.77, t1: 1.1}, {w: 'four', t0: 1.19, t1: 1.9}]), fps);
+    for (const t of [c.duration, ...c.scenes.flatMap((s) => [s.from, s.end, ...s.lines.map((l) => l.from)]), ...c.actions.map((a) => a.start)]) assert.equal(t, snap(fps, t), `${t} at ${fps} fps`);
   }
-  // the rule: the nearest frame, halves up, however long the document
-  assert.equal(snap(30, 0.016), 0);
-  assert.equal(snap(30, 0.017), 1 / 30);
-  assert.equal(snap(30, 100.0166), 3000 / 30);
-  // a document's own export rate is the default
-  assert.equal(solve({...d, exports: {fps: 24}} as VisoDoc, voice).fps, 24);
 });
 
-test('validator: an issue with a standard answer carries a fix, and a style issue lists the styles that exist', () => {
-  const d: any = example();
-  d.objects.bad = {type: 'chip', text: 'x', style: 'nope'};
-  d.scenes[0].beats[0].actions.push({target: 'g', motion: 'appear', at: {line: 'l1', word: 'zzz'}});
-  const issues = validate(d);
-  const style = issues.find((i) => i.code === 'style.unknown')!;
-  assert.match(style.fix!, /use one of: default, tool, mono/);
-  assert.match(issues.find((i) => i.code === 'anchor.word')!.fix!, /mark/);
-  assert.ok(issues.every((i) => i.fix));
+test('actions: after takes the end of the head (latest target plus dur), or its start; set ends where it starts', () => {
+  const d = doc('<Scene id="a"><Line id="l">go now</Line><Animation><Appear id="h" on={["p","q"]} stagger={0.5} line="l" word="go"/><Appear on="r" after="h" offset={0.1}/><Appear on="s" after="h" edge="start"/><Set id="z" on="t" k={1} line="l" word="now"/><Appear on="u" after="z"/></Animation></Scene>');
+  const c = solve(d, voice(d), 30);
+  const at = (on: string) => c.actions.find((a) => a.on === on && a.motion !== 'set')!.start;
+  const go = 0.4;
+  assert.equal(at('p'), snap(30, go));
+  assert.equal(at('q'), snap(30, go + 0.5));
+  assert.equal(at('r'), snap(30, snap(30, go + 0.5) + 0.45 + 0.1));
+  assert.equal(at('s'), snap(30, go));
+  assert.equal(at('u'), c.actions.find((a) => a.motion === 'set')!.start, 'a set ends where it starts');
 });
 
-test('the goldens were recorded with the pinned Chrome', () => {
-  const goldens = readdirSync('tests/regression/golden').filter((f) => f.endsWith('.json'));
-  assert.ok(goldens.length >= 4);
-  for (const f of goldens) assert.equal(JSON.parse(readFileSync(`tests/regression/golden/${f}`, 'utf8')).chrome, `HeadlessChrome/${PINNED_CHROME}`, f);
+test('presence: a part is invisible until its first appear; a disappear ramps out; other targets are visible until a first appear', () => {
+  const d = doc('<Part id="g"/><Scene id="a"><Line id="l">one two three four</Line><Part id="p"/><Animation><Appear on="p" at={1}/><Disappear on="p" at={3}/><Disappear on="q" at={2}/><Appear on="q" at={4}/><Appear on="n" at={1}/></Animation></Scene><Scene id="b"><Line id="m">five</Line><Part id="p"/><Animation><Appear on="p" at={1}/><Appear on="g" at={1}/></Animation></Scene>');
+  const c = solve(d, voice(d), 30);
+  const b = c.scenes[1].from;
+  const p = (id: string, t: number, scene?: string, part = false) => presenceAt(c, id, t, scene, part);
+  assert.equal(p('p', 0, 'a', true), 0);
+  assert.equal(p('p', 0.99, 'a', true), 0);
+  assert.equal(p('p', 1.0 + 0.45, 'a', true), 1);
+  assert.ok(p('p', 1.2, 'a', true) > 0 && p('p', 1.2, 'a', true) < 1);
+  assert.equal(p('p', 2.9, 'a', true), 1);
+  assert.equal(p('p', 3.3, 'a', true), 0);
+  assert.equal(p('r', 1, 'a'), 1, 'no action names a target that is not a part');
+  assert.equal(p('r', 1, 'a', true), 0, 'a part nobody appears is never there');
+  assert.equal(p('q', 0, 'a'), 1, 'first presence action is a disappear: visible until then');
+  assert.equal(p('q', 2.5, 'a'), 0);
+  assert.equal(p('q', 4.6, 'a'), 1);
+  assert.equal(p('n', 0.5, 'a'), 0, 'a target whose first action is an appear is hidden until it');
+  assert.equal(p('p', b, 'b', true), 0, 'the scene part of the next scene starts hidden: nothing carries over');
+  assert.equal(p('p', b + 1 + 0.45, 'b', true), 1);
+  assert.equal(p('p', b + 0.2, 'a', true), 0, 'scene a\'s own actions end with it');
+  assert.equal(p('g', b + 1 + 0.45, undefined, true), 1, 'a global part is one thing across scenes');
+  assert.equal(p('g', 0, undefined, true), 0);
 });
 
-test('qa: word anchors that rest on weak or missing alignment are reported', () => {
-  const words = [{w: 'one', t0: 0, t1: 1, p: 0.99}, {w: 'two', t0: 1, t1: 2, p: 0.2}, {w: '3', t0: 2, t1: 2}, {w: 'four', t0: 2, t1: 4, p: 0.9}];
-  const make = (at: any, extra: any = {}): VisoDoc => ({
-    spec: '0.4.0', meta: {id: 'al', title: 'al', lang: 'en'}, canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, theme: {id: 'visotalk/dark'},
-    objects: {a: {type: 'chip', text: 'a'}}, scenes: [{id: 's', pattern: {kind: 'grid', slots: {items: ['a']}}, beats: [{id: 'b',
-      lines: [{id: 'l', text: 'one two 3 four', say: 'one {#r}two 3{/r} four'}], actions: [{target: 'a', motion: 'appear', at: {line: 'l', ...at}, ...extra}]}]}],
-  } as any);
-  const run = (d: VisoDoc, w: unknown = words) => alignmentIssues(d, solve(d, {l: {duration: 4, audio: 'l.ogg', words: (w ?? undefined) as any}}));
-  assert.deepEqual(run(make({word: 'one'})), []);
-  assert.deepEqual(run(make({word: 'two'})).map((i) => i.code), ['align.weak']);
-  assert.match(run(make({word: 'two'}))[0].message, /p = 0\.20/);
-  // a word without letters has no time of its own, when the others have evidence
-  assert.match(run(make({word: '3'}))[0].message, /no letters/);
-  // a mark: the start word of the range is checked, and with `during` its end word too
-  assert.deepEqual(run(make({mark: 'r'})).map((i) => i.code), ['align.weak']);
-  assert.deepEqual(run(make({mark: 'r', edge: 'end'})).map((i) => i.code), ['align.weak']);
-  assert.equal(run(make({mark: 'r'}, {during: true})).length, 2);
-  assert.deepEqual(run(make({word: 'four'})), []);
-  // legacy word times with no probabilities say nothing
-  assert.deepEqual(run(make({word: 'two'}), words.map(({p, ...w}) => w)), []);
-  // no word times at all: one issue for the document, naming the lines
-  const none = run(make({word: 'two'}), null);
-  assert.deepEqual(none.map((i) => i.code), ['align.estimated']);
-  assert.match(none[0].message, /"l"/);
-  // an anchor on a line or beat edge needs no words
-  assert.deepEqual(run(make({offset: 0.2}), null), []);
+test('presence: an appear of what is visible changes nothing, and an action that interrupts a ramp turns it from where it is', () => {
+  const d = doc('<Scene id="a"><Line id="l">one two three four five six</Line><Part id="p"/><Animation><Appear on="p" at={1} dur={1} easing="linear"/><Appear on="p" at={3}/><Disappear on="p" at={4} dur={1} easing="linear"/><Appear on="p" at={4.5} dur={1} easing="linear"/></Animation></Scene>');
+  const c = solve(d, voice(d), 30);
+  const p = (t: number) => presenceAt(c, 'p', t, 'a', true);
+  assert.equal(p(2.5), 1);
+  assert.equal(p(3), 1, 'appearing what is already there does not flash');
+  assert.equal(p(3.2), 1);
+  assert.equal(p(4.5), 0.5, 'a disappear half way down');
+  assert.equal(p(5.0), 0.75, 'and an appear that interrupts it climbs back from 0.5 to 1 over its dur');
+  assert.equal(p(5.5), 1);
+});
+
+test('qa: an action that starts after its scene is over is reported', () => {
+  const d = doc('<Scene id="a"><Line id="l">one two</Line><Animation><Appear on="p" at="end" offset={5}/><Appear on="q" at="end" offset={-1}/></Animation></Scene>');
+  const issues = staticQa(d, solve(d, voice(d), 30)).filter((i) => i.code === 'action.outside-scene');
+  assert.deepEqual(issues.map((i) => i.objects[0]), ['p']);
+  assert.match(issues[0].message, /appear of "p" starts at .* s into scene "a", which is over at/);
+});
+
+test('props: a tween reaches its value over dur from the value it has, chains with set, and an interrupted tween starts from where it was', () => {
+  const d = doc('<Scene id="a"><Line id="l">go</Line><Animation><Tween on="o" x={100} at={1} dur={2} easing="linear"/><Set on="o" x={0} label="a" at={4}/><Tween on="o" x={10} at={5} dur={2} easing="linear"/><Tween on="o" x={40} at={6} dur={1} easing="linear"/></Animation></Scene>');
+  const c = solve(d, voice(d), 30);
+  const x = (t: number) => propAt(c, 'o', 'x', t, 0);
+  assert.equal(x(0.5), 0);
+  assert.equal(x(2), 50);
+  assert.equal(x(3.5), 100);
+  assert.equal(x(4), 0);
+  assert.equal(x(5.5), 2.5);
+  assert.equal(x(6), 5);
+  assert.equal(x(6.5), 22.5);
+  assert.equal(x(9), 40);
+  assert.equal(propAt(c, 'o', 'label', 5, 'none'), 'a');
+  assert.equal(propAt(c, 'o', 'label', 3, 'none'), 'none');
+  assert.equal(propAt(c, 'o', 'x', 3, 7), 100, 'a tween of a prop with a base starts from the base');
+});
+
+test('qa: samples per line, brief and never-visible targets, weak alignment', () => {
+  const d = doc('<Scene id="a"><Line id="l1">one two three</Line><Line id="l2">four five</Line><Animation><Appear on="blink" line="l1" word="two"/><Disappear on="blink" line="l1" word="three"/><Appear on="stays" line="l1"/><Appear on="late" at={99}/></Animation></Scene>');
+  const words = [{w: 'one', t0: 0, t1: 0.4, p: 1}, {w: 'two', t0: 0.5, t1: 0.9, p: 0.2}, {w: 'three', t0: 1, t1: 1.9, p: 1}];
+  const c = solve(d, voice(d, words), 30);
+  const q = staticQa(d, c);
+  assert.deepEqual(q.map((i) => [i.code, i.objects[0]]), [['action.outside-scene', 'late'], ['visible.brief', 'blink'], ['never-visible', 'late']]);
+  assert.match(q[1].fix!, /hold=\{1\.5\}/);
+  const a = alignmentIssues(d, c);
+  assert.deepEqual(a.map((i) => i.code), ['align.weak']);
+  const lost = doc('<Scene id="a"><Line id="l1">in 1927 it fell</Line><Animation><Appear on="p" line="l1" word="1927"/></Animation></Scene>');
+  assert.deepEqual(alignmentIssues(lost, solve(lost, voice(lost, [{w: 'in', t0: 0, t1: 0.2}, {w: 'nineteen', t0: 0.3, t1: 0.7}]), 30)).map((i) => i.code), ['align.estimated'], 'aligned words that do not hold the phrase leave it estimated');
+  const s = sampleFrames(c, 30, 2);
+  assert.ok(s.some((x) => x.at === 'a@0.4s') && s.some((x) => x.at.startsWith('a/l2@')));
+  assert.ok(s.every((x) => x.frame >= 0 && x.frame < Math.round(c.duration * 30)));
+});
+
+test('themes: tokens merge over the built-in theme; unknown themes are reported', () => {
+  assert.equal(themeTokens({id: 'visotalk/dark', tokens: {colors: {bg: '#000'}}}).colors.text, '#E8ECF4');
+  assert.equal(themeTokens({id: 'visotalk/dark', tokens: {colors: {bg: '#000'}}}).colors.bg, '#000');
+  assert.deepEqual(codes(doc('<Scene id="a" duration={1}/>', 'theme="nope"')), ['theme.unknown']);
+});
+
+test('qa: a global target that was on screen before the scene is not a brief flash when the scene takes it away at once', () => {
+  const d = doc('<Part id="g"/><Scene id="a"><Line id="l">one two three four five six</Line><Animation><Appear on="g" at="start"/><Appear on="x" at="start"/></Animation></Scene><Scene id="b"><Line id="m">one two</Line><Animation><Appear on="x" at="start"/><Disappear on="x" at={0.5}/><Appear on="y" at="start"/><Disappear on="y" at={0.7}/></Animation></Scene>');
+  const brief = staticQa(d, solve(d, voice(d), 30)).filter((i) => i.code === 'visible.brief').map((i) => i.objects[0]);
+  assert.deepEqual(brief, ['y'], 'y was shown and taken away within a second; x was on screen for the whole of scene a');
 });

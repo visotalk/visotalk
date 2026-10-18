@@ -1,4 +1,4 @@
-/** Static server for the built player, with the media cache and HTTP ranges. */
+/** Static server for the built player, with HTTP ranges. */
 import {createReadStream, existsSync, statSync} from 'node:fs';
 import {createServer, type IncomingMessage, type Server, type ServerResponse} from 'node:http';
 import {extname, join, resolve} from 'node:path';
@@ -24,15 +24,14 @@ function sendFile(req: IncomingMessage, res: ServerResponse, file: string, extra
 
 const listen = (s: Server, port = 0) => new Promise<number>((ok) => s.listen(port, '127.0.0.1', () => ok((s.address() as {port: number}).port)));
 
-/** Serves `root`, plus `/__media/<asset>/<frame>.png` from `mediaCache` */
-export async function servePlayer(root: string, mediaCache: string, port = 0): Promise<{url: string; close(): void}> {
+/** Serves `root`, and `media` (the decoded frames of video assets) at `/__media/` */
+export async function servePlayer(root: string, port = 0, media?: string): Promise<{url: string; close(): void}> {
   root = resolve(root);
-  mediaCache = resolve(mediaCache);
   const s = createServer((req, res) => {
     const p = decodeURIComponent(new URL(req.url!, 'http://x').pathname);
-    let file = p.startsWith('/__media/') ? join(mediaCache, p.slice(9)) : join(root, p);
+    let file = media && p.startsWith('/__media/') ? join(media, p.slice('/__media/'.length)) : join(root, p);
     if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
-    if (!(file.startsWith(root) || file.startsWith(mediaCache)) || !existsSync(file)) return void res.writeHead(404).end();
+    if (!(file.startsWith(root) || (media && file.startsWith(resolve(media)))) || !existsSync(file)) return void res.writeHead(404).end();
     sendFile(req, res, file);
   });
   const p = await listen(s, port);

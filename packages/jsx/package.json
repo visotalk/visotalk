@@ -1,16 +1,19 @@
 {
   "name": "@visotalk/jsx",
-  "version": "0.4.0",
-  "description": "Types for writing a VisoTalk document as TSX: the tags a document uses and their attributes. The document is read, never run, so there is no runtime.",
+  "version": "0.5.0",
+  "description": "The tags of a VisoTalk document as TSX: lines, parts and animations. The engine reads the file as text; as a module the tags render nothing.",
   "license": "MIT",
   "type": "module",
-  "types": "./index.d.ts",
   "exports": {
-    ".": {
-      "types": "./index.d.ts"
-    }
+    ".": "./index.ts"
   },
   "dependencies": {
     "@visotalk/ir": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12"
   }
 }

@@ -29,9 +29,6 @@ importers:
       esbuild:
         specifier: 0.24.0
         version: 0.24.0
-      katex:
-        specifier: 0.16.11
-        version: 0.16.11
       puppeteer-core:
         specifier: 23.6.0
         version: 23.6.0
@@ -68,6 +65,13 @@ importers:
       '@visotalk/ir':
         specifier: workspace:*
         version: link:../ir
+      react:
+        specifier: '*'
+        version: 18.3.1
+    devDependencies:
+      '@types/react':
+        specifier: 18.3.12
+        version: 18.3.12
 
   packages/runtime:
     dependencies:
@@ -80,9 +84,9 @@ importers:
       '@visotalk/ir':
         specifier: workspace:*
         version: link:../ir
-      katex:
-        specifier: 0.16.11
-        version: 0.16.11
+      '@visotalk/jsx':
+        specifier: workspace:*
+        version: link:../jsx
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -90,9 +94,6 @@ importers:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      '@types/katex':
-        specifier: 0.16.7
-        version: 0.16.7
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
@@ -260,9 +261,6 @@ packages:
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
 
-  '@types/katex@0.16.7':
-    resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
-
   '@types/node@22.9.0':
     resolution: {integrity: sha512-vuyHg81vvWA1Z1ELfvLko2c8f34gyA0zaic0+Rllc5lbCnbSyuvb2Oxpm6TAUAC/2xZN3QGqxBNggD1nNR2AfQ==}
 
@@ -368,10 +366,6 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  commander@8.3.0:
-    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
-    engines: {node: '>= 12'}
-
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
@@ -475,10 +469,6 @@ packages:
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
-
-  katex@0.16.11:
-    resolution: {integrity: sha512-RQrI8rlHY92OLf3rho/Ts8i/XvjgguEjOkO1BEXcU3N8BqPpSzBNwV/G0Ukr+P/l3ivvJUE/Fa/CwbS6HesGNQ==}
-    hasBin: true
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -746,8 +736,6 @@ snapshots:
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
-  '@types/katex@0.16.7': {}
-
   '@types/node@22.9.0':
     dependencies:
       undici-types: 6.19.8
@@ -840,8 +828,6 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
-
-  commander@8.3.0: {}
 
   csstype@3.2.3: {}
 
@@ -965,10 +951,6 @@ snapshots:
   is-fullwidth-code-point@3.0.0: {}
 
   js-tokens@4.0.0: {}
-
-  katex@0.16.11:
-    dependencies:
-      commander: 8.3.0
 
   loose-envify@1.4.0:
     dependencies:

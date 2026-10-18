@@ -3,30 +3,29 @@
  * visotalk — validate, prepare, build, render, play, check.
  *
  *   visotalk doctor   [--fix] [--json]   what rendering needs and where it stands; --fix installs the pinned Chrome, the Kokoro model, the Python packages and the aligner weights into ~/.visotalk
- *   visotalk validate <doc.tsx> [--json] [--limit 30]   issues carry a `fix` where there is a standard answer
+ *   visotalk init     <doc.tsx> [--lines lines.json] [--id ID] [--tts-models DIR]   a valid skeleton of the narration, nothing drawn; starts the narration in the background
+ *   visotalk validate <doc.tsx> [--json] [--limit 30] [--anchors]   issues carry a `fix` where there is a standard answer; --anchors lists each word anchor with the words it finds marked in the line
  *   visotalk prepare  <doc.tsx> [--tts-models DIR]
- *   visotalk build    <doc.tsx> [--out DIR]
- *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--chrome PATH] [--skip-review]
+ *   visotalk build    <doc.tsx> [--out DIR] [--artifact]   the player as static files; --artifact: MP3 narration, no fonts and a player.html + artifact.json to publish as a Claude artifact
+ *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--chrome PATH]
  *   visotalk play     <doc.tsx> [--port 4800]
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
- *   visotalk qa       <doc.tsx> [--per-beat 3] [--frames] [--json] [--limit 30]   layout checks on sampled frames + static checks; writes qa.json and sheet.png
- *   visotalk sheet    <doc.tsx> [--at 0.85] [--out FILE]   contact sheet: one frame per beat at that fraction
- *   visotalk design   <doc.tsx> <scene> [--step NAME --answer TEXT]   the next of four design questions for a scene, or record its answer; still needs all six
- *   visotalk still    <doc.tsx> --beat SCENE/BEAT [--at 0.85] | --time SECONDS  [--out FILE.png]   one full-size frame (1920x1080) and the questions to answer about it
- *   visotalk review   <doc.tsx> <scene> --seen TEXT --designed yes|no --distinct yes|no --problems none|TEXT   the answers; render needs a passing one for every scene
- *   visotalk preview  <doc.tsx> <Component> [--at 0,0.5,1] [--props JSON] [--out FILE.png]   a component alone, at those times, in the box a slot gives it
- *   visotalk schema   [object <type> | motions | patterns | icons | <type>] [--json]   the vocabulary, read from the same source the validator uses
+ *   visotalk qa       <doc.tsx> [--per-line 3] [--frames] [--json] [--limit 30]   layout checks on sampled frames + static checks; writes qa.json and sheet.png
+ *   visotalk sheet    <doc.tsx> [--at 0.85] [--out FILE]   contact sheet: one frame per line at that fraction
+ *   visotalk still    <doc.tsx> --line SCENE/LINE [--at 0.85] | --time SECONDS  [--out FILE.png]   one full-size frame (1920x1080), what was measured on it, and what the sentence names
+ *   visotalk schema   [tags | hooks | motions] [--json]   what a document is made of and the hooks a part calls
  */
-import {existsSync, readFileSync, writeFileSync, mkdirSync} from 'node:fs';
+import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync} from 'node:fs';
 import {basename, dirname, join, resolve} from 'node:path';
-import {alignmentIssues, creditsMarkdown, locate, MarkupError, revealIssues, type Loc, sampleFrames, solve, staticQa, withCredits, wordAt, type VoiceManifest} from '@visotalk/ir';
-import {contactSheet, frameIssues, renderBuilt, servePlayer, type FrameInspection} from '@visotalk/exporter';
-import {design, designOf} from './design.ts';
+import {alignmentIssues, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
+import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, servePlayer, type FrameInspection} from '@visotalk/exporter';
+import {lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
-import {buildPlayer, check, componentTextIssues, load, namedPhrases, prepare, recordReview, recordStill, unreviewedScenes, type Project} from './project.ts';
+import {skeleton, type Script} from './init.ts';
+import {anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
-const COMMANDS = ['doctor', 'schema', 'design', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'review', 'preview'];
+const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still'];
 const opt = (n: string, d?: string) => (rest.includes(`--${n}`) ? rest[rest.indexOf(`--${n}`) + 1] : d);
 const flag = (n: string) => rest.includes(`--${n}`);
 
@@ -45,93 +44,74 @@ function report(issues: Array<{code: string; at: string; message: string; fix?: 
   if (issues.length > shown.length) log(`… ${issues.length - shown.length} more not shown (--limit N)`);
 }
 
-type Field = {name: string; type: string; optional: boolean; doc: string};
-const fieldLine = (f: Field) => `  ${f.name}${f.optional ? '?' : ''}: ${f.type}${f.doc ? `   // ${f.doc}` : ''}`;
+const SCHEMA = {
+  tags: {
+    Doc: 'id title lang  [description sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
+    Scene: 'id  [title duration]   lines, parts and one Animation; a scene without lines needs duration (seconds)',
+    Line: 'id  [text hold i18n]   the words spoken are the children (<Mark id="x">phrase</Mark> names a phrase an action can hang on); text is the caption when it differs (digits for numbers spoken as words); hold is silence after the line',
+    Part: 'id  [x y w h z]   a box (default: the whole canvas) holding React: elements, or a function that returns them (hooks run inside it). Invisible until an Appear; in a Scene it ends with the scene, in Doc it stays',
+    Animation: 'the actions of the scene, in any order',
+    Asset: 'id kind src license  [source analysis proxy]   a file the document uses; read in a part with useAsset(id)',
+  },
+  motions: {
+    Appear: 'on  + where it starts  [dur stagger easing id]   every part is invisible until an Appear shows it; so is any other target whose first appear or disappear is an appear',
+    Disappear: 'on  + where it starts  [dur stagger easing id]',
+    Tween: 'on  + where it starts  [dur stagger easing id]  + props (numbers)   reach their values over dur, from the value they have then; x y (px) scale rotate (deg) move the target itself',
+    Set: 'on  + where it starts  [id]  + props (numbers, strings, true/false)   at once',
+    'where it starts': 'exactly one of: line="l1" word="phrase" [nth={2}] [edge="end"] (any substring of the spoken text; in Chinese, Japanese and Thai any characters) · line="l1" mark="name" [edge="end"] (a <Mark> in the line) · line="l1" [edge="end"] (the start of the line, or its end) · after="action-id" [edge="start"] · at={1.5} (seconds into the scene) · at="start" | at="end";  offset={s} adds to any',
+  },
+  hooks: {
+    'useTarget(id)': "props to spread on the element that is the target `id` (data-vt and a style: opacity, visibility, transform). Merge your own style over it, never replace it",
+    '<Obj id as? style?>': 'a div (or as="g", "span") that is a target: useTarget in a tag',
+    'useProp(name, base)': 'a prop of the part it runs in that <Tween> and <Set> change (<Set on="note" text="…"/> for <Part id="note">): its value now, `base` before the first',
+    'useProp(id, name, base)': 'the same for the target `id`',
+    'useTime()': 'seconds since the scene on screen started: draw by it, never by a timer',
+    'useDocTime()': 'seconds since the start of the video',
+    'useFrame()': 'the frame the clock is on',
+    'useCanvas()': '{width, height, preset}: the canvas it is drawn on',
+    'useTheme()': 'the theme tokens {colors, fonts, radius, space}; also CSS variables var(--vt-data), var(--vt-sans)',
+    'useAsset(id)': 'the URL of an <Asset>',
+    'random(key)': 'a deterministic random generator: the same key gives the same numbers; Math.random is refused',
+  },
+};
 
-/** `visotalk schema`: the committed vocabulary (scripts/generate-vocabulary.mjs), so the agent never reads the source to learn a field. */
-function schema(topic?: string, name?: string) {
-  const v = JSON.parse(readFileSync(new URL('../../ir/src/vocabulary.json', import.meta.url), 'utf8'));
-  const out = (x: unknown, text: string) => console.log(flag('json') ? JSON.stringify(x, null, 1) : text);
-  if (!topic) {
-    return out(v, [
-      `spec ${v.spec}, theme ${v.theme}`,
-      `objects:  ${Object.keys(v.objects).join(' ')}   (visotalk schema object <type>)`,
-      `motions:  ${Object.keys(v.motions).join(' ')}   (visotalk schema motions)`,
-      `patterns: ${Object.keys(v.patterns).join(' ')}   (visotalk schema patterns)`,
-      `types:    ${Object.keys(v.types).join(' ')}   (visotalk schema <type>)`,
-    ].join('\n'));
+/** `visotalk schema`: what a document is made of and the hooks a part calls */
+function schema(arg?: string) {
+  const topic = arg && !arg.startsWith('--') ? arg : undefined;
+  const json = process.argv.includes('--json');
+  const topics = Object.keys(SCHEMA);
+  if (topic && !topics.includes(topic)) return void (console.error(`unknown topic "${topic}"; one of: ${topics.join(' ')}`), process.exit(1));
+  if (json) return void console.log(JSON.stringify(topic ? SCHEMA[topic as keyof typeof SCHEMA] : SCHEMA, null, 1));
+  for (const t of topic ? [topic] : topics) {
+    console.log(`${t}:`);
+    for (const [k, v] of Object.entries(SCHEMA[t as keyof typeof SCHEMA])) console.log(`  ${k.padEnd(26)} ${v}`);
   }
-  if (topic === 'object') {
-    const o = v.objects[name ?? ''];
-    if (!o) return void (console.error(`unknown object type "${name}"; one of: ${Object.keys(v.objects).join(' ')}`), process.exit(1));
-    const styles = o.styles?.length ? `\nstyles: ${o.styles.join(' ')}` : '';
-    return out(o, `${name}${o.doc ? ` \u2014 ${o.doc}` : ''}\n${o.fields.map(fieldLine).join('\n')}${styles}`);
-  }
-  if (topic === 'icons') {
-    const names = Object.keys(JSON.parse(readFileSync(new URL('../../ir/src/icons.json', import.meta.url), 'utf8')));
-    return out(names, `${names.length} icons for <Shape shape="icon" icon="name"/>:\n${names.join(' ')}`);
-  }
-  if (topic === 'motions') {
-    return out(v.motions, Object.entries(v.motions).map(([k, m]: [string, any]) => `${k.padEnd(12)} ${m.dur}s${m.entrance ? '  entrance' : ''}${m.hidesUntilStart ? '  hidden until it starts' : ''}`).join('\n'));
-  }
-  if (topic === 'patterns') {
-    return out(v.patterns, Object.entries(v.patterns).map(([k, p]: [string, any]) => `${k}: slots ${p.slots.join(', ')}\n  ${p.doc}`).join('\n'));
-  }
-  const t = v.types[topic];
-  if (!t) return void (console.error(`unknown type "${topic}"; one of: ${Object.keys(v.types).join(' ')}`), process.exit(1));
-  out(t, `${topic}${t.doc ? ` \u2014 ${t.doc}` : ''}\n${t.fields.map(fieldLine).join('\n')}`);
 }
 
-/** `render` stops for a reveal this far (seconds) from the word that names it; a smaller one is only reported by `qa` */
-const REVEAL_BLOCKS = 0.75;
-
 function usage(): never {
-  console.error('usage: visotalk <doctor|validate|prepare|build|render|play|check|qa|sheet|still|review|preview> <doc.tsx> [options]\n       visotalk schema [object <type> | motions | patterns | icons | <type>] [--json]');
+  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still> <doc.tsx> [options]\n       visotalk schema [tags | hooks | motions] [--json]');
   process.exit(2);
 }
 
-/**
- * A component alone: a throwaway one-beat document with the component in the `full` pattern (the box an agent will get from a slot of that size), its props
- * those of its first use in the document with `--props` over them, rendered at each `--at` time (seconds since the component's scene started, `ctx.local`).
- */
-async function preview(p: Project) {
-  const comps = p.doc.components ?? [];
-  const name = rest[0] && !rest[0].startsWith('--') ? rest[0] : undefined;
-  const comp = comps.find((c) => c.export === name || c.id === name);
-  if (!comp) {
-    console.error(`usage: visotalk preview <doc.tsx> <Component> [--at 0,0.5,1] [--props '{"phase":0.5}'] [--out file.png]\ncomponents imported by this document: ${comps.map((c) => c.export ?? c.id).join(', ') || "none (import one: import {Moon} from './components/moon.ts';)"}`);
-    process.exit(2);
+/** `init`: the skeleton from a script, validated, with the narration started in the background */
+function init() {
+  if (!file) throw new Error('init needs the document: visotalk init doc.tsx --lines lines.json');
+  const path = resolve(file);
+  if (existsSync(path)) throw new Error(`${basename(path)} exists: init writes a new document and never overwrites one`);
+  const linesFile = opt('lines', 'lines.json')!;
+  if (!existsSync(linesFile)) throw new Error(`no script at ${linesFile}: {"title": "…", "lang": "en", "lines": [{"id": "l1", "text": "caption", "say": "spoken form", "intent": "what it shows"}]} (--lines FILE)`);
+  const script = JSON.parse(readFileSync(linesFile, 'utf8')) as Script;
+  writeFileSync(path, skeleton(script, opt('id')));
+  const p = load(path);
+  const issues = check(p);
+  if (issues.length) {
+    report(issues, console.error, {name: basename(p.file), locs: p.locs});
+    process.exit(1);
   }
-  const times = opt('at', '0,0.5,1')!.split(',').map(Number);
-  if (!times.length || times.some((t) => !Number.isFinite(t) || t < 0)) throw new Error(`--at is seconds, comma separated: --at 0,0.5,1 (got ${opt('at')})`);
-  const out = resolve(opt('out', join(p.work, 'preview', 'preview.png'))!);
-  if (!out.endsWith('.png')) throw new Error(`--out for preview is the image file and must end in .png (got ${opt('out')})`);
-  const used = Object.values(p.doc.objects).find((o) => o.type === 'component' && o.component === comp.id) as {props?: Record<string, unknown>} | undefined;
-  let extra: Record<string, unknown>;
-  try {
-    extra = JSON.parse(opt('props', '{}')!);
-  } catch {
-    throw new Error(`--props is a JSON object: --props '{"phase":0.5}' (got ${opt('props')})`);
-  }
-  const fps = 30;
-  const doc = {
-    spec: p.doc.spec, meta: {id: `preview-${comp.id}`, title: `Preview of ${comp.export ?? comp.id}`, lang: 'en'},
-    canvas: {presets: [{id: '16x9', width: 1920, height: 1080}]}, ...(p.doc.theme && {theme: p.doc.theme}), components: [comp],
-    objects: {view: {type: 'component', component: comp.id, props: {...used?.props, ...extra}}},
-    scenes: [{id: 's', pattern: {kind: 'full', slots: {main: 'view'}}, beats: [{id: 'b', duration: Math.max(...times) + 1}]}],
-    exports: {variants: [{preset: '16x9'}], fps, captions: 'none', credits: 'none'},
-  } as unknown as Project['doc'];
-  const work = join(p.work, 'preview');
-  mkdirSync(work, {recursive: true});
-  const pp: Project = {...p, doc, work, locs: new Map()};
-  const dist = await buildPlayer(pp);
-  const frames = times.map((t) => Math.floor(t * fps));
-  const images = new Map<number, Buffer>();
-  await renderBuilt({dist, out: join(work, 'frames'), fps, frames, inspect: false, concurrency: 1, encode: false, chrome: opt('chrome'), onFrame: (i, img) => void images.set(i, img)});
-  mkdirSync(dirname(out), {recursive: true});
-  contactSheet(frames.map((f) => images.get(f)!), out, {cols: Math.min(3, frames.length), cellW: 640});
-  times.forEach((t, k) => console.log(`${String(k + 1).padStart(3)}  ${t.toFixed(2).padStart(6)} s`));
-  console.log(`preview: ${out}`);
+  console.log(`${basename(path)}: document id "${p.doc.meta.id}" (work files in .visotalk/${p.doc.meta.id}/; changing the id prepares the narration again, so set it now with --id), ${script.lines.length} lines, one line each, all in the scene "draft" (split it into the scenes you design); nothing is drawn yet`);
+  const tts = opt('tts-models') || process.env.KOKORO_DIR;
+  if (tts) console.log(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}. Until it is ready a picture is timed from the words.`);
+  else console.log('no TTS model (--tts-models or KOKORO_DIR): the lines will be timed from their words; run prepare when you have one');
 }
 
 async function main() {
@@ -142,14 +122,8 @@ async function main() {
   }
   applyDefaults();
   if (cmd === 'doctor') return doctor(process.argv.slice(3));
-  if (cmd === 'schema') return schema(file, rest[0]);
-  if (cmd === 'design') {
-    if (!file || !rest[0] || rest[0].startsWith('--')) throw new Error('design needs the scene: visotalk design doc.tsx <scene> --step NAME --answer "…"');
-    const r = design(file, rest[0], {answer: opt('answer'), step: opt('step')});
-    (r.ok ? console.log : console.error)(r.text);
-    if (!r.ok) process.exit(1);
-    return;
-  }
+  if (cmd === 'schema') return schema(file);
+  if (cmd === 'init') return init();
   if (!cmd || !file) usage();
   const p = load(file);
 
@@ -159,62 +133,80 @@ async function main() {
     if (!flag('json')) console.error(`${issues.length} issue(s)`);
     process.exit(1);
   }
-  if (cmd === 'validate') return void (flag('json') ? report([], console.log) : console.log(`valid: ${p.doc.meta.id} (spec ${p.doc.spec})`));
+  if (cmd === 'validate') {
+    if (flag('json')) return void report([], console.log);
+    console.log(`valid: ${p.doc.meta.id} (spec ${p.doc.spec})`);
+    if (flag('anchors')) for (const sc of p.doc.scenes) for (const a of sc.animations) {
+      if (!('line' in a.at) || a.at.word === undefined) continue;
+      const line = sc.lines.find((l) => l.id === (a.at as {line: string}).line)!;
+      console.log(`${sc.id}/${line.id}  ${a.motion} ${[a.on].flat().join(',')}  ${markPhrase(sayOf(p.doc, line), a.at.word, a.at.nth) ?? '(not found)'}`);
+    }
+    return;
+  }
 
   if (cmd === 'prepare') {
-    const v = prepare(p, opt('tts-models'));
+    const v = prepareMarked(p, opt('tts-models'));
     return void console.log(`narration: ${Object.keys(v).length} line(s), ${Object.values(v).reduce((s, x) => s + x.duration, 0).toFixed(1)} s`);
   }
   if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && opt('out') && !opt('out')!.endsWith('.png')) {
     console.error(`--out for ${cmd} is the image file and must end in .png (got ${opt('out')})`);
     process.exit(1);
   }
-  if (cmd === 'preview') return preview(p);
-  if (cmd === 'review') {
-    const scene = rest[0] && !rest[0].startsWith('--') ? rest[0] : undefined;
-    if (!scene) throw new Error(`review needs the scene: visotalk review ${basename(p.file)} <scene> --seen "…" --designed yes|no --problems none|"…"\nthe scenes: ${p.doc.scenes.map((x) => x.id).join(', ')}`);
-    const r = recordReview(p, scene, {seen: opt('seen'), designed: opt('designed'), distinct: opt('distinct'), problems: opt('problems')});
-    if (r.errors.length) {
-      console.error(r.errors.join('\n'));
+  // A look never waits for narration: until it exists the lengths are estimated from the words, and it is started in the background if nobody has.
+  const tts = opt('tts-models') || process.env.KOKORO_DIR;
+  if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && narrationPending(p)) {
+    if (tts && !preparing(p)) console.error(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}`);
+    estimateVoice(p);
+    console.error(`narration is not ready${tts ? '' : ' (no TTS model: --tts-models or KOKORO_DIR)'}: the lines are timed from their words (about 2.8 a second), so what a word anchor shows will move when it is`);
+  } else {
+    if (preparing(p)) {
+      console.error('waiting for the narration that is being prepared');
+      waitForPrepare(p);
+    }
+    // Narration is cached per clip, so preparing again is cheap when nothing changed and keeps durations in step with the text.
+    if (tts) prepare(p, opt('tts-models'));
+    else if (existsSync(join(p.work, 'voice.json'))) console.error('no TTS model (--tts-models or KOKORO_DIR): reusing voice.json, so durations may not match the current text');
+    const added = estimateMissingVoice(p);
+    if (added.length) console.error(`no narration length yet for ${added.map((x) => `"${x}"`).join(', ')} (added since it was prepared): timed from their words until prepare runs`);
+    if (cmd === 'render' && narrationPending(p)) {
+      console.error('render needs the real narration, and voice.json holds lengths estimated from the words: run prepare with a TTS model (--tts-models or KOKORO_DIR)');
       process.exit(1);
     }
-    console.log(r.ok ? `scene ${scene}: reviewed, nothing to change` : `scene ${scene}: not done. You found something to change: change it, take a new still of it, read it and answer again`);
-    const open = unreviewedScenes(p);
-    return void console.log(open.length ? `still to review: ${open.join(', ')}` : 'every scene is reviewed: render');
   }
-  if (cmd === 'render' && !flag('skip-review')) {
-    const open = unreviewedScenes(p);
-    if (open.length) {
-      console.error(`render needs every scene reviewed on a full-size still as it is now (a sheet shows a third of the size and hides small text and empty space).\nnot reviewed, or reviewed with something left to change, since they last changed: ${open.join(', ')}\nfor each: visotalk still ${basename(p.file)} --beat <scene>/<beat>, read the image, then visotalk review ${basename(p.file)} <scene> --seen … --designed … --problems …   (--skip-review renders anyway)`);
-      process.exit(1);
-    }
-  }
-  // Narration is cached per clip, so preparing again is cheap when nothing changed and keeps durations in step with the text.
-  if (opt('tts-models') || process.env.KOKORO_DIR) prepare(p, opt('tts-models'));
-  else if (existsSync(join(p.work, 'voice.json'))) console.error('no TTS model (--tts-models or KOKORO_DIR): reusing voice.json, so durations may not match the current text');
 
-  if (cmd === 'render' && !flag('skip-review') && existsSync(join(p.work, 'voice.json'))) {
-    const voice = JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest;
-    const late = revealIssues(withCredits(p.doc), solve(withCredits(p.doc), voice, 30)).filter((i) => Math.abs(i.off ?? 0) > REVEAL_BLOCKS);
-    if (late.length) {
-      console.error(`render stops: ${late.length} thing(s) are not on screen at the word that names them, off by more than ${REVEAL_BLOCKS} s (the viewer sees the word with no picture, or the picture before the word):\n${late.map((i) => `  ${i.code}  ${i.at}  ${i.message}`).join('\n')}\nanchor each on its word (visotalk qa shows the same reports and their fixes), or --skip-review renders anyway`);
-      process.exit(1);
-    }
+  const dist = await buildPlayer(p, {out: cmd === 'build' ? opt('out') : undefined, artifact: cmd === 'build' && flag('artifact')});
+  if (cmd === 'build' && flag('artifact')) {
+    const {files} = JSON.parse(readFileSync(join(dist, 'artifact.json'), 'utf8')) as {files: string[]};
+    const big = files.find((f) => statSync(join(dist, f)).size > 16e6);
+    if (big) throw new Error(`${big} is over the 16 MB an artifact allows for one file`);
+    const bytes = files.reduce((n, f) => n + statSync(join(dist, f)).size, 0);
+    return void console.log(`built ${dist}: publish player.html with the ${files.length} files of artifact.json (${(bytes / 1e6).toFixed(1)} MB; no fonts: the player uses the system's)`);
   }
-  const dist = await buildPlayer(p, {out: cmd === 'build' ? opt('out') : undefined});
   if (cmd === 'build') return void console.log(`built ${dist}`);
 
   if (cmd === 'play') {
-    const s = await servePlayer(dist, join(p.work, '.media-cache'), Number(opt('port', '4800')));
+    const s = await servePlayer(dist, Number(opt('port', '4800')));
     return void console.log(`playing ${p.doc.meta.title} at ${s.url}`);
   }
 
   if (cmd === 'render') {
+    {
+      const fps = Number(opt('fps', '30'));
+      const c = solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, fps);
+      const frames = targetFrames(c, fps);
+      const probe = await renderBuilt({dist, out: join(p.work, 'targets'), fps, frames, inspect: true, concurrency: 1, encode: false, chrome: opt('chrome')});
+      const missing = targetIssues(p, c, fps, probe.inspections!);
+      if (missing.length) {
+        report(missing, console.error, {name: basename(p.file), locs: p.locs});
+        console.error(`render stops: ${missing.length} animation target(s) are on no page; fix them`);
+        process.exit(1);
+      }
+    }
     const out = resolve(opt('out', join(p.work, 'out'))!);
     const r = await renderBuilt({dist, out, fps: Number(opt('fps', '30')), format: flag('jpeg') ? 'jpeg' : 'png', concurrency: Number(opt('concurrency', '1')),
       from: opt('from') ? Number(opt('from')) : undefined, to: opt('to') ? Number(opt('to')) : undefined, saveFrames: flag('frames'),
       encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), chrome: opt('chrome'), log: (s) => console.error(s),});
-    writeFileSync(join(out, 'credits.md'), creditsMarkdown(withCredits(p.doc)));
+    writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc));
     console.log(JSON.stringify({...r, hashes: undefined}, null, 1));
     return void console.log(`video: ${join(out, r.frames && !flag('no-audio') ? 'final.mp4' : 'video.mp4')}`);
   }
@@ -222,59 +214,60 @@ async function main() {
   if (cmd === 'still') {
     const voice = JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest;
     const fps = Number(opt('fps', '30'));
-    const c = solve(withCredits(p.doc), voice, fps);
-    const beats = c.scenes.flatMap((sc) => sc.beats.map((b) => ({at: `${sc.id}/${b.id}`, from: b.from, end: b.end})));
+    const c = solve(p.doc, voice, fps);
+    const windows = lineWindows(c);
     let frame: number;
     if (opt('time') !== undefined) frame = Math.round(Number(opt('time')) * fps);
     else {
-      const b = beats.find((x) => x.at === opt('beat') || x.at.endsWith(`/${opt('beat')}`));
-      if (!b) throw new Error(`still needs --beat SCENE/BEAT or --time SECONDS; the beats are: ${beats.map((x) => x.at).join(', ')}`);
-      frame = Math.floor((b.from + Number(opt('at', '0.85')) * (b.end - b.from)) * fps);
+      const at = Number(opt('at', '0.85'));
+      if (!(at >= 0 && at <= 1)) throw new Error(`--at is how far through the line, 0 to 1 (got ${opt('at')}); a moment after the words (the pause or hold) is --time SECONDS`);
+      const w = windows.find((x) => x.at === opt('line') || x.at.endsWith(`/${opt('line')}`));
+      if (!w) throw new Error(`still needs --line SCENE/LINE or --time SECONDS; the lines are: ${windows.map((x) => x.at).join(', ')}`);
+      frame = Math.min(Math.floor((w.from + at * (w.end - w.from)) * fps), Math.ceil(w.end * fps) - 1);
     }
     if (!Number.isFinite(frame) || frame < 0) throw new Error(`--time is seconds from the start (got ${opt('time')})`);
+    // the last frame is the final state of the last scene, held after its narration: a time at or just past the end asks for it
+    const lastFrame = Math.round(c.duration * fps) - 1;
+    if (frame > lastFrame + fps) throw new Error(`--time is seconds from the start, and the video ends at ${c.duration.toFixed(2)} s (got ${opt('time')})`);
+    if (frame > lastFrame) {
+      console.error(`the video ends at ${c.duration.toFixed(2)} s: taking its last frame (${(lastFrame / fps).toFixed(2)} s)`);
+      frame = lastFrame;
+    }
     const img = new Map<number, Buffer>();
-    await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: [frame], encode: false, chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
+    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: [frame], encode: false, inspect: true, chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
     const png = resolve(opt('out', join(p.work, 'still', 'still.png'))!);
     mkdirSync(dirname(png), {recursive: true});
     writeFileSync(png, img.get(frame)!);
-    const sceneOf = c.scenes.find((sc) => sc.beats.some((b) => frame / fps >= b.from && frame / fps < b.end)) ?? c.scenes[c.scenes.length - 1];
     const t = frame / fps;
-    const active = c.scenes.flatMap((sc) => sc.beats.flatMap((b) => b.lines)).find((l) => t >= l.from && t < l.from + l.duration);
-    const rawLine = active ? p.doc.scenes.flatMap((sc) => sc.beats.flatMap((b) => b.lines ?? [])).find((l) => l.id === active.id) : undefined;
-    const names = namedPhrases(rawLine);
-    const beatId = c.scenes.flatMap((sc) => sc.beats.map((b) => ({sc: sc.id, id: b.id, from: b.from, end: b.end}))).find((b) => t >= b.from && t < b.end)?.id ?? '';
-    const planned = designOf(p.file, sceneOf.id);
-    if (planned.missing) {
-      console.error(`${planned.missing}\nThe design comes before the picture: answer the questions for this scene, then change the document to match.`);
-      process.exit(1);
-    }
-    recordStill(p, sceneOf.id, {beat: beatId, time: t, line: active?.id, text: rawLine?.text, names});
+    const sceneOf = c.scenes.find((sc) => t >= sc.from && t < sc.end) ?? c.scenes[c.scenes.length - 1];
+    const active = sceneOf.lines.find((l) => t >= l.from && t < l.from + l.duration);
+    const names = active ? anchoredWords(p.doc.scenes.find((sc) => sc.id === sceneOf.id)!, active.id) : [];
+    const inspection = taken.inspections![frame] as FrameInspection;
+    const measured = frameMeasured(inspection);
+    const facts = frameFacts(inspection);
     console.log(`still: ${png}  (${t.toFixed(2)} s, scene ${sceneOf.id})`);
-    console.log(`\nThe design you recorded for scene "${sceneOf.id}":\n${planned.text}`);
     console.log([
-      '',
-      `Read the image (Read tool) before you answer. The scene "${sceneOf.id}" counts as looked at only when you have answered:`,
-      `  visotalk review ${basename(p.file)} ${sceneOf.id} --seen "…" --designed yes|no --distinct yes|no --problems none|"…"`,
-      active ? `1. The sentence at this moment: "${active.say}"${names.length ? `\n   It is anchored on: ${names.map((n) => `"${n}"`).join(', ')}. In --seen, say where each of those is on the image, or that it is missing.` : '\n   In --seen, say what the image shows and what the sentence needs from it.'}` : '1. No sentence is spoken here. In --seen, say what the image shows.',
-      '2. Is this the picture and the layout you designed for the scene (the design above)? Go through the BOARD answer sentence by sentence (what is on stage, what arrives or leaves, which word fires it): is each one in the document, on that word? Anything missing or on another word: --designed no, and fix the document or change the answer. --designed yes or no.',
-      '3. Could a slide deck, with its layout and entrance animations, have made this? --distinct yes only if it is clearly more: a visual idea of its own, real hierarchy and composition, motion that means something. Is what is on screen the thing the sentence points at (the real command and what it prints, the real contents, the real values), or only labels about it? Labels only: say no and redesign.',
-      '4. Is anything small, empty, clipped, overlapping, wrong or missing, or is something the sentence says moves, grows, replaces or becomes (an action, not a thing) only a pop-in? --problems none, or what (then change it and take a new still; the answer you give now stays on record).',
+      ...(active?.say ? [`Spoken now: "${active.say}"${names.length ? `  (anchored on: ${names.map((n) => `"${n}"`).join(', ')})` : ''}`] : [`No sentence is spoken at this moment.`]),
+      ...(facts ? [`Measured on this frame: ${facts}.`] : []),
+      ...Object.entries(measured).flatMap(([k, found]) => (found as string[]).map((m) => `Measured (${k}): ${m}`)),
     ].join('\n'));
     return;
   }
 
   if (cmd === 'qa' || cmd === 'sheet') {
     const voice = JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest;
-    const doc = withCredits(p.doc);
+    const doc = p.doc;
     const fps = Number(opt('fps', '30'));
     const c = solve(doc, voice, fps);
     const out = join(p.work, cmd);
     mkdirSync(out, {recursive: true});
     const samples = cmd === 'qa'
-      ? sampleFrames(c, fps, Number(opt('per-beat', '3')))
-      : c.scenes.flatMap((s) => s.beats.map((b) => ({frame: Math.floor((b.from + Number(opt('at', '0.85')) * (b.end - b.from)) * fps), at: `${s.id}/${b.id}`})));
+      ? sampleFrames(c, fps, Number(opt('per-line', '3')))
+      : lineWindows(c).map((w) => ({frame: Math.floor((w.from + Number(opt('at', '0.85')) * (w.end - w.from)) * fps), at: w.at}));
+    // `qa` also looks at the frames where every animation target should be on the page
+    const extra = cmd === 'qa' ? targetFrames(c, fps).filter((f) => !samples.some((x) => x.frame === f)).map((f) => ({frame: f, at: `target@${(f / fps).toFixed(2)}s`})) : [];
     const images = new Map<number, Buffer>();
-    const r = await renderBuilt({dist, out, fps, frames: samples.map((x) => x.frame), inspect: cmd === 'qa', concurrency: Number(opt('concurrency', '2')), saveFrames: flag('frames'),
+    const r = await renderBuilt({dist, out, fps, frames: [...samples, ...extra].map((x) => x.frame), inspect: cmd === 'qa', concurrency: Number(opt('concurrency', '2')), saveFrames: flag('frames'),
       encode: false, chrome: opt('chrome'), onFrame: (i, img) => void images.set(i, img)});
     const sheet = resolve(opt('out', join(out, 'sheet.png'))!);
     contactSheet(samples.map((x) => images.get(x.frame)!), sheet, {cols: cmd === 'qa' ? 4 : 3, cellW: cmd === 'qa' ? 480 : 640});
@@ -286,12 +279,12 @@ async function main() {
       return void console.log(`sheet: ${sheet}`);
     }
     const issues = [
-      ...[...staticQa(doc, c), ...alignmentIssues(doc, c), ...componentTextIssues(p)].map((i) => ({...i, frame: -1})),
-      ...samples.flatMap((x) => frameIssues(r.inspections![x.frame] as FrameInspection, x.frame, x.at)),
+      ...[...staticQa(doc, c), ...alignmentIssues(doc, c), ...targetIssues(p, c, fps, r.inspections!)].map((i) => ({...i, frame: -1})),
+      ...[...samples, ...extra].flatMap((x) => frameIssues(r.inspections![x.frame] as FrameInspection, x.frame, x.at)),
     ];
     writeFileSync(join(out, 'qa.json'), JSON.stringify({samples: samples.length, issues}, null, 1));
     report(issues, console.log);
-    if (!flag('json')) console.log(`${issues.length} issue(s) in ${samples.length} sampled frames · sheet: ${sheet}`);
+    if (!flag('json')) console.log(`${issues.length} issue(s) in ${samples.length + extra.length} sampled frames · sheet: ${sheet}`);
     if (issues.length) process.exit(1);
     return;
   }

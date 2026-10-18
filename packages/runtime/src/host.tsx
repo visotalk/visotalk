@@ -1,7 +1,8 @@
 /**
  * Mounts an IR document in one of two hosts:
- *   live   (default)       web player: rAF clock, narration, interactions
- *   driven (?mode=driven&fps=N)  exporter: time only via window.__visotalk.seek(frame), params at defaults
+ *   live   (default)       web player: rAF clock, narration
+ *   driven (?mode=driven&fps=N)  exporter: time only via window.__visotalk.seek(frame)
+ * The document's module supplies the children of its parts; the IR (parsed from the same file) supplies everything else.
  */
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/700.css';
@@ -10,29 +11,27 @@ import '@fontsource/jetbrains-mono/700.css';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
-import {DEFAULT_FPS, solve, sourceFrameOf, themeTokens, withCredits, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {DEFAULT_FPS, solve, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {Clock} from './clock';
 import {Readiness} from './readiness';
-import {RuntimeProvider, type DrawInfo, type Runtime} from './react';
-import {IRProvider, ParamStore} from './ir/context';
-import type {TimedComponent} from './timed';
-import {IRStage} from './ir/Stage';
+import {RuntimeProvider, type Runtime} from './react';
+import {partBodies} from './bodies';
+import {Stage, StageProvider} from './stage';
 import {Player} from './player';
+import {installParentBridge} from './bridge';
 import {inspectFrame, type FrameInspection} from './inspect';
 import {C, themeVars} from './theme';
 
 export interface MountOptions {
   doc: VisoDoc;
   voice: VoiceManifest;
+  /** the document's own module: its default export is `<Doc …>`, the source of the parts' children */
+  module: {default: React.ReactElement};
   /** element to render into (default #root) */
   root?: HTMLElement;
   /** URL prefix for narration and assets (default "") */
   assetBase?: string;
-  /** L2 components by the id of the document's `components` entry (the CLI bundles each module) */
-  components?: Record<string, TimedComponent<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
-
-export type FrameManifestEntry = DrawInfo & {rect: [number, number, number, number]};
 
 export interface DrivenApi {
   doc: string;
@@ -41,8 +40,7 @@ export interface DrivenApi {
   height: number;
   narration: Array<{at: number; duration: number; src: string}>;
   fps: number;
-  mediaNeeds(): Record<string, {src: string; frames: number[]}>;
-  seek(frame: number): Promise<FrameManifestEntry[]>;
+  seek(frame: number): Promise<void>;
   /** Layout measurements of the current frame for QA (see inspect.ts) */
   inspect(): FrameInspection;
 }
@@ -50,73 +48,98 @@ export interface DrivenApi {
 declare global {
   interface Window {
     __visotalk?: DrivenApi;
-    __visotalkPlayer?: {clock: Clock; duration: number; params: ParamStore};
+    __visotalkPlayer?: {clock: Clock; duration: number};
   }
 }
 
-const PREMOUNT = 1;
+/** The ids of every part a document declares, in a scene or in `<Doc>`. */
+const partIds = (doc: VisoDoc): Set<string> => new Set([...(doc.parts ?? []).map((p) => p.id), ...doc.scenes.flatMap((s) => (s.parts ?? []).map((p) => p.id))]);
 
 export function mount(opts: MountOptions) {
   const params = new URLSearchParams(location.search);
   const mode = params.get('mode') === 'driven' ? 'driven' : 'live';
-  const {voice} = opts;
-  const doc = withCredits(opts.doc);
   const assetBase = opts.assetBase ?? '';
-  const presetId = params.get('preset') ?? doc.canvas.presets[0].id;
-  const preset = doc.canvas.presets.find((p) => p.id === presetId) ?? doc.canvas.presets[0];
+  const presetId = params.get('preset') ?? opts.doc.canvas.presets[0].id;
   // events sit on the frame grid of the frame rate the page is asked for (the exporter passes it), else the document's
-  const fps = Number(params.get('fps')) || doc.exports?.fps || DEFAULT_FPS;
-  const compiled = solve(doc, voice, fps);
-  const paramStore = new ParamStore(doc.params ?? {});
-  const assets = Object.fromEntries((doc.assets ?? []).map((a) => [a.id, a]));
+  const fpsOf = (d: VisoDoc) => Number(params.get('fps')) || d.exports?.fps || DEFAULT_FPS;
+  const presetOf = (d: VisoDoc) => d.canvas.presets.find((p) => p.id === presetId) ?? d.canvas.presets[0];
+  const bodies = partBodies(opts.module.default);
 
+  /** Everything the page draws that comes from the document, so a new document can be drawn the same way. */
+  const draw = (doc: VisoDoc, voice: VoiceManifest) => {
+    const preset = presetOf(doc);
+    const fps = fpsOf(doc);
+    const compiled = solve(doc, voice, fps);
+    const assets = Object.fromEntries((doc.assets ?? []).map((a) => [a.id, a]));
+    const theme = themeTokens(doc.theme);
+    const narration = compiled.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
+    const stage = (
+      <StageProvider doc={doc} c={compiled} bodies={bodies} theme={theme} preset={preset} live={mode === 'live'} assetUrl={(id) => assetBase + (assets[id]?.src ?? id)}>
+        <div style={{position: 'relative', width: preset.width, height: preset.height, overflow: 'hidden', background: C.bg}}>
+          <Stage />
+        </div>
+      </StageProvider>
+    );
+    return {doc, preset, fps, compiled, theme, narration, stage};
+  };
+
+  let shown = draw(opts.doc, opts.voice);
+  const {doc, compiled, preset, fps} = shown;
   const runtime: Runtime = {
     clock: new Clock(compiled.duration, mode),
     readiness: new Readiness(),
     width: preset.width,
     height: preset.height,
     pixelRatio: Number(params.get('dpr') ?? 1),
-    media: Object.fromEntries((doc.assets ?? []).filter((a) => a.kind === 'video').map((a) => [a.id, {
-      src: assetBase + (a.proxy ?? a.src), fps: a.analysis?.fps ?? 30, frames: a.analysis?.frames ?? 1, width: a.analysis?.width ?? 1920, height: a.analysis?.height ?? 1080,
-    }])),
-    mediaBase: params.get('media') ?? '/__media',
-    drawn: new Map(),
   };
-  const narration = compiled.scenes.flatMap((s) => s.beats.flatMap((b) => b.lines)).filter((l) => l.audio)
-    .map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
 
-  const stage = (
-    <IRProvider doc={doc} c={compiled} params={paramStore} live={mode === 'live'} preset={preset.id} components={opts.components ?? {}}
-      assetUrl={(id) => assetBase + (assets[id]?.src ?? id)}>
-      <div style={{position: 'relative', width: preset.width, height: preset.height, overflow: 'hidden', background: C.bg}}>
-        <IRStage />
-      </div>
-    </IRProvider>
-  );
-
-  // theme tokens → CSS custom properties (components read var(--vt-*))
-  for (const [k, v] of Object.entries(themeVars(themeTokens(doc.theme)))) document.documentElement.style.setProperty(k, v);
+  // theme tokens → CSS custom properties (parts read var(--vt-*))
+  const applyTheme = (theme: ReturnType<typeof themeTokens>) => {
+    for (const [k, v] of Object.entries(themeVars(theme))) document.documentElement.style.setProperty(k, v);
+  };
+  applyTheme(shown.theme);
   const rootEl = opts.root ?? document.getElementById('root')!;
   const root = createRoot(rootEl);
   document.body.style.margin = '0';
 
   if (mode === 'live') {
-    window.__visotalkPlayer = {clock: runtime.clock, duration: compiled.duration, params: paramStore};
-    const hint = compiled.interactions.some((i) => i.export === 'ignore' || i.export === 'caption')
-      ? 'Values with a dashed underline can be dragged sideways while their part of the explanation is on screen.'
-      : undefined;
-    root.render(
-      <RuntimeProvider runtime={runtime}>
-        <Player clock={runtime.clock} width={preset.width} height={preset.height} narration={narration} assetBase={assetBase} hint={hint}
-          autoplay={params.has('autoplay')} loop={params.has('loop')}>
-          {stage}
-        </Player>
-      </RuntimeProvider>,
-    );
-    return {compiled, runtime, params: paramStore};
+    const render = () =>
+      root.render(
+        <RuntimeProvider runtime={runtime}>
+          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} narration={shown.narration} assetBase={assetBase}
+            autoplay={params.has('autoplay')} loop={params.has('loop')} bare={params.has('bare')}>
+            {shown.stage}
+          </Player>
+        </RuntimeProvider>,
+      );
+    window.__visotalkPlayer = {clock: runtime.clock, duration: compiled.duration};
+    /**
+     * The parent hands over the document as it has it now (a box moved, a line reworded) and the player draws that, at the same time, without a build.
+     * Only what the player already has the code for is taken: the same parts, on the same canvas. Anything else needs a build, and is left alone.
+     */
+    const take = (nextDoc: unknown, nextVoice: unknown) => {
+      try {
+        const next = nextDoc as VisoDoc;
+        const ids = partIds(next);
+        const had = partIds(shown.doc);
+        if (ids.size !== had.size || [...ids].some((id) => !had.has(id))) return;
+        if (presetOf(next).width !== shown.preset.width || presetOf(next).height !== shown.preset.height) return;
+        shown = draw(next, nextVoice as VoiceManifest);
+        applyTheme(shown.theme);
+        runtime.clock.setDuration(shown.compiled.duration);
+        window.__visotalkPlayer = {clock: runtime.clock, duration: shown.compiled.duration};
+        render();
+      } catch {
+        // a document that does not solve is not drawn; the player keeps the one it has
+      }
+    };
+    installParentBridge(runtime.clock, undefined, undefined, take);
+    render();
+    return {compiled, runtime};
   }
 
   // ---------------------------------------------------------------------------------------------- driven
+  const {stage, narration} = shown;
   document.body.style.background = C.bg;
   runtime.readiness.hold(
     Promise.all(['400 16px Inter', '700 16px Inter', '400 16px "JetBrains Mono"', '700 16px "JetBrains Mono"'].map((f) => document.fonts.load(f, 'A–×≈·'))),
@@ -125,7 +148,7 @@ export function mount(opts: MountOptions) {
 
   /**
    * Per-frame paint reset: a layout-tree reattach through `display: flow-root` drops Chrome's
-   * history-dependent paint state without restarting CSS animations.
+   * history-dependent paint state.
    */
   const reset = params.get('reset') ?? 'flow';
   const invalidateAll = () => {
@@ -142,22 +165,14 @@ export function mount(opts: MountOptions) {
     height: preset.height,
     narration,
     fps,
-    mediaNeeds: () => sourceFrameOf(doc, compiled, fps, PREMOUNT, (id) => runtime.media[id]),
     /** The page at frame n, a whole number: its time is `n / fps`, the same expression the solver's events come from */
     async seek(frame) {
       if (!Number.isInteger(frame) || frame < 0) throw new Error(`seek needs a whole frame number, got ${frame}`);
       flushSync(() => runtime.clock.seek(frame / fps));
       invalidateAll();
       await runtime.readiness.settle();
-      const out: FrameManifestEntry[] = [];
-      for (const [el, info] of runtime.drawn) {
-        if (!el.checkVisibility({visibilityProperty: true})) continue;
-        const r = el.getBoundingClientRect();
-        out.push({...info, rect: [r.x, r.y, r.width, r.height]});
-      }
-      return out;
     },
     inspect: () => inspectFrame(rootEl, {width: preset.width, height: preset.height}),
   };
-  return {compiled, runtime, params: paramStore};
+  return {compiled, runtime};
 }

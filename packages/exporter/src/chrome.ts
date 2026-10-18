@@ -1,5 +1,7 @@
 /** chrome-headless-shell: launch with deterministic flags, open a begin-frame-controlled page, drive frames. */
-import {existsSync} from 'node:fs';
+import {existsSync, linkSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import puppeteer, {type Browser, type CDPSession, type Page} from 'puppeteer-core';
 
 /** The chrome-headless-shell build (Chrome for Testing) the goldens were recorded with: another build can paint other pixels */
@@ -65,4 +67,62 @@ export async function openDrivenPage(browser: Browser, url: string, width: numbe
   };
   await frame(); // warm-up: discard the page-load paint
   return {page, cdp, frame};
+}
+
+/** Where the lock lives (`VISOTALK_CHROME_LOCK` moves it, for tests), and how long a run waits for it before it says so and stops */
+const lockPath = () => process.env.VISOTALK_CHROME_LOCK ?? join(tmpdir(), 'visotalk-chrome.lock');
+const lockWaitMs = () => Number(process.env.VISOTALK_CHROME_LOCK_WAIT_MS ?? 45 * 60 * 1000);
+
+/**
+ * One run at a time drives Chrome on a machine: several software-rendered browsers at once exhaust it (a run dies with "Target closed"), and an author's tools,
+ * agents and a render start them freely. The lock is a file holding the owner's pid; a lock whose owner is gone is taken over.
+ */
+export async function withChromeLock<T>(fn: () => Promise<T>): Promise<T> {
+  const CHROME_LOCK = lockPath(), LOCK_WAIT_MS = lockWaitMs();
+  let waited = false;
+  const since = Date.now();
+  for (;;) {
+    // the pid is written before the lock exists (a hard link is atomic), so a crash can never leave a lock with no owner in it
+    const mine = `${CHROME_LOCK}.${process.pid}`;
+    writeFileSync(mine, String(process.pid));
+    try {
+      linkSync(mine, CHROME_LOCK);
+      break;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+    } finally {
+      rmSync(mine, {force: true});
+    }
+    let owner = 0;
+    try {
+      owner = Number(readFileSync(CHROME_LOCK, 'utf8'));
+      if (owner > 0) process.kill(owner, 0);
+      else throw Object.assign(new Error('no owner in the lock'), {code: 'ESRCH'});
+    } catch (err) {
+      // the file is gone, or its owner is (EPERM means the owner is alive): take over
+      if ((err as NodeJS.ErrnoException).code !== 'EPERM') {
+        try {
+          if (owner > 0 && readFileSync(CHROME_LOCK, 'utf8').trim() !== String(owner)) continue; // somebody took it over first
+        } catch {
+          continue; // gone meanwhile
+        }
+        rmSync(CHROME_LOCK, {force: true});
+        continue;
+      }
+    }
+    if (Date.now() - since > LOCK_WAIT_MS) throw new Error(`another visotalk run has held Chrome for more than ${Math.round(LOCK_WAIT_MS / 60000)} minutes${owner ? ` (pid ${owner})` : ''}: stop it, or remove ${CHROME_LOCK} if nothing is running`);
+    if (!waited) console.error(`waiting for another visotalk run to finish with Chrome${owner ? ` (pid ${owner})` : ''}`);
+    waited = true;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  try {
+    return await fn();
+  } finally {
+    // only our own lock: if it was taken over meanwhile, it is somebody else's now
+    try {
+      if (readFileSync(CHROME_LOCK, 'utf8').trim() === String(process.pid)) rmSync(CHROME_LOCK, {force: true});
+    } catch {
+      // already gone
+    }
+  }
 }

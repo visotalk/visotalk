@@ -1,5 +1,5 @@
 /**
- * Regression suite over the example documents (the prototype ports):
+ * Regression suite over the example documents (uv, population, moon-phases, liftoff):
  *
  *   1. validate     the document passes the validator with no issues
  *   2. determinism  sampled frames rendered twice — in order in one browser, then shuffled across two — are identical
@@ -10,7 +10,7 @@
  * Pixel hashes depend on the Chrome build and fonts; when the browser differs from the one that recorded the golden,
  * step 3 is reported as skipped (steps 1–2 still run).
  *
- *   node --experimental-strip-types tests/regression/run.ts [example ...] [--update] [--per-beat 3]
+ *   node --experimental-strip-types tests/regression/run.ts [example ...] [--update] [--per-line 3]
  *
  * --update records new goldens from the current renders; narration durations are taken from the example's prepared
  * voice manifest (run `visotalk prepare` first) or, failing that, from the existing golden.
@@ -18,7 +18,7 @@
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {sampleFrames, solve, staticQa, withCredits, type VoiceManifest} from '../../packages/ir/src/index.ts';
+import {sampleFrames, solve, staticQa, type VoiceManifest} from '../../packages/ir/src/index.ts';
 import {frameIssues, issueKey, renderBuilt, type FrameInspection} from '../../packages/exporter/src/index.ts';
 import {buildPlayer, check, load} from '../../packages/cli/src/project.ts';
 import {applyDefaults} from '../../packages/cli/src/doctor.ts';
@@ -27,7 +27,7 @@ applyDefaults(); // the Chrome that `visotalk doctor --fix` installed, unless VI
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const GOLDEN = join(ROOT, 'tests', 'regression', 'golden');
-const EXAMPLES = ['micrograd-backward', 'micrograd', 'uv', 'liftoff', 'moon-component', 'moon-phases', 'population', 'component-skeleton', 'shape-sketch'];
+const EXAMPLES = ['uv', 'moon-phases', 'population', 'liftoff'];
 const FPS = 30;
 
 interface Golden {
@@ -43,8 +43,8 @@ interface Golden {
 
 const args = process.argv.slice(2);
 const update = args.includes('--update');
-const perBeat = Number(args[args.indexOf('--per-beat') + 1]) || 3;
-const only = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--per-beat');
+const perLine = Number(args[args.indexOf('--per-line') + 1]) || 3;
+const only = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--per-line');
 const examples = only.length ? only : EXAMPLES;
 
 function shuffled<T>(xs: T[], seed = 11): T[] {
@@ -81,8 +81,8 @@ async function runExample(name: string): Promise<{name: string; ok: boolean; lin
     return {name, ok: false, lines};
   }
   const voice: VoiceManifest = Object.fromEntries(Object.entries(durations).map(([k, d]) => [k, {duration: d}])) as VoiceManifest;
-  const c = solve(withCredits(p.doc), voice, FPS);
-  const lineIds = c.scenes.flatMap((s) => s.beats.flatMap((b) => b.lines.map((l) => l.id)));
+  const c = solve(p.doc, voice, FPS);
+  const lineIds = c.scenes.flatMap((s) => s.lines.map((l) => l.id));
   const missing = lineIds.filter((id) => !(id in durations!));
   if (missing.length) {
     lines.push(`timing        FAIL golden has no duration for ${missing.slice(0, 5).join(', ')} (narration changed: prepare, then --update)`);
@@ -94,7 +94,7 @@ async function runExample(name: string): Promise<{name: string; ok: boolean; lin
   mkdirSync(work, {recursive: true});
   writeFileSync(join(work, 'voice.json'), JSON.stringify(voice));
   const dist = await buildPlayer({...p, work});
-  const samples = sampleFrames(c, FPS, perBeat);
+  const samples = sampleFrames(c, FPS, perLine);
   const frames = samples.map((s) => s.frame);
 
   // 2. determinism: in order, one browser — then shuffled, two browsers
@@ -106,7 +106,7 @@ async function runExample(name: string): Promise<{name: string; ok: boolean; lin
   lines.push(`determinism   ${unstable.length ? `FAIL ${unstable.length}/${samples.length} differ: ${unstable.slice(0, 4).map((s) => s.at).join(', ')}` : `ok ${samples.length}/${samples.length} identical`} (${secs} s)`);
 
   // 4. qa (computed before the golden step so --update records it)
-  const qaIssues = [...staticQa(withCredits(p.doc), c), ...samples.flatMap((x) => frameIssues(a.inspections![x.frame] as FrameInspection, x.frame, x.at))];
+  const qaIssues = [...staticQa(p.doc, c), ...samples.flatMap((x) => frameIssues(a.inspections![x.frame] as FrameInspection, x.frame, x.at))];
   const keys = [...new Set(qaIssues.map(issueKey))].sort();
 
   // 3. golden

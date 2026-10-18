@@ -12,7 +12,7 @@ type Listener = () => void;
 
 export class Clock {
   readonly mode: ClockMode;
-  readonly duration: number;
+  duration: number;
   private t = 0;
   private playing = false;
   private rate = 1;
@@ -23,6 +23,14 @@ export class Clock {
   constructor(duration: number, mode: ClockMode) {
     this.duration = duration;
     this.mode = mode;
+  }
+
+  /** The document changed under the clock (the web player was handed a new one): the time stays where it is, inside the new length. */
+  setDuration(duration: number): void {
+    this.duration = duration;
+    if (this.t > duration) this.t = duration;
+    if (this.t >= duration) this.playing = false;
+    this.emit();
   }
 
   subscribe = (fn: Listener): (() => void) => {

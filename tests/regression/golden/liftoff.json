@@ -2,7 +2,7 @@
  "doc": "liftoff",
  "chrome": "HeadlessChrome/157.0.8080.0",
  "fps": 30,
- "frames": 4778,
+ "frames": 4802,
  "voice": {
   "h1": 6.72,
   "h2": 4.3733,
@@ -31,87 +31,87 @@
   {
    "frame": 12,
    "at": "hook@0.4s",
-   "hash": "0557dd7b3da99d9f"
+   "hash": "b97d746ebc779dcf"
   },
   {
-   "frame": 56,
-   "at": "hook/launch@0.25",
-   "hash": "036193da59ae2ebb"
+   "frame": 65,
+   "at": "hook/h1@0.25",
+   "hash": "6c5b34fbd781572f"
   },
   {
-   "frame": 113,
-   "at": "hook/launch@0.50",
-   "hash": "54a7e561d769b531"
+   "frame": 118,
+   "at": "hook/h1@0.50",
+   "hash": "53bdda42f02b0d9f"
   },
   {
-   "frame": 169,
-   "at": "hook/launch@0.75",
-   "hash": "5f1648db6d016833"
+   "frame": 172,
+   "at": "hook/h1@0.75",
+   "hash": "0f22ad202875f89f"
   },
   {
    "frame": 261,
-   "at": "hook/first@0.25",
-   "hash": "aed688844f71e35c"
+   "at": "hook/h2@0.25",
+   "hash": "85ce58e8ee84c3d7"
   },
   {
    "frame": 297,
-   "at": "hook/first@0.50",
-   "hash": "02eafc3b80380dda"
+   "at": "hook/h2@0.50",
+   "hash": "04c2197401f1278b"
   },
   {
    "frame": 333,
-   "at": "hook/first@0.75",
-   "hash": "bde86d4aab85e312"
+   "at": "hook/h2@0.75",
+   "hash": "07bcbd060b053cb4"
   },
   {
    "frame": 422,
-   "at": "hook/title@0.25",
-   "hash": "9f07c8f22162dab8"
+   "at": "hook/h3@0.25",
+   "hash": "9b7cfb1bf7b722d1"
   },
   {
    "frame": 475,
-   "at": "hook/title@0.50",
-   "hash": "9fa1b1eb715278cb"
+   "at": "hook/h3@0.50",
+   "hash": "dd4d00abdf8695c8"
   },
   {
    "frame": 528,
-   "at": "hook/title@0.75",
-   "hash": "77b5a0a840ca533d"
+   "at": "hook/h3@0.75",
+   "hash": "8dc5d24402cb4699"
   },
   {
    "frame": 593,
    "at": "book@0.4s",
-   "hash": "28913ba450ea1db4"
+   "hash": "c71ec88a093775b7"
   },
   {
-   "frame": 666,
-   "at": "book/what@0.25",
-   "hash": "7cea3fc35ce516fc"
+   "frame": 675,
+   "at": "book/b1@0.25",
+   "hash": "d911adb31f979996"
   },
   {
-   "frame": 750,
-   "at": "book/what@0.50",
-   "hash": "f298bcb46ea791c6"
+   "frame": 756,
+   "at": "book/b1@0.50",
+   "hash": "e11d3d0967c11be7"
   },
   {
-   "frame": 834,
-   "at": "book/what@0.75",
-   "hash": "23996854a75766dc"
+   "frame": 837,
+   "at": "book/b1@0.75",
+   "hash": "eba528f2d45440a5"
   },
   {
    "frame": 980,
-   "at": "book/who@0.25",
-   "hash": "8487be246d28e9c5"
+   "at": "book/b2@0.25",
+   "hash": "6e5d85feb48b805d"
   },
   {
    "frame": 1043,
-   "at": "book/who@0.50",
-   "hash": "90cb5defdae19a2f"
+   "at": "book/b2@0.50",
+   "hash": "bc40b28a527b725a"
   },
   {
    "frame": 1106,
-   "at": "book/who@0.75",
-   "hash": "f134f4f1243c009a"
+   "at": "book/b2@0.75",
+   "hash": "2caf51198325202b"
   },
   {
    "frame": 1181,
@@ -119,49 +119,49 @@
    "hash": "28913ba450ea1db4"
   },
   {
-   "frame": 1186,
-   "at": "odds/absurd@0.25",
-   "hash": "5fe1ed195cbdbe9f"
+   "frame": 1195,
+   "at": "odds/o1@0.25",
+   "hash": "78119aa9c1ae66ce"
   },
   {
-   "frame": 1204,
-   "at": "odds/absurd@0.50",
-   "hash": "c2a13f923ffd1e85"
+   "frame": 1210,
+   "at": "odds/o1@0.50",
+   "hash": "5e221856bd03f6f0"
   },
   {
-   "frame": 1222,
-   "at": "odds/absurd@0.75",
-   "hash": "c2a13f923ffd1e85"
+   "frame": 1225,
+   "at": "odds/o1@0.75",
+   "hash": "5e221856bd03f6f0"
   },
   {
    "frame": 1302,
-   "at": "odds/big@0.25",
-   "hash": "9c08ca423a0b20e6"
+   "at": "odds/o2@0.25",
+   "hash": "d6b18dd69aa0a124"
   },
   {
    "frame": 1365,
-   "at": "odds/big@0.50",
-   "hash": "24bbf5dfd84e7961"
+   "at": "odds/o2@0.50",
+   "hash": "8fab6be666518930"
   },
   {
    "frame": 1427,
-   "at": "odds/big@0.75",
-   "hash": "26c77f2734a49478"
+   "at": "odds/o2@0.75",
+   "hash": "7af846e3a94f9fbe"
   },
   {
    "frame": 1549,
-   "at": "odds/small@0.25",
-   "hash": "d5e6bcda28440391"
+   "at": "odds/o3@0.25",
+   "hash": "6f97dde14c41b558"
   },
   {
    "frame": 1607,
-   "at": "odds/small@0.50",
-   "hash": "d5e6bcda28440391"
+   "at": "odds/o3@0.50",
+   "hash": "6f97dde14c41b558"
   },
   {
    "frame": 1667,
-   "at": "odds/small@0.75",
-   "hash": "b58e139f73d3f19e"
+   "at": "odds/o3@0.75",
+   "hash": "2d3b3c1a59c890de"
   },
   {
    "frame": 1738,
@@ -169,238 +169,242 @@
    "hash": "28913ba450ea1db4"
   },
   {
-   "frame": 1799,
-   "at": "island/where@0.25",
-   "hash": "0dedbb936ee9ddc8"
+   "frame": 1802,
+   "at": "island/i1@0.25",
+   "hash": "acca768927c08bb4"
   },
   {
-   "frame": 1872,
-   "at": "island/where@0.50",
-   "hash": "e560afa479ab0ac8"
+   "frame": 1866,
+   "at": "island/i1@0.50",
+   "hash": "9ea8c6d96f929785"
   },
   {
-   "frame": 1945,
-   "at": "island/where@0.75",
-   "hash": "fb0241fd42df3cb7"
+   "frame": 1930,
+   "at": "island/i1@0.75",
+   "hash": "b9e87dd29b7bc0cb"
   },
   {
-   "frame": 2075,
-   "at": "island/life@0.25",
-   "hash": "c978b28afb6d8190"
+   "frame": 2051,
+   "at": "island/i2@0.25",
+   "hash": "604c243fc2a1507b"
   },
   {
-   "frame": 2132,
-   "at": "island/life@0.50",
-   "hash": "69876c8cc19de226"
+   "frame": 2108,
+   "at": "island/i2@0.50",
+   "hash": "1332268ad668a21d"
   },
   {
-   "frame": 2189,
-   "at": "island/life@0.75",
-   "hash": "3f3dc2b96e31db8b"
+   "frame": 2165,
+   "at": "island/i2@0.75",
+   "hash": "01d33c13cdeae84f"
   },
   {
-   "frame": 2258,
+   "frame": 2234,
    "at": "failures@0.4s",
-   "hash": "9e7b73f1562da4dc"
+   "hash": "28913ba450ea1db4"
   },
   {
-   "frame": 2299,
-   "at": "failures/flight1@0.25",
-   "hash": "119408a3bdfc53b2"
+   "frame": 2285,
+   "at": "failures/f1@0.25",
+   "hash": "8a7c1a197ebd7e55"
   },
   {
-   "frame": 2354,
-   "at": "failures/flight1@0.50",
-   "hash": "47a568f4112e41fb"
+   "frame": 2336,
+   "at": "failures/f1@0.50",
+   "hash": "263be9b3f168014c"
   },
   {
-   "frame": 2408,
-   "at": "failures/flight1@0.75",
-   "hash": "8c73749e48ac2f27"
+   "frame": 2387,
+   "at": "failures/f1@0.75",
+   "hash": "2236a3137aaab0dd"
   },
   {
-   "frame": 2550,
-   "at": "failures/flight2@0.25",
-   "hash": "f2b9ec74236b6e69"
+   "frame": 2526,
+   "at": "failures/f2@0.25",
+   "hash": "3c4a82398d5443ed"
   },
   {
-   "frame": 2638,
-   "at": "failures/flight2@0.50",
-   "hash": "1c54bc40655a5ff1"
+   "frame": 2614,
+   "at": "failures/f2@0.50",
+   "hash": "198eea0c8b1a2e73"
   },
   {
-   "frame": 2726,
-   "at": "failures/flight2@0.75",
-   "hash": "b01824c611519af7"
+   "frame": 2702,
+   "at": "failures/f2@0.75",
+   "hash": "79e2df61cc571813"
   },
   {
-   "frame": 2868,
-   "at": "failures/flight3@0.25",
-   "hash": "2082f4edd35f0b30"
+   "frame": 2844,
+   "at": "failures/f3@0.25",
+   "hash": "e2a0a2c270105b1a"
   },
   {
-   "frame": 2921,
-   "at": "failures/flight3@0.50",
-   "hash": "54113d5bfd7b2d67"
+   "frame": 2897,
+   "at": "failures/f3@0.50",
+   "hash": "6cae0250743fdd36"
   },
   {
-   "frame": 2974,
-   "at": "failures/flight3@0.75",
-   "hash": "39027986a2b5caef"
+   "frame": 2950,
+   "at": "failures/f3@0.75",
+   "hash": "1050ce2b5224cf37"
   },
   {
-   "frame": 3051,
-   "at": "failures/tally@0.25",
-   "hash": "2bb7ef72cded5785"
+   "frame": 3027,
+   "at": "failures/f0@0.25",
+   "hash": "b694224b6469e10e"
   },
   {
-   "frame": 3074,
-   "at": "failures/tally@0.50",
-   "hash": "2dac90857b4bcce6"
+   "frame": 3050,
+   "at": "failures/f0@0.50",
+   "hash": "1053457abb145cd1"
   },
   {
-   "frame": 3097,
-   "at": "failures/tally@0.75",
-   "hash": "b2c87674067e307f"
+   "frame": 3073,
+   "at": "failures/f0@0.75",
+   "hash": "58393e004d71925b"
   },
   {
-   "frame": 3133,
+   "frame": 3109,
    "at": "flight4@0.4s",
-   "hash": "03b4dbdd27f77b4b"
+   "hash": "58393e004d71925b"
   },
   {
-   "frame": 3164,
-   "at": "flight4/last@0.25",
-   "hash": "a7d6d1425d2a347f"
+   "frame": 3149,
+   "at": "flight4/g1@0.25",
+   "hash": "90ef70a60182c644"
   },
   {
-   "frame": 3208,
-   "at": "flight4/last@0.50",
-   "hash": "c26791d95c0eb568"
+   "frame": 3190,
+   "at": "flight4/g1@0.50",
+   "hash": "f3721d97e7c98201"
   },
   {
-   "frame": 3252,
-   "at": "flight4/last@0.75",
-   "hash": "2438b164567bca65"
+   "frame": 3231,
+   "at": "flight4/g1@0.75",
+   "hash": "007f88bf28a910c9"
   },
   {
-   "frame": 3335,
-   "at": "flight4/orbit@0.25",
-   "hash": "cb05818bc7958979"
+   "frame": 3315,
+   "at": "flight4/g2@0.25",
+   "hash": "df556c9251453541"
   },
   {
-   "frame": 3376,
-   "at": "flight4/orbit@0.50",
-   "hash": "605ac7a71232b521"
+   "frame": 3358,
+   "at": "flight4/g2@0.50",
+   "hash": "fc26ce023a2a5a2a"
   },
   {
-   "frame": 3416,
-   "at": "flight4/orbit@0.75",
-   "hash": "7b5e184ae88adce1"
+   "frame": 3401,
+   "at": "flight4/g2@0.75",
+   "hash": "0ee9246a1b8e1ce8"
   },
   {
-   "frame": 3500,
-   "at": "flight4/first@0.25",
-   "hash": "c74cf2eb22eb424f"
+   "frame": 3488,
+   "at": "flight4/g3@0.25",
+   "hash": "de5e89cbbc1f2690"
   },
   {
-   "frame": 3545,
-   "at": "flight4/first@0.50",
-   "hash": "d8a8139bdb8f6195"
+   "frame": 3533,
+   "at": "flight4/g3@0.50",
+   "hash": "dff7b001127c1a32"
   },
   {
-   "frame": 3589,
-   "at": "flight4/first@0.75",
-   "hash": "a41062325242bbe1"
+   "frame": 3577,
+   "at": "flight4/g3@0.75",
+   "hash": "48886c456ac8b3df"
   },
   {
-   "frame": 3646,
+   "frame": 3634,
    "at": "after@0.4s",
-   "hash": "ffff94002f3248b4"
+   "hash": "1ad2c5bcc19c86f2"
   },
   {
-   "frame": 3711,
-   "at": "after/contract@0.25",
-   "hash": "3f40c277d0d1d2fd"
+   "frame": 3708,
+   "at": "after/a1@0.25",
+   "hash": "864b9484ed5971c3"
   },
   {
-   "frame": 3788,
-   "at": "after/contract@0.50",
-   "hash": "3d8f8bfa376f36e6"
+   "frame": 3782,
+   "at": "after/a1@0.50",
+   "hash": "917a47010a1e2329"
   },
   {
-   "frame": 3865,
-   "at": "after/contract@0.75",
-   "hash": "b496182faab8b554"
+   "frame": 3856,
+   "at": "after/a1@0.75",
+   "hash": "26057134e8a65f8c"
   },
   {
-   "frame": 4002,
-   "at": "after/path@0.25",
-   "hash": "5f96d7ba324d89dc"
+   "frame": 3990,
+   "at": "after/a2@0.25",
+   "hash": "c9d9c9467f05551f"
   },
   {
-   "frame": 4063,
-   "at": "after/path@0.50",
-   "hash": "ed826fbcc5ce2008"
+   "frame": 4051,
+   "at": "after/a2@0.50",
+   "hash": "64e8547bf4dc0f1e"
   },
   {
-   "frame": 4124,
-   "at": "after/path@0.75",
-   "hash": "411b01a53ef0a6f6"
+   "frame": 4112,
+   "at": "after/a2@0.75",
+   "hash": "d19311471792e7e3"
   },
   {
-   "frame": 4197,
+   "frame": 4185,
    "at": "why@0.4s",
    "hash": "28913ba450ea1db4"
   },
   {
-   "frame": 4247,
-   "at": "why/portrait@0.25",
-   "hash": "b3084ecae52eccb5"
+   "frame": 4244,
+   "at": "why/w1@0.25",
+   "hash": "f04aef600bf73f75"
   },
   {
-   "frame": 4309,
-   "at": "why/portrait@0.50",
-   "hash": "f9e412ede8eb7fb4"
+   "frame": 4303,
+   "at": "why/w1@0.50",
+   "hash": "ca5ec2ba021a9d9f"
   },
   {
-   "frame": 4371,
-   "at": "why/portrait@0.75",
-   "hash": "bd136dfca75727fe"
+   "frame": 4362,
+   "at": "why/w1@0.75",
+   "hash": "7373454bfdfe72b5"
   },
   {
-   "frame": 4455,
-   "at": "why/today@0.25",
-   "hash": "638f1b927bff26dc"
+   "frame": 4449,
+   "at": "why/w2@0.25",
+   "hash": "70c5b86467d48183"
   },
   {
    "frame": 4477,
-   "at": "why/today@0.50",
-   "hash": "8f16a3a92b36dbff"
+   "at": "why/w2@0.50",
+   "hash": "d79fce7de517ae1b"
   },
   {
-   "frame": 4499,
-   "at": "why/today@0.75",
-   "hash": "8f16a3a92b36dbff"
+   "frame": 4505,
+   "at": "why/w2@0.75",
+   "hash": "4d9b9b531194a459"
   },
   {
-   "frame": 4586,
-   "at": "why/credits@0.25",
-   "hash": "1280e3b4a8beed6f"
+   "frame": 4546,
+   "at": "credits@0.4s",
+   "hash": "28913ba450ea1db4"
   },
   {
-   "frame": 4650,
-   "at": "why/credits@0.50",
-   "hash": "52b7434403c40dbb"
+   "frame": 4610,
+   "at": "credits/c1@0.25",
+   "hash": "26f8b1e9cc729800"
   },
   {
-   "frame": 4714,
-   "at": "why/credits@0.75",
-   "hash": "52b7434403c40dbb"
+   "frame": 4674,
+   "at": "credits/c1@0.50",
+   "hash": "35b8bbcedafef169"
+  },
+  {
+   "frame": 4738,
+   "at": "credits/c1@0.75",
+   "hash": "35b8bbcedafef169"
   }
  ],
  "qa": [
-  "visible.brief:lab-pacific@island",
-  "visible.brief:w-bio@why"
+  "visible.brief:bio@why"
  ]
 }

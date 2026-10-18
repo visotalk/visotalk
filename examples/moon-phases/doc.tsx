@@ -1,114 +1,186 @@
-import {Appear, Beat, CountUp, Counter, Disappear, Doc, Line, Scene, Set, Text, Tween} from '@visotalk/jsx';
-import {Phases} from "./components/phases.ts";
-import {Orb} from "./components/orb.ts";
+import {Doc, Scene, Line, Part, Animation, Appear, Disappear, Tween, Set} from '@visotalk/jsx';
+import {useProp} from '@visotalk/runtime';
+import {PhaseDiscs} from './components/moon.tsx';
+import {Days, Earth, Ghosts, Moon, Orbit, PhaseName, Rays, Rim, Shadow, Sightline, Sun, View, Yesterday} from './components/orrery.tsx';
+
+/** The small text parts: a scene's kicker and a note under it. A note's words can be changed by `<Set text>`. */
+const Kicker = ({children}: {children: string}) => (
+  <div style={{fontFamily: 'var(--vt-sans)', fontSize: 32, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--vt-data)'}}>{children}</div>
+);
+const Note = ({color, children}: {color: string; children: string}) => (
+  <div style={{fontFamily: 'var(--vt-sans)', fontSize: 44, fontWeight: 700, textAlign: 'center', color: `var(--vt-${color})`}}>{useProp('text', children)}</div>
+);
 
 /**
- * Why the Moon has phases. One orrery component (Orb) carries the story from a ball in front of a lamp to the Sun, Earth, Moon geometry;
- * the document moves its numeric props on the words that name each part.
+ * Why the Moon has phases. The orrery (components/orrery.tsx) is a set of parts drawn from one geometry: the Sun fixed on the left, the Earth at the centre, the Moon
+ * going round it, and the view of the Moon from Earth beside it. A scene's parts end with it, so each scene declares the layers it shows; they start from their base
+ * props, and a Set at the start of the scene carries over what the story needs (the Moon's angle). The document moves `moon.angle` (0 new moon, 90 first quarter,
+ * 180 full moon, 270 last quarter) on the words that name each phase. Within a scene a lap is written 0 to 360, then a Set puts the angle back to 0, which looks
+ * the same, so every other angle in the file is a phase.
  */
-export default <Doc
-  spec="0.4.0"
-  id="moon-phases"
-  title="Why the Moon has phases"
-  lang="en"
-  theme="visotalk/dark"
-  canvas="16x9"
-  exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned", credits: "none"}}
->
-  <Text id="t-change" text="A month of Moons" style="kicker"/>
-  <Text id="t-lit" text="Half is always lit" style="kicker"/>
-  <Text id="t-orbit" text="The view from Earth" style="kicker"/>
-  <Text id="t-cycle" text="One lap" style="kicker"/>
-  <Text id="t-side" text="Not what you might think" style="kicker"/>
-  <Text id="t-geo" text="Just geometry" style="kicker"/>
-
-  <Phases id="ph" shown={0} whole={0}/>
-  <Text id="n-same" text="Same Moon, different light" style="caption" look={{size: 44, color: "data"}}/>
-
-  <Orb id="orb" sun={0} ball={0} focus={1} rim={0} earth={0} orbit={0} rays={0} tagSun={0} tagMoon={0} tagEarth={0} tagPos={0} tagView={0}
-    view={0} angle={0} align={0} glow={0.6} ghosts={0} gOne={0} gAngle={0} face={0} shadow={0} sight={0}/>
-  <Text id="n-lit" text="Always half lit" style="caption" look={{size: 44, color: "warn"}}/>
-  <Text id="tag" text="New moon" style="caption" look={{size: 48, color: "data", weight: 700}}/>
-  <Counter id="days" value={29.5} format="0.0" unit="days" style="data" scale={0.55}/>
-  <Text id="n-late" text="Rises later each night" style="caption" look={{size: 44, color: "warn"}}/>
-  <Text id="n-side" text="Same face, every night" style="caption" look={{size: 44, color: "warn"}}/>
-  <Text id="n-ecl" text="Lunar eclipse" style="caption" look={{size: 48, color: "bad", weight: 700}}/>
-
-  <Scene id="change" pattern="stage" slots={{title: "t-change", main: "ph"}}>
-    <Beat id="b1" hold={0.3}>
-      <Appear on="t-change" at="start"/>
-      <Line id="m1">Look up on different nights and the Moon seems to change shape: a <Tween id="s1" on="ph" shown={1} dur={0.7}>sliver</Tween>, a <Tween on="ph" shown={2} dur={0.7}>half</Tween>, a <Tween on="ph" shown={3} dur={0.7}>full disc</Tween>.</Line>
-    </Beat>
-    <Beat id="b2" slots={{note: "n-same"}} hold={1}>
-      <Line id="m2">But the Moon <Tween on="ph" whole={1} dur={1.4}>does not change shape</Tween>. It <Appear on="n-same">only looks</Appear> like it does.</Line>
-    </Beat>
+export default <Doc id="moon-phases" title="Why the Moon has phases" lang="en" theme="visotalk/dark" canvas="16x9"
+  exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
+  <Scene id="change">
+    <Line id="m1" hold={0.3}>Look up on different nights and the Moon seems to change shape: a sliver, a half, a full disc.</Line>
+    <Line id="m2" hold={1}>But the Moon does not change shape. It only looks like it does.</Line>
+    <Part id="t-change" x={96} y={44} w={1000} h={56}><Kicker>A month of Moons</Kicker></Part>
+    <Part id="phases"><PhaseDiscs /></Part>
+    <Part id="n-same" x={360} y={104} w={1200} h={70}><Note color="data">Same Moon, different light</Note></Part>
+    <Animation>
+      <Appear on={["t-change", "phases"]} at="start" />
+      <Appear on="sliver" line="m1" word="sliver" />
+      <Appear on="half" line="m1" word="half" />
+      <Appear on="full-disc" line="m1" word="full disc" />
+      <Tween on="phases" whole={1} line="m2" word="does not change shape" dur={1.4} />
+      <Appear on="n-same" line="m2" word="only looks" />
+    </Animation>
   </Scene>
 
-  <Scene id="lit" pattern="stage" slots={{title: "t-lit", main: "orb"}}>
-    <Beat id="b3">
-      <Appear on="t-lit" at="start"/>
-      <Line id="m3">Think of a <Tween on="orb" ball={1} dur={0.8}>ball</Tween> held up in front of a <Tween on="orb" sun={1} rays={1} dur={1.2}>lamp</Tween>: <Tween on="orb" rim={1} dur={1.2}>one half</Tween> is always bright.</Line>
-    </Beat>
-    <Beat id="b4" slots={{note: "n-lit"}} hold={1}>
-      <Line id="m4">Half of the <Tween on="orb" tagMoon={1} dur={0.5}>Moon</Tween> is <Appear on="n-lit">always lit</Appear> by the <Tween on="orb" tagSun={1} dur={0.5}>Sun</Tween>.</Line>
-    </Beat>
+  <Scene id="lit">
+    <Line id="m3">Think of a ball held up in front of a lamp: one half is always bright.</Line>
+    <Line id="m4" hold={1}>Half of the Moon is always lit by the Sun.</Line>
+    <Part id="t-lit" x={96} y={44} w={1000} h={56}><Kicker>Half is always lit</Kicker></Part>
+    <Part id="rays"><Rays /></Part>
+    <Part id="sun"><Sun /></Part>
+    <Part id="moon"><Moon /></Part>
+    <Part id="rim"><Rim /></Part>
+    <Part id="n-lit" x={360} y={104} w={1200} h={70}><Note color="warn">Always half lit</Note></Part>
+    <Animation>
+      <Appear on="t-lit" at="start" />
+      <Set on="moon" focus={1} at="start" />
+      <Appear on="moon" line="m3" word="ball" dur={0.8} />
+      <Appear on={["sun", "rays"]} line="m3" word="lamp" dur={1.2} />
+      <Appear on="rim" line="m3" word="one half" dur={0.8} />
+      <Appear on="moon-tag" line="m4" word="Moon" dur={0.5} />
+      <Appear on="n-lit" line="m4" word="always lit" />
+      <Appear on="sun-tag" line="m4" word="Sun" dur={0.5} />
+    </Animation>
   </Scene>
 
-  <Scene id="orbit" pattern="stage" slots={{title: "t-orbit", main: "orb"}}>
-    <Beat id="b5" hold={1}>
-      <Tween on="orb" rim={0} line="m5" word="circles" dur={0.5}/>
-      <Line id="m5">As the Moon <Tween on="orb" orbit={1} earth={1} dur={1.2}>circles</Tween> the <Tween on="orb" focus={0} tagEarth={1} dur={1.4}>Earth</Tween>, we see that <Tween on="orb" view={1} dur={0.8}>lit half</Tween> from <Tween on="orb" angle={360} dur={3.5} easing="easeInOut">different angles</Tween>.</Line>
-    </Beat>
-    <Beat id="b6" slots={{note: "tag"}} hold={0.5}>
-      <Line id="m6">At <Appear on="tag">new moon</Appear>, the Moon sits <Tween on="orb" align={1} dur={1.2}>between the Earth and the Sun</Tween>, so its lit side <Tween on="orb" glow={1} dur={0.8}>faces away</Tween> from us.</Line>
-    </Beat>
-    <Beat id="b7" hold={0.5}>
-      <Tween on="orb" align={0} line="m7" word="week" dur={0.4}/>
-      <Line id="m7">A <Tween on="orb" angle={450} dur={2} easing="easeInOut">week later</Tween>, at <Set on="tag" text="First quarter">first quarter</Set>, we see <Tween on="orb" sight={1} dur={0.6}>exactly half</Tween> of the lit side.</Line>
-    </Beat>
-    <Beat id="b8" hold={0.5}>
-      <Line id="m8">At <Set on="tag" text="Full moon">full moon</Set>, the Earth is <Tween on="orb" angle={540} dur={2.2} easing="easeInOut">between</Tween> the Sun and the Moon, so we <Tween on="orb" align={1} dur={1}>see the whole</Tween> lit face.</Line>
-    </Beat>
-    <Beat id="b9" hold={0.5}>
-      <Tween on="orb" align={0} line="m9" word="In" dur={0.4}/>
-      <Set on="orb" sight={0} at="start"/>
-      <Set on="tag" text="Same light" at="start"/>
-      <Line id="m9">In <Tween on="orb" ghosts={1} dur={1.4}>every phase</Tween> the Moon is lit in just the same way. Only our <Tween on="orb" sight={1} dur={0.8}>viewpoint</Tween> changes.</Line>
-    </Beat>
-    <Beat id="b10" hold={1.5}>
-      <Tween on="orb" ghosts={0} line="m10" word="Then" dur={0.6}/>
-      <Line id="m10">Then the <Tween on="orb" angle={630} dur={1.8} easing="easeInOut">light shrinks</Tween> again, through <Set on="tag" text="Last quarter">last quarter</Set>, <Tween id="back" on="orb" angle={720} dur={1.2} easing="easeInOut">back to</Tween> <Set on="tag" text="New moon">new</Set>.</Line>
-    </Beat>
+  <Scene id="orbit">
+    <Line id="m5" hold={1}>As the Moon circles the Earth, we see that lit half from different angles.</Line>
+    <Line id="m6" hold={0.5}>At new moon, the Moon sits between the Earth and the Sun, so its lit side faces away from us.</Line>
+    <Line id="m7" hold={0.5}>A week later, at first quarter, we see exactly half of the lit side.</Line>
+    <Line id="m8" hold={0.5}>At full moon, the Earth is between the Sun and the Moon, so we see the whole lit face.</Line>
+    <Line id="m9" hold={0.5}>In every phase the Moon is lit in just the same way. Only our viewpoint changes.</Line>
+    <Line id="m10" hold={1.5}>Then the light shrinks again, through last quarter, back to new.</Line>
+    <Part id="t-orbit" x={96} y={44} w={1000} h={56}><Kicker>The view from Earth</Kicker></Part>
+    <Part id="orbit"><Orbit /></Part>
+    <Part id="sun"><Sun /></Part>
+    <Part id="earth"><Earth /></Part>
+    <Part id="sightline"><Sightline /></Part>
+    <Part id="ghosts"><Ghosts /></Part>
+    <Part id="moon"><Moon /></Part>
+    <Part id="view"><View /></Part>
+    <Part id="phase-name"><PhaseName /></Part>
+    <Animation>
+      <Appear on={["t-orbit", "sun", "moon", "ghosts"]} at="start" />
+      <Set on="orbit" draw={0} at="start" />
+      <Appear on="orbit" line="m5" word="circles" dur={0.3} />
+      <Tween on="orbit" draw={1} line="m5" word="circles" dur={1.2} />
+      <Appear on="earth" line="m5" word="Earth" />
+      <Appear on={["view", "sightline"]} line="m5" word="lit half" dur={0.8} />
+      <Tween id="lap1" on="moon" angle={360} line="m5" word="lit half" dur={3.5} />
+      <Set on="moon" angle={0} after="lap1" />
+
+      <Appear on="phase-name" line="m6" word="new moon" />
+      <Tween on="sightline" emphasis={1} line="m6" word="between the Earth and the Sun" dur={1.2} />
+      <Tween on="moon" glow={1} line="m6" word="faces away" dur={0.8} />
+
+      <Tween on="sightline" emphasis={0} line="m7" word="week" dur={0.4} />
+      <Tween on="moon" angle={90} line="m7" word="week later" dur={2} />
+      <Set on="phase-name" text="First quarter" line="m7" word="first quarter" />
+      <Tween on="sightline" emphasis={1} line="m7" word="exactly half" dur={0.6} />
+
+      <Set on="phase-name" text="Full moon" line="m8" word="full moon" />
+      <Tween on="sightline" emphasis={0} line="m8" word="full moon" dur={0.4} />
+      <Tween on="moon" angle={180} line="m8" word="between" dur={2.2} />
+      <Tween on="sightline" emphasis={1} line="m8" word="see the whole" dur={1} />
+
+      <Set on="sightline" emphasis={0} line="m9" />
+      <Set on="phase-name" text="Same light" line="m9" />
+      <Appear on={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m9" word="every phase" stagger={0.12} dur={0.5} />
+      <Tween on="sightline" emphasis={1} line="m9" word="viewpoint" dur={0.8} />
+
+      <Disappear on={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m10" word="Then" dur={0.6} />
+      <Tween on="moon" angle={270} line="m10" word="light shrinks" dur={1.8} />
+      <Set on="phase-name" text="Last quarter" line="m10" word="last quarter" />
+      <Tween on="moon" angle={360} line="m10" word="back to" dur={1.2} />
+      <Set on="phase-name" text="New moon" line="m10" word="new" />
+    </Animation>
   </Scene>
 
-  <Scene id="cycle" pattern="stage" slots={{title: "t-cycle", main: "orb"}}>
-    <Beat id="b11" slots={{note: "days"}} hold={1.5}>
-      <Tween on="orb" angle={1080} line="m11" word="One full cycle" dur={5} easing="easeInOut"/>
-      <Appear on="days" line="m11" word="twenty nine"/>
-      <Line id="m11">One full cycle takes about <CountUp on="days" dur={2.2}>twenty nine and a half</CountUp> days.</Line>
-    </Beat>
-    <Beat id="b12" slots={{note: "n-late"}} hold={2}>
-      <Set on="orb" gAngle={1080} at="start"/>
-      <Line id="m12">In between, the Moon <Tween on="orb" gOne={1} angle={1095} dur={1.4}>moves a little</Tween> each night, so it <Appear on="n-late">rises later</Appear> each night.</Line>
-    </Beat>
+  <Scene id="cycle">
+    <Line id="m11" text="One full cycle takes about 29.5 days." hold={1.5}>One full cycle takes about twenty nine and a half days.</Line>
+    <Line id="m12" hold={2}>In between, the Moon moves a little each night, so it rises later each night.</Line>
+    <Part id="t-cycle" x={96} y={44} w={1000} h={56}><Kicker>One lap</Kicker></Part>
+    <Part id="orbit"><Orbit /></Part>
+    <Part id="sun"><Sun /></Part>
+    <Part id="earth"><Earth /></Part>
+    <Part id="sightline"><Sightline /></Part>
+    <Part id="yesterday"><Yesterday /></Part>
+    <Part id="moon"><Moon /></Part>
+    <Part id="view"><View /></Part>
+    <Part id="days"><Days /></Part>
+    <Part id="n-late" x={360} y={104} w={1200} h={70}><Note color="warn">Rises later each night</Note></Part>
+    <Animation>
+      <Appear on={["t-cycle", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
+      <Tween id="lap2" on="moon" angle={360} line="m11" word="One full cycle" dur={4} />
+      <Set on="moon" angle={0} after="lap2" />
+      <Appear on="days" line="m11" word="twenty nine" dur={0.3} />
+      <Tween on="days" value={29.5} line="m11" word="twenty nine" dur={2.2} />
+
+      {/* one night is 360 / 29.5 = 12.2 degrees of the orbit */}
+      <Appear on="yesterday" line="m12" word="moves a little" />
+      <Tween on="moon" angle={12.2} line="m12" word="moves a little" dur={1.4} />
+      <Appear on="n-late" line="m12" word="rises later" />
+    </Animation>
   </Scene>
 
-  <Scene id="side" pattern="stage" slots={{title: "t-side", main: "orb"}}>
-    <Beat id="b13" slots={{note: "n-side"}} hold={0.5}>
-      <Tween on="orb" gOne={0} line="m13" word="And" dur={0.4}/>
-      <Tween on="orb" angle={1455} line="m13" word="always see" dur={4} easing="easeInOut"/>
-      <Line id="m13">And we always see the <Tween on="orb" face={1} dur={0.6}>same side</Tween> of the Moon, <Appear on="n-side">whatever the phase</Appear>.</Line>
-    </Beat>
-    <Beat id="b14" slots={{note: "n-ecl"}} hold={1.5}>
-      <Appear on="n-ecl" line="m14" word="lunar eclipse"/>
-      <Line id="m14">It is not the <Tween on="orb" shadow={1} dur={1.4}>Earth's shadow</Tween>. That only happens in a <Tween on="orb" angle={1620} dur={2.4} easing="easeInOut">lunar eclipse</Tween>, which is <Set on="n-ecl" text="Lunar eclipse: rare">much rarer</Set>.</Line>
-    </Beat>
+  <Scene id="side">
+    <Line id="m13" hold={0.5}>And we always see the same side of the Moon, whatever the phase.</Line>
+    <Line id="m14" hold={1.5}>It is not the Earth's shadow. That only happens in a lunar eclipse, which is much rarer.</Line>
+    <Part id="t-side" x={96} y={44} w={1000} h={56}><Kicker>Not what you might think</Kicker></Part>
+    <Part id="orbit"><Orbit /></Part>
+    <Part id="shadow"><Shadow /></Part>
+    <Part id="sun"><Sun /></Part>
+    <Part id="earth"><Earth /></Part>
+    <Part id="sightline"><Sightline /></Part>
+    <Part id="moon"><Moon /></Part>
+    <Part id="view"><View /></Part>
+    <Part id="n-side" x={360} y={104} w={1200} h={70}><Note color="warn">Same face, every night</Note></Part>
+    <Part id="n-ecl" x={360} y={104} w={1200} h={70}><Note color="bad">Lunar eclipse</Note></Part>
+    <Animation>
+      <Appear on={["t-side", "orbit", "shadow", "sun", "earth", "sightline", "moon", "view"]} at="start" />
+      <Tween id="lap3" on="moon" angle={360} line="m13" word="always see" dur={4} />
+      <Set on="moon" angle={0} after="lap3" />
+      <Tween on="moon" face={1} line="m13" word="same side" dur={0.6} />
+      <Appear on="n-side" line="m13" word="whatever the phase" />
+
+      <Disappear id="side-off" on="n-side" line="m14" word="happens" dur={0.4} />
+      <Tween on="shadow" reach={1} line="m14" word="shadow" dur={1.4} />
+      <Appear on="n-ecl" after="side-off" />
+      <Tween on="moon" angle={180} line="m14" word="lunar eclipse" dur={2.4} />
+      <Set on="n-ecl" text="Lunar eclipse: rare" line="m14" word="much rarer" />
+    </Animation>
   </Scene>
 
-  <Scene id="geometry" pattern="stage" slots={{title: "t-geo", main: "orb"}}>
-    <Beat id="b15" hold={2.5}>
-      <Tween on="orb" shadow={0} line="m15" word="So" dur={0.8}/>
-      <Line id="m15">So the phases are just geometry: <Tween on="orb" tagPos={1} angle={1665} dur={1.4}>where the Moon is</Tween>, and <Tween on="orb" tagView={1} sight={1} dur={1}>where we are looking from</Tween>.</Line>
-    </Beat>
+  <Scene id="geometry">
+    <Line id="m15" hold={2.5}>So the phases are just geometry: where the Moon is, and where we are looking from.</Line>
+    <Part id="t-geo" x={96} y={44} w={1000} h={56}><Kicker>Just geometry</Kicker></Part>
+    <Part id="orbit"><Orbit /></Part>
+    <Part id="sun"><Sun /></Part>
+    <Part id="earth"><Earth /></Part>
+    <Part id="sightline"><Sightline /></Part>
+    <Part id="moon"><Moon /></Part>
+    <Part id="view"><View /></Part>
+    <Animation>
+      <Appear on={["t-geo", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
+      <Set on="moon" angle={180} at="start" />
+      <Tween on="moon" angle={225} line="m15" word="where the Moon is" dur={1.4} />
+      <Set on="moon" text="Position" line="m15" word="where the Moon is" />
+      <Tween on="sightline" emphasis={1} line="m15" word="where we are looking from" dur={1} />
+      <Set on="earth" text="Viewpoint" line="m15" word="where we are looking from" />
+    </Animation>
   </Scene>
 </Doc>;

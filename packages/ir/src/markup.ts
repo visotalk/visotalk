@@ -1,25 +1,24 @@
 /**
- * Markup: how an IR document is written. It is a static subset of TSX (tags, attributes, literals), read and never run, so it
- * is data, not code: `parseMarkup` compiles it to the engine's internal `VisoDoc`, and `printMarkup` prints a document back.
- * An object is referred to by its id as a string; the file may be wrapped as `export default <Doc …>…</Doc>;`.
+ * Markup: how an IR document is written. The file is a TSX module; the engine reads its skeleton, a static subset (tags, attributes, literals), and never
+ * runs it, so lines, parts and animations are data: `parseMarkup` compiles them to the engine's internal `VisoDoc`. What a part draws is React, found
+ * by its closing tag and kept as source; the code before `export default` is the module's own and is not read.
  *
- *   export default <Doc id="demo" title="Demo" lang="en">
- *     <Chip id="tag" text="ETag: v7a1c" style="mono"/>
- *     <Scene id="s" pattern="title" slots={{title: "title", aside: "tag"}}>
- *       <Beat id="b1">
- *         <Line id="l1">The server attaches a tag called an <Stamp on="tag">ETag</Stamp>.</Line>
- *       </Beat>
+ *   import {Doc, Scene, Line, Part, Animation, Appear, Tween} from '@visotalk/jsx';
+ *
+ *   export default <Doc id="demo" title="Demo" lang="en" canvas="16x9">
+ *     <Scene id="intro">
+ *       <Line id="l1">One billion people, counted.</Line>
+ *       <Part id="bar"><div {...useTarget("fill")}/></Part>
+ *       <Animation>
+ *         <Appear on="bar" line="l1" word="billion"/>
+ *         <Tween on="fill" w={1100} line="l1" word="counted" dur={1.4}/>
+ *       </Animation>
  *     </Scene>
  *   </Doc>;
- *
- * An element inside a `<Line>` is an action anchored on the words it wraps: it compiles to a mark in the line's `say` and an
- * action on that mark. Everything else maps field by field: an object tag is an object (its `id` is the key), `<Node>`,
- * `<Edge>`, `<Field>`, `<Item>`, `<Step>` and `<Run>` are the elements of the array property of their parent.
  */
-import type {VisoDoc} from './spec.ts';
+import {normalizeWord, occurrenceAt} from './timeline.ts';
+import type {Action, ActionAnchor, Asset, Line, MotionKind, Part, Scene, VisoDoc} from './spec.ts';
 import {SPEC_VERSION} from './spec.ts';
-import {parseSay, wordSpans} from './marks.ts';
-import {sayOf} from './normalize.ts';
 
 export class MarkupError extends Error {
   line: number;
@@ -41,38 +40,45 @@ interface Attr {
   name: string;
   value: Val;
   loc: Loc;
+  /** where the attribute is written: its name through the end of its value */
+  start: number;
+  end: number;
 }
-interface El {
+export interface El {
   tag: string;
   attrs: Attr[];
   kids: Array<El | Txt>;
   loc: Loc;
+  /** where the element is written: `<`, the end of the opening tag, the start of the closing tag (`openEnd` when it has none), and past it */
+  start: number;
+  openEnd: number;
+  closeStart: number;
+  end: number;
+  /** `<Part>` only: the source of its children */
+  body?: string;
 }
 interface Txt {
   text: string;
   loc: Loc;
 }
 
-const OBJECTS: Record<string, string> = {
-  Text: 'text', Shape: 'shape', Connector: 'connector', Image: 'image', Video: 'video', Card: 'card', Chip: 'chip', Counter: 'counter',
-  Math: 'math', Code: 'code', Terminal: 'terminal', Graph: 'graph', Chart: 'chart', Timeline: 'timeline', Steps: 'steps', Credits: 'credits',
-};
-const MOTIONS: Record<string, string> = {
-  Appear: 'appear', Disappear: 'disappear', Morph: 'morph', Set: 'set', Tween: 'tween', Highlight: 'highlight', Typewriter: 'typewriter', CountUp: 'countUp',
-  DrawIn: 'drawIn', Flow: 'flow', KenBurns: 'kenBurns', Stamp: 'stamp', Wipe: 'wipe', Crossfade: 'crossfade',
-};
-const ARRAYS: Record<string, string> = {Node: 'nodes', Edge: 'edges', Field: 'fields', Item: 'items', Step: 'steps', Run: 'runs'};
+const MOTIONS: Record<string, MotionKind> = {Appear: 'appear', Disappear: 'disappear', Tween: 'tween', Set: 'set'};
 const PRESETS: Record<string, [number, number]> = {'16x9': [1920, 1080], '9x16': [1080, 1920], '1x1': [1080, 1080]};
 const ENTITIES: Record<string, string> = {lt: '<', gt: '>', amp: '&', quot: '"', apos: "'"};
 
-const decode = (s: string) => s.replace(/&(#\d+|[a-z]+);/g, (m, e: string) => (e[0] === '#' ? String.fromCharCode(Number(e.slice(1))) : ENTITIES[e] ?? m));
-const encodeText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\{/g, '&#123;').replace(/\}/g, '&#125;');
+/** A table lookup that ignores the prototype: `<constructor>` and `&constructor;` are not in the table */
+const own = <T>(table: Record<string, T>, key: string): T | undefined => (Object.hasOwn(table, key) ? table[key] : undefined);
+
+const decode = (s: string) => s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) => {
+  if (e[0] !== '#') return own(ENTITIES, e) ?? m;
+  const cp = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1));
+  return cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+});
 
 // ------------------------------------------------------------------------------------------------ parser
 
 class Parser {
   i = 0;
-  imports: Array<{name: string; module: string; loc: Loc}> = [];
   starts: number[] = [0];
   s: string;
   constructor(src: string) {
@@ -115,28 +121,19 @@ class Parser {
     if (!this.s.startsWith(c, this.i)) this.fail(`expected "${c}" but found ${this.s[this.i] === undefined ? 'the end of the file' : `"${this.s[this.i]}"`}`);
     this.i += c.length;
   }
+  /** Source before `export default <Doc`: the module's own code (imports, helpers, data), which the document never reads */
+  prelude = '';
   document(): El {
-    this.skip();
-    // the import of the tags is for the editor and `tsc`; the engine knows the tags and reads nothing else
-    // and a component is an import of its module, which registers it: `import {Moon} from './components/moon.ts';` then `<Moon id="view" phase={0}/>`
-    while (this.s.startsWith('import ', this.i)) {
-      const rest = this.s.slice(this.i);
-      const tags = /^import\s*\{[^}]*\}\s*from\s*(['"])@visotalk\/jsx\1\s*;?/.exec(rest);
-      const comp = /^import\s*\{\s*([A-Z][A-Za-z0-9]*)\s*\}\s*from\s*(['"])(\.{1,2}\/[^'"]+)\2\s*;?/.exec(rest);
-      const m = tags ?? comp;
-      if (!m) this.fail(`a document imports its tags from '@visotalk/jsx' and a component from its module: "import { Moon } from './components/moon.ts';"; nothing else`);
-      if (comp && !tags) this.imports.push({name: comp[1], module: comp[3], loc: this.loc()});
-      this.i += m[0].length;
-      this.skip();
-    }
-    if (this.s.startsWith('export default', this.i)) { this.i += 'export default'.length; this.skip(); }
-    const paren = this.s[this.i] === '(';
-    if (paren) { this.i++; this.skip(); }
+    const m = /^[ \t]*export[ \t]+default[ \t\n]*(\(?)[ \t\n]*(?=<Doc[\s>/])/m.exec(this.s);
+    if (!m) this.fail('a document is `export default <Doc …>…</Doc>;`: no `export default <Doc` found');
+    this.prelude = this.s.slice(0, m.index);
+    this.i = m.index + m[0].length;
+    const paren = m[1] === '(';
     const el = this.element();
     this.skip();
     if (paren) { this.expect(')'); this.skip(); }
     if (this.s[this.i] === ';') { this.i++; this.skip(); }
-    if (this.i < this.s.length) this.fail('only one root element (<Doc>) is allowed');
+    if (this.i < this.s.length) this.fail('only one root element (<Doc>) is allowed; module code goes before `export default`');
     return el;
   }
   element(): El {
@@ -145,11 +142,11 @@ class Parser {
     const name = /^[A-Za-z][A-Za-z0-9]*/.exec(this.s.slice(this.i))?.[0];
     if (!name) this.fail('expected an element name after "<"');
     this.i += name.length;
-    const el: El = {tag: name, attrs: [], kids: [], loc: this.loc(at)};
+    const el: El = {tag: name, attrs: [], kids: [], loc: this.loc(at), start: at, openEnd: at, closeStart: at, end: at};
     for (;;) {
       this.skip();
-      if (this.s.startsWith('/>', this.i)) { this.i += 2; return el; }
-      if (this.s[this.i] === '>') { this.i++; break; }
+      if (this.s.startsWith('/>', this.i)) { this.i += 2; el.openEnd = el.closeStart = el.end = this.i; return el; }
+      if (this.s[this.i] === '>') { this.i++; el.openEnd = this.i; break; }
       const a = this.i;
       const an = /^[A-Za-z_$][A-Za-z0-9_$:-]*/.exec(this.s.slice(this.i))?.[0];
       if (!an) this.fail(`unexpected "${this.s[this.i] ?? 'end of file'}" in the <${name}> tag: expected an attribute, ">" or "/>"`);
@@ -157,7 +154,17 @@ class Parser {
       let value: Val = true;
       if (this.s[this.i] === '=') { this.i++; value = this.attrValue(); }
       if (el.attrs.some((x) => x.name === an)) this.fail(`attribute "${an}" is given twice on <${name}>`, a);
-      el.attrs.push({name: an, value, loc: this.loc(a)});
+      el.attrs.push({name: an, value, loc: this.loc(a), start: a, end: this.i});
+    }
+    if (name === 'Part') {
+      // the body is React: the engine does not read it, it finds the end of it (a part holds no other Part)
+      const close = this.s.indexOf('</Part>', this.i);
+      if (close < 0) this.fail(`<Part> opened at ${el.loc.line}:${el.loc.col} is never closed with </Part>`, this.i);
+      el.body = this.s.slice(this.i, close);
+      el.closeStart = close;
+      this.i = close + '</Part>'.length;
+      el.end = this.i;
+      return el;
     }
     for (;;) {
       const t = this.i;
@@ -178,6 +185,8 @@ class Parser {
         this.skip();
         this.expect('>');
         if (cn !== name) this.fail(`</${cn}> does not match <${name}> opened at ${el.loc.line}:${el.loc.col}`, c);
+        el.closeStart = c;
+        el.end = this.i;
         return el;
       }
       el.kids.push(this.element());
@@ -214,7 +223,15 @@ class Parser {
       if (ch === q) { this.i++; return decode(out); }
       if (ch === '\\') {
         const n = this.s[this.i + 1];
-        out += n === 'n' ? '\n' : n === 't' ? '\t' : n;
+        const hex = /^(?:u\{([0-9a-fA-F]+)\}|u([0-9a-fA-F]{4})|x([0-9a-fA-F]{2}))/.exec(this.s.slice(this.i + 1, this.i + 12));
+        if (hex) {
+          const cp = parseInt(hex[1] ?? hex[2] ?? hex[3], 16);
+          if (cp > 0x10ffff) this.fail(`\\${hex[0]} is not a character`, this.i);
+          out += String.fromCodePoint(cp);
+          this.i += 1 + hex[0].length;
+          continue;
+        }
+        out += n === 'n' ? '\n' : n === 't' ? '\t' : n === 'r' ? '\r' : n;
         this.i += 2;
         continue;
       }
@@ -276,61 +293,28 @@ class Parser {
   }
 }
 
+
 // ------------------------------------------------------------------------------------------------ compiler
 
 const META_EXTRA = ['description', 'sources', 'generator', 'created', 'updated'];
-const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing'];
-const SCENE_ATTRS = ['id', 'title', 'pattern', 'slots', 'options'];
-const BEAT_ATTRS = ['id', 'hold', 'duration', 'pattern', 'slots', 'options', 'interactions'];
-const LINE_ATTRS = ['id', 'text', 'say', 'live', 'i18n'];
-const STATE_ATTRS = ['target', 'visible', 'emphasis', 'props'];
-const ACTION_ATTRS = ['on', 'id', 'dur', 'stagger', 'easing', 'params', 'during', 'at', 'after', 'line', 'word', 'mark', 'edge', 'offset'];
+const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing', 'exports'];
+const SCENE_ATTRS = ['id', 'title', 'duration'];
+const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
+const LINE_ATTRS = ['id', 'text', 'hold', 'i18n'];
+/** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
+const ACTION_ATTRS = ['on', 'id', 'dur', 'stagger', 'easing', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 
 type Obj = {[k: string]: unknown};
 
-const flat = (kids: Array<El | Txt>): string => kids.map((k) => ('text' in k ? k.text : flat(k.kids))).join('');
-
-/** Marks sit between whitespace-separated words: a boundary inside "file." moves to the start (opening) or end (closing) of that word */
-function snapMarks(marked: string): string {
-  const MARK = /\{([#/@])([a-z][a-z0-9_-]*)\}/g;
-  let clean = '';
-  const marks: Array<{sigil: string; name: string; at: number; n: number}> = [];
-  let last = 0;
-  for (const m of marked.matchAll(MARK)) {
-    clean += marked.slice(last, m.index);
-    marks.push({sigil: m[1], name: m[2], at: clean.length, n: marks.length});
-    last = m.index! + m[0].length;
-  }
-  clean += marked.slice(last);
-  if (!marks.length) return marked;
-  const spans = wordSpans(clean);
-  for (const k of marks) {
-    const w = spans.find((x) => k.at > x.start && k.at < x.end);
-    if (w) k.at = k.sigil === '/' ? w.end : w.start;
-  }
-  marks.sort((a, b) => a.at - b.at || (a.sigil === '/' ? 0 : 1) - (b.sigil === '/' ? 0 : 1) || a.n - b.n);
-  let out = '';
-  let pos = 0;
-  for (const k of marks) {
-    out += clean.slice(pos, k.at) + `{${k.sigil}${k.name}}`;
-    pos = k.at;
-  }
-  return out + clean.slice(pos);
-}
-
-const kebab = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-
 class Compiler {
   locs = new Map<string, Loc>();
+  /** the same paths as `locs`, with the element they point at */
+  spans = new Map<string, El>();
+  /** per `scene/line`: the phrase and occurrence each of its marks wraps */
+  marks = new Map<string, Map<string, {word: string; nth: number}>>();
   root: El;
-  /** component tags: the imported name → its registration */
-  components = new Map<string, {id: string; module: string; export: string; contract: string}>();
-  constructor(root: El, imports: Array<{name: string; module: string; loc: Loc}>) {
+  constructor(root: El) {
     this.root = root;
-    for (const i of imports) {
-      if (OBJECTS[i.name] || MOTIONS[i.name] || ARRAYS[i.name] || ['Doc', 'Scene', 'Beat', 'Line', 'State', 'Canvas', 'Preset', 'Asset'].includes(i.name)) this.fail(`"${i.name}" is a tag of the document; give the component another name`, i.loc);
-      this.components.set(i.name, {id: kebab(i.name), module: i.module, export: i.name, contract: 'visotalk/timed@1'});
-    }
   }
 
   fail(msg: string, loc: Loc): never {
@@ -344,226 +328,222 @@ class Compiler {
     }
     return o;
   }
-  noText(el: El) {
-    for (const k of el.kids) if ('text' in k && k.text.trim()) this.fail(`text is only allowed inside <Line>; found "${k.text.trim().slice(0, 30)}" in <${el.tag}>`, k.loc);
+  /** Seconds, pixels and counts are numbers: `hold="1"` is a string, which `>= 0` accepts and the solver then concatenates */
+  numbers(el: El, o: Obj, keys: string[]) {
+    for (const k of keys) {
+      const v = o[k];
+      if (v !== undefined && !(typeof v === 'number' && Number.isFinite(v))) this.fail(`${k} of <${el.tag}> is a number: write ${k}={…}, not ${k}="…"`, el.attrs.find((x) => x.name === k)?.loc ?? el.loc);
+    }
   }
-  elements(el: El): El[] {
-    this.noText(el);
+  elements(el: El, textOk = false): El[] {
+    if (!textOk) for (const k of el.kids) if ('text' in k && k.text.trim()) this.fail(`text is only allowed inside <Line>; found "${k.text.trim().slice(0, 30)}" in <${el.tag}>`, k.loc);
     return el.kids.filter((k): k is El => 'tag' in k);
   }
-
-  /** An object element, or an element of an array property: attributes as fields, child elements as arrays */
   asObject(el: El): Obj {
     const o: Obj = {};
     for (const a of el.attrs) o[a.name] = a.value;
-    for (const k of this.elements(el)) {
-      const prop = ARRAYS[k.tag];
-      if (!prop) this.fail(`<${k.tag}> cannot be inside <${el.tag}>; an object can hold ${Object.keys(ARRAYS).map((t) => `<${t}>`).join(', ')}`, k.loc);
-      ((o[prop] ??= []) as Obj[]).push(this.asObject(k));
-    }
+    this.elements(el);
     return o;
-  }
-  object(el: El, doc: Obj) {
-    const props = this.asObject(el);
-    const id = props.id;
-    if (typeof id !== 'string') this.fail(`<${el.tag}> needs an id, e.g. <${el.tag} id="name" …>`, el.loc);
-    delete props.id;
-    const objects = doc.objects as Obj;
-    if (id in objects) this.fail(`object id "${id}" is declared twice`, el.loc);
-    const comp = this.components.get(el.tag);
-    if (comp) {
-      // a component tag: its attributes are the component's props, except the three every object has
-      const {label, style, ...rest} = props;
-      objects[id] = {type: 'component', component: comp.id, ...(label !== undefined && {label}), ...(style !== undefined && {style}), props: rest};
-    } else objects[id] = {type: OBJECTS[el.tag], ...props};
-    this.locs.set(`/objects/${id}`, el.loc);
   }
 
   compile(): VisoDoc {
     const root = this.root;
     if (root.tag !== 'Doc') this.fail(`the root element must be <Doc>, not <${root.tag}>`, root.loc);
-    const a = this.attrs(root, [...DOC_ATTRS, 'exports', 'params', 'flow', 'overrides']);
+    const a = this.attrs(root, DOC_ATTRS);
     for (const k of ['id', 'title', 'lang']) if (typeof a[k] !== 'string') this.fail(`<Doc> needs ${k}="…" (id, title and lang)`, root.loc);
     const doc: Obj = {spec: a.spec ?? SPEC_VERSION, meta: {id: a.id, title: a.title, lang: a.lang, ...Object.fromEntries(META_EXTRA.filter((k) => a[k] !== undefined).map((k) => [k, a[k]]))}};
     let presets: Array<{id: string; width: number; height: number}> | undefined;
     if (a.canvas !== undefined) {
       presets = String(a.canvas).split(',').map((s) => s.trim()).map((id) => {
-        const p = PRESETS[id];
+        const p = own(PRESETS, id);
         if (!p) this.fail(`canvas "${id}" is not one of ${Object.keys(PRESETS).join(', ')}; or write <Canvas><Preset id width height/></Canvas>`, root.loc);
         return {id, width: p[0], height: p[1]};
       });
     }
-    const scenes: Obj[] = [];
-    const assets: Obj[] = [];
-    doc.objects = {};
+    const scenes: Scene[] = [];
+    const assets: Asset[] = [];
+    const parts: Part[] = [];
     for (const k of this.elements(root)) {
-      if (k.tag === 'Canvas') presets = this.elements(k).map((p) => this.attrs(p, ['id', 'width', 'height']) as {id: string; width: number; height: number});
-      else if (k.tag === 'Asset') assets.push(this.asObject(k));
-      else if (k.tag === 'Scene') scenes.push(this.scene(k, doc));
-      else if (OBJECTS[k.tag] || this.components.has(k.tag)) this.object(k, doc);
-      else this.fail(`<${k.tag}> cannot be inside <Doc>; use <Canvas>, <Asset>, <Scene> or an object (${Object.keys(OBJECTS).map((t) => `<${t}>`).join(' ')})`, k.loc);
+      if (k.tag === 'Canvas') {
+        presets = this.elements(k).map((p) => {
+          const o = this.attrs(p, ['id', 'width', 'height']);
+          this.numbers(p, o, ['width', 'height']);
+          return o as {id: string; width: number; height: number};
+        });
+      }
+      else if (k.tag === 'Asset') assets.push(this.asObject(k) as unknown as Asset);
+      else if (k.tag === 'Part') parts.push(this.part(k, 'doc'));
+      else if (k.tag === 'Scene') scenes.push(this.scene(k));
+      else this.fail(`<${k.tag}> cannot be inside <Doc>; use <Canvas>, <Asset>, <Part> (on screen in every scene) or <Scene>`, k.loc);
     }
     doc.canvas = {presets: presets ?? [{id: '16x9', width: 1920, height: 1080}]};
+    const attrLoc = (name: string) => root.attrs.find((x) => x.name === name)?.loc ?? root.loc;
+    if (a.tokens !== undefined && a.theme === undefined) this.fail('tokens override a theme: add theme="…" (e.g. theme="visotalk/dark")', attrLoc('tokens'));
+    for (const k of ['speed', 'lexicon']) if (a[k] !== undefined && a.voice === undefined) this.fail(`${k} belongs to the voice: add voice="…"`, attrLoc(k));
     if (a.theme !== undefined) doc.theme = {id: a.theme, ...(a.tokens !== undefined && {tokens: a.tokens})};
     if (a.voice !== undefined) doc.voice = {voice: a.voice, ...(a.speed !== undefined && {speed: a.speed}), ...(a.lexicon !== undefined && {lexicon: a.lexicon})};
     if (a.pacing !== undefined) doc.pacing = a.pacing;
     if (assets.length) doc.assets = assets;
-    if (this.components.size) doc.components = [...this.components.values()];
-    for (const k of ['params', 'flow', 'overrides', 'exports']) if (a[k] !== undefined) doc[k] = a[k];
+    if (parts.length) doc.parts = parts;
     doc.scenes = scenes;
-    const order = ['spec', 'meta', 'canvas', 'theme', 'voice', 'pacing', 'assets', 'components', 'params', 'objects', 'scenes', 'flow', 'overrides', 'exports'];
+    if (a.exports !== undefined) doc.exports = a.exports;
+    const order = ['spec', 'meta', 'canvas', 'theme', 'voice', 'pacing', 'assets', 'parts', 'scenes', 'exports'];
     const out: Obj = {};
     for (const k of order) if (doc[k] !== undefined) out[k] = doc[k];
     return out as unknown as VisoDoc;
   }
 
-  pattern(a: Obj, el: El, scene: boolean): Obj | undefined {
-    if (a.pattern !== undefined && typeof a.pattern !== 'string') this.fail(`pattern is the name of a pattern, a string: pattern="dag"; the slots go in slots={{…}}, and a beat that only patches the pattern has no pattern attribute`, el.loc);
-    if (a.pattern === undefined && a.slots === undefined && a.options === undefined) return undefined;
-    if (a.pattern === undefined && scene) this.fail(`<Scene> with slots needs pattern="…" (title, board, dag, compare, steps, timeline, grid, codeOutput, photoStory, split, full)`, el.loc);
-    return {...(a.pattern !== undefined && {kind: a.pattern}), ...(a.slots !== undefined && {slots: a.slots}), ...(a.options !== undefined && {options: a.options})};
+  part(el: El, scene: string): Part {
+    const a = this.attrs(el, PART_ATTRS);
+    if (typeof a.id !== 'string') this.fail('<Part> needs id="…"', el.loc);
+    this.locs.set(scene === 'doc' ? `/parts/${a.id}` : `/scenes/${scene}/parts/${a.id}`, el.loc);
+    this.spans.set(scene === 'doc' ? `/parts/${a.id}` : `/scenes/${scene}/parts/${a.id}`, el);
+    this.numbers(el, a, ['x', 'y', 'w', 'h', 'z']);
+    const {id, ...box} = a;
+    return {id, ...box, ...(el.body !== undefined && el.body.trim() && {body: el.body.trim()})} as Part;
   }
 
-  scene(el: El, doc: Obj): Obj {
+  scene(el: El): Scene {
     const a = this.attrs(el, SCENE_ATTRS);
     if (typeof a.id !== 'string') this.fail('<Scene> needs id="…"', el.loc);
-    this.locs.set(`/scenes/${a.id}`, el.loc);
-    const scene: Obj = {id: a.id, ...(a.title !== undefined && {title: a.title})};
-    const pat = this.pattern(a, el, true);
-    if (pat) scene.pattern = pat;
-    const beats: Obj[] = [];
+    this.numbers(el, a, ['duration']);
+    const id = a.id;
+    this.locs.set(`/scenes/${id}`, el.loc);
+    this.spans.set(`/scenes/${id}`, el);
+    const lines: Line[] = [];
+    const parts: Part[] = [];
+    const animations: Action[] = [];
+    const actionLocs = new Map<Action, Loc>();
     for (const k of this.elements(el)) {
-      if (k.tag === 'Beat') beats.push(this.beat(k, a.id, doc));
-      else if (OBJECTS[k.tag] || this.components.has(k.tag)) this.object(k, doc);
-      else this.fail(`<${k.tag}> cannot be inside <Scene>; use <Beat>, or declare an object (it is shared by the whole document)`, k.loc);
+      if (k.tag === 'Line') lines.push(this.line(k, id));
+      else if (k.tag === 'Part') parts.push(this.part(k, id));
+      else if (k.tag === 'Animation') {
+        this.attrs(k, []);
+        for (const m of this.elements(k)) {
+          if (!own(MOTIONS, m.tag)) this.fail(`<${m.tag}> cannot be inside <Animation>; use ${Object.keys(MOTIONS).map((t) => `<${t}>`).join(', ')}`, m.loc);
+          const action = this.action(m);
+          // the validator addresses an action by its id when it has one, else by its place
+          this.locs.set(`/scenes/${id}/animations/${animations.length}`, m.loc);
+          this.spans.set(`/scenes/${id}/animations/${animations.length}`, m);
+          if (action.id) {
+            this.locs.set(`/scenes/${id}/animations/${action.id}`, m.loc);
+            this.spans.set(`/scenes/${id}/animations/${action.id}`, m);
+          }
+          animations.push(action);
+          actionLocs.set(action, m.loc);
+        }
+      } else this.fail(`<${k.tag}> cannot be inside <Scene>; use <Line>, <Part> or <Animation>`, k.loc);
     }
-    scene.beats = beats;
-    return scene;
+    // mark="name" is the phrase and occurrence the line's <Mark> wraps
+    for (const action of animations) {
+      const at = action.at as {line?: string; mark?: string; word?: string; nth?: number};
+      if (at.mark === undefined) continue;
+      const found = this.marks.get(`${id}/${at.line}`)?.get(at.mark);
+      if (!found) {
+        const known = [...(this.marks.get(`${id}/${at.line}`)?.keys() ?? [])];
+        this.fail(`line "${at.line}" has no <Mark id="${at.mark}">${known.length ? ` (it has: ${known.join(', ')})` : ': wrap the phrase in the line with <Mark id="…">'}`, actionLocs.get(action)!);
+      }
+      delete at.mark;
+      at.word = found.word;
+      if (found.nth > 1) at.nth = found.nth;
+    }
+    return {id, ...(a.title !== undefined && {title: a.title as string}), lines, ...(a.duration !== undefined && {duration: a.duration as number}), parts, animations};
   }
 
-  beat(el: El, sceneId: unknown, doc: Obj): Obj {
-    const a = this.attrs(el, BEAT_ATTRS);
-    if (typeof a.id !== 'string') this.fail('<Beat> needs id="…"', el.loc);
-    const base = `/scenes/${sceneId}/beats/${a.id}`;
-    this.locs.set(base, el.loc);
-    const beat: Obj = {id: a.id};
-    for (const k of ['duration', 'hold']) if (a[k] !== undefined) beat[k] = a[k];
-    const pat = this.pattern(a, el, false);
-    if (pat) beat.pattern = pat;
-    const lines: Obj[] = [];
-    const state: Obj = {};
-    const actions: Obj[] = [];
-    for (const k of this.elements(el)) {
-      if (k.tag === 'Line') lines.push(this.line(k, base, actions));
-      else if (k.tag === 'State') {
-        const s = this.attrs(k, STATE_ATTRS);
-        if (s.target === undefined) this.fail('<State> needs target={object} (or "object#part")', k.loc);
-        const {target, ...props} = s;
-        for (const t of [target].flat() as string[]) { state[t] = props; this.locs.set(`${base}/state/${t}`, k.loc); }
-      } else if (MOTIONS[k.tag]) {
-        this.locs.set(`${base}/actions/${actions.length}`, k.loc);
-        actions.push(this.action(k, undefined, base));
-      } else if (OBJECTS[k.tag]) this.object(k, doc);
-      else this.fail(`<${k.tag}> cannot be inside <Beat>; use <Line>, <State>, or a motion (${Object.keys(MOTIONS).map((t) => `<${t}>`).join(' ')})`, k.loc);
-    }
-    if (lines.length) beat.lines = lines;
-    if (Object.keys(state).length) beat.state = state;
-    if (actions.length) beat.actions = actions;
-    if (a.interactions !== undefined) beat.interactions = a.interactions;
-    return beat;
-  }
-
-  /** Text and inline actions → the caption, the spoken text with marks, and one action per inline element */
-  line(el: El, base: string, actions: Obj[]): Obj {
+  line(el: El, scene: string): Line {
     const a = this.attrs(el, LINE_ATTRS);
     if (typeof a.id !== 'string') this.fail('<Line> needs id="…"', el.loc);
-    const lineBase = `${base}/lines/${a.id}`;
-    this.locs.set(lineBase, el.loc);
-    let count = 0;
-    let marked = '';
-    let plain = '';
-    const walk = (kids: Array<El | Txt>) => {
-      for (const k of kids) {
-        if ('text' in k) { marked += k.text; plain += k.text; continue; }
-        if (!MOTIONS[k.tag]) this.fail(`<${k.tag}> cannot be inside <Line>; only text and motions (${Object.keys(MOTIONS).map((t) => `<${t}>`).join(' ')}) wrapped around the words that trigger them`, k.loc);
-        const act = this.action(k, String(a.id), lineBase);
-        const at = act.at as Obj;
-        const name = `m${++count}`;
-        at.mark = name;
-        const range = act.during === true || at.edge !== undefined || /\S\s+\S/.test(flat(k.kids).trim());
-        marked += range ? `{#${name}}` : `{@${name}}`;
-        this.locs.set(`${base}/actions/${actions.length}`, k.loc);
-        actions.push(act);
-        walk(k.kids);
-        if (range) marked += `{/${name}}`;
+    this.numbers(el, a, ['hold']);
+    this.locs.set(`/scenes/${scene}/lines/${a.id}`, el.loc);
+    this.spans.set(`/scenes/${scene}/lines/${a.id}`, el);
+    let spoken = '';
+    const marked: Array<{id: string; from: number; to: number; loc: Loc}> = [];
+    for (const k of el.kids) {
+      if (!('tag' in k)) {
+        spoken += k.text;
+        continue;
       }
-    };
-    walk(el.kids);
-    const squash = (s: string) => s.replace(/\s+/g, ' ').trim();
-    if (/\{@m\d+\}$/.test(squash(marked))) this.fail(`<Line id="${a.id}"> ends in a motion with nothing after it to anchor on; wrap the words it should fire on: <Appear on="x">words</Appear>`, el.loc);
-    marked = snapMarks(squash(marked));
-    plain = squash(plain);
-    const line: Obj = {id: a.id};
-    if (a.say !== undefined && (count || plain)) this.fail('<Line say="…"> takes its text from the attribute: leave the element empty (use <Line id text say/>)', el.loc);
-    if (a.say !== undefined) {
-      line.text = a.text ?? parseSay(String(a.say)).say;
-      line.say = a.say;
-    } else {
-      const text = a.text !== undefined ? String(a.text) : plain;
-      if (!text) this.fail(`<Line id="${a.id}"> has no text`, el.loc);
-      line.text = text;
-      if (count || (a.text !== undefined && a.text !== plain && plain)) line.say = marked;
+      if (k.tag !== 'Mark') this.fail(`<${k.tag}> cannot be inside <Line>: a line holds the words spoken, and what happens on them is written in <Animation>; only <Mark id="…"> may wrap a phrase to hang an action on`, k.loc);
+      const m = this.attrs(k, ['id']);
+      if (typeof m.id !== 'string') this.fail('<Mark> needs id="…": the name an action uses (mark="…")', k.loc);
+      if (marked.some((x) => x.id === m.id)) this.fail(`<Mark id="${m.id}"> twice in line "${a.id}"`, k.loc);
+      let inner = '';
+      for (const j of k.kids) {
+        if ('tag' in j) this.fail('<Mark> holds the words only', j.loc);
+        inner += j.text;
+      }
+      marked.push({id: m.id, from: spoken.length, to: spoken.length + inner.length, loc: k.loc});
+      spoken += inner;
     }
-    for (const k of ['live', 'i18n']) if (a[k] !== undefined) line[k] = a[k];
-    return line;
+    const squash = (s: string) => s.replace(/\s+/g, ' ');
+    const say = squash(spoken).trim();
+    if (!say) this.fail(`<Line id="${a.id}"> holds no words: write what is spoken inside the tag`, el.loc);
+    // a mark is the phrase it wraps and which occurrence of it that is: the same word and nth an author could have written
+    const byId = new Map<string, {word: string; nth: number}>();
+    for (const m of marked) {
+      const word = squash(spoken.slice(m.from, m.to)).trim();
+      const from = squash(spoken.slice(0, m.from + spoken.slice(m.from, m.to).search(/\S|$/))).trimStart().length;
+      if (!normalizeWord(word)) this.fail(`<Mark id="${m.id}"> holds no words: wrap the words an action hangs on`, m.loc);
+      const nth = occurrenceAt(say, word, from);
+      if (nth === undefined) this.fail(`<Mark id="${m.id}"> must wrap whole words: "${word}" starts or ends inside a word`, m.loc);
+      byId.set(m.id, {word, nth});
+    }
+    this.marks.set(`${scene}/${a.id}`, byId);
+    const text = (a.text as string | undefined) ?? say;
+    return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number}), ...(a.i18n !== undefined && {i18n: a.i18n as Line['i18n']})};
   }
 
-  action(el: El, lineId: string | undefined, where: string): Obj {
-    // <Set> and <Tween> take the props they change as attributes: <Tween on="view" phase={0.5}>; a prop named like an attribute of the action goes in params={{props: {…}}}
-    const takesProps = el.tag === 'Set' || el.tag === 'Tween';
-    const own = takesProps ? el.attrs.filter((x) => ACTION_ATTRS.includes(x.name)) : el.attrs;
-    const props = takesProps ? Object.fromEntries(el.attrs.filter((x) => !ACTION_ATTRS.includes(x.name)).map((x) => [x.name, x.value])) : {};
-    const a = this.attrs({...el, attrs: own}, ACTION_ATTRS);
-    const hint = (k: string) => (takesProps ? `; if ${'`'}${k}${'`'} is a prop of the component, write it as params={{props: {${k}: …}}}` : '');
-    if (a.on === undefined) this.fail(`<${el.tag}> needs on={object} (the thing that moves); e.g. <${el.tag} on={tag}>…</${el.tag}>`, el.loc);
-    const act: Obj = {target: a.on, motion: MOTIONS[el.tag]};
-    let at: Obj;
-    if (lineId !== undefined) {
-      if (a.at !== undefined || a.after !== undefined || a.line !== undefined || a.word !== undefined || a.mark !== undefined) this.fail(`<${el.tag}> inside a <Line> is anchored on the words it wraps: drop at, after, line, word and mark${hint(['mark', 'word', 'line', 'after', 'at'].find((k) => a[k] !== undefined) ?? 'mark')}`, el.loc);
-      at = {line: lineId};
-    } else if (a.after !== undefined) {
-      if (typeof a.after !== 'string') this.fail(`after="…" is the id of another action, a string`, el.loc);
-      if (a.at !== undefined || a.line !== undefined || a.word !== undefined || a.mark !== undefined) this.fail(`<${el.tag}> has one position: after="id", or at, or line with word or mark`, el.loc);
-      at = {after: a.after};
-    } else if (typeof a.at === 'string') {
-      if (a.at !== 'start' && a.at !== 'end') this.fail(`at="${a.at}" is not "start" or "end" (the beat's start or end); to anchor on words, wrap them in a motion inside <Line>`, el.loc);
-      if (a.line !== undefined || a.word !== undefined || a.mark !== undefined) this.fail(`at="${a.at}" is the beat's own position, so line, word and mark beside it would be ignored${hint(['mark', 'word', 'line'].find((k) => a[k] !== undefined) ?? 'mark')}`, el.loc);
-      at = {beat: a.at};
-    } else if (a.at !== undefined) at = a.at as Obj;
-    else if (a.line !== undefined) {
-      at = {line: a.line};
-      if (a.word !== undefined) at.word = a.word;
-      if (a.mark !== undefined) at.mark = a.mark;
-    } else this.fail(`<${el.tag}> needs a position: wrap words inside <Line>, or give at="start" / at="end" (the beat's), or line="…" and word="…"`, el.loc);
-    if (a.edge !== undefined && a.edge !== 'start' && a.edge !== 'end') this.fail(`edge="…" is "start" or "end" (which end of the words the action fires on)${hint('edge')}`, el.loc);
-    if (a.edge !== undefined) at.edge = a.edge;
-    if (a.offset !== undefined) at.offset = a.offset;
-    act.at = at;
-    for (const k of ['dur', 'stagger', 'easing', 'during', 'id']) if (a[k] !== undefined) act[k] = a[k];
-    const params = {...(a.params as Obj | undefined)};
-    if (Object.keys(props).length) params.props = {...(params.props as Obj | undefined), ...props};
-    if (Object.keys(params).length) act.params = params;
-    void where;
-    return act;
+  action(el: El): Action {
+    const motion = own(MOTIONS, el.tag)!;
+    const takesProps = motion === 'set' || motion === 'tween';
+    const a: Obj = {};
+    const props: Record<string, number | string | boolean> = {};
+    for (const at of el.attrs) {
+      if (ACTION_ATTRS.includes(at.name)) a[at.name] = at.value;
+      else if (takesProps) {
+        const v = at.value;
+        if (typeof v !== 'number' && !(motion === 'set' && (typeof v === 'string' || typeof v === 'boolean'))) this.fail(`${at.name} of <${el.tag}> is ${motion === 'tween' ? 'a number' : 'a number, a string or true/false'}`, at.loc);
+        props[at.name] = v;
+      } else this.fail(`<${el.tag}> has no attribute "${at.name}"; it takes: ${ACTION_ATTRS.join(', ')}`, at.loc);
+    }
+    this.elements(el);
+    this.numbers(el, a, ['dur', 'stagger', 'offset', 'nth', ...(typeof a.at === 'string' ? [] : ['at'])]);
+    if (a.on === undefined || !(typeof a.on === 'string' || (Array.isArray(a.on) && a.on.every((x) => typeof x === 'string')))) this.fail(`<${el.tag}> needs on="id" (a part, or an element a part registers), or on={["id", "id"]}`, el.loc);
+    const anchors = (['line', 'after', 'at'] as const).filter((k) => a[k] !== undefined);
+    if (anchors.length !== 1) this.fail(`<${el.tag}> needs exactly one of line (with word), after, or at: when does it start?`, el.loc);
+    if (a.word !== undefined && a.line === undefined) this.fail('word needs line="…": the line whose words it names', el.loc);
+    if ((a.nth !== undefined) && a.word === undefined) this.fail('nth needs word="…"', el.loc);
+    if (a.mark !== undefined && a.line === undefined) this.fail('mark needs line="…": the line that holds the <Mark>', el.loc);
+    if (a.mark !== undefined && (a.word !== undefined || a.nth !== undefined)) this.fail('mark names the phrase: it replaces word and nth', el.loc);
+    let at: ActionAnchor;
+    if (a.after !== undefined) at = {after: a.after as string, ...(a.edge !== undefined && {edge: a.edge as 'start' | 'end'}), ...(a.offset !== undefined && {offset: a.offset as number})};
+    else if (a.line !== undefined) at = {line: a.line as string, ...(a.mark !== undefined && {mark: a.mark}), ...(a.word !== undefined && {word: a.word as string}), ...(a.nth !== undefined && {nth: a.nth as number}), ...(a.edge !== undefined && {edge: a.edge as 'start' | 'end'}), ...(a.offset !== undefined && {offset: a.offset as number})};
+    else if (typeof a.at === 'number') at = {at: a.at + ((a.offset as number | undefined) ?? 0)};
+    else if (a.at === 'start' || a.at === 'end') at = {scene: a.at, ...(a.offset !== undefined && {offset: a.offset as number})};
+    else this.fail('at is seconds from the start of the scene, "start" or "end"', el.loc);
+    return {
+      ...(a.id !== undefined && {id: a.id as string}), motion, on: a.on as string | string[], at,
+      ...(a.dur !== undefined && {dur: a.dur as number}), ...(a.stagger !== undefined && {stagger: a.stagger as number}), ...(a.easing !== undefined && {easing: a.easing as Action['easing']}),
+      ...(takesProps && Object.keys(props).length && {props}),
+    };
   }
 }
 
-export function parseMarkup(src: string): {doc: VisoDoc; locs: Map<string, Loc>} {
+export interface Parsed {
+  doc: VisoDoc;
+  locs: Map<string, Loc>;
+  /** Where each scene, line, part and animation is written, by the same paths as `locs` */
+  spans: Map<string, El>;
+  /** The module's own code before `export default`: imports, helpers, data. Parts can use it, the engine does not read it. */
+  prelude: string;
+}
+
+export function parseMarkup(src: string): Parsed {
   const parser = new Parser(src);
   const root = parser.document();
-  const c = new Compiler(root, parser.imports);
+  const c = new Compiler(root);
   const doc = c.compile();
-  return {doc, locs: c.locs};
+  return {doc, locs: c.locs, spans: c.spans, prelude: parser.prelude};
 }
 
 /** The source position of the nearest part of the document an issue's path points into */
@@ -573,190 +553,4 @@ export function locate(locs: Map<string, Loc>, path: string): Loc | undefined {
     if (l) return l;
   }
   return undefined;
-}
-
-// ------------------------------------------------------------------------------------------------ printer
-
-function lit(v: unknown, ind = ''): string {
-  if (v === null || typeof v === 'number' || typeof v === 'boolean') return String(v);
-  if (typeof v === 'string') return JSON.stringify(v);
-  const one = Array.isArray(v) ? `[${v.map((x) => lit(x, ind)).join(', ')}]` : `{${Object.entries(v as Obj).map(([k, x]) => `${/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k)}: ${lit(x, ind)}`).join(', ')}}`;
-  if (one.length + ind.length <= 100) return one;
-  const inner = ind + '  ';
-  if (Array.isArray(v)) return `[\n${v.map((x) => inner + lit(x, inner)).join(',\n')}\n${ind}]`;
-  return `{\n${Object.entries(v as Obj).map(([k, x]) => `${inner}${/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(k) ? k : JSON.stringify(k)}: ${lit(x, inner)}`).join(',\n')}\n${ind}}`;
-}
-function attr(name: string, v: unknown, ind: string): string {
-  if (v === true) return name;
-  // JSX reads an attribute's own string without escapes: a quote, a backslash or a newline puts the value in {…}
-  if (typeof v === 'string' && !/["\\\n]/.test(v)) return `${name}="${v.replace(/&/g, '&amp;')}"`;
-  return `${name}={${lit(v, ind)}}`;
-}
-/** The tags a print wrote, for its import line */
-let used = new Set<string>();
-function open(tag: string, attrs: Array<[string, unknown]>, ind: string, close: string): string {
-  used.add(tag);
-  const parts = attrs.filter(([, v]) => v !== undefined).map(([n, v]) => attr(n, v, ind + '  '));
-  const one = `<${tag}${parts.length ? ' ' + parts.join(' ') : ''}${close}`;
-  if (one.length + ind.length <= 120 && !one.includes('\n')) return one;
-  return `<${tag}\n${parts.map((p) => `${ind}  ${p}`).join('\n')}\n${ind}${close}`;
-}
-
-const TAG_OF = Object.fromEntries(Object.entries(OBJECTS).map(([t, k]) => [k, t]));
-const MOTION_TAG = Object.fromEntries(Object.entries(MOTIONS).map(([t, k]) => [k, t]));
-const ARRAY_TAG = Object.fromEntries(Object.entries(ARRAYS).map(([t, k]) => [k, t]));
-
-function printItem(tag: string, o: Obj, ind: string, parentType: string): string {
-  const {id, ...rest} = o;
-  const arrays = Object.entries(rest).filter(([k, v]) => ARRAY_TAG[k] && Array.isArray(v) && v.every((x) => typeof x === 'object' && x !== null && !Array.isArray(x)) && !(parentType === 'chart'));
-  const attrs: Array<[string, unknown]> = [...(id !== undefined ? [['id', id] as [string, unknown]] : []), ...Object.entries(rest).filter(([k]) => !arrays.some(([a]) => a === k))];
-  if (!arrays.length) return ind + open(tag, attrs, ind, '/>');
-  const kids = arrays.flatMap(([k, v]) => (v as Obj[]).map((x) => printItem(ARRAY_TAG[k], x, ind + '  ', tag.toLowerCase())));
-  return `${ind}${open(tag, attrs, ind, '>')}\n${kids.join('\n')}\n${ind}</${tag}>`;
-}
-
-function printAction(a: Obj, ind: string, inline: boolean): string {
-  const at = a.at as Obj;
-  const attrs: Array<[string, unknown]> = [['on', a.target]];
-  if (!inline) {
-    if ('after' in at) {
-      attrs.push(['after', at.after]);
-      if (at.edge !== undefined) attrs.push(['edge', at.edge]);
-      if (at.offset !== undefined) attrs.push(['offset', at.offset]);
-    } else if ('beat' in at && !at.ref) { attrs.push(['at', at.beat]); if (at.offset !== undefined) attrs.push(['offset', at.offset]); }
-    else if ('line' in at && at.word !== undefined && typeof at.word !== 'number' && at.mark === undefined) { attrs.push(['line', at.line], ['word', at.word]); if (at.edge !== undefined) attrs.push(['edge', at.edge]); if (at.offset !== undefined) attrs.push(['offset', at.offset]); }
-    else if ('line' in at && at.mark !== undefined && at.word === undefined) { attrs.push(['line', at.line], ['mark', at.mark]); if (at.edge !== undefined) attrs.push(['edge', at.edge]); if (at.offset !== undefined) attrs.push(['offset', at.offset]); }
-    else if ('line' in at && at.word === undefined && at.mark === undefined) { attrs.push(['line', at.line]); if (at.edge !== undefined) attrs.push(['edge', at.edge]); if (at.offset !== undefined) attrs.push(['offset', at.offset]); }
-    else attrs.push(['at', at]);
-  } else {
-    if (at.edge !== undefined) attrs.push(['edge', at.edge]);
-    if (at.offset !== undefined) attrs.push(['offset', at.offset]);
-  }
-  for (const k of ['dur', 'stagger', 'easing', 'during', 'id']) if (a[k] !== undefined) attrs.push([k, a[k]]);
-  // <Set> and <Tween> write the props they change as attributes, unless a prop is named like one of the action's own
-  const params = {...(a.params as Obj | undefined)};
-  if ((a.motion === 'set' || a.motion === 'tween') && params.props && typeof params.props === 'object' && !Object.keys(params.props as Obj).some((k) => ACTION_ATTRS.includes(k))) {
-    for (const [k, v] of Object.entries(params.props as Obj)) attrs.push([k, v]);
-    delete params.props;
-  }
-  if (Object.keys(params).length) attrs.push(['params', params]);
-  return open(MOTION_TAG[a.motion as string], attrs, ind, inline ? '>' : '/>');
-}
-
-/** The words an action's anchor covers in the spoken text, or undefined when it cannot be written around words */
-function spanOf(a: Obj, line: Obj, doc: VisoDoc, clean: string, marks: ReturnType<typeof parseSay>['marks']): [number, number] | undefined {
-  const at = a.at as Obj;
-  const spans = wordSpans(clean);
-  if (typeof at.mark === 'string') {
-    const m = marks.find((x) => x.name === at.mark);
-    return m ? [spans[m.from].start, spans[m.to].end] : undefined;
-  }
-  if (typeof at.word === 'number') return spans[at.word] ? [spans[at.word].start, spans[at.word].end] : undefined;
-  if (typeof at.word === 'string') {
-    const phrase = at.word;
-    if (!line.say && sayOf(doc, line as never) !== line.text) return undefined;
-    const i = clean.toLowerCase().indexOf(phrase.toLowerCase());
-    if (i < 0) return undefined;
-    const from = spans.findIndex((s) => s.end > i), to = spans.findIndex((s) => s.start >= i + phrase.length) - 1;
-    const last = to < 0 ? spans.length - 1 : to;
-    if (from < 0 || last < from || spans[from].start !== i) return undefined;
-    return [spans[from].start, spans[last].end];
-  }
-  return undefined;
-}
-
-function printLine(line: Obj, beatActions: Obj[], doc: VisoDoc, ind: string, rest: Obj[]): string {
-  const extra: Array<[string, unknown]> = (['live', 'i18n'] as const).filter((k) => line[k] !== undefined).map((k) => [k, line[k]]);
-  const raw = () => `${ind}${open('Line', [['id', line.id], ['text', line.text], ...(line.say ? [['say', line.say] as [string, unknown]] : []), ...extra], ind, '/>')}`;
-  const mine = beatActions.filter((a) => (a.at as Obj).line === line.id);
-  const clean = line.say ? parseSay(String(line.say)).say : String(line.text);
-  const marks = line.say ? parseSay(String(line.say)).marks : [];
-  const used = new Set(mine.map((a) => (a.at as Obj).mark));
-  if (marks.some((m) => !used.has(m.name))) { rest.push(...mine); return raw(); }
-  const items = mine.map((a, i) => ({a, i, span: spanOf(a, line, doc, clean, marks)}));
-  if (items.some((x) => !x.span)) { rest.push(...mine); return raw(); }
-  const sorted = [...items].sort((x, y) => x.span![0] - y.span![0] || y.span![1] - x.span![1] || x.i - y.i);
-  const stack: Array<[number, number]> = [];
-  for (const it of sorted) {
-    while (stack.length && stack[stack.length - 1][1] <= it.span![0]) stack.pop();
-    if (stack.length && it.span![1] > stack[stack.length - 1][1]) { rest.push(...mine); return raw(); }
-    stack.push(it.span!);
-  }
-  // an action that is a point or whose range is written as `during` keeps its anchor kind: only `during`/`edge` make a range
-  for (const it of items) {
-    const at = it.a.at as Obj, m = typeof at.mark === 'string' ? marks.find((x) => x.name === at.mark) : undefined;
-    if (m?.kind === 'point' && (it.a.during === true || at.edge !== undefined)) { rest.push(...mine); return raw(); }
-  }
-  let body = '';
-  let pos = 0;
-  const opens = new Map<number, typeof sorted>();
-  const closes = new Map<number, typeof sorted>();
-  for (const it of sorted) {
-    (opens.get(it.span![0]) ?? opens.set(it.span![0], []).get(it.span![0])!).push(it);
-    (closes.get(it.span![1]) ?? closes.set(it.span![1], []).get(it.span![1])!).unshift(it);
-  }
-  const cuts = [...new Set([...opens.keys(), ...closes.keys()])].sort((x, y) => x - y);
-  for (const c of cuts) {
-    body += encodeText(clean.slice(pos, c));
-    pos = c;
-    for (const it of closes.get(c) ?? []) body += `</${MOTION_TAG[it.a.motion as string]}>`;
-    for (const it of opens.get(c) ?? []) body += printAction(it.a, ind, true);
-  }
-  body += encodeText(clean.slice(pos));
-  const attrs: Array<[string, unknown]> = [['id', line.id], ...(line.text !== clean ? [['text', line.text] as [string, unknown]] : []), ...extra];
-  return `${ind}${open('Line', attrs, ind, '>')}${body}</Line>`;
-}
-
-export function printMarkup(doc: VisoDoc): string {
-  used = new Set();
-  const d = doc as unknown as Obj & {meta: Obj; canvas: {presets: Array<Obj>}; objects: Obj; scenes: Array<Obj>};
-  const out: string[] = [];
-  const presetIds = d.canvas.presets.map((p) => p.id as string);
-  const standard = d.canvas.presets.every((p) => PRESETS[p.id as string]?.[0] === p.width && PRESETS[p.id as string]?.[1] === p.height);
-  const theme = d.theme as Obj | undefined, voice = d.voice as Obj | undefined;
-  // a registered component is imported by its module and used as a tag named by its export
-  const comps = ((d.components as Obj[] | undefined) ?? []).map((c) => ({id: c.id as string, module: c.module as string, name: (c.export as string | undefined) ?? (c.id as string).split('-').map((w) => w[0].toUpperCase() + w.slice(1)).join('')}));
-  const compName = new Map(comps.map((c) => [c.id, c.name]));
-  const docAttrs: Array<[string, unknown]> = [
-    ['spec', d.spec], ['id', d.meta.id], ['title', d.meta.title], ['lang', d.meta.lang], ...META_EXTRA.map((k) => [k, d.meta[k]] as [string, unknown]),
-    ['theme', theme?.id], ['tokens', theme?.tokens], ['voice', voice?.voice], ['speed', voice?.speed], ['lexicon', voice?.lexicon],
-    ['canvas', standard ? presetIds.join(',') : undefined], ['pacing', d.pacing],
-    ...(['params', 'flow', 'overrides', 'exports'] as const).map((k) => [k, d[k]] as [string, unknown]),
-  ];
-  out.push('export default ' + open('Doc', docAttrs, '', '>'));
-  if (!standard) out.push('  <Canvas>', ...d.canvas.presets.map((p) => '    ' + open('Preset', [['id', p.id], ['width', p.width], ['height', p.height]], '    ', '/>')), '  </Canvas>');
-  for (const a of (d.assets as Obj[] | undefined) ?? []) out.push(printItem('Asset', a, '  ', 'asset'));
-  out.push('');
-  for (const [id, o] of Object.entries(d.objects)) {
-    const {type, ...props} = o as Obj;
-    if (type === 'component') {
-      const {component, label, style, props: own} = props as {component: string; label?: string; style?: string; props?: Obj};
-      const name = compName.get(component);
-      if (!name) throw new Error(`object "${id}" uses the component "${component}", which is not in \`components\``);
-      if (own && ['id', 'label', 'style'].some((k) => k in own)) throw new Error(`a prop of the component "${component}" is named id, label or style, which a tag takes for itself`);
-      out.push('  ' + open(name, [['id', id], ['label', label], ['style', style], ...Object.entries(own ?? {})], '  ', '/>'));
-    } else out.push(printItem(TAG_OF[type as string], {id, ...props}, '  ', type as string));
-  }
-  for (const s of d.scenes) {
-    out.push('');
-    const pat = s.pattern as Obj | undefined;
-    out.push('  ' + open('Scene', [['id', s.id], ['title', s.title], ['pattern', pat?.kind], ['slots', pat?.slots], ['options', pat?.options]], '  ', '>'));
-    for (const b of s.beats as Obj[]) {
-      const bp = b.pattern as Obj | undefined;
-      out.push('    ' + open('Beat', [['id', b.id], ['duration', b.duration], ['hold', b.hold], ['pattern', bp?.kind], ['slots', bp?.slots], ['options', bp?.options], ['interactions', b.interactions]], '    ', '>'));
-      for (const [t, st] of Object.entries((b.state as Obj | undefined) ?? {})) out.push('      ' + open('State', [['target', t], ...Object.entries(st as Obj)], '      ', '/>'));
-      const actions = (b.actions as Obj[] | undefined) ?? [];
-      const rest: Obj[] = [];
-      for (const l of (b.lines as Obj[] | undefined) ?? []) out.push(printLine(l, actions, doc, '      ', rest));
-      const inline = new Set(actions.filter((a) => !rest.includes(a) && 'line' in (a.at as Obj) && ((b.lines as Obj[]) ?? []).some((l) => l.id === (a.at as Obj).line)));
-      for (const a of actions) if (!inline.has(a)) out.push('      ' + printAction(a, '      ', false));
-      out.push('    </Beat>');
-    }
-    out.push('  </Scene>');
-  }
-  out.push('</Doc>;', '');
-  const body = out.join('\n');
-  const tags = [...used].filter((t) => !compName.has(t) && ![...compName.values()].includes(t)).sort();
-  const imports = [`import {${tags.join(', ')}} from '@visotalk/jsx';`, ...comps.map((c) => `import {${c.name}} from ${JSON.stringify(c.module)};`)];
-  return `${imports.join('\n')}\n\n${body}`;
 }

@@ -1,19 +1,18 @@
 /**
  * renderBuilt(): deterministic export of a built player (dist/ with index.html).
  *
- * 1. Probe the page: duration, narration, source video frames needed.
- * 2. Extract those frames once per asset (ffmpeg, sequential decode).
- * 3. Per frame: window.__visotalk.seek(n) (commit + paint reset + readiness) → beginFrame screenshot.
+ * 1. Probe the page: duration, narration.
+ * 2. Per frame: window.__visotalk.seek(n) (commit + paint reset + readiness) → beginFrame screenshot.
  *    Contiguous chunks render in parallel browsers; any order gives identical frames.
- * 4. Encode (H.264) and mix narration (−16 LUFS).
+ * 3. Encode (H.264) and mix narration (−16 LUFS).
  */
 import {createHash} from 'node:crypto';
 import {mkdirSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {spawn} from 'node:child_process';
-import {findChrome, launch, openDrivenPage, PINNED_CHROME} from './chrome.ts';
+import {findChrome, launch, openDrivenPage, PINNED_CHROME, withChromeLock} from './chrome.ts';
+import {extractMedia} from './extract.ts';
 import {servePlayer} from './server.ts';
-import {extractFrames} from './extract.ts';
 
 export interface RenderOptions {
   dist: string;
@@ -37,7 +36,7 @@ export interface RenderOptions {
   /** also measure each frame's layout for QA (window.__visotalk.inspect) */
   inspect?: boolean;
   /** called for every captured frame */
-  onFrame?: (i: number, img: Buffer, manifest: unknown[]) => void;
+  onFrame?: (i: number, img: Buffer) => void;
   log?: (s: string) => void;
 }
 
@@ -50,7 +49,6 @@ export interface RenderReport {
   order: string;
   concurrency: number;
   timings: {wallMs: number; seekMsPerFrame: number; captureMsPerFrame: number; fps: number; encodeMs: number};
-  extraction: Record<string, {frames: number; decoded: number; ms: number}>;
   hashes: string[];
   /** per frame index, when `inspect` is set */
   inspections?: Record<number, unknown>;
@@ -62,7 +60,6 @@ interface Meta {
   width: number;
   height: number;
   narration: Array<{at: number; duration: number; src: string}>;
-  needs: Record<string, {src: string; frames: number[]}>;
 }
 
 function shuffled<T>(xs: T[], seed = 7): T[] {
@@ -76,7 +73,10 @@ function shuffled<T>(xs: T[], seed = 7): T[] {
   return a;
 }
 
-export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
+/** Renders (or probes, or inspects) frames of a built player; one run at a time drives Chrome on a machine (`withChromeLock`) */
+export const renderBuilt = (o: RenderOptions): Promise<RenderReport> => withChromeLock(() => renderUnlocked(o));
+
+async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
   const fps = o.fps ?? 30;
   const format = o.format ?? 'png';
   const log = o.log ?? (() => {});
@@ -85,7 +85,8 @@ export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
   mkdirSync(out, {recursive: true});
   if (o.saveFrames) mkdirSync(join(out, 'frames'), {recursive: true});
   const mediaCache = resolve(o.dist, '..', '.media-cache');
-  const player = await servePlayer(o.dist, mediaCache);
+  await extractMedia(resolve(o.dist), mediaCache);
+  const player = await servePlayer(o.dist, 0, mediaCache);
   const query = new URLSearchParams({mode: 'driven', fps: String(fps), media: '/__media', reset: o.reset ?? 'flow', ...(o.preset ? {preset: o.preset} : {})});
   const url = `${player.url}?${query}`;
   try {
@@ -100,17 +101,11 @@ export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
       await p.goto(url, {waitUntil: 'domcontentloaded'});
       await p.waitForFunction('!!window.__visotalk');
       meta = (await p.evaluate(`({doc: window.__visotalk.doc, duration: window.__visotalk.duration, width: window.__visotalk.width,
-        height: window.__visotalk.height, narration: window.__visotalk.narration, needs: window.__visotalk.mediaNeeds()})`)) as Meta;
+        height: window.__visotalk.height, narration: window.__visotalk.narration})`)) as Meta;
     } finally {
       await probeBrowser.close();
     }
-    // 2. extract
-    const extraction: RenderReport['extraction'] = {};
-    for (const [asset, need] of Object.entries(meta.needs)) {
-      const r = await extractFrames(join(resolve(o.dist), need.src), need.frames, join(mediaCache, asset));
-      extraction[asset] = {frames: need.frames.length, decoded: r.decoded, ms: Math.round(r.ms)};
-    }
-    // 3. capture
+    // 2. capture
     const total = Math.round(meta.duration * fps);
     const from = o.from ?? 0;
     const to = Math.min(total, o.to ?? total);
@@ -130,7 +125,7 @@ export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
         const d = await openDrivenPage(browser, url, meta.width, meta.height, fps);
         for (const [k, i] of chunk.entries()) {
           const a = performance.now();
-          const manifest = (await d.page.evaluate(`window.__visotalk.seek(${i})`)) as unknown[];
+          await d.page.evaluate(`window.__visotalk.seek(${i})`);
           if (o.inspect) inspections[i] = await d.page.evaluate('window.__visotalk.inspect()');
           const b = performance.now();
           const img = (await d.frame(format === 'jpeg' ? {format: 'jpeg', quality: 95} : {format: 'png'}))!;
@@ -139,7 +134,7 @@ export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
           hashes[i] = createHash('sha256').update(img).digest('hex').slice(0, 16);
           if (o.encode) frames[i] = img;
           if (o.saveFrames) writeFileSync(join(out, 'frames', `${String(i).padStart(5, '0')}.${format === 'jpeg' ? 'jpg' : 'png'}`), img);
-          o.onFrame?.(i, img, manifest);
+          o.onFrame?.(i, img);
           if (k % 150 === 0) log(`frame ${i} (${k + 1}/${chunk.length})`);
         }
       } finally {
@@ -147,7 +142,7 @@ export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
       }
     }));
     const wall = performance.now() - t0;
-    // 4. encode
+    // 3. encode
     let encodeMs = 0;
     if (o.encode) {
       const e0 = performance.now();
@@ -159,7 +154,7 @@ export async function renderBuilt(o: RenderOptions): Promise<RenderReport> {
     const report: RenderReport = {
       doc: meta.doc, chrome: version, fps, frames: n, range: [from, to], order: o.order ?? 'seq', concurrency: chunks.length,
       timings: {wallMs: Math.round(wall), seekMsPerFrame: +(seekMs / n).toFixed(1), captureMsPerFrame: +(captureMs / n).toFixed(1), fps: +(n / (wall / 1000)).toFixed(2), encodeMs: Math.round(encodeMs)},
-      extraction, hashes, ...(o.inspect ? {inspections} : {}),
+      hashes, ...(o.inspect ? {inspections} : {}),
     };
     writeFileSync(join(out, 'report.json'), JSON.stringify({...report, inspections: undefined}, null, 1));
     return report;

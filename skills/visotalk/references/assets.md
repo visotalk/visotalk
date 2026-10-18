@@ -1,6 +1,6 @@
 # Material from the internet: finding, keeping and declaring it
 
-When a real picture, logo, clip or sound would explain better than a drawing, fetch it. This is decided in the design answers (the thing itself) and done after the last scene's design is answered and before `doc.tsx` is written, never while drawing: if drawing shows that something is missing, go back, change the answer, then fetch.
+When a real picture, logo, clip or sound would explain better than a drawing, fetch it. Decide it when you plan a scene (the thing itself) and fetch before you draw it.
 
 ## What you may keep
 
@@ -15,14 +15,14 @@ Never "free to look at", never a file of unknown origin, never a hotlink (the fi
 
 ## Where it goes
 
-The project's local library: `media/` beside the document, one file per asset, named for what it is (`media/rocket-launch.mp4`). Reuse what the library already holds before fetching again. Note the size and aspect of what you fetched: they go into the layout answered in the design.
+The project's local library: `media/` beside the document, one file per asset, named for what it is (`media/rocket-launch.jpg`). Reuse what the library already holds before fetching again. Note the size and aspect of what you fetched: they go into the layout.
 
 ## How it is declared
 
-Every file in the library that a document uses is an asset with its source page and licence:
+Every file in the library that a document uses is an asset with its source page and licence, declared in `<Doc>`, and read in a part with `useAsset("launch")` (the URL, for `<img src>`):
 
 ```tsx
-<Asset id="launch" kind="video" src="media/rocket-launch.mp4"
+<Asset id="launch" kind="image" src="media/rocket-launch.jpg"
   license={{id: "PD-USGov", attribution: "Agency/Photographer", obligations: []}}
   source="https://example.org/the-page-it-came-from"/>
 ```
@@ -30,8 +30,9 @@ Every file in the library that a document uses is an asset with its source page 
 - `id` is the SPDX id where there is one (`CC0-1.0`, `CC-BY-4.0`), or a well-known label (`PD-USGov`, `user-owned`).
 - `obligations` lists what the licence asks for (`attribution`, `share-alike`, `non-commercial`, `no-derivatives`); the credits are generated from them.
 - A licence you cannot name is a reason not to use the file.
-- A photo holds 8 seconds at most; use `<KenBurns>` or cut. Never use book covers, film stills, ripped video or portraits of real people without a licence.
+- A photo holds 8 seconds at most; move it (a slow `<Tween>` of `scale` or `x`) or cut. Never use book covers, film stills, ripped video or portraits of real people without a licence.
+- A clip is an asset of `kind="video"` (constant frame rate, H.264 is safe) and is drawn in a part with `<Video asset="clip" in={2} rate={0.6} fit="cover"/>` from `@visotalk/runtime`: it plays from `in` seconds of the source at `rate`, starting `start` seconds into the scene (default 0, the scene's start). Its sound is not used; the narration is. Cut a clip to the seconds you need before you add it, since an export decodes every frame of it.
 
 ## A small mark
 
-A logo or a symbol that is small and simple can be drawn instead as an `svg` shape (`references/objects.md`, "Icons and drawings"). A brand's logo is an asset all the same: draw it only from a source you hold and may use, and say where it came from in a comment above the scene.
+A logo or a symbol that is small and simple can be drawn instead as inline SVG in a part (`references/parts.md`). A brand's logo is an asset all the same: draw it only from a source you hold and may use, and say where it came from in a comment above the scene.

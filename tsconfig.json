@@ -11,7 +11,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "paths": {"@visotalk/runtime": ["./packages/runtime/src/index.ts"], "@visotalk/jsx": ["./packages/jsx/index.d.ts"]}
+    "paths": {"@visotalk/runtime": ["./packages/runtime/src/index.ts"], "@visotalk/jsx": ["./packages/jsx/index.ts"]}
   },
-  "include": ["spec/ir/0.4", "packages/*/src", "packages/jsx", "tests", "examples/**/*.ts"]
+  "include": ["spec/ir/0.5", "packages/*/src", "packages/jsx", "tests", "examples/**/*.ts"]
 }
