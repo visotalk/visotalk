@@ -21,6 +21,10 @@ This is a creative task, not a form to fill in. You are a video designer: design
   minutes) so that every command finds them. It cannot install `ffmpeg` or Python 3.9+; it says so and you install those. It exits 0 when all is
   ready. Run `npx visotalk@latest doctor` to check without installing. `VISOTALK_CHROME`, `KOKORO_DIR`, `VISOTALK_PYTHON` and `TORCH_HOME` override what it
   installed; `VISOTALK_HOME` moves `~/.visotalk` (keep it short: narration fails under a path over about 90 characters).
+- **Another voice.** The narration is Kokoro unless the document names a provider: `<Doc voice="minimax:English_captivating_female1" speed={1}>` speaks it with MiniMax
+  (`MINIMAX_API_KEY` in the environment; `MINIMAX_GROUP_ID`, `MINIMAX_BASE_URL` and `MINIMAX_TTS_MODEL` are optional), whose word times replace the aligner's and so also
+  work in other languages. Any other service is a module whose default export is `(request) => {audio, ext, words?}`: `voice="./my-voice.mjs:name"`
+  (see the header of `packages/cli/src/voice_lines.ts`). A clip is billed once; it is cached by provider, voice, speed, language and text.
 - Reference, only when this file is not enough: the techniques in `references/` (`markup.md`, `parts.md`, `assets.md`), and the vocabulary
   itself: `visotalk schema` prints the tags, motions and hooks (`schema tags`, `schema motions`, `schema hooks`).
   Finished documents are in `examples/` of github.com/visotalk/visotalk. They show what the engine can do, not what to draw: do not reuse their look; your video has its own picture.
@@ -35,7 +39,7 @@ This is a creative task, not a form to fill in. You are a video designer: design
 | `sheet doc.tsx [--at 0.85]` | one frame per line as a contact sheet; prints the PNG path. Works from the skeleton, before anything is drawn | seconds |
 | `still doc.tsx --line scene/line [--at 0.85]` or `--time 40` `[--out name.png]` | one frame at full size (1920x1080); `--at` is how far through the line (0 to 1), `--time` any second of the video (the end of the video gives its last frame, the picture a held last scene stays on). Prints the PNG path, the sentence spoken then with the phrases it is anchored on, and what the engine measured on the frame (where the ink is, how much room is left on each side, and any text crossed, overlapped, past an edge or under the captions). `sheet` shows each frame at a third of that, where small text and sparse scenes look fine | seconds |
 | `qa doc.tsx` | overflow, clipping, text over text or cut by a shape, text under captions, a target no part registers, anchors on a weak alignment, on sampled frames; exit 1 on any issue | seconds |
-| `render doc.tsx` | the video: `.visotalk/<id>/out/final.mp4` (roughly 4 to 8 s per second of video on four cores). It needs the real narration, and stops while an animation names a target no part registers | minutes |
+| `render doc.tsx` | the video: `.visotalk/<id>/out/final.mp4` (roughly 3 to 8 s per second of video on four cores). It needs the real narration, and stops while an animation names a target no part registers. Captions are painted on the picture unless the document says `exports={{captions: 'sidecar'}}`: then they are left off it (and off the player) and written as `out/captions.srt` (five words a cue), the track to upload with the video; `'words'` paints the spoken words as a block in the lower half of a tall (9x16) frame, each word appearing as it is said, so keep the pictures in the upper half (y 200 to 980 of 1920) | minutes |
 | `play doc.tsx` | the interactive web player | |
 | `build doc.tsx --artifact [--out DIR]` | the player for a Claude artifact: MP3 narration, no fonts, `player.html` (the page) and `artifact.json` (the files to publish with it). Publish it with the Artifact tool instead of rendering an MP4 when you only need to look at the result | seconds |
 
@@ -91,3 +95,5 @@ How to make each of the above is in `references/`, one file per kind of question
 - `markup.md`: the syntax of `doc.tsx`, parts, targets, anchors, motions, `qa` and known gotchas.
 - `parts.md`: drawing a part: CSS layout, data-driven pictures, motion by a number, SVG, theme tokens.
 - `assets.md`: finding, keeping and declaring material from the internet.
+- `explainers.md`: a video that reports what a source found, and a series of them: the first frame and covers, a phone screen, a long film's chapter rail, illustrations, honest pictures, the independent check, delivering a player or a video.
+- `scripts/`: `review-frames.mjs` (one frame per narrated line, cut for reviewers) and `render-segments.sh` (a long film as resumable segments, joined).

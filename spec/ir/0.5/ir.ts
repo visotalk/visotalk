@@ -225,5 +225,6 @@ export interface Action {
 export interface ExportPolicy {
   variants: Array<{preset: Id; lang?: string}>;
   fps?: number; // default 30
-  captions?: 'burned' | 'sidecar' | 'both' | 'none';
+  /** `words`: the spoken words in a block in the lower half of a tall frame, each on the second it is said */
+  captions?: 'burned' | 'sidecar' | 'both' | 'none' | 'words';
 }

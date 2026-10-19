@@ -124,7 +124,7 @@ const CHARS_PER_SECOND = 3.8;
  * is spoken by the English one, as it always was.
  */
 export function narrationLanguage(lang: string, voice?: string): {tts: 'en-us' | 'cmn'; voice: string} {
-  const mandarin = voice ? voice.startsWith('z') : /^(zh|zho|chi|cmn)([-_]|$)/i.test(lang);
+  const mandarin = voice && !voice.includes(':') ? voice.startsWith('z') : /^(zh|zho|chi|cmn)([-_]|$)/i.test(lang);
   return mandarin ? {tts: 'cmn', voice: voice ?? 'zf_xiaobei'} : {tts: 'en-us', voice: voice ?? 'af_heart'};
 }
 
@@ -230,6 +230,15 @@ export function waitForPrepare(p: Project) {
   while (preparing(p) && Date.now() < end) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
 }
 
+/** `voice="minimax:English_captivating_female1"`: a third-party provider and its voice; a bare name is a Kokoro voice */
+export const voiceProvider = (voice?: string): {provider: string; voice: string} | undefined => {
+  const i = voice?.indexOf(':') ?? -1;
+  return voice && i > 0 ? {provider: voice.slice(0, i), voice: voice.slice(i + 1)} : undefined;
+};
+
+/** What can speak this document: a Kokoro model directory, or the voice provider the document names; undefined when neither */
+export const narrationSource = (p: Project, models?: string) => models || process.env.KOKORO_DIR || voiceProvider(p.doc.voice?.voice)?.provider;
+
 export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManifest {
   const lines = p.doc.scenes.flatMap((s) => s.lines.map((l) => ({id: l.id, say: sayOf(p.doc, l)})));
   const voicePath = join(p.work, 'voice.json');
@@ -239,15 +248,24 @@ export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManif
     writeFileSync(voicePath, '{}');
     return {};
   }
-  if (!models) throw new Error('narration needs a TTS model: pass --tts-models DIR or set KOKORO_DIR (kokoro-v1.0.onnx + voices-v1.0.bin)');
+  const third = voiceProvider(p.doc.voice?.voice);
+  if (!third && !models) throw new Error('narration needs a TTS model: pass --tts-models DIR or set KOKORO_DIR (kokoro-v1.0.onnx + voices-v1.0.bin), or name a voice provider: voice="minimax:<voice>"');
   const speak = join(p.work, 'speak.json');
   const spoken = narrationLanguage(p.doc.meta.lang, p.doc.voice?.voice);
-  writeFileSync(speak, JSON.stringify({voice: spoken.voice, lang: spoken.tts, speed: p.doc.voice?.speed ?? 1, lines}));
+  const speed = p.doc.voice?.speed ?? 1;
   const wavDir = join(p.dir, '.visotalk', '.tts-cache');
-  const manifest = JSON.parse(execFileSync(PYTHON(), [join(HERE, 'tts_lines.py'), speak, wavDir, models]).toString()) as Record<string, {file: string; duration: number}>;
+  let manifest: Record<string, {file: string; duration: number}>;
+  if (third) {
+    // a provider's own language tag (zh-CN, en) goes through as written: it is what the provider's voices are listed under
+    writeFileSync(speak, JSON.stringify({provider: third.provider, voice: third.voice, lang: p.doc.meta.lang, speed, lines}));
+    manifest = JSON.parse(execFileSync(process.execPath, [...process.execArgv, join(HERE, 'voice_lines.ts'), speak, wavDir], {stdio: ['ignore', 'pipe', 'inherit']}).toString());
+  } else {
+    writeFileSync(speak, JSON.stringify({voice: spoken.voice, lang: spoken.tts, speed, lines}));
+    manifest = JSON.parse(execFileSync(PYTHON(), [join(HERE, 'tts_lines.py'), speak, wavDir, models!]).toString());
+  }
   const manifestPath = join(p.work, 'clips.json');
   writeFileSync(manifestPath, JSON.stringify(manifest));
-  const words = alignWords(p.doc.meta.lang, speak, wavDir, manifestPath);
+  const words = alignWords(p.doc.meta.lang, speak, wavDir, manifestPath, manifest);
   const voice: VoiceManifest = {};
   for (const [id, m] of Object.entries(manifest)) {
     const aac = m.file.replace('.wav', '.m4a'); // AAC plays everywhere; Ogg Opus does not play on every iPhone
@@ -259,17 +277,28 @@ export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManif
   return voice;
 }
 
-/** Word times per line id. Without them the solver places a word anchor by its character position, which is off by up to half a second. */
-function alignWords(lang: string, speak: string, wavDir: string, manifest: string): Record<string, NonNullable<VoiceManifest[string]['words']>> {
+type Words = NonNullable<VoiceManifest[string]['words']>;
+
+/**
+ * Word times per line id: those a provider returned (the aligner's cache entries), else the aligner's, which is English only. Without them the solver
+ * places a word anchor by its character position, which is off by up to half a second.
+ */
+function alignWords(lang: string, speak: string, wavDir: string, manifestPath: string, manifest: Record<string, {file: string}>): Record<string, Words> {
+  const cached: Record<string, Words> = {};
+  for (const [id, m] of Object.entries(manifest)) {
+    const file = join(wavDir, m.file.replace(/\.wav$/, '.words2.json'));
+    if (existsSync(file)) cached[id] = JSON.parse(readFileSync(file, 'utf8'));
+  }
+  if (Object.keys(cached).length === Object.keys(manifest).length) return cached;
   if (!lang.toLowerCase().startsWith('en')) {
     console.error(`word alignment is English only: word anchors in "${lang}" are placed by character position`);
-    return {};
+    return cached;
   }
   try {
-    return JSON.parse(execFileSync(PYTHON(), [join(HERE, 'align_lines.py'), speak, wavDir, manifest], {stdio: ['ignore', 'pipe', 'inherit']}).toString());
+    return JSON.parse(execFileSync(PYTHON(), [join(HERE, 'align_lines.py'), speak, wavDir, manifestPath], {stdio: ['ignore', 'pipe', 'inherit']}).toString());
   } catch (e) {
     console.error(`word alignment failed (${(e as Error).message.split('\n')[0]}): word anchors are placed by character position`);
-    return {};
+    return cached;
   }
 }
 

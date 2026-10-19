@@ -7,7 +7,8 @@ import React, {createContext, useContext} from 'react';
 import {presenceAt, propAt, type Compiled, type ThemeTokens, type VisoDoc} from '@visotalk/ir';
 import {SceneCtx, useDocTime, useTime} from './react';
 import {clamp01} from './motion';
-import {C, F} from './theme';
+import {C, F, alpha} from './theme';
+import {captionBlocks} from './caption-blocks';
 
 /** What a part's children are: React nodes, or a function that returns them (so a hook can be called in it) */
 export type PartBody = React.ReactNode | (() => React.ReactNode);
@@ -20,7 +21,7 @@ export interface StageData {
   theme: ThemeTokens;
   preset: {id: string; width: number; height: number};
   assetUrl: (id: string) => string;
-  /** the web player (captions always on screen), not the export (which follows `exports.captions`) */
+  /** the web player, not the export (an export with `exports.captions` of `none` or `sidecar` paints none, and neither does the player) */
   live: boolean;
 }
 
@@ -97,6 +98,8 @@ export const useCanvas = (): {width: number; height: number; preset: string} => 
 export const useTheme = (): ThemeTokens => useStage().theme;
 /** The URL of an asset of the document (`<Asset>`) */
 export const useAsset = (id: string): string => useStage().assetUrl(id);
+/** The scenes of the film with where each starts and ends, in document seconds: a part that draws progress across scenes (a chapter rail) reads them */
+export const useScenes = (): Array<{id: string; from: number; end: number}> => useStage().c.scenes.map((s) => ({id: s.id, from: s.from, end: s.end}));
 /** The frame the clock is on, at the document's frame rate */
 export const useFrame = (): number => Math.round(useTime() * useStage().c.fps);
 
@@ -120,11 +123,32 @@ const PartBox: React.FC<{part: VisoDoc['scenes'][number]['parts'][number]; body:
   );
 };
 
+/** `captions: 'words'`: the block of spoken words that fills the lower half of a tall frame, one word appearing as it is said, the line being said in full ink */
+const WordCaptions: React.FC = () => {
+  const {c, preset} = useStage();
+  const t = useDocTime();
+  const blocks = React.useMemo(() => captionBlocks(c), [c]);
+  const block = blocks.find((b) => t >= b.from && t < b.to);
+  if (!block) return null;
+  const tall = preset.height > preset.width;
+  const now = [...block.words].reverse().find((w) => w.t0 <= t)?.line;
+  return (
+    <div data-caption="words" style={{position: 'absolute', ...(tall ? {left: preset.width * 0.067, right: preset.width * 0.067, top: preset.height * 0.527} : {left: 160, right: 160, bottom: 54, textAlign: 'center'}),
+      fontFamily: F.sans, fontSize: tall ? 60 : 38, fontWeight: 600, lineHeight: 1.5, color: C.text}}>
+      {block.words.map((w, i) => {
+        const p = clamp01((t - w.t0) / 0.16);
+        return <span key={i} style={{display: 'inline-block', marginRight: '0.28em', opacity: p * (w.line === now ? 1 : 0.62), transform: `translateY(${(1 - p) * 10}px)`}}>{w.w}</span>;
+      })}
+    </div>
+  );
+};
+
 const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
-  const {c, doc, live} = useStage();
+  const {c, doc} = useStage();
   const t = useDocTime();
   const mode = doc.exports?.captions ?? 'burned';
-  if (!live && (mode === 'none' || mode === 'sidecar')) return null;
+  if (mode === 'words') return <WordCaptions />;
+  if (mode === 'none' || mode === 'sidecar') return null;
   const sc = c.scenes.find((s) => s.id === sceneId)!;
   const line = sc.lines.find((l) => t >= l.from && t < l.from + l.duration + 0.2);
   if (!line) return null;
@@ -132,7 +156,7 @@ const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
   return (
     <div style={{position: 'absolute', left: 0, right: 0, bottom: 54, display: 'flex', justifyContent: 'center', opacity: o}}>
       <div data-caption={line.id} style={{maxWidth: 1500, textAlign: 'center', fontFamily: F.sans, fontSize: 34, lineHeight: 1.35, color: C.text,
-        background: 'rgba(11,14,20,0.82)', padding: '10px 26px', borderRadius: 10}}>
+        background: alpha(C.bg, 0.82), padding: '10px 26px', borderRadius: 10}}>
         {line.text}
       </div>
     </div>

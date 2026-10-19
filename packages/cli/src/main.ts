@@ -22,7 +22,8 @@ import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, serve
 import {lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
 import {skeleton, type Script} from './init.ts';
-import {anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
+import {captionsSrt} from './captions.ts';
+import {narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
 const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still'];
@@ -109,7 +110,7 @@ function init() {
     process.exit(1);
   }
   console.log(`${basename(path)}: document id "${p.doc.meta.id}" (work files in .visotalk/${p.doc.meta.id}/; changing the id prepares the narration again, so set it now with --id), ${script.lines.length} lines, one line each, all in the scene "draft" (split it into the scenes you design); nothing is drawn yet`);
-  const tts = opt('tts-models') || process.env.KOKORO_DIR;
+  const tts = narrationSource(p, opt('tts-models'));
   if (tts) console.log(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}. Until it is ready a picture is timed from the words.`);
   else console.log('no TTS model (--tts-models or KOKORO_DIR): the lines will be timed from their words; run prepare when you have one');
 }
@@ -153,7 +154,7 @@ async function main() {
     process.exit(1);
   }
   // A look never waits for narration: until it exists the lengths are estimated from the words, and it is started in the background if nobody has.
-  const tts = opt('tts-models') || process.env.KOKORO_DIR;
+  const tts = narrationSource(p, opt('tts-models'));
   if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && narrationPending(p)) {
     if (tts && !preparing(p)) console.error(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}`);
     estimateVoice(p);
@@ -207,6 +208,7 @@ async function main() {
       from: opt('from') ? Number(opt('from')) : undefined, to: opt('to') ? Number(opt('to')) : undefined, saveFrames: flag('frames'),
       encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), chrome: opt('chrome'), log: (s) => console.error(s),});
     writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc));
+    if (p.doc.exports?.captions === 'sidecar') writeFileSync(join(out, 'captions.srt'), captionsSrt(solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, Number(opt('fps', '30')))));
     console.log(JSON.stringify({...r, hashes: undefined}, null, 1));
     return void console.log(`video: ${join(out, r.frames && !flag('no-audio') ? 'final.mp4' : 'video.mp4')}`);
   }
