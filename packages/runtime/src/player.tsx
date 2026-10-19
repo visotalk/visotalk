@@ -2,7 +2,7 @@
  * Web player chrome: fits the fixed stage into its box, play/pause, a scrubber with a tick at every narration clip, sound, keyboard,
  * narration in sync with the clock. `bare` (`?bare` on the page) draws the picture alone, for a page that has controls of its own.
  * The controls are the brand's, not the video theme's: square, a cue-orange play button and playhead
- * (docs/brand/tokens.json); only the greys come from the theme's `--vt-*` variables.
+ * (the open site's cue sheet); only the greys come from the theme's `--vt-*` variables.
  */
 import React, {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {Clock} from './clock';
