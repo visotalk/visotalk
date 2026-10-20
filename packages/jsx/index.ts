@@ -26,7 +26,7 @@ export const Doc: Tag<{
   id: string; title: string; lang: string; description?: string; sources?: Meta['sources']; generator?: string; created?: string; updated?: string; spec?: string;
   theme?: string; tokens?: Partial<ThemeTokens>; voice?: string; speed?: number; lexicon?: Voice['lexicon'];
   /** "16x9,9x16", or a <Canvas> child with <Preset> tags */
-  canvas?: string; pacing?: Pacing; exports?: ExportPolicy;
+  canvas?: string; pacing?: Pacing; texts?: Record<string, string>; exports?: ExportPolicy;
   children?: ReactNode;
 }> = tag('Doc');
 export const Canvas: Tag<{children?: ReactNode}> = tag('Canvas');
@@ -45,11 +45,23 @@ export const Part: Tag<{id: string} & Box & {children?: ReactNode | (() => React
 
 export const Animation: Tag<{children?: ReactNode}> = tag('Animation');
 
+/**
+ * Music or a sound effect of an `<Asset kind="audio">`, in a `<Scene>`: it starts on a word of a line (`line` + `word`), `at` seconds into the scene, or "start"/"end" of it.
+ * `volume` is dB against the file; the narration is never changed. `loop` plays it again until `dur` seconds are up, or to the end of the film; `fadeIn` and `fadeOut` are
+ * seconds (`fadeOut` needs `dur` or `loop`); `duck` is how many dB it steps back while the narration is speaking. `<Sound asset="bed" at="start" loop volume={-8} duck={4} fadeIn={1.2} fadeOut={4}/>`.
+ */
+export const Sound: Tag<{
+  asset: string; id?: string; dur?: number; volume?: number; loop?: boolean; fadeIn?: number; fadeOut?: number; duck?: number;
+  at?: number | 'start' | 'end'; line?: string; word?: string; nth?: number; mark?: string; edge?: 'start' | 'end'; offset?: number;
+}> = tag('Sound');
+
 /** A motion needs exactly one place to start: a word of a line (`line` + `word`, `nth` for the nth occurrence), `after` another action, or `at` seconds into the scene (or "start", "end") */
 interface MotionProps {
   /** a part, or an element a part registers with `useTarget` or `<Obj>`: ids are unique within a scene */
   on: string | string[];
   id?: string; dur?: number; stagger?: number; easing?: Easing;
+  /** `<Tween>` only: plays again this many times (-1: for the whole film); `yoyo` makes every other play run backwards */
+  repeat?: number; yoyo?: boolean;
   at?: number | 'start' | 'end';
   after?: string;
   line?: string; word?: string; nth?: number; mark?: string;
@@ -57,7 +69,7 @@ interface MotionProps {
 }
 export const Appear: Tag<MotionProps> = tag('Appear');
 export const Disappear: Tag<MotionProps> = tag('Disappear');
-/** The props it changes are its other attributes, numbers: `<Tween on="bar" w={1100} line="l1" word="counted" dur={1.4}/>`; read with `useProp("bar", "w", 0)`. `x`, `y`, `scale` and `rotate` move the target itself */
+/** The props it changes are its other attributes: numbers, colours ("#426894") and lengths ("12px"): `<Tween on="bar" w={1100} line="l1" word="counted" dur={1.4}/>`; read with `useProp("bar", "w", 0)`. `x`, `y`, `scale` and `rotate` move the target itself */
 export const Tween: Tag<MotionProps & {[prop: string]: unknown}> = tag('Tween');
 /** Like `<Tween>`, at once, and a value may be a string or true/false */
 export const Set: Tag<MotionProps & {[prop: string]: unknown}> = tag('Set');

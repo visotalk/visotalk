@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import {existsSync, mkdtempSync, readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {test} from 'node:test';
@@ -76,4 +77,27 @@ test('voice runner: a clip is made once, its word times land in the aligner\'s c
   await run({...spec, voice: 'V2'}, dir, speak);
   assert.equal(calls, 2, 'another voice is another clip');
   assert.ok(existsSync(join(dir, first.l1.file)));
+});
+
+test('the published package speaks a third-party voice: the script is built beside main.js and runs under plain node', () => {
+  const build = spawnSync(process.execPath, ['packages/cli/scripts/bundle.mjs'], {encoding: 'utf8'});
+  assert.equal(build.status, 0, build.stderr);
+  const dist = join(process.cwd(), 'packages/cli/dist/packages/cli/src');
+  assert.ok(existsSync(join(dist, 'voice_lines.js')));
+  const dir = mkdtempSync(join(tmpdir(), 'vt-pkg-voice-'));
+  // a provider that answers with a tenth of a second of silence (a 16-bit mono WAV)
+  const wav = Buffer.alloc(44 + 1600);
+  wav.write('RIFF', 0); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(16000, 28); wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(1600, 40);
+  mkdirSync(dir, {recursive: true});
+  writeFileSync(join(dir, 'silent.mjs'), `export default async () => ({audio: Buffer.from('${wav.toString('base64')}', 'base64'), ext: 'wav'});`);
+  writeFileSync(join(dir, 'doc.tsx'), `import {Doc, Scene, Line} from '@visotalk/jsx';
+export default <Doc id="pkg" title="Pkg" lang="zh-CN" voice="./silent.mjs:me"><Scene id="s1"><Line id="l1">Hello there.</Line></Scene></Doc>;`);
+  // `node`, with none of the flags the repository's own scripts are started with
+  const r = spawnSync('node', [join(dist, 'main.js'), 'prepare', join(dir, 'doc.tsx')], {encoding: 'utf8', env: {...process.env, NODE_OPTIONS: ''}});
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /narration: 1 line\(s\)/);
+  const voice = JSON.parse(readFileSync(join(dir, '.visotalk/pkg/voice.json'), 'utf8'));
+  assert.match(voice.l1.audio, /^audio\/[0-9a-f]{12}\.m4a$/);
+  assert.equal(voice.l1.key, voice.l1.audio.slice(6, 18));
 });

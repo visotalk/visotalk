@@ -7,3 +7,4 @@ export * from './qa.ts';
 export * from './themes.ts';
 export * from './markup.ts';
 export * from './markup-edit.ts';
+export * from './captions.ts';

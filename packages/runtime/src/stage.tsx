@@ -80,13 +80,18 @@ export function useProp(...args: [string, number | string | boolean] | [string, 
   return propAt(c, id, name, useDocTime(), base, part.scene);
 }
 
-/** A target as an element: `<Obj id="bar" style={{…}}>…</Obj>` is a div (or `as="g"`, `as="span"`) a document can name */
+/** The words a part draws, by id: what the document's `texts` say for it, else `base`, the words the part was written with. A person edits these in the Studio. */
+export function useText(id: string, base: string): string {
+  return useStage().doc.texts?.[id] ?? base;
+}
+
+/** A target as an element: `<Obj id="bar" style={{…}}>…</Obj>` is a div (or `as="g"`, `as="span"`) a document can name; its DOM `id` is the target's, so a stylesheet can too (`#bar`) */
 export function Obj<T extends keyof React.JSX.IntrinsicElements = 'div'>({id, as, style, children, ...rest}: {id: string; as?: T; style?: React.CSSProperties; children?: React.ReactNode} & Omit<React.JSX.IntrinsicElements[T], 'id' | 'style' | 'children'>) {
   const t = useTarget(id);
   // the document's animation and the element's own style compose: opacities multiply, transforms follow one another
   const merged = {...style, ...t.style, opacity: Number(style?.opacity ?? 1) * Number(t.style.opacity),
     ...(style?.transform && t.style.transform && {transform: `${t.style.transform} ${style.transform}`})};
-  return React.createElement((as ?? 'div') as string, {...rest, ...t, style: merged}, children);
+  return React.createElement((as ?? 'div') as string, {...rest, id, ...t, style: merged}, children);
 }
 
 /** The canvas the part is drawn on: size in px and which preset */

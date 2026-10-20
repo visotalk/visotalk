@@ -51,6 +51,68 @@ function useNarration(clock: Clock, clips: NarrationClip[], base: string, muted:
   return () => unlockRef.current();
 }
 
+const NO_SOUNDS: SoundTrack[] = [];
+const NO_GAIN = () => 1;
+
+export interface SoundTrack {
+  src: string;
+  start: number;
+  /** absent for a single play of a file whose length the document does not know */
+  end?: number;
+  loop: boolean;
+}
+
+/**
+ * The sounds of the document (music, effects), each an element routed through a gain node (`gain(i, t)` is the document's own curve: volume, fades, ducking), because
+ * an element's `volume` does nothing on iOS. They start and stop from the clock like the narration, and stay with it after a seek. `unlock` is called from a tap.
+ */
+function useSounds(clock: Clock, sounds: SoundTrack[], gain: (i: number, t: number) => number, base: string, muted: React.MutableRefObject<boolean>) {
+  const unlockRef = useRef(() => {});
+  const gainRef = useRef(gain);
+  gainRef.current = gain;
+  useEffect(() => {
+    const Ctx = typeof window === 'undefined' ? undefined : window.AudioContext ?? (window as unknown as {webkitAudioContext?: typeof AudioContext}).webkitAudioContext;
+    if (!Ctx || !sounds.length) return undefined;
+    const ctx = new Ctx();
+    const tracks = sounds.map((s) => {
+      const el = new Audio(base + s.src);
+      el.loop = s.loop;
+      const node = ctx.createGain();
+      node.gain.value = 0;
+      ctx.createMediaElementSource(el).connect(node).connect(ctx.destination);
+      return {...s, el, node, starting: false};
+    });
+    const sync = () => {
+      const t = clock.getTime();
+      tracks.forEach((tr, i) => {
+        const inside = !muted.current && clock.isPlaying() && t >= tr.start && (tr.end === undefined || t < tr.end);
+        if (!inside) {
+          if (!tr.el.paused) tr.el.pause();
+          tr.node.gain.value = 0;
+          return;
+        }
+        tr.node.gain.value = gainRef.current(i, t);
+        const len = tr.el.duration;
+        const want = tr.loop && len > 0 ? (t - tr.start) % len : t - tr.start;
+        if (tr.el.paused) {
+          if (tr.starting) return;
+          tr.starting = true;
+          tr.el.currentTime = want;
+          void ctx.resume().then(() => tr.el.play()).catch(() => {}).finally(() => { tr.starting = false; });
+        } else if (Math.abs(tr.el.currentTime - want) > 0.4 && !(tr.loop && len > 0 && Math.abs(Math.abs(tr.el.currentTime - want) - len) < 0.4)) tr.el.currentTime = want;
+      });
+    };
+    unlockRef.current = () => { void ctx.resume().then(sync); };
+    const off = clock.subscribe(sync);
+    return () => {
+      off();
+      tracks.forEach((tr) => tr.el.pause());
+      void ctx.close();
+    };
+  }, [clock, sounds, base, muted]);
+  return () => unlockRef.current();
+}
+
 /** `cue` and `on-cue` (dark) from docs/brand/tokens.json: the play button and the playhead are playback's colour and nothing else's. */
 const CUE = '#4aa8f2';
 const ON_CUE = '#0d0f14';
@@ -78,8 +140,8 @@ const Glyph: React.FC<{name: 'play' | 'pause' | 'sound' | 'muted'}> = ({name}) =
 /** 82.53 -> "1:22" */
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export const Player: React.FC<{clock: Clock; width: number; height: number; narration: NarrationClip[]; assetBase: string; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
-  clock: ck, width, height, narration, assetBase, hint, autoplay, loop, bare, children,
+export const Player: React.FC<{clock: Clock; width: number; height: number; narration: NarrationClip[]; sounds?: SoundTrack[]; gain?: (i: number, t: number) => number; assetBase: string; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
+  clock: ck, width, height, narration, sounds = NO_SOUNDS, gain = NO_GAIN, assetBase, hint, autoplay, loop, bare, children,
 }) => {
   const t = useSyncExternalStore(ck.subscribe, ck.getTime);
   const playing = useSyncExternalStore(ck.subscribe, ck.isPlaying);
@@ -91,7 +153,9 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
   const viewerMuted = useRef(false);
-  const unlock = useNarration(ck, narration, assetBase, mutedRef);
+  const unlockNarration = useNarration(ck, narration, assetBase, mutedRef);
+  const unlockSounds = useSounds(ck, sounds, gain, assetBase, mutedRef);
+  const unlock = () => { unlockNarration(); unlockSounds(); };
   const setSound = (on: boolean) => { viewerMuted.current = !on; mutedRef.current = !on; setMuted(!on); if (on) unlock(); };
   const toggle = () => { if (playing) ck.pause(); else { if (!viewerMuted.current) setSound(true); ck.play(); } };
   // a page that frames a bare player has the sound button: `{vt: 'sound', on}` from the parent is a press of it (see `bridge.ts`)
@@ -137,7 +201,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
     else if (e.key === 'ArrowLeft') ck.seek(ck.getTime() - 5);
     else if (e.key === 'Home') ck.seek(0);
     else if (e.key === 'End') ck.seek(ck.duration);
-    else if (e.key === 'm' && narration.length > 0) setSound(muted);
+    else if (e.key === 'm' && (narration.length > 0 || sounds.length > 0)) setSound(muted);
     else return;
     e.preventDefault();
   };
@@ -180,7 +244,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
         <span style={{fontFamily: F.mono, fontSize: 12, color: C.muted, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'}}>
           {clock(t)} / {clock(ck.duration)}
         </span>
-        {narration.length > 0 && (
+        {(narration.length > 0 || sounds.length > 0) && (
           <button id="vt-sound" type="button" className="vt-b" aria-label={muted ? 'Sound on' : 'Sound off'} aria-pressed={!muted} onClick={() => setSound(muted)}>
             <Glyph name={muted ? 'muted' : 'sound'} />
           </button>

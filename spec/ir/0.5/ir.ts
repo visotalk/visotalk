@@ -27,6 +27,8 @@ export interface VisoDoc {
   voice?: Voice;
   /** Narration pacing used by the time solver (seconds); defaults in parentheses */
   pacing?: Pacing;
+  /** The words a part draws with `useText(id, base)`, by id: what a person edited, in place of the `base` the part was written with. Ids are lowercase `[a-z][a-z0-9_-]*` like every id */
+  texts?: Record<string, string>;
   assets?: Asset[];
   /** Global parts: the only parts that outlive a scene. Hidden until an `appear`, they keep their instance, and the props the document gave them, from scene to scene */
   parts?: Part[];
@@ -96,7 +98,12 @@ export interface Voice {
   lexicon?: Record<string, string>;
 }
 
-export type Easing = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
+/**
+ * `easeIn`, `easeOut`, `easeInOut` are cubic curves; `Sine`, `Quad`, `Quart`, `Quint` after one of the three (`easeOutQuart`) are the others of easings.net, `Back` overshoots
+ * (`easeOutBack` by 1.70158, or `easeOutBack(2.2)` by 2.2), and `cubic-bezier(x1, y1, x2, y2)` is the CSS curve.
+ */
+export type Curve = 'Sine' | 'Quad' | 'Quart' | 'Quint' | 'Back';
+export type Easing = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | `ease${'In' | 'Out' | 'InOut'}${Curve}` | `ease${'In' | 'Out' | 'InOut'}Back(${number})` | `cubic-bezier(${string})`;
 
 // ---------------------------------------------------------------------------------------------- assets & licensing
 
@@ -155,6 +162,8 @@ export interface Scene {
   parts: Part[];
   /** The actions of the scene, in any order: each says when it starts */
   animations: Action[];
+  /** Music and sound effects that start in this scene: each says when, and how loud */
+  sounds?: Sound[];
 }
 
 /**
@@ -216,8 +225,36 @@ export interface Action {
   /** Delay between multiple targets */
   stagger?: Seconds;
   easing?: Easing;
-  /** `tween`: numeric props that reach these values over `dur`, from the value they have then; `set`: props that take these values at once */
+  /** `tween`: it plays again this many times after the first (0, once; -1, for as long as the film runs); each play runs `dur` */
+  repeat?: number;
+  /** `tween` with `repeat`: every other play runs backwards, so the prop comes back to where it began (after an even number of plays in all) */
+  yoyo?: boolean;
+  /** `tween`: props that reach these values over `dur`, from the value they have then (numbers, colours such as "#426894" or "hsl(212 46% 68%)", and lengths such as "12px" or "40%", a length from one of the same unit); `set`: props that take these values at once */
   props?: Record<string, number | string | boolean>;
+}
+
+// ---------------------------------------------------------------------------------------------- sound
+
+/**
+ * A sound of an `audio` asset, started on the same anchors an action is (a word of a line, a time in the scene, a scene edge). The narration is the loudest
+ * thing in a film and is never changed: a sound is set against its own file in dB, fades in and out, and can step back while the narration speaks (`duck`).
+ * A bed of music that runs across scenes is a sound that starts in one scene and lasts to the end of the film (`loop` without `dur`).
+ */
+export interface Sound {
+  id?: Id;
+  /** an asset of kind `audio` */
+  asset: Id;
+  at: Anchor;
+  /** Seconds it sounds. Without it: the file's length, or with `loop` the rest of the film. `fadeOut` needs one or the other. */
+  dur?: Seconds;
+  /** dB against the file (0); negative is quieter */
+  volume?: number;
+  /** Play again from the start when the file ends, for as long as it sounds */
+  loop?: boolean;
+  fadeIn?: Seconds;
+  fadeOut?: Seconds;
+  /** dB it steps back, from `volume`, while a narration line is spoken, and releases in the pauses (0, never; 6 is a clear step) */
+  duck?: number;
 }
 
 // ---------------------------------------------------------------------------------------------- export

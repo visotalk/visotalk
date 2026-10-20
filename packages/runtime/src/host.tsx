@@ -11,7 +11,7 @@ import '@fontsource/jetbrains-mono/700.css';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
-import {DEFAULT_FPS, solve, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {DEFAULT_FPS, solve, soundGain, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {Clock} from './clock';
 import {Readiness} from './readiness';
 import {RuntimeProvider, type Runtime} from './react';
@@ -39,6 +39,10 @@ export interface DrivenApi {
   width: number;
   height: number;
   narration: Array<{at: number; duration: number; src: string}>;
+  /** each sound of the document: its file (relative to the page), where it sounds, and whether it loops */
+  sounds: Array<{src: string; at: number; end?: number; loop: boolean}>;
+  /** the gain of sound `i` at `n` samples a second from `from` (seconds) for `count` samples: the envelope the exporter multiplies the file by */
+  soundGain(i: number, from: number, hz: number, count: number): number[];
   fps: number;
   seek(frame: number): Promise<void>;
   /** Layout measurements of the current frame for QA (see inspect.ts) */
@@ -73,6 +77,7 @@ export function mount(opts: MountOptions) {
     const assets = Object.fromEntries((doc.assets ?? []).map((a) => [a.id, a]));
     const theme = themeTokens(doc.theme);
     const narration = compiled.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
+    const sounds = compiled.sounds.map((s) => ({...s, src: assets[s.asset]?.src ?? s.asset}));
     const stage = (
       <StageProvider doc={doc} c={compiled} bodies={bodies} theme={theme} preset={preset} live={mode === 'live'} assetUrl={(id) => assetBase + (assets[id]?.src ?? id)}>
         <div style={{position: 'relative', width: preset.width, height: preset.height, overflow: 'hidden', background: C.bg}}>
@@ -80,7 +85,7 @@ export function mount(opts: MountOptions) {
         </div>
       </StageProvider>
     );
-    return {doc, preset, fps, compiled, theme, narration, stage};
+    return {doc, preset, fps, compiled, theme, narration, sounds, stage};
   };
 
   let shown = draw(opts.doc, opts.voice);
@@ -106,7 +111,7 @@ export function mount(opts: MountOptions) {
     const render = () =>
       root.render(
         <RuntimeProvider runtime={runtime}>
-          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} narration={shown.narration} assetBase={assetBase}
+          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} narration={shown.narration} sounds={shown.sounds} gain={(i, t) => soundGain(shown.compiled, shown.compiled.sounds[i], t)} assetBase={assetBase}
             autoplay={params.has('autoplay')} loop={params.has('loop')} bare={params.has('bare')}>
             {shown.stage}
           </Player>
@@ -139,7 +144,7 @@ export function mount(opts: MountOptions) {
   }
 
   // ---------------------------------------------------------------------------------------------- driven
-  const {stage, narration} = shown;
+  const {stage, narration, sounds} = shown;
   document.body.style.background = C.bg;
   runtime.readiness.hold(
     Promise.all(['400 16px Inter', '700 16px Inter', '400 16px "JetBrains Mono"', '700 16px "JetBrains Mono"'].map((f) => document.fonts.load(f, 'A–×≈·'))),
@@ -164,6 +169,8 @@ export function mount(opts: MountOptions) {
     width: preset.width,
     height: preset.height,
     narration,
+    sounds: sounds.map((s) => ({src: s.src, at: s.start, end: s.end, loop: s.loop})),
+    soundGain: (i, from, hz, count) => Array.from({length: count}, (_, k) => soundGain(compiled, compiled.sounds[i], from + k / hz)),
     fps,
     /** The page at frame n, a whole number: its time is `n / fps`, the same expression the solver's events come from */
     async seek(frame) {

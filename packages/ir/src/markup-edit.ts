@@ -6,7 +6,7 @@
  * The result is read back and validated: an edit that leaves a document the engine would refuse (a word an animation hangs on that is no longer spoken, an
  * animation another is anchored after) fails with the engine's own message, and nothing is changed.
  */
-import {parseMarkup, MarkupError} from './markup.ts';
+import {parseMarkup, textsOf, MarkupError} from './markup.ts';
 import type {El} from './markup.ts';
 import {validate} from './validate.ts';
 
@@ -22,13 +22,15 @@ export type Edit =
   | {op: 'animation'; scene: string; animation: string; set: Record<string, number | string | null>}
   /** where the animation starts, replaced whole: on a line (and a word of it), after another animation, or at a time */
   | {op: 'anchor'; scene: string; animation: string; to: {line: string; word?: string; nth?: number; edge?: 'start' | 'end'; offset?: number} | {after: string; edge?: 'start' | 'end'; offset?: number} | {at: number | 'start' | 'end'; offset?: number}}
-  | {op: 'removeAnimation'; scene: string; animation: string};
+  | {op: 'removeAnimation'; scene: string; animation: string}
+  /** the words a part draws with `useText(id, …)`; `say` replaces them, `null` goes back to what the part was written with */
+  | {op: 'text'; id: string; say: string | null};
 
 export class EditError extends Error {}
 
 const ANCHOR_ATTRS = ['line', 'word', 'nth', 'edge', 'offset', 'after', 'at', 'mark'];
 /** What `animation` may set besides a tween's own values: never the target, the id or the anchor (that is `anchor`) */
-const TIMING = ['dur', 'stagger', 'easing', 'offset', 'edge'];
+const TIMING = ['dur', 'stagger', 'easing', 'repeat', 'yoyo', 'offset', 'edge'];
 
 const attrSource = (name: string, value: number | string): string => {
   if (typeof value === 'number') {
@@ -107,6 +109,21 @@ function applyOne(src: string, edit: Edit): string {
       const added = Object.entries(edit.to as Record<string, number | string | undefined>).flatMap(([name, value]) => (value === undefined ? [] : [attrSource(name, value)]));
       const closing = node.openEnd === node.end ? '/>' : '>';
       return `${src.slice(0, node.start)}<${node.tag} ${[...kept, ...added].join(' ')}${closing}${src.slice(node.openEnd)}`;
+    }
+    case 'text': {
+      if (!textsOf(src).some((t) => t.id === edit.id)) throw new EditError(`no part draws text "${edit.id}" (useText("${edit.id}", …))`);
+      if (edit.say !== null && !edit.say.trim()) throw new EditError(`text "${edit.id}" would hold no words`);
+      const root = find(src, '/', 'document');
+      const texts = {...parseMarkup(src).doc.texts};
+      if (edit.say === null) delete texts[edit.id];
+      else texts[edit.id] = edit.say;
+      const entries = Object.entries(texts);
+      if (!entries.length) return setAttr(src, root, 'texts', null);
+      const value = `{{${entries.map(([id, say]) => `${JSON.stringify(id)}: ${JSON.stringify(say)}`).join(', ')}}}`;
+      const found = root.attrs.find((a) => a.name === 'texts');
+      if (found) return `${src.slice(0, found.start)}texts=${value}${src.slice(found.end)}`;
+      const last = root.attrs[root.attrs.length - 1];
+      return `${src.slice(0, last.end)}\n  texts=${value}${src.slice(last.end)}`;
     }
     case 'removeAnimation': {
       const node = find(src, animationPath(edit.scene, edit.animation), `animation "${edit.animation}" in scene "${edit.scene}"`);

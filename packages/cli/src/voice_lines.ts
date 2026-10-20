@@ -8,14 +8,14 @@
  * a language it cannot align keeps real word anchors), and prints a JSON manifest {line_id: {file, duration}}.
  *
  * A provider is a function `(request) => {audio, ext, words?}`: the built-in `minimax`, or the default export of a module whose path starts with `.` or `/`
- * (resolved from the current directory). `words` are one entry per whitespace token of `say`, in seconds from the clip start.
+ * (resolved from the current directory, which `prepare` sets to the document's own). `words` are one entry per whitespace token of `say`, in seconds from the clip start.
  * Credentials come from the environment, never from the document: MINIMAX_API_KEY (MINIMAX_GROUP_ID, MINIMAX_BASE_URL and MINIMAX_TTS_MODEL are optional).
  */
 import {execFileSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {clipKey} from './clip_key.ts';
 
 export interface SpeakRequest {say: string; voice: string; lang: string; speed: number}
 export interface Word {w: string; t0: number; t1: number}
@@ -96,7 +96,7 @@ export async function run(spec: SpeakSpec, outDir: string, speak?: VoiceProvider
   mkdirSync(outDir, {recursive: true});
   const manifest: Record<string, {file: string; duration: number}> = {};
   for (const line of spec.lines) {
-    const hash = createHash('sha1').update(`${spec.provider}|${spec.voice}|${spec.speed}|${spec.lang}|${line.say}`).digest('hex').slice(0, 12);
+    const hash = clipKey(spec, line.say);
     const wav = join(outDir, `${hash}.wav`);
     if (!existsSync(wav)) {
       console.error(`speaking ${line.id}`);

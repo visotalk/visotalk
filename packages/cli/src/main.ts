@@ -8,25 +8,29 @@
  *   visotalk prepare  <doc.tsx> [--tts-models DIR]
  *   visotalk build    <doc.tsx> [--out DIR] [--artifact]   the player as static files; --artifact: MP3 narration, no fonts and a player.html + artifact.json to publish as a Claude artifact
  *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--chrome PATH]
- *   visotalk play     <doc.tsx> [--port 4800]
+ *   visotalk play     <doc.tsx | FILE.visotalk> [--port 4800]   a document, or a player bundle (`export --player`), served as a page
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
  *   visotalk qa       <doc.tsx> [--per-line 3] [--frames] [--json] [--limit 30]   layout checks on sampled frames + static checks; writes qa.json and sheet.png
  *   visotalk sheet    <doc.tsx> [--at 0.85] [--out FILE]   contact sheet: one frame per line at that fraction
  *   visotalk still    <doc.tsx> --line SCENE/LINE [--at 0.85] | --time SECONDS  [--out FILE.png]   one full-size frame (1920x1080), what was measured on it, and what the sentence names
+ *   visotalk export   <doc.tsx> [--out FILE.visotalk] [--cover FILE] [--player]   the talk as one file: its source, its voice if it is prepared, captions and credits; --player: the built talk instead, which plays and has no document to open
+ *   visotalk import   <FILE.visotalk> [DIR] [--remix] [--allow-voice-module]   unpack a source bundle into a new directory, checked as any document is; --remix starts a talk of its own
  *   visotalk schema   [tags | hooks | motions] [--json]   what a document is made of and the hooks a part calls
  */
-import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync} from 'node:fs';
+import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
-import {alignmentIssues, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
+import {alignmentIssues, captionsSrt, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
 import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, servePlayer, type FrameInspection} from '@visotalk/exporter';
 import {lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
 import {skeleton, type Script} from './init.ts';
-import {captionsSrt} from './captions.ts';
+import {BundleError, openBundle} from '@visotalk/ir/bundle';
+import {exportBundle, importBundle} from './bundle.ts';
 import {narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
-const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still'];
+const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
 const opt = (n: string, d?: string) => (rest.includes(`--${n}`) ? rest[rest.indexOf(`--${n}`) + 1] : d);
 const flag = (n: string) => rest.includes(`--${n}`);
 
@@ -48,16 +52,17 @@ function report(issues: Array<{code: string; at: string; message: string; fix?: 
 const SCHEMA = {
   tags: {
     Doc: 'id title lang  [description sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
-    Scene: 'id  [title duration]   lines, parts and one Animation; a scene without lines needs duration (seconds)',
+    Scene: 'id  [title duration]   lines, parts, one Animation and any Sounds; a scene without lines needs duration (seconds)',
     Line: 'id  [text hold i18n]   the words spoken are the children (<Mark id="x">phrase</Mark> names a phrase an action can hang on); text is the caption when it differs (digits for numbers spoken as words); hold is silence after the line',
     Part: 'id  [x y w h z]   a box (default: the whole canvas) holding React: elements, or a function that returns them (hooks run inside it). Invisible until an Appear; in a Scene it ends with the scene, in Doc it stays',
     Animation: 'the actions of the scene, in any order',
+    Sound: 'asset  + where it starts  [id dur volume loop fadeIn fadeOut duck]   music or an effect of an <Asset kind="audio">, in a Scene: volume and duck are dB (the narration is never changed), fadeIn/fadeOut/dur seconds; loop without dur lasts to the end of the film; fadeOut needs dur or loop; duck steps it back while the narration speaks',
     Asset: 'id kind src license  [source analysis proxy]   a file the document uses; read in a part with useAsset(id)',
   },
   motions: {
-    Appear: 'on  + where it starts  [dur stagger easing id]   every part is invisible until an Appear shows it; so is any other target whose first appear or disappear is an appear',
+    Appear: 'on  + where it starts  [dur stagger easing id]   easing: linear, easeIn/easeOut/easeInOut (cubic), those with Sine Quad Quart Quint Back (easeOutQuart, easeOutBack(2.2)), cubic-bezier(x1, y1, x2, y2); every part is invisible until an Appear shows it; so is any other target whose first appear or disappear is an appear',
     Disappear: 'on  + where it starts  [dur stagger easing id]',
-    Tween: 'on  + where it starts  [dur stagger easing id]  + props (numbers)   reach their values over dur, from the value they have then; x y (px) scale rotate (deg) move the target itself',
+    Tween: 'on  + where it starts  [dur stagger easing repeat yoyo id]  + props (numbers, colours, lengths)   reach their values over dur, from the value they have then; repeat plays it again (-1: for the whole film), yoyo back and forth; x y (px) scale rotate (deg) move the target itself',
     Set: 'on  + where it starts  [id]  + props (numbers, strings, true/false)   at once',
     'where it starts': 'exactly one of: line="l1" word="phrase" [nth={2}] [edge="end"] (any substring of the spoken text; in Chinese, Japanese and Thai any characters) · line="l1" mark="name" [edge="end"] (a <Mark> in the line) · line="l1" [edge="end"] (the start of the line, or its end) · after="action-id" [edge="start"] · at={1.5} (seconds into the scene) · at="start" | at="end";  offset={s} adds to any',
   },
@@ -90,7 +95,7 @@ function schema(arg?: string) {
 }
 
 function usage(): never {
-  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still> <doc.tsx> [options]\n       visotalk schema [tags | hooks | motions] [--json]');
+  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still|export> <doc.tsx> [options]\n       visotalk import <file.visotalk> [dir] [--remix] [--allow-voice-module]\n       visotalk schema [tags | hooks | motions] [--json]');
   process.exit(2);
 }
 
@@ -115,6 +120,40 @@ function init() {
   else console.log('no TTS model (--tts-models or KOKORO_DIR): the lines will be timed from their words; run prepare when you have one');
 }
 
+/** `play` of a player bundle: its page, served as it is; a source bundle is imported first */
+async function playBundle() {
+  const {manifest, entries} = await openBundle(readFileSync(resolve(file!))).catch((e) => {
+    if (!(e instanceof BundleError)) throw e;
+    console.error(`refused: ${e.message}`);
+    return process.exit(1);
+  });
+  if (manifest.kind !== 'player') {
+    console.error(`this is a source bundle: unpack it with "visotalk import ${basename(file!)}", then play its document`);
+    process.exit(1);
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'visotalk-play-'));
+  for (const [name, data] of entries) {
+    if (!name.startsWith('player/')) continue;
+    mkdirSync(dirname(join(dir, name.slice('player/'.length))), {recursive: true});
+    writeFileSync(join(dir, name.slice('player/'.length)), data);
+  }
+  const s = await servePlayer(dir, Number(opt('port', '4800')));
+  console.log(`playing ${manifest.summary.title} at ${s.url}`);
+}
+
+/** `import`: a bundle into a new directory; a refused bundle is a message, not a stack */
+async function importCmd() {
+  const dir = rest.find((a) => !a.startsWith('--')) ?? basename(file!, '.visotalk');
+  try {
+    const r = await importBundle(resolve(file!), dir, {remix: flag('remix'), allowVoiceModule: flag('allow-voice-module')});
+    console.log(`imported "${r.manifest.summary.title}" into ${r.dir}: ${basename(r.entry)}${r.manifest.voice ? ', with its voice' : ' (no voice: run prepare)'}`);
+  } catch (e) {
+    if (!(e instanceof BundleError)) throw e;
+    console.error(`refused: ${e.message}`);
+    process.exit(1);
+  }
+}
+
 async function main() {
   // a mistyped command must not fall through to being read as a document path
   if (cmd && !cmd.startsWith('-') && !COMMANDS.includes(cmd)) {
@@ -125,6 +164,8 @@ async function main() {
   if (cmd === 'doctor') return doctor(process.argv.slice(3));
   if (cmd === 'schema') return schema(file);
   if (cmd === 'init') return init();
+  if (cmd === 'import') return importCmd();
+  if (cmd === 'play' && file?.endsWith('.visotalk')) return playBundle();
   if (!cmd || !file) usage();
   const p = load(file);
 
@@ -143,6 +184,16 @@ async function main() {
       console.log(`${sc.id}/${line.id}  ${a.motion} ${[a.on].flat().join(',')}  ${markPhrase(sayOf(p.doc, line), a.at.word, a.at.nth) ?? '(not found)'}`);
     }
     return;
+  }
+
+  if (cmd === 'export') {
+    const out = opt('out', `${p.doc.meta.id}${flag('player') ? '-player' : ''}.visotalk`)!;
+    const r = await exportBundle(p, out, {cover: opt('cover'), player: flag('player')}).catch((e) => {
+      if (!(e instanceof BundleError)) throw e;
+      console.error(`cannot export: ${e.message}`);
+      process.exit(1);
+    });
+    return void console.log(`wrote ${out}: ${(r.bytes / 1e6).toFixed(1)} MB, ${Object.keys(r.manifest.files).length} files, revision ${r.manifest.revision.slice(0, 19)}…${r.voice ? '' : ' (no voice: the narration is not prepared yet, so whoever opens it speaks the lines)'}${r.manifest.cover ? '' : ' (no cover: pass --cover FILE)'}${r.manifest.kind === 'player' && r.manifest.summary.obligations ? ` (terms of its media, kept in credits.md: ${r.manifest.summary.obligations.join(', ')})` : ''}`);
   }
 
   if (cmd === 'prepare') {

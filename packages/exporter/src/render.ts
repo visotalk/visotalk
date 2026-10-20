@@ -7,7 +7,8 @@
  * 3. Encode (H.264) and mix narration (−16 LUFS).
  */
 import {createHash} from 'node:crypto';
-import {mkdirSync, writeFileSync} from 'node:fs';
+import {mkdirSync, mkdtempSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {spawn} from 'node:child_process';
 import {findChrome, launch, openDrivenPage, PINNED_CHROME, withChromeLock} from './chrome.ts';
@@ -60,7 +61,13 @@ interface Meta {
   width: number;
   height: number;
   narration: Array<{at: number; duration: number; src: string}>;
+  sounds: Array<{src: string; at: number; end?: number; loop: boolean}>;
+  /** per sound, its gain from 0 s at `ENV_HZ` samples a second (see `soundGain`) */
+  envelopes: number[][];
 }
+
+/** Samples a second of the gain envelope a sound's file is multiplied by: fades and the duck are no faster than 0.1 s */
+const ENV_HZ = 200;
 
 function shuffled<T>(xs: T[], seed = 7): T[] {
   const a = [...xs];
@@ -101,7 +108,9 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
       await p.goto(url, {waitUntil: 'domcontentloaded'});
       await p.waitForFunction('!!window.__visotalk');
       meta = (await p.evaluate(`({doc: window.__visotalk.doc, duration: window.__visotalk.duration, width: window.__visotalk.width,
-        height: window.__visotalk.height, narration: window.__visotalk.narration})`)) as Meta;
+        height: window.__visotalk.height, narration: window.__visotalk.narration, sounds: window.__visotalk.sounds, envelopes: []})`)) as Meta;
+      const count = Math.ceil(meta.duration * ENV_HZ);
+      meta.envelopes = (await p.evaluate(`window.__visotalk.sounds.map((_, i) => window.__visotalk.soundGain(i, 0, ${ENV_HZ}, ${count}))`)) as number[][];
     } finally {
       await probeBrowser.close();
     }
@@ -147,7 +156,7 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
     if (o.encode) {
       const e0 = performance.now();
       await encode(frames.slice(from, to), join(out, 'video.mp4'), fps, format);
-      if (o.audio !== false && meta.narration.length) await muxNarration(join(out, 'video.mp4'), join(out, 'final.mp4'), from / fps, meta.narration, resolve(o.dist));
+      if (o.audio !== false && (meta.narration.length || meta.sounds.length)) await muxAudio(join(out, 'video.mp4'), join(out, 'final.mp4'), from / fps, (to - from) / fps, meta, resolve(o.dist));
       encodeMs = performance.now() - e0;
     }
     const n = order.length;
@@ -181,13 +190,45 @@ async function encode(frames: Buffer[], out: string, fps: number, format: string
   });
 }
 
-/** Narration: each clip at its absolute start, mixed, loudness-normalised to −16 LUFS */
-export async function muxNarration(video: string, out: string, offset: number, narration: Meta['narration'], root: string) {
-  const lines = narration.map((l) => ({at: l.at - offset, src: join(root, l.src)})).filter((l) => l.at >= 0);
-  if (!lines.length) return;
-  const inputs = lines.flatMap((l) => ['-i', l.src]);
-  const delays = lines.map((l, k) => `[${k + 1}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`).join(';');
-  const mix = `${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11[aout]`;
-  await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', video, ...inputs, '-filter_complex', `${delays};${mix}`,
-    '-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', out]);
+/**
+ * The soundtrack of a video that starts `offset` seconds into the film and runs `length` seconds. The narration clips each at their start, mixed and loudness-normalised
+ * to −16 LUFS, as they are; then each sound of the document: its file (looped if it loops) set at its start, multiplied by its gain envelope (volume, fades, ducking: the
+ * curve the player uses), and added to the narration without changing it.
+ */
+export async function muxAudio(video: string, out: string, offset: number, length: number, meta: Pick<Meta, 'narration' | 'sounds' | 'envelopes'>, root: string) {
+  const lines = meta.narration.map((l) => ({at: l.at - offset, src: join(root, l.src)})).filter((l) => l.at >= 0);
+  const tmp = mkdtempSync(join(tmpdir(), 'visotalk-env-'));
+  try {
+    const args = ['-y', '-loglevel', 'error', '-i', video];
+    for (const l of lines) args.push('-i', l.src);
+    for (const s of meta.sounds) args.push(...(s.loop ? ['-stream_loop', '-1'] : []), '-i', join(root, s.src));
+    meta.sounds.forEach((_, k) => {
+      const slice = Float32Array.from(meta.envelopes[k].slice(Math.round(offset * ENV_HZ), Math.round((offset + length) * ENV_HZ)));
+      const file = join(tmp, `env${k}.raw`);
+      writeFileSync(file, Buffer.from(slice.buffer));
+      args.push('-f', 'f32le', '-ar', String(ENV_HZ), '-ac', '1', '-i', file);
+    });
+    const graph: string[] = [];
+    const mixed: string[] = [];
+    if (lines.length) {
+      graph.push(...lines.map((l, k) => `[${k + 1}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`));
+      graph.push(`${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,pan=stereo|c0=c0|c1=c0[nar]`); // loudnorm returns 192 kHz, which amix cannot join to 48 kHz inputs without dropping the narration
+      mixed.push('[nar]');
+    }
+    const FMT = 'aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo';
+    meta.sounds.forEach((s, k) => {
+      const file = 1 + lines.length + k, env = 1 + lines.length + meta.sounds.length + k;
+      const at = s.at - offset;
+      // a sound that began before this piece is joined part-way in (a looped file keeps its place only to the second; a piece of a long film starts on a cut anyway)
+      const place = at >= 0 ? `adelay=${Math.round(at * 1000)}:all=1` : `atrim=start=${(-at).toFixed(3)},asetpts=PTS-STARTPTS`;
+      graph.push(`[${file}:a]aresample=48000,${FMT},${place},apad=whole_dur=${length.toFixed(3)},atrim=0:${length.toFixed(3)}[s${k}]`);
+      graph.push(`[${env}:a]aresample=48000,pan=stereo|c0=c0|c1=c0,${FMT},apad=whole_dur=${length.toFixed(3)},atrim=0:${length.toFixed(3)}[e${k}]`);
+      graph.push(`[s${k}][e${k}]amultiply[m${k}]`);
+      mixed.push(`[m${k}]`);
+    });
+    graph.push(`${mixed.join('')}amix=inputs=${mixed.length}:normalize=0:duration=longest,alimiter=limit=0.95,atrim=0:${length.toFixed(3)}[aout]`);
+    await run('ffmpeg', [...args, '-filter_complex', graph.join(';'), '-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', out]);
+  } finally {
+    rmSync(tmp, {recursive: true, force: true});
+  }
 }

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {applyEdits, EditError, parseMarkup, validate} from '../../packages/ir/src/index.ts';
+import {applyEdits, EditError, parseMarkup, textsOf, validate} from '../../packages/ir/src/index.ts';
 
 const SRC = `import {Doc, Scene, Line, Part, Animation, Appear, Tween} from '@visotalk/jsx';
 const COLOUR = 'red'; // the module's own code
@@ -113,4 +113,34 @@ test('edit: places are the ones the person was looking at, however the removals 
     {op: 'removeAnimation', scene: 'one', animation: '#1'},
   ]);
   assert.deepEqual(doc(out).scenes[0].animations.map((a) => a.dur), [undefined, undefined, 7]);
+});
+
+const TEXT_SRC = `import {Doc, Scene, Line, Part, Animation, Appear} from '@visotalk/jsx';
+import {useText} from '@visotalk/runtime';
+const Title = () => <h1>{useText('title', "Any article, in 30 seconds.")}</h1>;
+export default (<Doc id="d" title="t" lang="en" canvas="16x9">
+  <Scene id="one">
+    <Line id="l1">Hello there.</Line>
+    <Part id="card" x={0} y={0} w={800} h={200}>{() => <div><Title />{useText('sub', 'Say "hi"')}</div>}</Part>
+    <Animation><Appear on="card" line="l1"/></Animation>
+  </Scene>
+</Doc>);
+`;
+
+test('edit: the words a part draws with useText are set in <Doc texts>, and unset again', () => {
+  assert.deepEqual(textsOf(TEXT_SRC), [{id: 'title', base: 'Any article, in 30 seconds.'}, {id: 'sub', base: 'Say "hi"'}]);
+  const once = applyEdits(TEXT_SRC, [{op: 'text', id: 'title', say: 'Two words, "quoted"\nand a line'}]);
+  assert.deepEqual(doc(once).texts, {title: 'Two words, "quoted"\nand a line'});
+  const twice = applyEdits(once, [{op: 'text', id: 'sub', say: 'café ✓ — ü'}, {op: 'text', id: 'title', say: 'Changed'}]);
+  assert.deepEqual(doc(twice).texts, {title: 'Changed', sub: 'café ✓ — ü'});
+  assert.equal(twice.replace(/\n  texts=\{\{[^\n]*\}\}/, ''), TEXT_SRC, 'nothing else in the file changes');
+  const back = applyEdits(twice, [{op: 'text', id: 'title', say: null}, {op: 'text', id: 'sub', say: null}]);
+  assert.equal(doc(back).texts, undefined);
+  assert.equal(back, TEXT_SRC);
+});
+
+test('edit: a text no part draws, or one with no words, is refused', () => {
+  assert.throws(() => applyEdits(TEXT_SRC, [{op: 'text', id: 'nope', say: 'x'}]), EditError);
+  assert.throws(() => applyEdits(TEXT_SRC, [{op: 'text', id: 'title', say: '  '}]), EditError);
+  assert.ok(validate({...doc(TEXT_SRC), texts: {'Bad Id': 'x'}}).some((i) => i.code === 'id.format'));
 });

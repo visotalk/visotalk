@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import type {Compiled} from '../../packages/ir/src/index.ts';
-import {captionsSrt, cut} from '../../packages/cli/src/captions.ts';
+import {captionsSrt, cut} from '../../packages/ir/src/captions.ts';
 
 const w = (s: string) => s.split(' ');
 const fixture = (lines: Array<{text: string; from: number; duration: number; words?: Array<{w: string; t0: number; t1: number}>}>) =>

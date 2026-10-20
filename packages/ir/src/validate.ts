@@ -4,9 +4,9 @@
  * whether an action's target exists inside a part is checked after a run (the runtime lists what parts register).
  */
 import {THEMES} from './themes.ts';
-import {SPEC_VERSION, type Action, type ActionAnchor, type Scene, type VisoDoc} from './spec.ts';
+import {SPEC_VERSION, type Action, type ActionAnchor, type Scene, type Sound, type VisoDoc} from './spec.ts';
 import {sayOf} from './normalize.ts';
-import {MOTION_DUR, occurrences, phraseContexts} from './timeline.ts';
+import {easingFn, occurrences, phraseContexts, playTime, tweenable} from './timeline.ts';
 
 export interface Issue {
   code: string;
@@ -32,15 +32,19 @@ const FIXES: Record<string, string> = {
   'action.on': 'name one or more targets: <Appear on="id" …/> or on={["id", "id"]}',
   'anchor.cycle': 'anchor one action of the cycle on a word, a scene time or a scene edge',
   'anchor.after-negative': 'raise `offset` so the action does not start before the action it hangs on',
-  'motion.tween': 'a tween needs numbers: <Tween on="id" name={0.5}/>',
+  'motion.tween': 'a tween needs numbers, colours ("#426894", "hsl(212 46% 68%)") or lengths ("12px"): <Tween on="id" name={0.5}/>',
   'motion.set': 'a set needs the props it sets: <Set on="id" name={value}/>',
   'motion.props': 'appear and disappear take no props: change a prop with <Set> or <Tween>',
-  'motion.easing': 'easing is linear, easeIn, easeOut or easeInOut',
+  'motion.easing': 'easing is linear, easeIn, easeOut, easeInOut, one of those with Sine, Quad, Quart, Quint or Back (easeOutQuart, easeOutBack(2.2)), or cubic-bezier(x1, y1, x2, y2)',
+  'motion.repeat': '`repeat` (0 or more extra plays, or -1 to go on for the whole film) and `yoyo` belong to <Tween>',
   'motion.time': '`dur`, `stagger` and `hold` are seconds, 0 or more',
+  'sound.asset': 'declare the file as <Asset id="…" kind="audio" src="…" license={{…}}/> and name its id: <Sound asset="id" …/>',
+  'sound.params': '`volume` and `duck` are dB (numbers), `loop` is true or false, `fadeIn`, `fadeOut` and `dur` are seconds, 0 or more; `fadeOut` needs `dur` or `loop`',
 };
 
-const ID = /^[a-z][a-z0-9_-]*$/;
-const EASINGS = new Set(['linear', 'easeIn', 'easeOut', 'easeInOut']);
+/** What an id is: a document's, a scene's, a line's. It names directories and anchors, so it is never a path. */
+export const ID_PATTERN = /^[a-z][a-z0-9_-]*$/;
+const ID = ID_PATTERN;
 /** Seconds, 0 or more; a numeric string passes `>= 0` and then concatenates in the solver, so the type is checked too */
 const seconds = (v: unknown) => typeof v === 'number' && v >= 0;
 
@@ -53,6 +57,14 @@ export function validate(doc: VisoDoc): Issue[] {
   if (doc.theme && !Object.hasOwn(THEMES, doc.theme.id)) add('theme.unknown', '/theme/id', `unknown theme "${doc.theme.id}" (built-in: ${Object.keys(THEMES).join(', ')})`);
   if (!doc.canvas.presets.length) add('canvas.presets', '/canvas/presets', 'a canvas needs at least one preset (the first is the default)');
   for (const k of ['lead', 'hold', 'tail'] as const) if (doc.pacing?.[k] !== undefined && !seconds(doc.pacing[k])) add('motion.time', `/pacing/${k}`, `${k} is seconds, 0 or more`);
+
+  for (const [id, text] of Object.entries(doc.texts ?? {})) {
+    if (!ID.test(id)) add('id.format', `/texts/${id}`, `text id "${id}" is lowercase letters, digits, - and _, starting with a letter`);
+    if (typeof text !== 'string') add('text.value', `/texts/${id}`, `text "${id}" is a string`);
+  }
+
+  // the document's id names a directory (`.visotalk/<id>/`, in a bundle's archive too): it is a plain id, never a path
+  if (!ID.test(doc.meta.id)) add('id.format', '/meta/id', `document id "${doc.meta.id}" is not a valid id`);
 
   const seen = new Map<string, string>();
   const uniq = (kind: string, id: string, at: string) => {
@@ -97,6 +109,7 @@ export function validate(doc: VisoDoc): Issue[] {
       else if (!shown.has(`${scene.id}:${p.id}`)) add('part.appear', at, `part "${p.id}" is never shown: nothing in scene "${scene.id}" appears it`);
     }
     scene.animations.forEach((a, i) => checkAction(doc, scene, a, `${sat}/animations/${a.id ?? i}`, add));
+    (scene.sounds ?? []).forEach((s, i) => checkSound(doc, scene, s, `${sat}/sounds/${i}`, add));
   }
   for (const p of doc.parts ?? []) if (!shown.has(p.id)) add('part.appear', `/parts/${p.id}`, `global part "${p.id}" is never shown: no scene appears it`);
   checkAfter(doc, add);
@@ -128,11 +141,25 @@ function checkAction(doc: VisoDoc, scene: Scene, a: Action, at: string, add: (c:
   for (const t of [a.on].flat()) if (!ID.test(t)) add('id.format', `${at}/on`, `target "${t}" is not a valid id`);
   checkAnchor(doc, scene, a.at, `${at}/at`, add);
   for (const k of ['dur', 'stagger'] as const) if (a[k] !== undefined && !seconds(a[k])) add('motion.time', `${at}/${k}`, `${k} is seconds, 0 or more`);
-  if (a.easing !== undefined && !EASINGS.has(a.easing)) add('motion.easing', `${at}/easing`, `unknown easing "${a.easing}"`);
+  if (a.easing !== undefined && !easingFn(a.easing)) add('motion.easing', `${at}/easing`, `unknown easing "${a.easing}"`);
+  if ((a.repeat !== undefined || a.yoyo !== undefined) && (a.motion !== 'tween' || (a.repeat !== undefined && !(Number.isInteger(a.repeat) && a.repeat >= -1)) || (a.yoyo !== undefined && typeof a.yoyo !== 'boolean'))) add('motion.repeat', at, a.motion === 'tween' ? '`repeat` is a whole number, -1 or more; `yoyo` is true or false' : `${a.motion} does not repeat`);
   const props = a.props ?? {};
-  if (a.motion === 'tween' && (!Object.keys(props).length || !Object.values(props).every((v) => typeof v === 'number' && Number.isFinite(v)))) add('motion.tween', at, 'a tween needs one or more props, each a number');
+  if (a.motion === 'tween' && (!Object.keys(props).length || !Object.values(props).every((v) => tweenable(v) && (typeof v !== 'number' || Number.isFinite(v))))) add('motion.tween', at, 'a tween needs one or more props, each a number, a colour or a length');
   if (a.motion === 'set' && !Object.keys(props).length) add('motion.set', at, 'a set needs one or more props');
   if ((a.motion === 'appear' || a.motion === 'disappear') && Object.keys(props).length) add('motion.props', at, `${a.motion} takes no props`);
+}
+
+function checkSound(doc: VisoDoc, scene: Scene, s: Sound, at: string, add: (c: string, at: string, m: string) => void) {
+  const asset = (doc.assets ?? []).find((a) => a.id === s.asset);
+  if (!asset) add('sound.asset', `${at}/asset`, `no asset has the id "${s.asset}"`);
+  else if (asset.kind !== 'audio') add('sound.asset', `${at}/asset`, `asset "${s.asset}" is a ${asset.kind}, not audio`);
+  if ('after' in (s.at as ActionAnchor)) add('anchor.at', `${at}/at`, 'a sound starts on a word, a scene time or a scene edge, not after an action');
+  else checkAnchor(doc, scene, s.at, `${at}/at`, add);
+  const num = (v: unknown) => v === undefined || (typeof v === 'number' && Number.isFinite(v));
+  const secs = (v: unknown) => v === undefined || seconds(v);
+  if (!num(s.volume) || !num(s.duck) || !secs(s.dur) || !secs(s.fadeIn) || !secs(s.fadeOut) || (s.loop !== undefined && typeof s.loop !== 'boolean')) add('sound.params', at, 'a sound takes dB for volume and duck, seconds for dur, fadeIn and fadeOut, true or false for loop');
+  else if (s.fadeOut !== undefined && s.fadeOut > 0 && s.dur === undefined && !s.loop) add('sound.params', at, '`fadeOut` needs `dur` (the sound ends then) or `loop` (it ends with the film)');
+  else if (s.duck !== undefined && s.duck < 0) add('sound.params', at, '`duck` is how many dB it steps back: 0 or more');
 }
 
 /** `at.after`: action ids are unique, every reference names one, no chain returns to itself, no one hangs before the action it follows */
@@ -160,7 +187,7 @@ function checkAfter(doc: VisoDoc, add: (c: string, at: string, m: string) => voi
       else {
         // from the head's first target to its edge: the solver's `endOf` is its last target's start plus `dur`
         const stagger = Math.max(0, [ref.on].flat().length - 1) * (ref.stagger ?? 0);
-        const span = a.at.edge === 'start' ? 0 : stagger + (ref.motion === 'set' ? 0 : ref.dur ?? MOTION_DUR[ref.motion]);
+        const span = a.at.edge === 'start' ? 0 : stagger + (ref.motion === 'set' ? 0 : playTime(ref));
         if ((a.at.offset ?? 0) < -span) add('anchor.after-negative', `${at}/at`, `\`offset\` ${a.at.offset} puts the action before the start of "${ref.id}"`);
         visit(ref, [...path, a.id ?? '?']);
       }

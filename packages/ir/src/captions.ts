@@ -6,7 +6,7 @@
  * 4 / 4 / 4 and never 5 / 5 / 2. Times come from the words the aligner or the voice provider heard when their count matches the caption's words, else from
  * the share of the line's duration each cue's letters make.
  */
-import type {Compiled} from '@visotalk/ir';
+import type {Compiled} from './timeline.ts';
 
 const MAX_WORDS = 5;
 const SENTENCE = /[.!?…]["')\]]*$/;

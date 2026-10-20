@@ -20,6 +20,10 @@ await build({
   entryPoints: [join(CLI, 'src', 'main.ts')], outfile: main, bundle: true, platform: 'node', format: 'esm', target: 'node20',
   external: ['puppeteer-core', '@puppeteer/browsers', 'esbuild'], logLevel: 'warning',
 });
+// `prepare` runs the third-party voice script as a process of its own; the package has no TypeScript flag to run it with, so it ships as plain JavaScript beside main.js
+await build({
+  entryPoints: [join(CLI, 'src', 'voice_lines.ts')], outfile: join(OUT, 'cli', 'src', 'voice_lines.js'), bundle: true, platform: 'node', format: 'esm', target: 'node20', logLevel: 'warning',
+});
 // esbuild keeps the source's shebang, which asks for the flag that strips types; the bundle is plain JavaScript.
 writeFileSync(main, readFileSync(main, 'utf8').replace(/^#!.*\n/, '#!/usr/bin/env node\n'));
 chmodSync(main, 0o755);

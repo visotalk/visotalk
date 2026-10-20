@@ -16,8 +16,8 @@
  *     </Scene>
  *   </Doc>;
  */
-import {normalizeWord, occurrenceAt} from './timeline.ts';
-import type {Action, ActionAnchor, Asset, Line, MotionKind, Part, Scene, VisoDoc} from './spec.ts';
+import {normalizeWord, occurrenceAt, tweenable} from './timeline.ts';
+import type {Action, ActionAnchor, Anchor, Asset, Line, MotionKind, Part, Scene, Sound, VisoDoc} from './spec.ts';
 import {SPEC_VERSION} from './spec.ts';
 
 export class MarkupError extends Error {
@@ -297,12 +297,13 @@ class Parser {
 // ------------------------------------------------------------------------------------------------ compiler
 
 const META_EXTRA = ['description', 'sources', 'generator', 'created', 'updated'];
-const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing', 'exports'];
+const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing', 'texts', 'exports'];
 const SCENE_ATTRS = ['id', 'title', 'duration'];
 const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
 const LINE_ATTRS = ['id', 'text', 'hold', 'i18n'];
 /** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
-const ACTION_ATTRS = ['on', 'id', 'dur', 'stagger', 'easing', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
+const SOUND_ATTRS = ['id', 'asset', 'dur', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
+const ACTION_ATTRS = ['on', 'id', 'dur', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 
 type Obj = {[k: string]: unknown};
 
@@ -349,6 +350,7 @@ class Compiler {
   compile(): VisoDoc {
     const root = this.root;
     if (root.tag !== 'Doc') this.fail(`the root element must be <Doc>, not <${root.tag}>`, root.loc);
+    this.spans.set('/', root);
     const a = this.attrs(root, DOC_ATTRS);
     for (const k of ['id', 'title', 'lang']) if (typeof a[k] !== 'string') this.fail(`<Doc> needs ${k}="…" (id, title and lang)`, root.loc);
     const doc: Obj = {spec: a.spec ?? SPEC_VERSION, meta: {id: a.id, title: a.title, lang: a.lang, ...Object.fromEntries(META_EXTRA.filter((k) => a[k] !== undefined).map((k) => [k, a[k]]))}};
@@ -383,11 +385,12 @@ class Compiler {
     if (a.theme !== undefined) doc.theme = {id: a.theme, ...(a.tokens !== undefined && {tokens: a.tokens})};
     if (a.voice !== undefined) doc.voice = {voice: a.voice, ...(a.speed !== undefined && {speed: a.speed}), ...(a.lexicon !== undefined && {lexicon: a.lexicon})};
     if (a.pacing !== undefined) doc.pacing = a.pacing;
+    if (a.texts !== undefined) doc.texts = a.texts;
     if (assets.length) doc.assets = assets;
     if (parts.length) doc.parts = parts;
     doc.scenes = scenes;
     if (a.exports !== undefined) doc.exports = a.exports;
-    const order = ['spec', 'meta', 'canvas', 'theme', 'voice', 'pacing', 'assets', 'parts', 'scenes', 'exports'];
+    const order = ['spec', 'meta', 'canvas', 'theme', 'voice', 'pacing', 'texts', 'assets', 'parts', 'scenes', 'exports'];
     const out: Obj = {};
     for (const k of order) if (doc[k] !== undefined) out[k] = doc[k];
     return out as unknown as VisoDoc;
@@ -413,6 +416,7 @@ class Compiler {
     const lines: Line[] = [];
     const parts: Part[] = [];
     const animations: Action[] = [];
+    const sounds: Sound[] = [];
     const actionLocs = new Map<Action, Loc>();
     for (const k of this.elements(el)) {
       if (k.tag === 'Line') lines.push(this.line(k, id));
@@ -432,10 +436,16 @@ class Compiler {
           animations.push(action);
           actionLocs.set(action, m.loc);
         }
-      } else this.fail(`<${k.tag}> cannot be inside <Scene>; use <Line>, <Part> or <Animation>`, k.loc);
+      } else if (k.tag === 'Sound') {
+        const sound = this.sound(k);
+        this.locs.set(`/scenes/${id}/sounds/${sounds.length}`, k.loc);
+        this.spans.set(`/scenes/${id}/sounds/${sounds.length}`, k);
+        sounds.push(sound);
+        actionLocs.set(sound as unknown as Action, k.loc);
+      } else this.fail(`<${k.tag}> cannot be inside <Scene>; use <Line>, <Part>, <Animation> or <Sound>`, k.loc);
     }
     // mark="name" is the phrase and occurrence the line's <Mark> wraps
-    for (const action of animations) {
+    for (const action of [...animations, ...sounds] as Action[]) {
       const at = action.at as {line?: string; mark?: string; word?: string; nth?: number};
       if (at.mark === undefined) continue;
       const found = this.marks.get(`${id}/${at.line}`)?.get(at.mark);
@@ -447,7 +457,7 @@ class Compiler {
       at.word = found.word;
       if (found.nth > 1) at.nth = found.nth;
     }
-    return {id, ...(a.title !== undefined && {title: a.title as string}), lines, ...(a.duration !== undefined && {duration: a.duration as number}), parts, animations};
+    return {id, ...(a.title !== undefined && {title: a.title as string}), lines, ...(a.duration !== undefined && {duration: a.duration as number}), parts, animations, ...(sounds.length && {sounds})};
   }
 
   line(el: El, scene: string): Line {
@@ -493,24 +503,10 @@ class Compiler {
     return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number}), ...(a.i18n !== undefined && {i18n: a.i18n as Line['i18n']})};
   }
 
-  action(el: El): Action {
-    const motion = own(MOTIONS, el.tag)!;
-    const takesProps = motion === 'set' || motion === 'tween';
-    const a: Obj = {};
-    const props: Record<string, number | string | boolean> = {};
-    for (const at of el.attrs) {
-      if (ACTION_ATTRS.includes(at.name)) a[at.name] = at.value;
-      else if (takesProps) {
-        const v = at.value;
-        if (typeof v !== 'number' && !(motion === 'set' && (typeof v === 'string' || typeof v === 'boolean'))) this.fail(`${at.name} of <${el.tag}> is ${motion === 'tween' ? 'a number' : 'a number, a string or true/false'}`, at.loc);
-        props[at.name] = v;
-      } else this.fail(`<${el.tag}> has no attribute "${at.name}"; it takes: ${ACTION_ATTRS.join(', ')}`, at.loc);
-    }
-    this.elements(el);
-    this.numbers(el, a, ['dur', 'stagger', 'offset', 'nth', ...(typeof a.at === 'string' ? [] : ['at'])]);
-    if (a.on === undefined || !(typeof a.on === 'string' || (Array.isArray(a.on) && a.on.every((x) => typeof x === 'string')))) this.fail(`<${el.tag}> needs on="id" (a part, or an element a part registers), or on={["id", "id"]}`, el.loc);
-    const anchors = (['line', 'after', 'at'] as const).filter((k) => a[k] !== undefined);
-    if (anchors.length !== 1) this.fail(`<${el.tag}> needs exactly one of line (with word), after, or at: when does it start?`, el.loc);
+  /** Where a motion or a sound starts: one of a word of a line (`line`, with `word` or `mark`, `nth`), `after` another action (motions only), or `at` seconds into the scene, "start" or "end" */
+  anchor(el: El, a: Obj, allowAfter: boolean): ActionAnchor {
+    const anchors = (['line', ...(allowAfter ? ['after'] : []), 'at'] as const).filter((k) => a[k] !== undefined);
+    if (anchors.length !== 1) this.fail(`<${el.tag}> needs exactly one of line (with word), ${allowAfter ? 'after, ' : ''}or at: when does it start?`, el.loc);
     if (a.word !== undefined && a.line === undefined) this.fail('word needs line="…": the line whose words it names', el.loc);
     if ((a.nth !== undefined) && a.word === undefined) this.fail('nth needs word="…"', el.loc);
     if (a.mark !== undefined && a.line === undefined) this.fail('mark needs line="…": the line that holds the <Mark>', el.loc);
@@ -521,9 +517,44 @@ class Compiler {
     else if (typeof a.at === 'number') at = {at: a.at + ((a.offset as number | undefined) ?? 0)};
     else if (a.at === 'start' || a.at === 'end') at = {scene: a.at, ...(a.offset !== undefined && {offset: a.offset as number})};
     else this.fail('at is seconds from the start of the scene, "start" or "end"', el.loc);
+    return at;
+  }
+
+  sound(el: El): Sound {
+    const a: Obj = this.attrs(el, SOUND_ATTRS);
+    this.elements(el);
+    this.numbers(el, a, ['dur', 'volume', 'fadeIn', 'fadeOut', 'duck', 'offset', 'nth', ...(typeof a.at === 'string' ? [] : ['at'])]);
+    if (typeof a.asset !== 'string') this.fail('<Sound> needs asset="id": an <Asset kind="audio"> of the document', el.loc);
+    if (a.loop !== undefined && typeof a.loop !== 'boolean') this.fail('loop is true or false: <Sound loop …/>', el.loc);
+    const at = this.anchor(el, a, false);
+    return {
+      ...(a.id !== undefined && {id: a.id as string}), asset: a.asset, at: at as Anchor,
+      ...(a.dur !== undefined && {dur: a.dur as number}), ...(a.volume !== undefined && {volume: a.volume as number}), ...(a.loop !== undefined && {loop: a.loop}),
+      ...(a.fadeIn !== undefined && {fadeIn: a.fadeIn as number}), ...(a.fadeOut !== undefined && {fadeOut: a.fadeOut as number}), ...(a.duck !== undefined && {duck: a.duck as number}),
+    };
+  }
+
+  action(el: El): Action {
+    const motion = own(MOTIONS, el.tag)!;
+    const takesProps = motion === 'set' || motion === 'tween';
+    const a: Obj = {};
+    const props: Record<string, number | string | boolean> = {};
+    for (const at of el.attrs) {
+      if (ACTION_ATTRS.includes(at.name)) a[at.name] = at.value;
+      else if (takesProps) {
+        const v = at.value;
+        if (!(motion === 'tween' ? tweenable(v) : typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean')) this.fail(`${at.name} of <${el.tag}> is ${motion === 'tween' ? 'a number, a colour or a length such as "12px"' : 'a number, a string or true/false'}`, at.loc);
+        props[at.name] = v as number | string | boolean;
+      } else this.fail(`<${el.tag}> has no attribute "${at.name}"; it takes: ${ACTION_ATTRS.join(', ')}`, at.loc);
+    }
+    this.elements(el);
+    this.numbers(el, a, ['dur', 'stagger', 'offset', 'nth', 'repeat', ...(typeof a.at === 'string' ? [] : ['at'])]);
+    if (a.on === undefined || !(typeof a.on === 'string' || (Array.isArray(a.on) && a.on.every((x) => typeof x === 'string')))) this.fail(`<${el.tag}> needs on="id" (a part, or an element a part registers), or on={["id", "id"]}`, el.loc);
+    const at = this.anchor(el, a, true);
     return {
       ...(a.id !== undefined && {id: a.id as string}), motion, on: a.on as string | string[], at,
       ...(a.dur !== undefined && {dur: a.dur as number}), ...(a.stagger !== undefined && {stagger: a.stagger as number}), ...(a.easing !== undefined && {easing: a.easing as Action['easing']}),
+      ...(a.repeat !== undefined && {repeat: a.repeat as number}), ...(a.yoyo !== undefined && {yoyo: a.yoyo as boolean}),
       ...(takesProps && Object.keys(props).length && {props}),
     };
   }
@@ -553,4 +584,20 @@ export function locate(locs: Map<string, Loc>, path: string): Loc | undefined {
     if (l) return l;
   }
   return undefined;
+}
+
+/**
+ * The words a document's parts draw with `useText(id, base)`, found in its source without running it: the ids and the `base` each was written with, in the
+ * order they first appear. Only calls whose id and base are plain string literals count; a person edits those, in `<Doc texts>`, and a call that builds
+ * its words is the author's own business.
+ */
+export function textsOf(source: string): Array<{id: string; base: string}> {
+  const found = new Map<string, string>();
+  const call = /\buseText\(\s*(?:'([^'\\\n]*)'|"([^"\\\n]*)")\s*,\s*(?:'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`([^`$\\]*)`)\s*\)/g;
+  for (const m of source.matchAll(call)) {
+    const id = m[1] ?? m[2];
+    const raw = m[3] ?? m[4] ?? m[5];
+    if (!found.has(id)) found.set(id, raw.replace(/\\(.)/g, (_, c: string) => (c === 'n' ? '\n' : c)));
+  }
+  return [...found].map(([id, base]) => ({id, base}));
 }

@@ -15,7 +15,7 @@ Never "free to look at", never a file of unknown origin, never a hotlink (the fi
 
 ## Where it goes
 
-The project's local library: `media/` beside the document, one file per asset, named for what it is (`media/rocket-launch.jpg`). Reuse what the library already holds before fetching again. Note the size and aspect of what you fetched: they go into the layout.
+The project's local library: `media/` beside the document, one file per asset, named for what it is (`media/rocket-launch.jpg`). Name a file in lower case with hyphens and a plain extension, and keep to PNG, JPEG, GIF, WebP, MP4 or WebM where you can: only such files can be imported by VisoTalk's web app from a `.visotalk` bundle (`visotalk export`), which refuses `Rocket Launch.JPG`. Reuse what the library already holds before fetching again. Note the size and aspect of what you fetched: they go into the layout.
 
 ## How it is declared
 

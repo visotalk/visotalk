@@ -3,11 +3,13 @@
  * Work files live next to the document in .visotalk/<doc-id>/.
  */
 import {execFileSync, spawn} from 'node:child_process';
-import {closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync} from 'node:fs';
+import {closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-import {basename, dirname, extname, join, resolve} from 'node:path';
+import {basename, dirname, extname, join, relative, resolve, sep} from 'node:path';
 import {build as esbuild} from 'esbuild';
-import {parseMarkup, sayOf, speechTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {localImports} from '@visotalk/ir/bundle';
+import {clipKey, kokoroKey} from './clip_key.ts';
+import {ID_PATTERN, parseMarkup, sayOf, speechTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 
 const HERE = import.meta.dirname;
 const RUNTIME = resolve(HERE, '../../runtime/src/index.ts');
@@ -33,6 +35,8 @@ export function load(file: string): Project {
   if (extname(path) !== '.tsx') throw new Error(`a document is a .tsx file (got ${basename(path)}); JSON documents are no longer read`);
   const markup = parseMarkup(text);
   const doc = markup.doc;
+  // the id names the work directory, and a document may come from anywhere: never a path
+  if (!ID_PATTERN.test(doc.meta.id)) throw new Error(`the document id "${doc.meta.id}" is not a valid id (${path})`);
   const work = join(dirname(path), '.visotalk', doc.meta.id);
   mkdirSync(work, {recursive: true});
   return {file: path, dir: dirname(path), work, doc, locs: markup.locs, prelude: markup.prelude};
@@ -41,11 +45,11 @@ export function load(file: string): Project {
 /** The source files a document's code imports from its own project (relative paths), followed through their own imports */
 function localSources(p: Project): Array<{file: string; text: string}> {
   const out = new Map<string, string>();
+  const isFile = (rel: string) => statSync(resolve(p.dir, rel), {throwIfNoEntry: false})?.isFile() ?? false;
   const visit = (from: string, text: string) => {
-    for (const m of text.matchAll(/(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]/g)) {
-      const base = resolve(dirname(from), m[1]);
-      const file = ['', '.ts', '.tsx', '.js', '/index.ts', '/index.tsx'].map((e) => base + e).concat(base.replace(/\.jsx?$/, '.ts'), base.replace(/\.jsx?$/, '.tsx')).find((f) => existsSync(f) && extname(f) !== '' && !out.has(f));
-      if (!file) continue;
+    for (const rel of localImports(relative(p.dir, from).split(sep).join('/'), text, isFile)) {
+      const file = resolve(p.dir, rel);
+      if (out.has(file)) continue;
       const t = readFileSync(file, 'utf8');
       out.set(file, t);
       visit(file, t);
@@ -249,32 +253,42 @@ export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManif
     return {};
   }
   const third = voiceProvider(p.doc.voice?.voice);
-  if (!third && !models) throw new Error('narration needs a TTS model: pass --tts-models DIR or set KOKORO_DIR (kokoro-v1.0.onnx + voices-v1.0.bin), or name a voice provider: voice="minimax:<voice>"');
-  const speak = join(p.work, 'speak.json');
   const spoken = narrationLanguage(p.doc.meta.lang, p.doc.voice?.voice);
   const speed = p.doc.voice?.speed ?? 1;
-  const wavDir = join(p.dir, '.visotalk', '.tts-cache');
-  let manifest: Record<string, {file: string; duration: number}>;
-  if (third) {
-    // a provider's own language tag (zh-CN, en) goes through as written: it is what the provider's voices are listed under
-    writeFileSync(speak, JSON.stringify({provider: third.provider, voice: third.voice, lang: p.doc.meta.lang, speed, lines}));
-    manifest = JSON.parse(execFileSync(process.execPath, [...process.execArgv, join(HERE, 'voice_lines.ts'), speak, wavDir], {stdio: ['ignore', 'pipe', 'inherit']}).toString());
-  } else {
-    writeFileSync(speak, JSON.stringify({voice: spoken.voice, lang: spoken.tts, speed, lines}));
-    manifest = JSON.parse(execFileSync(PYTHON(), [join(HERE, 'tts_lines.py'), speak, wavDir, models!]).toString());
-  }
-  const manifestPath = join(p.work, 'clips.json');
-  writeFileSync(manifestPath, JSON.stringify(manifest));
-  const words = alignWords(p.doc.meta.lang, speak, wavDir, manifestPath, manifest);
+  // a provider's own language tag (zh-CN, en) goes through as written: it is what the provider's voices are listed under
+  const keyOf = (say: string) => (third ? clipKey({...third, speed, lang: p.doc.meta.lang}, say) : kokoroKey(spoken.voice, speed, spoken.tts, say));
+  // A line whose clip was made from these very words, voice and speed is kept as it is, whoever made it (a bundle brings its clips, and a provider bills each one).
+  const before: VoiceManifest = existsSync(voicePath) ? JSON.parse(readFileSync(voicePath, 'utf8')) : {};
+  const kept = (l: {id: string; say: string}) => before[l.id]?.key === keyOf(l.say) && before[l.id].audio && existsSync(join(p.work, before[l.id].audio));
+  const todo = lines.filter((l) => !kept(l));
   const voice: VoiceManifest = {};
-  for (const [id, m] of Object.entries(manifest)) {
-    const aac = m.file.replace('.wav', '.m4a'); // AAC plays everywhere; Ogg Opus does not play on every iPhone
-    if (!existsSync(join(audioDir, aac))) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(wavDir, m.file), '-c:a', 'aac', '-b:a', '64k', join(audioDir, aac)]);
-    voice[id] = {duration: m.duration, audio: `audio/${aac}`, ...(words[id] && {words: words[id]})};
+  if (todo.length) {
+    if (!third && !models) throw new Error('narration needs a TTS model: pass --tts-models DIR or set KOKORO_DIR (kokoro-v1.0.onnx + voices-v1.0.bin), or name a voice provider: voice="minimax:<voice>"');
+    const speak = join(p.work, 'speak.json');
+    const wavDir = join(p.dir, '.visotalk', '.tts-cache');
+    let manifest: Record<string, {file: string; duration: number}>;
+    if (third) {
+      writeFileSync(speak, JSON.stringify({...third, lang: p.doc.meta.lang, speed, lines: todo}));
+      // the package ships the script built (voice_lines.js); in the repository it is the TypeScript source, which the flags of this process can run
+      const script = existsSync(join(HERE, 'voice_lines.js')) ? join(HERE, 'voice_lines.js') : join(HERE, 'voice_lines.ts');
+      manifest = JSON.parse(execFileSync(process.execPath, [...process.execArgv, script, speak, wavDir], {cwd: p.dir, stdio: ['ignore', 'pipe', 'inherit']}).toString());
+    } else {
+      writeFileSync(speak, JSON.stringify({voice: spoken.voice, lang: spoken.tts, speed, lines: todo}));
+      manifest = JSON.parse(execFileSync(PYTHON(), [join(HERE, 'tts_lines.py'), speak, wavDir, models!]).toString());
+    }
+    const manifestPath = join(p.work, 'clips.json');
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    const words = alignWords(p.doc.meta.lang, speak, wavDir, manifestPath, manifest);
+    for (const [id, m] of Object.entries(manifest)) {
+      const aac = m.file.replace('.wav', '.m4a'); // AAC plays everywhere; Ogg Opus does not play on every iPhone
+      if (!existsSync(join(audioDir, aac))) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(wavDir, m.file), '-c:a', 'aac', '-b:a', '64k', join(audioDir, aac)]);
+      voice[id] = {duration: m.duration, audio: `audio/${aac}`, key: m.file.replace(/\.wav$/, ''), ...(words[id] && {words: words[id]})};
+    }
   }
-  writeFileSync(voicePath, JSON.stringify(voice, null, 1));
+  const whole: VoiceManifest = Object.fromEntries(lines.map((l) => [l.id, voice[l.id] ?? before[l.id]]));
+  writeFileSync(voicePath, JSON.stringify(whole, null, 1));
   rmSync(estimateMark(p), {force: true});
-  return voice;
+  return whole;
 }
 
 type Words = NonNullable<VoiceManifest[string]['words']>;
@@ -304,10 +318,10 @@ function alignWords(lang: string, speak: string, wavDir: string, manifestPath: s
 
 /**
  * Assets → dist/assets: files copied, with srcs rewritten relative to dist. Returns the document with the bodies of its parts left out (the player
- * gets them from the module). A video asset is copied like an image, and what ffprobe found about it (`fps`, `frames`: it must have a constant frame rate)
+ * gets them from the module). An audio asset is copied too (for an artifact, as a smaller MP3). A video asset is copied like an image, and what ffprobe found about it (`fps`, `frames`: it must have a constant frame rate)
  * goes into its `analysis` and into `dist/media.json`, which the exporter decodes from.
  */
-function ingest(p: Project, dist: string): VisoDoc {
+function ingest(p: Project, dist: string, artifact = false): VisoDoc {
   const doc = structuredClone(p.doc);
   for (const part of [...(doc.parts ?? []), ...doc.scenes.flatMap((s) => s.parts)]) delete part.body;
   const outDir = join(dist, 'assets');
@@ -317,8 +331,10 @@ function ingest(p: Project, dist: string): VisoDoc {
     if (/^https?:/.test(a.src)) continue;
     const src = resolve(p.dir, a.src);
     if (!existsSync(src)) throw new Error(`asset "${a.id}": file not found: ${a.src}`);
-    const file = `${a.id}${extname(src)}`;
-    copyFileSync(src, join(outDir, file));
+    // an artifact page is small: music and effects go in as 96 kbit/s MP3
+    const file = artifact && a.kind === 'audio' ? `${a.id}.mp3` : `${a.id}${extname(src)}`;
+    if (artifact && a.kind === 'audio') execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-vn', '-c:a', 'libmp3lame', '-b:a', '96k', join(outDir, file)]);
+    else copyFileSync(src, join(outDir, file));
     a.src = `assets/${file}`;
     if (a.kind === 'video') {
       const probe = Object.fromEntries(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=r_frame_rate,nb_frames,duration', '-of', 'default=nw=1', src], {encoding: 'utf8'}).trim().split('\n').map((l) => l.split('=')));
@@ -340,7 +356,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   if (!existsSync(voicePath)) prepare(p);
   const dist = resolve(opts.out ?? join(p.work, 'dist'));
   mkdirSync(dist, {recursive: true});
-  const doc = ingest(p, dist);
+  const doc = ingest(p, dist, opts.artifact);
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));
   const entry = join(p.work, 'entry.tsx');
   // an artifact page serves no .m4a: its narration is MP3, under the same names

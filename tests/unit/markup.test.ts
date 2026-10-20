@@ -74,7 +74,7 @@ test('markup: mistakes name the line and what to write instead', () => {
   const doc = (inner: string, head = '') => `${head}export default <Doc id="d" title="t" lang="en">${inner}</Doc>;`;
   const fails = (src: string, re: RegExp) => assert.throws(() => parseMarkup(src), (e) => e instanceof MarkupError && re.test(e.message));
   fails('const x = 1;', /no `export default <Doc`/);
-  fails(doc('<Scene id="s"><Beat id="b"/></Scene>'), /<Beat> cannot be inside <Scene>; use <Line>, <Part> or <Animation>/);
+  fails(doc('<Scene id="s"><Beat id="b"/></Scene>'), /<Beat> cannot be inside <Scene>; use <Line>, <Part>, <Animation> or <Sound>/);
   fails(doc('<Text id="t"/>'), /<Text> cannot be inside <Doc>/);
   fails(doc('<Scene id="s"><Line id="l">Words <b>bold</b></Line></Scene>'), /a line holds the words spoken/);
   fails(doc('<Scene id="s"><Line id="l"></Line></Scene>'), /holds no words/);
