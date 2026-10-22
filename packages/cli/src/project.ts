@@ -471,7 +471,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));
   const entry = join(p.work, 'entry.tsx');
   const voice = JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest;
-  // every player plays one track, the film's whole soundtrack mixed as the video's is; the clips and sounds stay beside it for what plays without a build (the Studio's edits)
+  // every player plays one track, the film's whole soundtrack mixed as the video's is; the clips and sounds stay beside it for what plays without a build (the web editor's edits)
   const mix = await mixSoundtrack(p, doc, voice, dist);
   // the document is also a module: its parts' React runs in the player
   writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './voice.json';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any${mix ? `, mix: '${mix}'` : ''}});\n`);
