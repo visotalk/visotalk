@@ -1,26 +1,55 @@
 /** Drawing shared by the Moon parts: a lit disc, the Moon's grey patches, labels, and the layer every part draws on. All SVG, so frames can be measured. */
 import React from 'react';
-import {Obj, useProp} from '@visotalk/runtime';
+import {Obj, useProp, useTheme} from '@visotalk/runtime';
 
 export const CREAM = '#efe8cf';
 export const NIGHT = '#343a52';
+
+/** The colours that are not theme tokens: the Moon, the Sun's label, the shadow and the frame. The dark ones are the film's own; a light theme (a paper ground) gets its own. */
+export interface Palette {
+  light: boolean;
+  lit: [string, string];
+  night: string;
+  /** the moon's outline (a disc on a pale ground needs one) */
+  rim: string;
+  moonLabel: string;
+  sunLabel: string;
+  earthLabel: string;
+  earthHalo: string;
+  frame: string;
+  frameNight: string;
+  shadow: string;
+  rays: number;
+}
+const DARK: Palette = {light: false, lit: ['#fff8e0', CREAM], night: NIGHT, rim: 'var(--vt-border)', moonLabel: '#efe8cf', sunLabel: '#ffc94d', earthLabel: 'var(--vt-text)', earthHalo: 'var(--vt-bg)', frame: '#10131f', frameNight: '#2b3047', shadow: 'rgba(0,0,0,0.5)', rays: 0.18};
+const LIGHT: Palette = {light: true, lit: ['#fffdf4', '#fbefc4'], night: '#8d97b5', rim: '#5a6277', moonLabel: 'var(--vt-text)', sunLabel: 'var(--vt-warn)', earthLabel: '#ffffff', earthHalo: '#1b2b52', frame: '#E4DED0', frameNight: '#9aa3bd', shadow: 'rgba(29,35,48,0.28)', rays: 0.4};
+
+/** The palette for the theme being drawn: the light one when the ground is pale */
+export function usePalette(): Palette {
+  const bg = useTheme().colors.bg.replace('#', '');
+  const lightness = [0, 2, 4].reduce((n, i) => n + parseInt(bg.slice(i, i + 2), 16), 0) / 3;
+  return lightness > 128 ? LIGHT : DARK;
+}
 export const DEG = Math.PI / 180;
 export const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
 
 /** The canvas is 1920 x 1080; every layer draws in those coordinates, above y = 880 (the captions use the band below) */
-export const Layer = ({children}: {children: React.ReactNode}) => (
-  <svg viewBox="0 0 1920 1080" width="100%" height="100%" style={{display: 'block'}}>
-    <defs>
-      <radialGradient id="moon-cream" cx=".35" cy=".35" r=".8"><stop offset="0" stopColor="#fff8e0" /><stop offset="1" stopColor={CREAM} /></radialGradient>
-    </defs>
-    {children}
-  </svg>
-);
+export const Layer = ({children}: {children: React.ReactNode}) => {
+  const {lit} = usePalette();
+  return (
+    <svg viewBox="0 0 1920 1080" width="100%" height="100%" style={{display: 'block'}}>
+      <defs>
+        <radialGradient id="moon-cream" cx=".35" cy=".35" r=".8"><stop offset="0" stopColor={lit[0]} /><stop offset="1" stopColor={lit[1]} /></radialGradient>
+      </defs>
+      {children}
+    </svg>
+  );
+};
 
 /** A label with an outline in the background colour, so a line passing behind it does not cut the letters */
-export const Label = ({x, y, children, fill = 'var(--vt-text)', size = 32, anchor = 'middle'}: {x: number; y: number; children: React.ReactNode; fill?: string; size?: number; anchor?: 'start' | 'middle' | 'end'}) => (
+export const Label = ({x, y, children, fill = 'var(--vt-text)', size = 32, anchor = 'middle', halo = 'var(--vt-bg)'}: {x: number; y: number; children: React.ReactNode; fill?: string; size?: number; anchor?: 'start' | 'middle' | 'end'; halo?: string}) => (
   <text x={x} y={y} textAnchor={anchor} dominantBaseline="central" fontSize={size} fontWeight={700} fontFamily="var(--vt-sans)" fill={fill}
-    stroke="var(--vt-bg)" strokeWidth={10} strokeLinejoin="round" paintOrder="stroke">{children}</text>
+    stroke={halo} strokeWidth={10} strokeLinejoin="round" paintOrder="stroke">{children}</text>
 );
 
 /** The lit part of a disc seen from Earth; phase 0 is the new moon, 90 first quarter, 180 full moon, 270 last quarter (the lit side is on the right while it waxes) */
@@ -56,19 +85,20 @@ export function arc(cx: number, cy: number, r: number, from: number, to: number)
 const MARIA: [number, number, number][] = [[-0.3, -0.35, 0.28], [0.25, -0.2, 0.22], [-0.1, 0.15, 0.2], [0.35, 0.3, 0.17], [-0.45, 0.25, 0.14], [0.05, -0.6, 0.12]];
 
 /** A disc whose lit part is `lit` (a path); `tint` (0 to 1) reddens it, as in a lunar eclipse. `id` names the clip path and must be unique in the document */
-export function MoonFace({id, cx, cy, r, lit, night = NIGHT, maria = false, tint = 0, stroke = 'var(--vt-border)'}: {
+export function MoonFace({id, cx, cy, r, lit, night, maria = false, tint = 0, stroke}: {
   id: string; cx: number; cy: number; r: number; lit: string; night?: string; maria?: boolean; tint?: number; stroke?: string;
 }) {
+  const pal = usePalette();
   return (
     <g>
-      <circle cx={cx} cy={cy} r={r} fill={night} />
+      <circle cx={cx} cy={cy} r={r} fill={night ?? pal.night} />
       <clipPath id={id}><path d={lit} /></clipPath>
       <g clipPath={`url(#${id})`}>
         <circle cx={cx} cy={cy} r={r} fill="url(#moon-cream)" />
         {maria && MARIA.map(([x, y, s], i) => <circle key={i} cx={cx + x * r} cy={cy + y * r} r={s * r} fill="rgba(110,106,92,0.35)" />)}
       </g>
       {tint > 0 && <circle cx={cx} cy={cy} r={r} fill="rgb(150,50,35)" opacity={0.85 * tint} />}
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={stroke} strokeWidth={3} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={stroke ?? pal.rim} strokeWidth={3} />
     </g>
   );
 }
@@ -81,12 +111,12 @@ const DISCS = [{id: 'sliver', phase: 40, x: 384}, {id: 'half', phase: 90, x: 960
  * 1 shows the dark rest of the sphere and the one dashed circle round each disc. The discs are targets named after the words that bring them in.
  */
 export function PhaseDiscs() {
-  const whole = useProp('phases', 'whole', 0);
+  const whole = useProp('phases', 'whole', 0), pal = usePalette();
   return (
     <Layer>
       {DISCS.map((d) => (
         <Obj key={d.id} id={d.id} as="g">
-          <MoonFace id={`${d.id}-lit`} cx={d.x} cy={DISC_Y} r={DISC_R} lit={litPath(d.x, DISC_Y, DISC_R, d.phase)} maria stroke="none" night={`rgba(70,76,96,${0.35 + 0.35 * whole})`} />
+          <MoonFace id={`${d.id}-lit`} cx={d.x} cy={DISC_Y} r={DISC_R} lit={litPath(d.x, DISC_Y, DISC_R, d.phase)} maria night={pal.light ? pal.night : `rgba(70,76,96,${0.35 + 0.35 * whole})`} stroke={pal.light ? pal.rim : 'none'} />
           {whole > 0 && <path d={arc(d.x, DISC_Y, DISC_R + 16, 0, 360 * whole)} fill="none" stroke="var(--vt-data)" strokeWidth={4} strokeDasharray="14 12" />}
           <Label x={d.x} y={DISC_Y + DISC_R + 62} fill="var(--vt-muted)" size={34}>{d.id === 'full-disc' ? 'full' : d.id}</Label>
         </Obj>

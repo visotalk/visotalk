@@ -251,21 +251,27 @@ test('import refuses a document that is not valid, a voice module, a player, and
 
 test('prepare keeps a line whose clip was made from these words, so a bundle needs no model and no provider to be used', () => {
   const p = project();
-  const key = kokoroKey('af_heart', 1, 'en-us', 'Hello there, world.');
+  const key = kokoroKey('af_heart', 1, 'Hello there, world.');
   mkdirSync(join(p.work, 'audio'), {recursive: true});
   writeFileSync(join(p.work, 'audio/x.m4a'), 'a');
   const entry = {duration: 1.5, audio: 'audio/x.m4a', key};
   writeFileSync(join(p.work, 'voice.json'), JSON.stringify({l1: entry}));
   assert.deepEqual(prepare(p, undefined), {l1: entry});
   writeFileSync(join(p.work, 'voice.json'), JSON.stringify({l1: {...entry, key: 'other'}}));
-  assert.throws(() => prepare(p, undefined), /needs a TTS model/);
+  const kokoroDir = process.env.KOKORO_DIR; // a machine with a model installed would speak the line instead of refusing
+  delete process.env.KOKORO_DIR;
+  try {
+    assert.throws(() => prepare(p, undefined), /needs a TTS model/);
+  } finally {
+    if (kokoroDir !== undefined) process.env.KOKORO_DIR = kokoroDir;
+  }
 });
 
 test('the key of a Kokoro clip is the one tts_lines.py gives it', () => {
-  const py = (voice: string, speed: number, lang: string, say: string) => spawnSync('python3', ['-c',
-    'import hashlib,sys;v,s,l,t=sys.argv[1:];print(hashlib.sha1((f"{v}|{s}|{t}" if l=="en-us" else f"{v}|{s}|{l}|{t}").encode()).hexdigest()[:12])', voice, String(speed), lang, say], {encoding: 'utf8'}).stdout.trim();
-  for (const [v, s, l, t] of [['af_heart', 1, 'en-us', 'Hello there.'], ['zf_xiaobei', 0.9, 'cmn', '\u4f60\u597d\uff0c\u4e16\u754c\u3002'], ['af_heart', 1.25, 'en-us', 'It took 123 years.']] as const) {
-    assert.equal(kokoroKey(v, s, l, t), py(v, s, l, t));
+  const py = (voice: string, speed: number, say: string) => spawnSync('python3', ['-c',
+    'import hashlib,sys;v,s,t=sys.argv[1:];print(hashlib.sha1(f"{v}|{s}|{t}".encode()).hexdigest()[:12])', voice, String(speed), say], {encoding: 'utf8'}).stdout.trim();
+  for (const [v, s, t] of [['af_heart', 1, 'Hello there.'], ['bf_emma', 0.9, 'Hello, world.'], ['af_heart', 1.25, 'It took 123 years.']] as const) {
+    assert.equal(kokoroKey(v, s, t), py(v, s, t));
   }
 });
 

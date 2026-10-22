@@ -18,7 +18,7 @@
  */
 import React from 'react';
 import {Obj, useProp} from '@visotalk/runtime';
-import {DEG, Label, Layer, MoonFace, NIGHT, arc, clamp, litPath, sunHalf} from './moon.tsx';
+import {DEG, Label, Layer, MoonFace, arc, clamp, litPath, sunHalf, usePalette} from './moon.tsx';
 
 const SUN = {x: 282, y: 520, r: 92};
 const EARTH = {x: 960, y: 520, r: 80};
@@ -86,19 +86,19 @@ export function Orbit() {
 
 /** The Earth's shadow, drawn to `reach` (0 to 1) of its length */
 export function Shadow() {
-  const reach = useProp('reach', 0);
-  return <Layer>{reach > 0 && <path d={shadowPath(reach)} fill="rgba(0,0,0,0.5)" stroke="var(--vt-muted)" strokeWidth={3} strokeDasharray="12 10" />}</Layer>;
+  const reach = useProp('reach', 0), pal = usePalette();
+  return <Layer>{reach > 0 && <path d={shadowPath(reach)} fill={pal.shadow} stroke="var(--vt-muted)" strokeWidth={3} strokeDasharray="12 10" />}</Layer>;
 }
 
 /** The lamp's parallel rays reaching the ball. A ray stops where it hits the ball. */
 export function Rays() {
-  const m = useMoon();
+  const m = useMoon(), pal = usePalette();
   return (
     <Layer>
       {[-120, -80, -40, 0, 40, 80, 120].map((dy) => {
         const y = SUN.y + dy, off = y - m.y;
         const to = Math.abs(off) < m.r ? m.x - Math.sqrt(m.r * m.r - off * off) : m.x - m.r;
-        return <line key={dy} x1={SUN.x + SUN.r * 2 + 6} y1={y} x2={to} y2={y} stroke={SUN_COLOR} strokeWidth={3} opacity={0.18} />;
+        return <line key={dy} x1={SUN.x + SUN.r * 2 + 6} y1={y} x2={to} y2={y} stroke={SUN_COLOR} strokeWidth={3} opacity={pal.rays} />;
       })}
     </Layer>
   );
@@ -106,6 +106,7 @@ export function Rays() {
 
 /** The Sun: a disc with a halo and a corona, and its label (`sun-tag`) */
 export function Sun() {
+  const pal = usePalette();
   const corona = Array.from({length: 16}, (_, i) => {
     const a = i * 22.5 * DEG, len = i % 2 ? 20 : 36, w = 0.11;
     const p = (r: number, da: number) => `${(SUN.x + r * Math.cos(a + da)).toFixed(1)},${(SUN.y + r * Math.sin(a + da)).toFixed(1)}`;
@@ -120,14 +121,14 @@ export function Sun() {
       <circle cx={SUN.x} cy={SUN.y} r={SUN.r * 2} fill="url(#sun-halo)" />
       {corona.map((points, i) => <polygon key={i} points={points} fill={SUN_COLOR} opacity={0.85} />)}
       <circle cx={SUN.x} cy={SUN.y} r={SUN.r} fill="url(#sun-core)" />
-      <Obj id="sun-tag" as="g"><Label x={SUN.x} y={SUN.y + SUN.r + 80} fill={SUN_COLOR}>Sun</Label></Obj>
+      <Obj id="sun-tag" as="g"><Label x={SUN.x} y={SUN.y + SUN.r + 80} fill={pal.light ? pal.sunLabel : SUN_COLOR}>Sun</Label></Obj>
     </Layer>
   );
 }
 
 /** The Earth with its day side to the Sun and its label, whose text the document may change (`earth.text`) */
 export function Earth() {
-  const tag = useProp('text', 'Earth');
+  const tag = useProp('text', 'Earth'), pal = usePalette();
   return (
     <Layer>
       <defs>
@@ -139,7 +140,7 @@ export function Earth() {
         <circle cx={EARTH.x} cy={EARTH.y} r={EARTH.r} fill="url(#earth-day)" />
         <g fill="rgba(90,170,110,0.9)"><circle cx={EARTH.x - 30} cy={EARTH.y - 24} r={16} /><circle cx={EARTH.x - 14} cy={EARTH.y + 30} r={10} /></g>
       </g>
-      <Label x={EARTH.x} y={EARTH.y} fill="var(--vt-text)" size={28}>{tag}</Label>
+      <Label x={EARTH.x} y={EARTH.y} fill={pal.earthLabel} halo={pal.earthHalo} size={28}>{tag}</Label>
     </Layer>
   );
 }
@@ -187,6 +188,7 @@ export function Yesterday() {
 
 /** The Moon (or the ball), with the mark on the side that faces the Earth and its label (`moon-tag`, whose text is `moon.text`) */
 export function Moon() {
+  const pal = usePalette();
   const angle = useProp('angle', 0), focus = useProp('focus', 0), glow = useProp('glow', 0.6), face = useProp('face', 0), tag = useProp('text', 'Moon');
   const m = moonAt(angle, focus), tint = useEclipse({...m, focus});
   const at = labelAt(m, focus, tag, 32);
@@ -194,7 +196,7 @@ export function Moon() {
   return (
     <Layer>
       <g style={{filter: `drop-shadow(-6px 0 ${14 * glow}px rgba(255,201,77,${0.9 * glow}))`}}>
-        <MoonFace id="moon-lit" cx={m.x} cy={m.y} r={m.r} lit={sunHalf(m.x, m.y, m.r)} night={NIGHT} tint={tint} />
+        <MoonFace id="moon-lit" cx={m.x} cy={m.y} r={m.r} lit={sunHalf(m.x, m.y, m.r)} tint={tint} />
       </g>
       {face > 0 && (
         <g opacity={face * (1 - focus)}>
@@ -202,18 +204,18 @@ export function Moon() {
           <circle cx={m.x + (dx / d) * m.r * 0.62} cy={m.y + (dy / d) * m.r * 0.62} r={17} fill="none" stroke="var(--vt-warn)" strokeWidth={3} />
         </g>
       )}
-      <Obj id="moon-tag" as="g"><Label x={at.x} y={at.y} fill="#efe8cf">{tag}</Label></Obj>
+      <Obj id="moon-tag" as="g"><Label x={at.x} y={at.y} fill={pal.moonLabel}>{tag}</Label></Obj>
     </Layer>
   );
 }
 
 /** The frame on the right: the Moon as we see it from Earth (its phase is the Moon's angle) */
 export function View() {
-  const m = useMoon(), tint = useEclipse(m);
+  const m = useMoon(), tint = useEclipse(m), pal = usePalette();
   return (
     <Layer>
-      <circle cx={VIEW.x} cy={VIEW.y} r={VIEW.r + 22} fill="#10131f" stroke="var(--vt-data)" strokeWidth={3} />
-      <MoonFace id="view-lit" cx={VIEW.x} cy={VIEW.y} r={VIEW.r} lit={litPath(VIEW.x, VIEW.y, VIEW.r, m.angle)} night="#2b3047" maria tint={tint} stroke="none" />
+      <circle cx={VIEW.x} cy={VIEW.y} r={VIEW.r + 22} fill={pal.frame} stroke="var(--vt-data)" strokeWidth={3} />
+      <MoonFace id="view-lit" cx={VIEW.x} cy={VIEW.y} r={VIEW.r} lit={litPath(VIEW.x, VIEW.y, VIEW.r, m.angle)} night={pal.frameNight} maria tint={tint} stroke={pal.light ? pal.rim : 'none'} />
       <Label x={VIEW.x} y={VIEW.y + VIEW.r + 62} fill="var(--vt-data)" size={30}>What we see</Label>
     </Layer>
   );

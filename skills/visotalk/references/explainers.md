@@ -12,9 +12,18 @@ lifted to the middle of the canvas, made from `still --time 0` and a crop.
 
 ## A phone screen (9x16)
 
-A phone shows little: one figure and one short line per scene, in the upper half (y 200 to 980 of 1920), the figure at 190 px or more, the line at 52 px or more, no axes, bands
-or labels beside it. `exports={{captions: 'words'}}` fills the lower half with the spoken words, each appearing as it is said, so nothing else goes below y 1010 except a source
-line at the very bottom (y 1780). A thin scale line with a dot and a soft range is enough to say "where in the range". The detail is for the long film.
+A phone shows little: one figure and one short line per scene. A vertical film is read as large words typed onto the lower half, one at a time, over one big picture in the upper half.
+The frame is 1080 x 1920 in two halves. **Picture:** the upper half, y 160 to 980, the figure as large as it will go (190 px or more across, usually most of the width), no axes, bands or
+labels beside it. **Words:** `exports={{captions: 'words'}}` types the spoken words in the lower half from y 1012, in 88 px bold type, one word appearing as each is said (the line being
+said in full ink, the earlier ones dimmer), a block of up to about six lines, so write each line short (about twelve words at most) or it wraps into a wall. `qa` measures it: it takes a frame at the end of every block and reports `caption-safe` when the block ends below y 1720. In Chinese, Japanese and Korean each character is a word and appears on its share of the line (about 20 characters a line of narration at most; a block holds about 40), and a line breaks between words, not inside them, as far as the platform's word segmenter knows them: if a word is still split at a line end, reword the sentence. The block clears a moment after the last word, so the held last frame is the picture alone: give the film a closing picture or line on purpose. `'burned'` is a small box
+near y 1650 and does not do this. Nothing else goes in the lower half, and the last 200 px stay empty: platforms put their own name and buttons there. A figure drawn past the canvas edge
+is reported by `qa`, so keep it inside. A thin scale line with a dot and a soft range is enough to say "where in the range". The detail is for the long film.
+
+A vertical film is its own film, not the horizontal one fitted to a phone: it is watched for less time on another kind of platform, so write it shorter (30 to 45 seconds, one idea) with `canvas="9x16"`, and draw it for that frame. A burned caption in a tall frame is already larger and keeps off the edges.
+
+## A light variant
+
+`theme="visotalk/light"` is built in, with the dark theme's keys on a pale ground. A variant that is only a look is `{preset: "16x9", theme: "visotalk/light"}`: the same film, drawn with it (`render --theme visotalk/light`, `qa` checks it with the others). It only works for a part that draws from tokens (`var(--vt-text)`, `useTheme()`); a colour written into a part stays what it is, so a picture with its own colours (a moon, a sun) reads the theme to choose between two palettes.
 
 ## A long film
 

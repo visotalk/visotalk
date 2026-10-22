@@ -32,6 +32,8 @@ export interface RenderOptions {
   chrome?: string;
   /** canvas preset id */
   preset?: string;
+  /** a built-in theme drawn in place of the document's own (a variant's `theme`) */
+  theme?: string;
   /** per-frame paint reset (default flow) */
   reset?: 'flow' | 'display' | 'none';
   /** also measure each frame's layout for QA (window.__visotalk.inspect) */
@@ -94,7 +96,7 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
   const mediaCache = resolve(o.dist, '..', '.media-cache');
   await extractMedia(resolve(o.dist), mediaCache);
   const player = await servePlayer(o.dist, 0, mediaCache);
-  const query = new URLSearchParams({mode: 'driven', fps: String(fps), media: '/__media', reset: o.reset ?? 'flow', ...(o.preset ? {preset: o.preset} : {})});
+  const query = new URLSearchParams({mode: 'driven', fps: String(fps), media: '/__media', reset: o.reset ?? 'flow', ...(o.preset ? {preset: o.preset} : {}), ...(o.theme ? {theme: o.theme} : {})});
   const url = `${player.url}?${query}`;
   try {
     // 1. probe
@@ -212,7 +214,7 @@ export async function muxAudio(video: string, out: string, offset: number, lengt
     const mixed: string[] = [];
     if (lines.length) {
       graph.push(...lines.map((l, k) => `[${k + 1}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`));
-      graph.push(`${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,pan=stereo|c0=c0|c1=c0[nar]`); // loudnorm returns 192 kHz, which amix cannot join to 48 kHz inputs without dropping the narration
+      graph.push(`${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad=whole_dur=${length.toFixed(3)}[nar]`); // loudnorm returns 192 kHz, which amix cannot join to 48 kHz inputs without dropping the narration; FFmpeg 5 leaves the mix's channel layout unspecified, which pan refuses, so it is named; loudnorm measures the stereo pair, since a mono level copied to two channels reads 3 LU louder; the pad keeps the track as long as the picture, whose last scene holds after the last word
       mixed.push('[nar]');
     }
     const FMT = 'aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo';

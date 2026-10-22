@@ -9,7 +9,7 @@
   "type": "module",
   "bin": {"visotalk": "./dist/packages/cli/src/main.js"},
   "files": ["dist", "README.md", "LICENSE"],
-  "engines": {"node": ">=20"},
+  "engines": {"node": ">=22"},
   "scripts": {"prepack": "node scripts/bundle.mjs"},
   "dependencies": {
     "@puppeteer/browsers": "2.4.0",

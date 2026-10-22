@@ -8,3 +8,4 @@ export * from './themes.ts';
 export * from './markup.ts';
 export * from './markup-edit.ts';
 export * from './captions.ts';
+export * from './caption-blocks.ts';

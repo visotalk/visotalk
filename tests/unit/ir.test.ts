@@ -248,3 +248,15 @@ test('qa: a global target that was on screen before the scene is not a brief fla
   const brief = staticQa(d, solve(d, voice(d), 30)).filter((i) => i.code === 'visible.brief').map((i) => i.objects[0]);
   assert.deepEqual(brief, ['y'], 'y was shown and taken away within a second; x was on screen for the whole of scene a');
 });
+
+test('exports: a variant names a canvas the document has and a built-in theme, and the light theme has the dark one\'s keys', () => {
+  const scene = '<Scene id="a" duration={1}/>';
+  const ok = doc(scene, 'canvas="16x9,9x16" exports={{variants: [{preset: "16x9"}, {preset: "9x16"}, {preset: "16x9", theme: "visotalk/light"}]}}');
+  assert.deepEqual(codes(ok), []);
+  assert.deepEqual(codes(doc(scene, 'exports={{variants: [{preset: "9x16"}]}}')), ['export.variant'], 'a canvas the document does not have');
+  assert.deepEqual(codes(doc(scene, 'exports={{variants: [{preset: "16x9", theme: "visotalk/neon"}]}}')), ['export.variant'], 'an unknown theme');
+  const dark = themeTokens(), light = themeTokens({id: 'visotalk/light'});
+  assert.deepEqual(Object.keys(light.colors).sort(), Object.keys(dark.colors).sort());
+  assert.notEqual(light.colors.bg, dark.colors.bg);
+  assert.deepEqual(light.fonts, dark.fonts);
+});

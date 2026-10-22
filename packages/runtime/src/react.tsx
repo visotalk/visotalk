@@ -37,5 +37,5 @@ export const useDocTime = (): number => {
 export const useTime = (): number => useDocTime() - useContext(SceneCtx).from;
 /** Length of the scene on screen, in seconds */
 export const useSceneDuration = (): number => useContext(SceneCtx).duration;
-/** Work the frame must wait for before it is captured: a part's own async loading (fonts and images are awaited already) */
+/** Work the frame must wait for before it is captured, and the web player's clock before it goes on: a part's own async loading (fonts and images are awaited already) */
 export const useReadiness = (): Readiness => useRuntime().readiness;

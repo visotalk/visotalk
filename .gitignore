@@ -4,3 +4,6 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .env
+examples/**/.cmds
+examples/**/.t0
+examples/**/.vt.sh

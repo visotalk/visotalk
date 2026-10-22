@@ -20,8 +20,17 @@ export const DARK_TOKENS: ThemeTokens = {
   space: [8, 16, 24, 40, 60],
 };
 
+const LIGHT_COLORS = {
+  bg: '#F6F3EA', panel: '#FFFFFF', panel2: '#EFEAE0', border: '#D8D2C4', text: '#1D2330', muted: '#5F6778', faint: '#C9C3B4',
+  data: '#1F6FD0', grad: '#D9631F', op: '#7B4FD6', good: '#1E9E55', bad: '#D13B3B', warn: '#B7791F',
+};
+
+/** The light counterpart of `visotalk/dark`: the same keys and fonts on a warm paper ground, so a document that draws from tokens has both */
+export const LIGHT_TOKENS: ThemeTokens = {...DARK_TOKENS, colors: LIGHT_COLORS};
+
 export const THEMES: Record<string, {tokens: ThemeTokens}> = {
   [DEFAULT_THEME]: {tokens: DARK_TOKENS},
+  'visotalk/light': {tokens: LIGHT_TOKENS},
 };
 
 /** Tokens of a document: its theme's, with `theme.tokens` merged over them */

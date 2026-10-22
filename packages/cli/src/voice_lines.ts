@@ -3,15 +3,20 @@
  * it writes the same files and prints the same manifest, so `prepare` treats the two alike.
  *
  * Usage: node voice_lines.ts <speak.json> <out_dir>
- * speak.json: {"provider": "minimax" | "./my-voice.mjs", "voice": "…", "lang": "en", "speed": 1, "lines": [{"id": "l1", "say": "…"}]}
+ * speak.json: {"provider": "minimax" | "elevenlabs" | "volcengine" | "openai" | "./my-voice.mjs", "voice": "…", "lang": "en", "speed": 1, "lines": [{"id": "l1", "say": "…"}]}
  * Writes <out_dir>/<hash>.wav, and <hash>.words2.json when the provider returns word times (the aligner's cache entry: the aligner is then not run, and
  * a language it cannot align keeps real word anchors), and prints a JSON manifest {line_id: {file, duration}}.
  *
- * A provider is a function `(request) => {audio, ext, words?}`: the built-in `minimax`, or the default export of a module whose path starts with `.` or `/`
+ * A provider is a function `(request) => {audio, ext, words?}`: a built-in one (`minimax`, `elevenlabs`, `volcengine`, `openai`), or the default export of a module whose path starts with `.` or `/`
  * (resolved from the current directory, which `prepare` sets to the document's own). `words` are one entry per whitespace token of `say`, in seconds from the clip start.
- * Credentials come from the environment, never from the document: MINIMAX_API_KEY (MINIMAX_GROUP_ID, MINIMAX_BASE_URL and MINIMAX_TTS_MODEL are optional).
+ * Credentials come from the environment, never from the document:
+ *   minimax     MINIMAX_API_KEY (optional: MINIMAX_GROUP_ID, MINIMAX_TTS_MODEL, MINIMAX_BASE_URL: the default is the international site, https://api.minimaxi.com for a China account)
+ *   elevenlabs  ELEVENLABS_API_KEY (optional: ELEVENLABS_BASE_URL, ELEVENLABS_MODEL); `voice` is a voice id
+ *   volcengine  VOLCENGINE_APPID and VOLCENGINE_ACCESS_TOKEN (optional: VOLCENGINE_CLUSTER, VOLCENGINE_BASE_URL); `voice` is a voice_type
+ *   openai      OPENAI_API_KEY (optional: OPENAI_BASE_URL, OPENAI_TTS_MODEL); `voice` is a voice name; no word times, so the aligner (English only) places the words
  */
 import {execFileSync} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -25,7 +30,10 @@ export type VoiceProvider = (request: SpeakRequest) => Promise<Spoken>;
 /** A MiniMax subtitle entry: a syllable, or the space between two words (blank `word`), in milliseconds */
 export interface MinimaxEntry {word: string; time_begin: number; time_end: number}
 
-const key = (token: string) => token.toLowerCase().replace(/[^a-z0-9']/g, '');
+interface Heard {text: string; t0: number; t1: number}
+
+/** What a word is compared by: its Latin letters and digits, and Hangul (Korean is spaced, so MiniMax times its words; Han and kana have no spaces to match on) */
+const key = (token: string) => token.toLowerCase().replace(/[^a-z0-9'\p{Script=Hangul}]/gu, '');
 
 /**
  * MiniMax's syllables ("M" "ine" "'" "s"), matched to the whitespace tokens of `say`. What it gives is an entry for the space between words, and that
@@ -33,7 +41,7 @@ const key = (token: string) => token.toLowerCase().replace(/[^a-z0-9']/g, '');
  * it, as the aligner does. Undefined when the words it heard are not the words in `say`: a silent mismatch would move every anchor after it.
  */
 export function minimaxWords(entries: MinimaxEntry[], say: string): Word[] | undefined {
-  const heard: Array<{text: string; t0: number; t1: number}> = [];
+  const heard: Heard[] = [];
   let run: MinimaxEntry[] = [];
   const flush = () => {
     const text = run.map((e) => e.word).join('').trim();
@@ -42,6 +50,11 @@ export function minimaxWords(entries: MinimaxEntry[], say: string): Word[] | und
   };
   for (const e of entries) (e.word.trim() ? run.push(e) : flush());
   if (run.length) flush();
+  return matchWords(heard, say);
+}
+
+/** The words a provider heard, in seconds, matched one to one to the whitespace tokens of `say`; undefined when they are not the same words */
+function matchWords(heard: Heard[], say: string): Word[] | undefined {
   const out: Word[] = [];
   let k = 0, last = 0;
   for (const token of say.split(/\s+/).filter(Boolean)) {
@@ -58,7 +71,7 @@ export function minimaxWords(entries: MinimaxEntry[], say: string): Word[] | und
 export function minimax(env: Record<string, string | undefined> = process.env, fetchImpl: typeof fetch = fetch): VoiceProvider {
   return async ({say, voice, speed}) => {
     if (!env.MINIMAX_API_KEY) throw new Error('the minimax voice needs MINIMAX_API_KEY in the environment');
-    const base = env.MINIMAX_BASE_URL ?? 'https://api.minimaxi.com';
+    const base = env.MINIMAX_BASE_URL ?? 'https://api.minimax.io';
     const res = await fetchImpl(`${base}/v1/t2a_v2${env.MINIMAX_GROUP_ID ? `?GroupId=${env.MINIMAX_GROUP_ID}` : ''}`, {
       method: 'POST',
       headers: {Authorization: `Bearer ${env.MINIMAX_API_KEY}`, 'Content-Type': 'application/json'},
@@ -82,9 +95,89 @@ export function minimax(env: Record<string, string | undefined> = process.env, f
   };
 }
 
+/** ElevenLabs character times (seconds), grouped at whitespace into the words of `say` */
+export interface ElevenLabsAlignment {characters: string[]; character_start_times_seconds: number[]; character_end_times_seconds: number[]}
+
+export function elevenLabsWords(a: ElevenLabsAlignment, say: string): Word[] | undefined {
+  const heard: Heard[] = [];
+  let text = '', t0 = 0, t1 = 0;
+  const flush = () => { if (key(text)) heard.push({text, t0, t1}); text = ''; };
+  a.characters.forEach((c, i) => {
+    if (!c.trim()) return flush();
+    if (!text) t0 = a.character_start_times_seconds[i];
+    text += c;
+    t1 = a.character_end_times_seconds[i];
+  });
+  flush();
+  return matchWords(heard, say);
+}
+
+/** ElevenLabs `with-timestamps`; the voice is a voice id. Its speed is 0.7 to 1.2 and the API refuses a value outside it. */
+export function elevenlabs(env: Record<string, string | undefined> = process.env, fetchImpl: typeof fetch = fetch): VoiceProvider {
+  return async ({say, voice, speed}) => {
+    if (!env.ELEVENLABS_API_KEY) throw new Error('the elevenlabs voice needs ELEVENLABS_API_KEY in the environment');
+    const base = env.ELEVENLABS_BASE_URL ?? 'https://api.elevenlabs.io';
+    const res = await fetchImpl(`${base}/v1/text-to-speech/${encodeURIComponent(voice)}/with-timestamps?output_format=mp3_44100_128`, {
+      method: 'POST',
+      headers: {'xi-api-key': env.ELEVENLABS_API_KEY, 'Content-Type': 'application/json'},
+      body: JSON.stringify({text: say, model_id: env.ELEVENLABS_MODEL ?? 'eleven_multilingual_v2', voice_settings: {speed}}),
+    });
+    const json = (await res.json().catch(() => ({}))) as {audio_base64?: string; alignment?: ElevenLabsAlignment | null; detail?: unknown};
+    if (!res.ok || !json.audio_base64) throw new Error(`elevenlabs: ${JSON.stringify(json.detail ?? {http: res.status})}`);
+    const words = json.alignment ? elevenLabsWords(json.alignment, say) : undefined;
+    if (!words) console.error(`elevenlabs: its word times do not match the words of "${say.slice(0, 40)}…": the aligner (English only) places the words`);
+    return {audio: Buffer.from(json.audio_base64, 'base64'), ext: 'mp3', words};
+  };
+}
+
+/** Volcengine (Doubao) speech, the HTTP interface with `with_timestamp`; the voice is a `voice_type`. Its word times are in `addition.frontend`. */
+export function volcengine(env: Record<string, string | undefined> = process.env, fetchImpl: typeof fetch = fetch): VoiceProvider {
+  return async ({say, voice, speed}) => {
+    if (!env.VOLCENGINE_APPID || !env.VOLCENGINE_ACCESS_TOKEN) throw new Error('the volcengine voice needs VOLCENGINE_APPID and VOLCENGINE_ACCESS_TOKEN in the environment');
+    const base = env.VOLCENGINE_BASE_URL ?? 'https://openspeech.bytedance.com';
+    const res = await fetchImpl(`${base}/api/v1/tts`, {
+      method: 'POST',
+      // the semicolon after Bearer is Volcengine's, not a typo
+      headers: {Authorization: `Bearer;${env.VOLCENGINE_ACCESS_TOKEN}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        app: {appid: env.VOLCENGINE_APPID, token: env.VOLCENGINE_ACCESS_TOKEN, cluster: env.VOLCENGINE_CLUSTER ?? 'volcano_tts'},
+        user: {uid: 'visotalk'},
+        audio: {voice_type: voice, encoding: 'mp3', speed_ratio: speed},
+        request: {reqid: randomUUID(), text: say, operation: 'query', with_timestamp: 1},
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as {code?: number; message?: string; data?: string; addition?: {frontend?: string}};
+    if (json.code !== 3000 || !json.data) throw new Error(`volcengine: ${JSON.stringify({code: json.code, message: json.message, http: res.status})}`);
+    let words: Word[] | undefined;
+    try {
+      const frontend = JSON.parse(json.addition?.frontend ?? '{}') as {words?: Array<{word: string; start_time: number; end_time: number}>};
+      words = matchWords((frontend.words ?? []).filter((w) => key(w.word)).map((w) => ({text: w.word, t0: w.start_time, t1: w.end_time})), say);
+    } catch { /* no usable word times: the aligner places the words */ }
+    if (!words) console.error(`volcengine: its word times do not match the words of "${say.slice(0, 40)}…": the aligner (English only) places the words`);
+    return {audio: Buffer.from(json.data, 'base64'), ext: 'mp3', words};
+  };
+}
+
+/** OpenAI `audio/speech`; the voice is a voice name. It returns no word times. */
+export function openai(env: Record<string, string | undefined> = process.env, fetchImpl: typeof fetch = fetch): VoiceProvider {
+  return async ({say, voice, speed}) => {
+    if (!env.OPENAI_API_KEY) throw new Error('the openai voice needs OPENAI_API_KEY in the environment');
+    const base = env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1';
+    const res = await fetchImpl(`${base}/audio/speech`, {
+      method: 'POST',
+      headers: {Authorization: `Bearer ${env.OPENAI_API_KEY}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify({model: env.OPENAI_TTS_MODEL ?? 'gpt-4o-mini-tts', input: say, voice, speed, response_format: 'mp3'}),
+    });
+    if (!res.ok) throw new Error(`openai: ${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}`);
+    return {audio: new Uint8Array(await res.arrayBuffer()), ext: 'mp3'};
+  };
+}
+
+const BUILT_IN: Record<string, () => VoiceProvider> = {minimax, elevenlabs, volcengine, openai};
+
 async function provider(id: string): Promise<VoiceProvider> {
-  if (id === 'minimax') return minimax();
-  if (!/^\.{0,2}\//.test(id)) throw new Error(`unknown voice provider "${id}": "minimax", or the path of a module (starting with ./ or /) whose default export is a function`);
+  if (BUILT_IN[id]) return BUILT_IN[id]();
+  if (!/^\.{0,2}\//.test(id)) throw new Error(`unknown voice provider "${id}": ${Object.keys(BUILT_IN).map((n) => `"${n}"`).join(', ')}, or the path of a module (starting with ./ or /) whose default export is a function`);
   const fn = ((await import(pathToFileURL(resolve(id)).href)) as {default?: unknown}).default;
   if (typeof fn !== 'function') throw new Error(`${id}: the default export must be a function (request) => {audio, ext, words?}`);
   return fn as VoiceProvider;

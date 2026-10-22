@@ -72,3 +72,26 @@ test('speechAt: a short ramp in before a line, and a release that holds through 
   assert.ok(speechAt(c, gap) > 0.5, 'the pause between two lines does not let the music swell');
   assert.equal(speechAt(c, c.scenes[1].lines[0].from + c.scenes[1].lines[0].duration + 1), 0);
 });
+
+test('muxAudio: narration alone is as long as the picture and sits at -16 LUFS in stereo', async () => {
+  const {mkdtempSync, rmSync} = await import('node:fs');
+  const {execFileSync, spawnSync} = await import('node:child_process');
+  const {tmpdir} = await import('node:os');
+  const {join} = await import('node:path');
+  const {muxAudio} = await import('../../packages/exporter/src/index.ts');
+  const dir = mkdtempSync(join(tmpdir(), 'visotalk-mux-'));
+  try {
+    const ff = (...a: string[]) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...a]);
+    ff('-f', 'lavfi', '-i', 'color=c=black:s=64x64:d=4:r=10', '-pix_fmt', 'yuv420p', join(dir, 'v.mp4'));
+    ff('-f', 'lavfi', '-i', 'sine=f=300:d=1.5', '-ac', '1', '-ar', '24000', join(dir, 'n.wav'));
+    await muxAudio(join(dir, 'v.mp4'), join(dir, 'out.mp4'), 0, 4, {narration: [{at: 0.5, src: 'n.wav'}], sounds: [], envelopes: []} as never, dir);
+    const probe = (entry: string, stream: string) => execFileSync('ffprobe', ['-v', 'error', '-select_streams', stream, '-show_entries', entry, '-of', 'csv=p=0', join(dir, 'out.mp4')]).toString().trim();
+    assert.ok(Math.abs(Number(probe('stream=duration', 'a:0')) - 4) < 0.1, 'the audio runs to the end of the picture');
+    assert.equal(probe('stream=channels', 'a:0'), '2');
+    const {stderr} = spawnSync('ffmpeg', ['-nostats', '-i', join(dir, 'out.mp4'), '-af', 'ebur128', '-f', 'null', '-'], {encoding: 'utf8'});
+    const lufs = Number(/I:\s+(-?[\d.]+) LUFS/.exec(stderr.slice(stderr.lastIndexOf('Summary')))![1]);
+    assert.ok(Math.abs(lufs + 16) < 1, `integrated loudness ${lufs} LUFS`);
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
+});

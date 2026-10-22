@@ -1,0 +1,35 @@
+/** What a document is made of and the hooks a part calls: what `visotalk schema` prints. The reference page of the documentation is held to it by a test. */
+export const SCHEMA = {
+  tags: {
+    Doc: 'id title lang  [description sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
+    Scene: 'id  [title duration]   lines, parts, one Animation and any Sounds; a scene without lines needs duration (seconds)',
+    Line: 'id  [text hold i18n]   the words spoken are the children (<Mark id="x">phrase</Mark> names a phrase an action can hang on); text is the caption when it differs (digits for numbers spoken as words); hold is silence after the line',
+    Part: 'id  [x y w h z]   a box (default: the whole canvas) holding React: elements, or a function that returns them (hooks run inside it). Invisible until an Appear; in a Scene it ends with the scene, in Doc it stays',
+    Animation: 'the actions of the scene, in any order',
+    Sound: 'asset  + where it starts  [id dur volume loop fadeIn fadeOut duck]   music or an effect of an <Asset kind="audio">, in a Scene: volume and duck are dB (the narration is never changed), fadeIn/fadeOut/dur seconds; loop without dur lasts to the end of the film; fadeOut needs dur or loop; duck steps it back while the narration speaks',
+    Asset: 'id kind src license  [source analysis proxy]   a file the document uses; read in a part with useAsset(id)',
+  },
+  motions: {
+    Appear: 'on  + where it starts  [dur stagger easing id]   easing: linear, easeIn/easeOut/easeInOut (cubic), those with Sine Quad Quart Quint Back (easeOutQuart, easeOutBack(2.2)), cubic-bezier(x1, y1, x2, y2); every part is invisible until an Appear shows it; so is any other target whose first appear or disappear is an appear',
+    Disappear: 'on  + where it starts  [dur stagger easing id]',
+    Tween: 'on  + where it starts  [dur stagger easing repeat yoyo id]  + props (numbers, colours, lengths)   reach their values over dur, from the value they have then; repeat plays it again (-1: for the whole film), yoyo back and forth; x y (px) scale rotate (deg) move the target itself',
+    Set: 'on  + where it starts  [id]  + props (numbers, strings, true/false)   at once',
+    'where it starts': 'exactly one of: line="l1" word="phrase" [nth={2}] [edge="end"] (any substring of the spoken text; in Chinese, Japanese and Thai any characters) · line="l1" mark="name" [edge="end"] (a <Mark> in the line) · line="l1" [edge="end"] (the start of the line, or its end) · after="action-id" [edge="start"] · at={1.5} (seconds into the scene) · at="start" | at="end";  offset={s} adds to any',
+  },
+  hooks: {
+    'useTarget(id)': "props to spread on the element that is the target `id` (data-vt and a style: opacity, visibility, transform). Merge your own style over it, never replace it",
+    '<Obj id as? style?>': 'a div (or as="g", "span") that is a target: useTarget in a tag',
+    'useProp(name, base)': 'a prop of the part it runs in that <Tween> and <Set> change (<Set on="note" text="…"/> for <Part id="note">): its value now, `base` before the first',
+    'useProp(id, name, base)': 'the same for the target `id`',
+    'useTime()': 'seconds since the scene on screen started: draw by it, never by a timer',
+    'useDocTime()': 'seconds since the start of the video',
+    'useFrame()': 'the frame the clock is on',
+    'useCanvas()': '{width, height, preset}: the canvas it is drawn on',
+    'useTheme()': 'the theme tokens {colors, fonts, radius, space}; also CSS variables var(--vt-data), var(--vt-sans)',
+    'useAsset(id)': 'the URL of an <Asset>',
+    'useText(id, base)': "words a person may edit: the text written in `<Doc texts={{id: '…'}}>` for this id, or `base` until there is one (id and base are string literals)",
+    'useScenes()': 'the scenes as [{id, from, end}] in seconds of the video, for a picture that spans them (a chapter rail)',
+    '<Video asset in? start? rate? fit?>': 'a clip of an <Asset kind="video">: from `in` seconds of the source at `rate`, starting `start` seconds into the scene; its sound is not used',
+    'random(key)': 'a deterministic random generator: the same key gives the same numbers; Math.random is refused',
+  },
+};

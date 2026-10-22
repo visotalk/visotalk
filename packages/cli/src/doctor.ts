@@ -2,10 +2,10 @@
  * `visotalk doctor [--fix] [--json]`: what rendering needs, and where it stands on this machine.
  *
  * Without `--fix` it only reports. With `--fix` it installs what is missing into ~/.visotalk (VISOTALK_HOME): the pinned
- * chrome-headless-shell, the Kokoro model, a Python venv with its packages and the word-alignment weights, each download
+ * chrome-headless-shell, the Kokoro model, a Python venv with its packages, the word-alignment weights and the CJK fonts, each download
  * checked against a size and a SHA-256 and written whole or not at all. `ffmpeg` and Python itself are the user's to install.
  * Every command then finds those files through `applyDefaults`, unless the variable it replaces (VISOTALK_CHROME, KOKORO_DIR,
- * VISOTALK_PYTHON, TORCH_HOME) is already set.
+ * VISOTALK_PYTHON, TORCH_HOME, VISOTALK_FONTS) is already set.
  */
 import {createHash} from 'node:crypto';
 import {createWriteStream, existsSync, mkdirSync, renameSync, rmSync, statSync} from 'node:fs';
@@ -16,6 +16,7 @@ import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
 import {Browser, computeExecutablePath, detectBrowserPlatform, install} from '@puppeteer/browsers';
 import {PINNED_CHROME} from '@visotalk/exporter';
+import {CJK_FONTS, fontFile, isInstalled} from './fonts.ts';
 
 const KOKORO_URL = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0';
 const KOKORO = [
@@ -28,7 +29,7 @@ const ALIGNER = {
   bytes: 377664473, sha256: '488fd4f16de84438ffc945334278c1b9fb9b7159a806c1080b16111a958c945d',
 };
 /** kokoro-onnx is the one whose output the audio depends on, so it is pinned. torchaudio does not require torch in its metadata, so both are named and pip picks a pair. */
-const PIP = ['kokoro-onnx==0.6.1', 'soundfile', 'torch', 'torchaudio'];
+const PIP = ['kokoro-onnx==0.6.1', 'soundfile', 'torch', 'torchaudio', 'fonttools==4.67.0', 'brotli==1.2.0'];
 const PIP_CPU_INDEX = 'https://download.pytorch.org/whl/cpu';
 /**
  * espeak-ng, which Kokoro speaks through, loses its data under a path of about 160 characters (measured: a data path of 157 works, 167 fails with
@@ -52,6 +53,7 @@ export function applyDefaults() {
   use('KOKORO_DIR', join(h, 'kokoro'), KOKORO.every((f) => hasSize(join(h, 'kokoro', f.file), f.bytes)));
   use('VISOTALK_PYTHON', venvPython(h), existsSync(venvPython(h)));
   use('TORCH_HOME', join(h, 'torch'), hasSize(weightsIn(join(h, 'torch')), ALIGNER.bytes));
+  use('VISOTALK_FONTS', join(h, 'fonts'), CJK_FONTS.every((f) => isInstalled(join(h, 'fonts'), f)));
 }
 
 /** Download `url` to `dest`: the file appears only when it has the expected size and SHA-256, so a cut connection never leaves a bad one in place. */
@@ -86,7 +88,7 @@ function check(): Item[] {
   const add = (id: string, ok: boolean, detail: string, fixable = false) => void items.push({id, ok, detail, fixable});
 
   const major = Number(process.versions.node.split('.')[0]);
-  add('node', major >= 20, major >= 20 ? process.version : `${process.version}; Node 20 or later is needed`);
+  add('node', major >= 22, major >= 22 ? process.version : `${process.version}; Node 22 or later is needed`);
 
   const ff = run('ffmpeg', ['-version']);
   add('ffmpeg', ff.status === 0, ff.status === 0 ? ff.stdout.split('\n')[0].replace(/ Copyright.*/, '') : 'not on the PATH; install it (brew install ffmpeg, apt install ffmpeg, winget install ffmpeg)');
@@ -106,12 +108,16 @@ function check(): Item[] {
   const mine = ours(process.env.VISOTALK_PYTHON, venvPython(h));
   const tooLong = mine && join(h, 'venv').length > MAX_VENV_PATH;
   if (tooLong) add('home', false, `${h} is too long for narration (espeak-ng fails on paths over ~160 characters); set VISOTALK_HOME to a shorter directory, e.g. ~/.visotalk`);
-  const py = run(python(), ['-c', 'import kokoro_onnx, soundfile, torch, torchaudio']);
-  add('python', py.status === 0, py.status === 0 ? `${python()} has kokoro-onnx, soundfile, torch and torchaudio` : `${python()} lacks kokoro-onnx, soundfile, torch or torchaudio`, mine && !tooLong);
+  const py = run(python(), ['-c', 'import kokoro_onnx, soundfile, torch, torchaudio, fontTools, brotli']);
+  add('python', py.status === 0, py.status === 0 ? `${python()} has kokoro-onnx, soundfile, torch, torchaudio, fonttools and brotli` : `${python()} lacks kokoro-onnx, soundfile, torch, torchaudio, fonttools or brotli`, mine && !tooLong);
 
   const torchHome = process.env.TORCH_HOME ?? join(homedir(), '.cache', 'torch');
   const weights = hasSize(weightsIn(torchHome), ALIGNER.bytes);
   add('aligner', weights, weights ? weightsIn(torchHome) : 'the word-alignment weights are not downloaded', ours(process.env.TORCH_HOME, join(h, 'torch')));
+
+  const fonts = process.env.VISOTALK_FONTS;
+  const missing = fonts ? CJK_FONTS.filter((f) => !isInstalled(fonts, f)) : CJK_FONTS;
+  add('fonts', missing.length === 0, missing.length === 0 ? `${fonts} (${CJK_FONTS.map((f) => f.family).join(', ')})` : fonts ? `${fonts} lacks ${missing.map((f) => f.family).join(', ')}` : 'the CJK fonts (Chinese, Japanese and Korean documents) are not installed', ours(fonts, join(h, 'fonts')));
   return items;
 }
 
@@ -132,6 +138,9 @@ const fixers: Record<string, (h: string) => Promise<void>> = {
     const index = process.platform === 'linux' ? ['--extra-index-url', PIP_CPU_INDEX] : [];
     const pip = run(venvPython(h), ['-m', 'pip', 'install', '-q', '--disable-pip-version-check', ...index, ...PIP]);
     if (pip.status !== 0) throw new Error(`pip install ${PIP.join(' ')} failed: ${pip.stderr.trim().split('\n').slice(-3).join(' ')}`);
+  },
+  async fonts(h) {
+    for (const f of CJK_FONTS) if (!isInstalled(join(h, 'fonts'), f)) await download(f.url, fontFile(join(h, 'fonts'), f), f);
   },
   async aligner(h) {
     const dest = weightsIn(join(h, 'torch'));

@@ -1,7 +1,7 @@
 /**
  * A `.visotalk` bundle: what its manifest says, which paths and contents are acceptable, when a set of files is a
  * whole, honest bundle, and how a talk's files are packed into one and opened from one. Pure: bytes in, bytes or a verdict out, no file system (the CLI
- * and the web app each gather and place the files themselves). Its own entry point, `@visotalk/ir/bundle`, so the Studio's bundle does not carry the ZIP code.
+ * and the web app each gather and place the files themselves). Its own entry point, `@visotalk/ir/bundle`, so the web editor's bundle does not carry the ZIP code.
  */
 import {unzipSync, zipSync, type Zippable} from 'fflate';
 import {captionsSrt} from './captions.ts';

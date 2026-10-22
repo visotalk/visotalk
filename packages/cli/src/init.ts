@@ -14,6 +14,10 @@ export interface ScriptLine {
 export interface Script {
   title?: string;
   lang?: string;
+  /** `minimax:<voice>`: a language written without spaces (zh, ja, ko) is spoken by a provider's voice, not Kokoro */
+  voice?: string;
+  /** `9x16` for a vertical film: the skeleton gets that canvas and the word captions a phone is read by */
+  canvas?: string;
   lines: ScriptLine[];
 }
 
@@ -43,7 +47,7 @@ export function skeleton(script: Script, id?: string): string {
     `import {Doc, Scene, Line, Part, Animation, Appear, Tween} from '@visotalk/jsx';`,
     `import {useTarget, useProp, useTime} from '@visotalk/runtime';`,
     ``,
-    `export default <Doc id=${JSON.stringify(docId)} title={${JSON.stringify(title)}} lang={${JSON.stringify(script.lang ?? 'en')}} theme="visotalk/dark" canvas="16x9">`,
+    `export default <Doc id=${JSON.stringify(docId)} title={${JSON.stringify(title)}} lang={${JSON.stringify(script.lang ?? 'en')}}${script.voice ? ` voice={${JSON.stringify(script.voice)}}` : ''} theme="visotalk/dark" canvas=${JSON.stringify(script.canvas ?? '16x9')}${script.canvas === '9x16' ? ` exports={{captions: 'words', fps: 30}}` : ''}>`,
     `  {/* A skeleton: the narration, nothing drawn. Split "draft" into the scenes you design, then draw them. */}`,
     `  <Scene id="draft">`,
     ...lines,

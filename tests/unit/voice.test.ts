@@ -4,19 +4,16 @@ import {existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync} from 'n
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {test} from 'node:test';
-import {minimax, minimaxWords, run, type MinimaxEntry, type SpeakRequest} from '../../packages/cli/src/voice_lines.ts';
-import {narrationLanguage, voiceProvider} from '../../packages/cli/src/project.ts';
+import {elevenlabs, elevenLabsWords, minimax, minimaxWords, openai, run, volcengine, type MinimaxEntry, type SpeakRequest} from '../../packages/cli/src/voice_lines.ts';
+import {voiceProvider} from '../../packages/cli/src/project.ts';
 
 const e = (word: string, a: number, b: number): MinimaxEntry => ({word, time_begin: a, time_end: b});
 
 test('voice: "provider:name" names a third-party voice, a bare name is a Kokoro voice', () => {
-  assert.deepEqual(voiceProvider('minimax:English_captivating_female1'), {provider: 'minimax', voice: 'English_captivating_female1'});
+  assert.deepEqual(voiceProvider('minimax:English_Trustworthy_Man'), {provider: 'minimax', voice: 'English_Trustworthy_Man'});
   assert.deepEqual(voiceProvider('./my-voice.mjs:alice'), {provider: './my-voice.mjs', voice: 'alice'});
   assert.equal(voiceProvider('af_heart'), undefined);
   assert.equal(voiceProvider(undefined), undefined);
-  // a provider's voice name says nothing about the language: the document's lang does
-  assert.equal(narrationLanguage('zh-CN', 'minimax:zh_voice').tts, 'cmn');
-  assert.equal(narrationLanguage('en', 'minimax:zh_voice').tts, 'en-us');
 });
 
 test('minimax words: syllables are joined at the blank entries and matched one to one to the tokens of what was said', () => {
@@ -27,6 +24,12 @@ test('minimax words: syllables are joined at the blank entries and matched one t
   // a token with no letters has an empty span at the end of the word before it, as the aligner leaves it
   const dash = minimaxWords([e('So', 0, 200), e(' ', 200, 200), e('what', 300, 500)], 'So — what');
   assert.deepEqual(dash, [{w: 'so', t0: 0, t1: 0.2}, {w: '', t0: 0.2, t1: 0.2}, {w: 'what', t0: 0.3, t1: 0.5}]);
+});
+
+test('minimax words: a spaced language that is not Latin, Korean, is timed word by word instead of as empty words', () => {
+  const [an, nyeong, ha, se, yo] = [0xc548, 0xb155, 0xd558, 0xc138, 0xc694].map((c) => String.fromCodePoint(c));
+  const entries = [e(an, 0, 100), e(nyeong, 100, 300), e(' ', 300, 300), e(ha, 320, 400), e(se, 400, 500), e(yo, 500, 700)];
+  assert.deepEqual(minimaxWords(entries, `${an}${nyeong} ${ha}${se}${yo}`), [{w: `${an}${nyeong}`, t0: 0, t1: 0.3}, {w: `${ha}${se}${yo}`, t0: 0.32, t1: 0.7}]);
 });
 
 test('minimax words: words other than the ones sent are refused rather than shifting every anchor after them', () => {
@@ -55,6 +58,70 @@ test('minimax: one request per line with the voice, speed and verbatim text; the
   assert.deepEqual(spoken.words, [{w: 'hi', t0: 0, t1: 0.2}]);
   const failing = (async () => new Response(JSON.stringify({base_resp: {status_code: 1004, status_msg: 'auth'}}))) as unknown as typeof fetch;
   await assert.rejects(minimax({MINIMAX_API_KEY: 'k'}, failing)(req), /1004/);
+});
+
+const chars = (text: string, step = 0.1) => ({
+  characters: [...text], character_start_times_seconds: [...text].map((_, i) => i * step), character_end_times_seconds: [...text].map((_, i) => (i + 1) * step),
+});
+
+test('elevenlabs words: characters are grouped at whitespace and matched to the tokens; other words are refused', () => {
+  assert.deepEqual(elevenLabsWords(chars('Hi you.'), 'Hi you.'), [{w: 'hi', t0: 0, t1: 0.2}, {w: 'you', t0: 0.3, t1: 0.7}]);
+  assert.equal(elevenLabsWords(chars('Hi there'), 'Hi world'), undefined);
+});
+
+test('elevenlabs: the voice is in the path, the key in a header, the speed in voice_settings', async () => {
+  const seen: Array<{url: string; init?: RequestInit}> = [];
+  const fetchImpl = (async (url: string, init?: RequestInit) => {
+    seen.push({url, init});
+    return new Response(JSON.stringify({audio_base64: Buffer.from([1, 2, 3]).toString('base64'), alignment: chars('Hi')}));
+  }) as typeof fetch;
+  const req: SpeakRequest = {say: 'Hi', voice: 'V 1', lang: 'en', speed: 1.1};
+  await assert.rejects(elevenlabs({}, fetchImpl)(req), /ELEVENLABS_API_KEY/);
+  const spoken = await elevenlabs({ELEVENLABS_API_KEY: 'k', ELEVENLABS_BASE_URL: 'https://api.example'}, fetchImpl)(req);
+  assert.equal(seen[0].url, 'https://api.example/v1/text-to-speech/V%201/with-timestamps?output_format=mp3_44100_128');
+  assert.equal((seen[0].init!.headers as Record<string, string>)['xi-api-key'], 'k');
+  assert.deepEqual(JSON.parse(String(seen[0].init!.body)).voice_settings, {speed: 1.1});
+  assert.deepEqual([...spoken.audio], [1, 2, 3]);
+  assert.deepEqual(spoken.words, [{w: 'hi', t0: 0, t1: 0.2}]);
+  const failing = (async () => new Response(JSON.stringify({detail: {status: 'invalid_api_key'}}), {status: 401})) as unknown as typeof fetch;
+  await assert.rejects(elevenlabs({ELEVENLABS_API_KEY: 'k'}, failing)(req), /invalid_api_key/);
+});
+
+test('volcengine: Bearer; auth, the voice and speed in audio, word times from addition.frontend, an error code refused', async () => {
+  const seen: Array<{url: string; init?: RequestInit}> = [];
+  const frontend = JSON.stringify({words: [{word: 'Hi', start_time: 0, end_time: 0.2}, {word: 'you', start_time: 0.3, end_time: 0.5}]});
+  const fetchImpl = (async (url: string, init?: RequestInit) => {
+    seen.push({url, init});
+    return new Response(JSON.stringify({code: 3000, message: 'Success', data: Buffer.from([1, 2, 3]).toString('base64'), addition: {frontend}}));
+  }) as typeof fetch;
+  const req: SpeakRequest = {say: 'Hi you', voice: 'zh_female_x', lang: 'en', speed: 1.2};
+  await assert.rejects(volcengine({VOLCENGINE_APPID: 'a'}, fetchImpl)(req), /VOLCENGINE_ACCESS_TOKEN/);
+  const spoken = await volcengine({VOLCENGINE_APPID: 'a', VOLCENGINE_ACCESS_TOKEN: 't', VOLCENGINE_BASE_URL: 'https://api.example'}, fetchImpl)(req);
+  assert.equal(seen[0].url, 'https://api.example/api/v1/tts');
+  assert.equal((seen[0].init!.headers as Record<string, string>).Authorization, 'Bearer;t');
+  const body = JSON.parse(String(seen[0].init!.body));
+  assert.deepEqual(body.audio, {voice_type: 'zh_female_x', encoding: 'mp3', speed_ratio: 1.2});
+  assert.equal(body.app.appid, 'a');
+  assert.equal(body.request.text, 'Hi you');
+  assert.deepEqual([...spoken.audio], [1, 2, 3]);
+  assert.deepEqual(spoken.words, [{w: 'hi', t0: 0, t1: 0.2}, {w: 'you', t0: 0.3, t1: 0.5}]);
+  const failing = (async () => new Response(JSON.stringify({code: 3001, message: 'bad'}))) as unknown as typeof fetch;
+  await assert.rejects(volcengine({VOLCENGINE_APPID: 'a', VOLCENGINE_ACCESS_TOKEN: 't'}, failing)(req), /3001/);
+});
+
+test('openai: model, input, voice and speed in the body, no word times, an HTTP error refused', async () => {
+  const seen: Array<{url: string; init?: RequestInit}> = [];
+  const fetchImpl = (async (url: string, init?: RequestInit) => { seen.push({url, init}); return new Response(new Uint8Array([1, 2, 3])); }) as typeof fetch;
+  const req: SpeakRequest = {say: 'Hi', voice: 'alloy', lang: 'en', speed: 1.1};
+  await assert.rejects(openai({}, fetchImpl)(req), /OPENAI_API_KEY/);
+  const spoken = await openai({OPENAI_API_KEY: 'k', OPENAI_BASE_URL: 'https://api.example/v1'}, fetchImpl)(req);
+  assert.equal(seen[0].url, 'https://api.example/v1/audio/speech');
+  assert.equal((seen[0].init!.headers as Record<string, string>).Authorization, 'Bearer k');
+  assert.deepEqual(JSON.parse(String(seen[0].init!.body)), {model: 'gpt-4o-mini-tts', input: 'Hi', voice: 'alloy', speed: 1.1, response_format: 'mp3'});
+  assert.deepEqual([...spoken.audio], [1, 2, 3]);
+  assert.equal(spoken.words, undefined);
+  const failing = (async () => new Response('nope', {status: 401})) as unknown as typeof fetch;
+  await assert.rejects(openai({OPENAI_API_KEY: 'k'}, failing)(req), /401/);
 });
 
 test('voice runner: a clip is made once, its word times land in the aligner\'s cache, and a second run asks the provider for nothing', async () => {

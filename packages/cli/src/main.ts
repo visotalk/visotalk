@@ -6,13 +6,13 @@
  *   visotalk init     <doc.tsx> [--lines lines.json] [--id ID] [--tts-models DIR]   a valid skeleton of the narration, nothing drawn; starts the narration in the background
  *   visotalk validate <doc.tsx> [--json] [--limit 30] [--anchors]   issues carry a `fix` where there is a standard answer; --anchors lists each word anchor with the words it finds marked in the line
  *   visotalk prepare  <doc.tsx> [--tts-models DIR]
- *   visotalk build    <doc.tsx> [--out DIR] [--artifact]   the player as static files; --artifact: MP3 narration, no fonts and a player.html + artifact.json to publish as a Claude artifact
- *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--chrome PATH]
+ *   visotalk build    <doc.tsx> [--out DIR] [--artifact [--theme ID]]   the player as static files; --artifact: MP3 narration, no Latin fonts (a CJK document's faces go with it) and a player.html + artifact.json to publish as a Claude artifact
+ *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--theme ID] [--chrome PATH]
  *   visotalk play     <doc.tsx | FILE.visotalk> [--port 4800]   a document, or a player bundle (`export --player`), served as a page
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
- *   visotalk qa       <doc.tsx> [--per-line 3] [--frames] [--json] [--limit 30]   layout checks on sampled frames + static checks; writes qa.json and sheet.png
- *   visotalk sheet    <doc.tsx> [--at 0.85] [--out FILE]   contact sheet: one frame per line at that fraction
- *   visotalk still    <doc.tsx> --line SCENE/LINE [--at 0.85] | --time SECONDS  [--out FILE.png]   one full-size frame (1920x1080), what was measured on it, and what the sentence names
+ *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--limit 30]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.png
+ *   visotalk sheet    <doc.tsx> [--at 0.85] [--theme ID] [--out FILE.png]   contact sheet: one frame per line at that fraction
+ *   visotalk still    <doc.tsx> --line SCENE/LINE [--at 0.85] | --time SECONDS  [--theme ID] [--out FILE.png]   one full-size frame (1920x1080), what was measured on it, and what the sentence names
  *   visotalk export   <doc.tsx> [--out FILE.visotalk] [--cover FILE] [--player]   the talk as one file: its source, its voice if it is prepared, captions and credits; --player: the built talk instead, which plays and has no document to open
  *   visotalk import   <FILE.visotalk> [DIR] [--remix] [--allow-voice-module]   unpack a source bundle into a new directory, checked as any document is; --remix starts a talk of its own
  *   visotalk schema   [tags | hooks | motions] [--json]   what a document is made of and the hooks a part calls
@@ -22,12 +22,13 @@ import {tmpdir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
 import {alignmentIssues, captionsSrt, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
 import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, servePlayer, type FrameInspection} from '@visotalk/exporter';
-import {lineWindows, targetFrames, targetIssues} from './targets.ts';
+import {blockFrames, lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
 import {skeleton, type Script} from './init.ts';
 import {BundleError, openBundle} from '@visotalk/ir/bundle';
 import {exportBundle, importBundle} from './bundle.ts';
-import {narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
+import {SCHEMA} from './schema.ts';
+import {narrationHint, narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
 const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
@@ -48,38 +49,6 @@ function report(issues: Array<{code: string; at: string; message: string; fix?: 
   }
   if (issues.length > shown.length) log(`… ${issues.length - shown.length} more not shown (--limit N)`);
 }
-
-const SCHEMA = {
-  tags: {
-    Doc: 'id title lang  [description sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
-    Scene: 'id  [title duration]   lines, parts, one Animation and any Sounds; a scene without lines needs duration (seconds)',
-    Line: 'id  [text hold i18n]   the words spoken are the children (<Mark id="x">phrase</Mark> names a phrase an action can hang on); text is the caption when it differs (digits for numbers spoken as words); hold is silence after the line',
-    Part: 'id  [x y w h z]   a box (default: the whole canvas) holding React: elements, or a function that returns them (hooks run inside it). Invisible until an Appear; in a Scene it ends with the scene, in Doc it stays',
-    Animation: 'the actions of the scene, in any order',
-    Sound: 'asset  + where it starts  [id dur volume loop fadeIn fadeOut duck]   music or an effect of an <Asset kind="audio">, in a Scene: volume and duck are dB (the narration is never changed), fadeIn/fadeOut/dur seconds; loop without dur lasts to the end of the film; fadeOut needs dur or loop; duck steps it back while the narration speaks',
-    Asset: 'id kind src license  [source analysis proxy]   a file the document uses; read in a part with useAsset(id)',
-  },
-  motions: {
-    Appear: 'on  + where it starts  [dur stagger easing id]   easing: linear, easeIn/easeOut/easeInOut (cubic), those with Sine Quad Quart Quint Back (easeOutQuart, easeOutBack(2.2)), cubic-bezier(x1, y1, x2, y2); every part is invisible until an Appear shows it; so is any other target whose first appear or disappear is an appear',
-    Disappear: 'on  + where it starts  [dur stagger easing id]',
-    Tween: 'on  + where it starts  [dur stagger easing repeat yoyo id]  + props (numbers, colours, lengths)   reach their values over dur, from the value they have then; repeat plays it again (-1: for the whole film), yoyo back and forth; x y (px) scale rotate (deg) move the target itself',
-    Set: 'on  + where it starts  [id]  + props (numbers, strings, true/false)   at once',
-    'where it starts': 'exactly one of: line="l1" word="phrase" [nth={2}] [edge="end"] (any substring of the spoken text; in Chinese, Japanese and Thai any characters) · line="l1" mark="name" [edge="end"] (a <Mark> in the line) · line="l1" [edge="end"] (the start of the line, or its end) · after="action-id" [edge="start"] · at={1.5} (seconds into the scene) · at="start" | at="end";  offset={s} adds to any',
-  },
-  hooks: {
-    'useTarget(id)': "props to spread on the element that is the target `id` (data-vt and a style: opacity, visibility, transform). Merge your own style over it, never replace it",
-    '<Obj id as? style?>': 'a div (or as="g", "span") that is a target: useTarget in a tag',
-    'useProp(name, base)': 'a prop of the part it runs in that <Tween> and <Set> change (<Set on="note" text="…"/> for <Part id="note">): its value now, `base` before the first',
-    'useProp(id, name, base)': 'the same for the target `id`',
-    'useTime()': 'seconds since the scene on screen started: draw by it, never by a timer',
-    'useDocTime()': 'seconds since the start of the video',
-    'useFrame()': 'the frame the clock is on',
-    'useCanvas()': '{width, height, preset}: the canvas it is drawn on',
-    'useTheme()': 'the theme tokens {colors, fonts, radius, space}; also CSS variables var(--vt-data), var(--vt-sans)',
-    'useAsset(id)': 'the URL of an <Asset>',
-    'random(key)': 'a deterministic random generator: the same key gives the same numbers; Math.random is refused',
-  },
-};
 
 /** `visotalk schema`: what a document is made of and the hooks a part calls */
 function schema(arg?: string) {
@@ -117,7 +86,7 @@ function init() {
   console.log(`${basename(path)}: document id "${p.doc.meta.id}" (work files in .visotalk/${p.doc.meta.id}/; changing the id prepares the narration again, so set it now with --id), ${script.lines.length} lines, one line each, all in the scene "draft" (split it into the scenes you design); nothing is drawn yet`);
   const tts = narrationSource(p, opt('tts-models'));
   if (tts) console.log(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}. Until it is ready a picture is timed from the words.`);
-  else console.log('no TTS model (--tts-models or KOKORO_DIR): the lines will be timed from their words; run prepare when you have one');
+  else console.log(`${narrationHint(p)}: the lines will be timed from their words; run prepare when you have one`);
 }
 
 /** `play` of a player bundle: its page, served as it is; a source bundle is imported first */
@@ -209,7 +178,7 @@ async function main() {
   if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && narrationPending(p)) {
     if (tts && !preparing(p)) console.error(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}`);
     estimateVoice(p);
-    console.error(`narration is not ready${tts ? '' : ' (no TTS model: --tts-models or KOKORO_DIR)'}: the lines are timed from their words (about 2.8 a second), so what a word anchor shows will move when it is`);
+    console.error(`narration is not ready${tts ? '' : ` (${narrationHint(p)})`}: the lines are timed from their words (about 2.8 a second), so what a word anchor shows will move when it is`);
   } else {
     if (preparing(p)) {
       console.error('waiting for the narration that is being prepared');
@@ -217,22 +186,22 @@ async function main() {
     }
     // Narration is cached per clip, so preparing again is cheap when nothing changed and keeps durations in step with the text.
     if (tts) prepare(p, opt('tts-models'));
-    else if (existsSync(join(p.work, 'voice.json'))) console.error('no TTS model (--tts-models or KOKORO_DIR): reusing voice.json, so durations may not match the current text');
+    else if (existsSync(join(p.work, 'voice.json'))) console.error(`${narrationHint(p)}: reusing voice.json, so durations may not match the current text`);
     const added = estimateMissingVoice(p);
     if (added.length) console.error(`no narration length yet for ${added.map((x) => `"${x}"`).join(', ')} (added since it was prepared): timed from their words until prepare runs`);
     if (cmd === 'render' && narrationPending(p)) {
-      console.error('render needs the real narration, and voice.json holds lengths estimated from the words: run prepare with a TTS model (--tts-models or KOKORO_DIR)');
+      console.error('render needs the real narration, and voice.json holds lengths estimated from the words: ' + narrationHint(p));
       process.exit(1);
     }
   }
 
-  const dist = await buildPlayer(p, {out: cmd === 'build' ? opt('out') : undefined, artifact: cmd === 'build' && flag('artifact')});
+  const dist = await buildPlayer(p, {out: cmd === 'build' ? opt('out') : undefined, artifact: cmd === 'build' && flag('artifact'), theme: opt('theme')});
   if (cmd === 'build' && flag('artifact')) {
     const {files} = JSON.parse(readFileSync(join(dist, 'artifact.json'), 'utf8')) as {files: string[]};
     const big = files.find((f) => statSync(join(dist, f)).size > 16e6);
     if (big) throw new Error(`${big} is over the 16 MB an artifact allows for one file`);
     const bytes = files.reduce((n, f) => n + statSync(join(dist, f)).size, 0);
-    return void console.log(`built ${dist}: publish player.html with the ${files.length} files of artifact.json (${(bytes / 1e6).toFixed(1)} MB; no fonts: the player uses the system's)`);
+    return void console.log(`built ${dist}: publish player.html with the ${files.length} files of artifact.json (${(bytes / 1e6).toFixed(1)} MB; the Latin fonts stay out, the player uses the system's; a CJK face goes with it)`);
   }
   if (cmd === 'build') return void console.log(`built ${dist}`);
 
@@ -257,7 +226,7 @@ async function main() {
     const out = resolve(opt('out', join(p.work, 'out'))!);
     const r = await renderBuilt({dist, out, fps: Number(opt('fps', '30')), format: flag('jpeg') ? 'jpeg' : 'png', concurrency: Number(opt('concurrency', '1')),
       from: opt('from') ? Number(opt('from')) : undefined, to: opt('to') ? Number(opt('to')) : undefined, saveFrames: flag('frames'),
-      encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), chrome: opt('chrome'), log: (s) => console.error(s),});
+      encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), theme: opt('theme'), chrome: opt('chrome'), log: (s) => console.error(s),});
     writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc));
     if (p.doc.exports?.captions === 'sidecar') writeFileSync(join(out, 'captions.srt'), captionsSrt(solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, Number(opt('fps', '30')))));
     console.log(JSON.stringify({...r, hashes: undefined}, null, 1));
@@ -287,8 +256,8 @@ async function main() {
       frame = lastFrame;
     }
     const img = new Map<number, Buffer>();
-    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: [frame], encode: false, inspect: true, chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
-    const png = resolve(opt('out', join(p.work, 'still', 'still.png'))!);
+    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: [frame], encode: false, inspect: true, theme: opt('theme'), chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
+    const png = resolve(p.work, opt('out', join(p.work, 'still', 'still.png'))!);
     mkdirSync(dirname(png), {recursive: true});
     writeFileSync(png, img.get(frame)!);
     const t = frame / fps;
@@ -318,12 +287,21 @@ async function main() {
       ? sampleFrames(c, fps, Number(opt('per-line', '3')))
       : lineWindows(c).map((w) => ({frame: Math.floor((w.from + Number(opt('at', '0.85')) * (w.end - w.from)) * fps), at: w.at}));
     // `qa` also looks at the frames where every animation target should be on the page
-    const extra = cmd === 'qa' ? targetFrames(c, fps).filter((f) => !samples.some((x) => x.frame === f)).map((f) => ({frame: f, at: `target@${(f / fps).toFixed(2)}s`})) : [];
-    const images = new Map<number, Buffer>();
-    const r = await renderBuilt({dist, out, fps, frames: [...samples, ...extra].map((x) => x.frame), inspect: cmd === 'qa', concurrency: Number(opt('concurrency', '2')), saveFrames: flag('frames'),
-      encode: false, chrome: opt('chrome'), onFrame: (i, img) => void images.set(i, img)});
-    const sheet = resolve(opt('out', join(out, 'sheet.png'))!);
-    contactSheet(samples.map((x) => images.get(x.frame)!), sheet, {cols: cmd === 'qa' ? 4 : 3, cellW: cmd === 'qa' ? 480 : 640});
+    const extra = cmd === 'qa' ? [...targetFrames(c, fps).map((f) => ({frame: f, at: `target@${(f / fps).toFixed(2)}s`})), ...blockFrames(doc, c, fps)].filter((f, i, all) => !samples.some((x) => x.frame === f.frame) && all.findIndex((g) => g.frame === f.frame) === i) : [];
+    // `qa` looks at every output the document means to make (`exports.variants`): `--theme ID` looks at one, and `sheet` at the first or the one named
+    const variants: Array<{preset?: string; theme?: string}> = cmd === 'qa' && !opt('theme') && doc.exports?.variants?.length ? doc.exports.variants : [{theme: opt('theme')}];
+    const nameOf = (v: {preset?: string; theme?: string}) => [v.preset, v.theme?.replace(/^visotalk\//, '')].filter(Boolean).join(' ') || 'default';
+    const frames = [...samples, ...extra].map((x) => x.frame);
+    const looks = [];
+    for (const v of variants) {
+      const images = new Map<number, Buffer>();
+      const r = await renderBuilt({dist, out, fps, frames, inspect: cmd === 'qa', concurrency: Number(opt('concurrency', '2')), saveFrames: flag('frames'),
+        encode: false, preset: v.preset, theme: v.theme, chrome: opt('chrome'), onFrame: (i, img) => void images.set(i, img)});
+      const sheet = resolve(p.work, opt('out', join(out, looks.length ? `sheet-${nameOf(v).replace(/\W+/g, '-')}.png` : 'sheet.png'))!);
+      contactSheet(samples.map((x) => images.get(x.frame)!), sheet, {cols: cmd === 'qa' ? 4 : 3, cellW: cmd === 'qa' ? 480 : 640});
+      looks.push({name: nameOf(v), r, sheet});
+    }
+    const {r, sheet} = looks[0];
     if (cmd === 'sheet') {
       samples.forEach((x, k) => {
         const t = x.frame / fps, w = wordAt(c, t);
@@ -333,11 +311,11 @@ async function main() {
     }
     const issues = [
       ...[...staticQa(doc, c), ...alignmentIssues(doc, c), ...targetIssues(p, c, fps, r.inspections!)].map((i) => ({...i, frame: -1})),
-      ...[...samples, ...extra].flatMap((x) => frameIssues(r.inspections![x.frame] as FrameInspection, x.frame, x.at)),
+      ...looks.flatMap((l) => [...samples, ...extra].flatMap((x) => frameIssues(l.r.inspections![x.frame] as FrameInspection, x.frame, looks.length > 1 ? `${l.name} ${x.at}` : x.at))),
     ];
-    writeFileSync(join(out, 'qa.json'), JSON.stringify({samples: samples.length, issues}, null, 1));
+    writeFileSync(join(out, 'qa.json'), JSON.stringify({samples: samples.length, variants: looks.map((l) => l.name), issues}, null, 1));
     report(issues, console.log);
-    if (!flag('json')) console.log(`${issues.length} issue(s) in ${samples.length + extra.length} sampled frames · sheet: ${sheet}`);
+    if (!flag('json')) console.log(`${issues.length} issue(s) in ${(samples.length + extra.length) * looks.length} sampled frames${looks.length > 1 ? ` (${looks.map((l) => l.name).join(', ')})` : ''} · sheet: ${looks.map((l) => l.sheet).join(', ')}`);
     if (issues.length) process.exit(1);
     return;
   }

@@ -91,7 +91,7 @@ export interface Pacing {
 }
 
 export interface Voice {
-  provider?: string; // local default if absent
+  /** A bare name is a local Kokoro voice; `provider:name` is a third-party one (`minimax:…`, `elevenlabs:…`, `volcengine:…`, `openai:…`) or a module (`./my-voice.mjs:name`) */
   voice: string;
   speed?: number; // 1 = natural
   /** word → pronunciation, applied before `say` derivation */
@@ -167,7 +167,7 @@ export interface Scene {
 }
 
 /**
- * A box (default: the whole canvas) that holds what its React children draw. Every part is invisible until an `appear` shows it. Studio moves, sizes, shows and hides
+ * A box (default: the whole canvas) that holds what its React children draw. Every part is invisible until an `appear` shows it. The web editor moves, sizes, shows and hides
  * parts; it does not edit what is inside. The engine reads `id` and the box; `body` is the source of the children, for tools (it is not run from here).
  */
 export interface Part {
@@ -260,8 +260,9 @@ export interface Sound {
 // ---------------------------------------------------------------------------------------------- export
 
 export interface ExportPolicy {
-  variants: Array<{preset: Id; lang?: string}>;
+  /** The outputs the document means to make: a canvas, and optionally a built-in theme (`visotalk/light`) drawn in place of the document's own */
+  variants?: Array<{preset: Id; lang?: string; theme?: string}>;
   fps?: number; // default 30
-  /** `words`: the spoken words in a block in the lower half of a tall frame, each on the second it is said */
+  /** `words`: the spoken words in a block of large type in the lower half of a tall frame (from 53% of its height, 88 px, up to about six lines), each on the second it is said */
   captions?: 'burned' | 'sidecar' | 'both' | 'none' | 'words';
 }

@@ -37,9 +37,11 @@ export interface FrameInspection {
   registered: string[];
   registeredGlobal?: string[];
   caption: Rect | null;
+  captionWords?: boolean;
+  partErrors?: Array<{part: string; scene?: string; message: string}>;
 }
 export interface FrameIssue {
-  code: 'overflow' | 'clipped' | 'offscreen' | 'caption' | 'text-overlap' | 'text-crossed';
+  code: 'overflow' | 'clipped' | 'offscreen' | 'caption' | 'caption-safe' | 'text-overlap' | 'text-crossed';
   at: string;
   frame: number;
   objects: string[];
@@ -52,6 +54,7 @@ const FIX: Record<FrameIssue['code'], string> = {
   clipped: 'give that element at least the size its content needs (width and height below), or shorten what is in it or lower its font size, or remove its `overflow` clipping; a reveal that is meant to cut (typing, a scroller) is drawn by tweening a number that slices the content, not by clipping',
   offscreen: 'move it into the canvas, or shorten the content',
   caption: 'keep it above the two-line caption band (y 900 and below is the caption)',
+  'caption-safe': 'shorten the line (about twelve words, or about twenty characters of Chinese, Japanese or Korean, at most) so the block stays within about six lines',
   'text-overlap': 'move one of the two texts apart, make them smaller, or show them one after the other',
   'text-crossed': 'move the text clear of the shape, or put it fully on the shape (a label on a card sits inside the card), or draw the line behind a gap in the text',
 };
@@ -64,9 +67,15 @@ const intersect = (a: Rect, b: Rect): Rect | null => {
 };
 const past = (ink: Rect, box: Rect) => Math.max(box.x - ink.x, box.y - ink.y, ink.x + ink.w - (box.x + box.w), ink.y + ink.h - (box.y + box.h));
 
+/** The words block of a tall frame must end this far above the bottom: platforms lay their own name and buttons over it */
+export const WORDS_SAFE_BOTTOM = 200;
+
 export function frameIssues(f: FrameInspection, frame: number, at: string): FrameIssue[] {
   const out: FrameIssue[] = [];
   const add = (code: FrameIssue['code'], objects: string[], message: string) => out.push({code, at, frame, objects, message, fix: FIX[code]});
+  if (f.captionWords && f.caption && f.caption.y + f.caption.h > f.height - WORDS_SAFE_BOTTOM) {
+    add('caption-safe', [], `the words block ends at y ${Math.round(f.caption.y + f.caption.h)}, past y ${f.height - WORDS_SAFE_BOTTOM}: the last ${WORDS_SAFE_BOTTOM}px of a tall frame belong to the platform`);
+  }
   const shown = f.objects.filter((o) => o.ink && o.opacity >= 0.5);
   for (const o of shown) {
     const ink = o.ink!;

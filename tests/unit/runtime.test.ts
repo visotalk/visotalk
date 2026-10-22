@@ -97,3 +97,78 @@ test('a clock that is given a new length keeps its time inside it', () => {
   assert.equal(clock.duration, 30);
   assert.equal(clock.getTime(), 30, 'a time past the new end is brought back to it');
 });
+
+test('a live clock stands still while media is held, and goes on from where it stood', async () => {
+  const frames: ((now: number) => void)[] = [];
+  const g = globalThis as unknown as Record<string, unknown>;
+  const saved = {raf: g.requestAnimationFrame, caf: g.cancelAnimationFrame};
+  g.requestAnimationFrame = (f: (now: number) => void) => frames.push(f);
+  g.cancelAnimationFrame = () => {};
+  try {
+    const clock = new Clock(60, 'live');
+    const now = performance.now();
+    clock.play();
+    clock.seek(10);
+    let release!: () => void;
+    clock.hold(new Promise<void>((r) => (release = r)));
+    assert.equal(clock.isBuffering(), true);
+    frames.shift()!(now + 5000);
+    assert.equal(clock.getTime(), 10, 'time does not move while a hold is pending, and the wait is not owed afterwards');
+    assert.equal(clock.isPlaying(), true, 'it is still playing');
+    release();
+    await Promise.resolve();
+    assert.equal(clock.isBuffering(), false);
+    frames.shift()!(now + 5500);
+    assert.ok(Math.abs(clock.getTime() - 10.5) < 1e-6, 'it goes on from where it stood');
+    clock.pause();
+  } finally {
+    g.requestAnimationFrame = saved.raf;
+    g.cancelAnimationFrame = saved.caf;
+  }
+});
+
+test('qa: the words block of a tall frame must end 200 px above the bottom, and a line of words in a box is not held to it', async () => {
+  const {frameIssues} = await import('../../packages/exporter/src/qa.ts');
+  const tall = (caption: {x: number; y: number; w: number; h: number}, captionWords?: boolean) =>
+    frameIssues({width: 1080, height: 1920, objects: [], texts: [], crossings: [], registered: [], registeredGlobal: [], caption, ...(captionWords && {captionWords})}, 0, '1s');
+  assert.deepEqual(tall({x: 72, y: 1012, w: 936, h: 700}, true), [], 'ends at 1712: inside');
+  const out = tall({x: 72, y: 1012, w: 936, h: 713}, true);
+  assert.deepEqual(out.map((i) => i.code), ['caption-safe']);
+  assert.match(out[0].message, /ends at y 1725, past y 1720/);
+  assert.deepEqual(tall({x: 72, y: 1650, w: 936, h: 160}), [], 'a burned caption sits near the bottom by design');
+});
+
+test('the parent can ask which words are drawn at a point, and nobody else can', () => {
+  const sent: unknown[] = [];
+  const parent = {postMessage: (m: unknown) => sent.push(m)};
+  let listener: ((e: {source: unknown; data: unknown}) => void) | undefined;
+  const win = {parent, addEventListener: (_: 'message', l: typeof listener) => void (listener = l)};
+  installParentBridge(new Clock(10, 'live'), win as never, () => 0, undefined, {at: (fx, fy) => (fx === 0.5 && fy === 0.25 ? 'Hello' : null), fit: (words) => (words === 'long' ? 'overflow' : null)});
+  sent.length = 0;
+  listener!({source: {}, data: {vt: 'textAt', req: 1, fx: 0.5, fy: 0.25}});
+  assert.deepEqual(sent, []);
+  listener!({source: parent, data: {vt: 'textAt', req: 1, fx: 0.5, fy: 0.25}});
+  listener!({source: parent, data: {vt: 'textAt', req: 2, fx: 0.9, fy: 0.9}});
+  assert.deepEqual(sent, [{vt: 'text', req: 1, hit: 'Hello'}, {vt: 'text', req: 2, hit: null}]);
+  sent.length = 0;
+  listener!({source: parent, data: {vt: 'textFit', req: 3, words: 'long'}});
+  assert.deepEqual(sent, [{vt: 'fit', req: 3, problem: 'overflow'}]);
+});
+
+test('a hold taken through the readiness barrier stops a live clock until it settles, and a promise that never settles is let go', async () => {
+  const {Readiness, within} = await import('../../packages/runtime/src/readiness.ts');
+  const clock = new Clock(60, 'live');
+  let release!: () => void;
+  void new Readiness(clock).hold(new Promise<void>((r) => (release = r)));
+  assert.equal(clock.isBuffering(), true);
+  release();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(clock.isBuffering(), false);
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    await within(new Promise(() => {}), 10, 'a stuck part');
+  } finally {
+    console.warn = warn;
+  }
+});

@@ -10,4 +10,4 @@ const sha = (s: string) => createHash('sha1').update(s).digest('hex').slice(0, 1
 export const clipKey = (spec: {provider: string; voice: string; speed: number; lang: string}, say: string) => sha(`${spec.provider}|${spec.voice}|${spec.speed}|${spec.lang}|${say}`);
 
 /** A Kokoro clip: the formula of `tts_lines.py`, so a prepared line is recognised without running the model */
-export const kokoroKey = (voice: string, speed: number, lang: 'en-us' | 'cmn', say: string) => sha(lang === 'en-us' ? `${voice}|${speed}|${say}` : `${voice}|${speed}|${lang}|${say}`);
+export const kokoroKey = (voice: string, speed: number, say: string) => sha(`${voice}|${speed}|${say}`);

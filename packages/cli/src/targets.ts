@@ -1,7 +1,7 @@
 /**
  * Where to look: the window of every line, the frames at which every target an action names should be on the page, and what a run found there.
  */
-import type {Compiled} from '@visotalk/ir';
+import {captionBlocks, type Compiled, type VisoDoc} from '@visotalk/ir';
 import type {FrameInspection} from '@visotalk/exporter';
 import type {Project} from './project.ts';
 
@@ -25,12 +25,33 @@ export function targetFrames(c: Compiled, fps: number): number[] {
   return [...out].sort((x, y) => x - y);
 }
 
+/**
+ * With `captions: 'words'`, the frame where each block of words is fullest (just after its last word): that is where it can run past the safe area,
+ * and a sample taken part-way through a line would not show it.
+ */
+export function blockFrames(doc: VisoDoc, c: Compiled, fps: number): Array<{frame: number; at: string}> {
+  if (doc.exports?.captions !== 'words') return [];
+  const last = Math.round(c.duration * fps) - 1;
+  return captionBlocks(c).map((b) => {
+    const frame = Math.max(0, Math.min(last, Math.round((b.words[b.words.length - 1].t1 + 0.05) * fps)));
+    return {frame, at: `words@${(frame / fps).toFixed(2)}s`};
+  });
+}
+
 export function targetIssues(p: Project, c: Compiled, fps: number, inspections: Record<number, unknown>): Array<{code: string; at: string; message: string; fix: string}> {
   const issues: Array<{code: string; at: string; message: string; fix: string}> = [];
   const clashes = new Set<string>();
+  // a part whose code threw draws nothing: name it, and do not also report every target inside it as missing
+  const crashed = new Map<string, {part: string; scene?: string; message: string}>();
+  for (const ins of Object.values(inspections)) for (const e of (ins as FrameInspection).partErrors ?? []) crashed.set(`${e.scene ?? ''}:${e.part}`, e);
+  for (const e of crashed.values()) {
+    issues.push({code: 'part.error', at: e.scene ? `/scenes/${e.scene}/parts/${e.part}` : `/parts/${e.part}`, message: `part "${e.part}"${e.scene ? ` of scene "${e.scene}"` : ' (global)'} threw: ${e.message}`,
+      fix: `read the message and the part's code: a prop of the wrong type (a number where it maps over a list) or a value read before it exists is the usual cause; \`validate\` cannot see it`});
+  }
   p.doc.scenes.forEach((scene, i) => {
     const sc = c.scenes[i];
     const seen = new Set<string>();
+    const broken = [...crashed.values()].some((e) => e.scene === undefined || e.scene === scene.id);
     for (const [f, ins] of Object.entries(inspections)) {
       const t = Number(f) / fps;
       if (t < sc.from || t >= sc.end) continue;
@@ -47,7 +68,7 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
     }
     scene.animations.forEach((a, k) => {
       for (const id of [a.on].flat()) {
-        if (seen.has(id)) continue;
+        if (seen.has(id) || broken) continue;
         issues.push({code: 'target.unregistered', at: `/scenes/${scene.id}/animations/${a.id ?? k}`,
           message: `"${id}" is not on the page in scene "${scene.id}": no part has that id, and no element has registered it (registered at the sampled frames: ${[...seen].join(', ') || 'none'})`,
           fix: `register it: <Obj id="${id}">…</Obj> or {...useTarget("${id}")} on the element, or name a part of the scene; check the spelling`});

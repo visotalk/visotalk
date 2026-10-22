@@ -84,6 +84,11 @@ export default <Doc id="d" title="t" lang="en"><Scene id="s"><Line id="l">One tw
   assert.match(typo[0].message, /"barr" is not on the page/);
   const clash = targetIssues(p, c, 30, at(['p', 'bar', 'barr', 'bar']));
   assert.deepEqual(clash.map((i) => i.code), ['target.duplicate']);
+  // a part that threw is named once, and the targets that were inside it are not reported as typos as well
+  const threw = Object.fromEntries(frames.map((f) => [f, {...page(['bar']), partErrors: [{part: 'p', scene: 's', message: 't.map is not a function'}]}]));
+  const crash = targetIssues(p, c, 30, threw);
+  assert.deepEqual(crash.map((i) => [i.code, i.at]), [['part.error', '/scenes/s/parts/p']]);
+  assert.match(crash[0].message, /part "p" of scene "s" threw: t\.map is not a function/);
 });
 
 test('check: the engine\'s clock is the only one a part may draw by, in the document and in the files it imports', async () => {
@@ -175,6 +180,11 @@ export default <Doc id="v" title="V" lang="en" theme="visotalk/dark" canvas="16x
   writeFileSync(dir + '/.visotalk/v/voice.json', JSON.stringify({l1: {duration: 2}}));
   const dist = await buildPlayer(load(dir + '/doc.tsx'));
   assert.deepEqual(JSON.parse(readFileSync(dist + '/media.json', 'utf8')), {clip: {src: 'assets/clip.mp4', fps: 25, frames: 25}});
+  // ffmpeg writes the index (moov) after the frames (mdat) unless told otherwise (the fixture above); a host that does not answer
+  // range requests, a Claude artifact among them, then never gives the browser the index. The built copy has it first.
+  assert.ok(readFileSync(dir + '/media/clip.mp4').indexOf('moov') > readFileSync(dir + '/media/clip.mp4').indexOf('mdat'), 'the fixture has its index last');
+  const bytes = readFileSync(dist + '/assets/clip.mp4');
+  assert.ok(bytes.indexOf('moov') > 0 && bytes.indexOf('moov') < bytes.indexOf('mdat'), 'the built video has its index before its frames');
   const cache = dir + '/cache';
   assert.deepEqual(await extractMedia(dist, cache), {clip: 25});
   assert.equal(readdirSync(cache + '/clip').length, 25);
@@ -182,23 +192,26 @@ export default <Doc id="v" title="V" lang="en" theme="visotalk/dark" canvas="16x
   assert.deepEqual(await extractMedia(dist, cache), {clip: 0}, 'a second run decodes nothing');
 });
 
-test('narration: Mandarin documents get a Mandarin voice and a length estimated from characters; everything else keeps the English one', async () => {
-  const {narrationLanguage, estimateVoice} = await import('../../packages/cli/src/project.ts');
-  assert.deepEqual(narrationLanguage('zh'), {tts: 'cmn', voice: 'zf_xiaobei'});
-  assert.deepEqual(narrationLanguage('zh-CN'), {tts: 'cmn', voice: 'zf_xiaobei'});
-  assert.deepEqual(narrationLanguage('en'), {tts: 'en-us', voice: 'af_heart'});
-  assert.deepEqual(narrationLanguage('fr'), {tts: 'en-us', voice: 'af_heart'});
-  for (const lang of ['zh_CN', 'zho', 'cmn', 'ZH-tw']) assert.equal(narrationLanguage(lang).tts, 'cmn', lang);
-  assert.equal(narrationLanguage('zhx').tts, 'en-us', 'a different code that merely starts with zh');
-  // a voice the document names decides how its text is read
-  assert.deepEqual(narrationLanguage('zh-CN', 'af_heart'), {tts: 'en-us', voice: 'af_heart'});
-  assert.deepEqual(narrationLanguage('en', 'zm_yunxi'), {tts: 'cmn', voice: 'zm_yunxi'});
+test('narration: a CJK document is spoken by a provider and timed from characters; Kokoro is English only', async () => {
+  const {isCjk, narrationHint, narrationSource, prepare, estimateVoice} = await import('../../packages/cli/src/project.ts');
+  for (const lang of ['zh', 'zh-CN', 'zh_CN', 'zho', 'cmn', 'ZH-tw', 'ja', 'ja-JP', 'ko', 'kor']) assert.ok(isCjk(lang), lang);
+  for (const lang of ['en', 'fr', 'zhx', 'jam']) assert.ok(!isCjk(lang), lang);
+  const doc = (lang: string, voice = '') => project(mkdtempSync('/tmp/vt-cjk-'), `export default <Doc id="d" title="t" lang="${lang}"${voice}>
+  <Scene id="s"><Line id="l1">One.</Line></Scene>
+</Doc>;`);
+  // a Kokoro model does not make a CJK document speakable: only a provider's voice does
+  assert.equal(narrationSource(doc('zh-CN'), '/models'), undefined);
+  assert.equal(narrationSource(doc('zh-CN', ' voice="minimax:v"'), '/models'), 'minimax');
+  assert.equal(narrationSource(doc('en'), '/models'), '/models');
+  assert.match(narrationHint(doc('ja')), /needs a voice provider.*minimax/);
+  assert.equal(narrationHint(doc('ja', ' voice="minimax:v"')), 'no TTS model: --tts-models or KOKORO_DIR');
+  assert.throws(() => prepare(doc('ko'), '/models'), /needs a voice provider/);
   const text = '\u57df\u540d\u7cfb\u7edf\u628a\u540d\u5b57\u53d8\u6210\u5730\u5740\uff0c\u6d4f\u89c8\u5668\u5148\u95ee\u89e3\u6790\u5668\u3002';
   const zh = project(mkdtempSync('/tmp/vt-zh-'), `export default <Doc id="d" title="t" lang="zh-CN">
   <Scene id="s"><Line id="l1">${text}</Line></Scene>
 </Doc>;`);
-  // 21 characters (the full stop and comma too) at 3.8 a second, not one "word" at 2.8
-  assert.ok(Math.abs(estimateVoice(zh).l1.duration - 21 / 3.8) < 0.05);
+  // 21 characters (the full stop and comma too) at 4.4 a second, not one "word" at 2.8
+  assert.ok(Math.abs(estimateVoice(zh).l1.duration - 21 / 4.4) < 0.05);
 });
 
 test('artifact: the player is built with MP3 narration, a page and the list of files to publish', async (t) => {
@@ -221,4 +234,16 @@ export default <Doc id="a" title="A <b>" lang="en" theme="visotalk/dark" canvas=
   assert.ok(existsSync(dist + '/audio/l1.mp3') && !existsSync(dist + '/audio/l1.m4a'));
   assert.match(readFileSync(dist + '/app.js', 'utf8'), /audio\/l1\.mp3/);
   assert.match(readFileSync(dist + '/player.html', 'utf8'), /^<title>A &lt;b>/);
+  assert.doesNotMatch(readFileSync(dist + '/player.html', 'utf8'), /replaceState/, 'no output named: the first one plays');
+  // an artifact page has no query of its own, so the theme it plays in is set before the player reads it
+  const named = await buildPlayer(load(dir + '/doc.tsx'), {artifact: true, theme: 'visotalk/light'});
+  assert.match(readFileSync(named + '/player.html', 'utf8'), /history\.replaceState\(null, '', '\?theme=visotalk%2Flight'\)/);
+});
+
+test('init: a vertical script gets a 9:16 canvas and word captions, a horizontal one the default', async () => {
+  const {skeleton} = await import('../../packages/cli/src/init.ts');
+  const lines = [{text: 'One.'}];
+  assert.match(skeleton({title: 'T', canvas: '9x16', lines}), /canvas="9x16" exports=\{\{captions: 'words', fps: 30\}\}>/);
+  assert.match(skeleton({title: 'T', lines}), /canvas="16x9">/);
+  assert.doesNotMatch(skeleton({title: 'T', lines}), /exports=/);
 });

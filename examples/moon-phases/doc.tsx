@@ -12,14 +12,15 @@ const Note = ({color, children}: {color: string; children: string}) => (
 );
 
 /**
- * Why the Moon has phases. The orrery (components/orrery.tsx) is a set of parts drawn from one geometry: the Sun fixed on the left, the Earth at the centre, the Moon
+ * Why the Moon has phases, in two looks from this one document: the dark one, and the light theme (`exports.variants`). The parts take the colours that are not theme
+ * tokens from `usePalette` (components/moon.tsx), so nothing is drawn twice. The orrery (components/orrery.tsx) is a set of parts drawn from one geometry: the Sun fixed on the left, the Earth at the centre, the Moon
  * going round it, and the view of the Moon from Earth beside it. A scene's parts end with it, so each scene declares the layers it shows; they start from their base
  * props, and a Set at the start of the scene carries over what the story needs (the Moon's angle). The document moves `moon.angle` (0 new moon, 90 first quarter,
  * 180 full moon, 270 last quarter) on the words that name each phase. Within a scene a lap is written 0 to 360, then a Set puts the angle back to 0, which looks
  * the same, so every other angle in the file is a phase.
  */
 export default <Doc id="moon-phases" title="Why the Moon has phases" lang="en" theme="visotalk/dark" canvas="16x9"
-  exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
+  exports={{variants: [{preset: "16x9"}, {preset: "16x9", theme: "visotalk/light"}], fps: 30, captions: "burned"}}>
   <Scene id="change">
     <Line id="m1" hold={0.3}>Look up on different nights and the Moon seems to change shape: a sliver, a half, a full disc.</Line>
     <Line id="m2" hold={1}>But the Moon does not change shape. It only looks like it does.</Line>

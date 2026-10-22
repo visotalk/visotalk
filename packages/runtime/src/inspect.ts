@@ -45,6 +45,10 @@ export interface FrameInspection {
   /** of those, the ones inside a part of the document (global): invisible until an appear shows them, so one nothing appears never shows */
   registeredGlobal: string[];
   caption: Rect | null;
+  /** the caption is the `words` block of a tall frame, not a line in a box */
+  captionWords?: boolean;
+  /** the parts whose code threw (`scene` is absent for a global part), with the exception's message */
+  partErrors?: Array<{part: string; scene?: string; message: string}>;
 }
 
 const toRect = (r: DOMRect | Rect): Rect => ('w' in r ? r : {x: r.x, y: r.y, w: r.width, h: r.height});
@@ -171,7 +175,13 @@ function marksOf(all: Element[], root: HTMLElement, canvas: {width: number; heig
       const cs = getComputedStyle(el);
       const ctm = el.getScreenCTM();
       if (!ctm) return;
-      const inv = ctm.inverse();
+      // a shape scaled to nothing (scale 0, a flip through zero) has no inverse and nothing to hide or cross
+      let inv: DOMMatrix;
+      try {
+        inv = ctm.inverse();
+      } catch {
+        return;
+      }
       const box = toRect(el.getBoundingClientRect());
       if (box.w * box.h >= big) return;
       const to = (x: number, y: number) => new DOMPoint(x, y).matrixTransform(inv);
@@ -283,5 +293,6 @@ export function inspectFrame(root: HTMLElement, canvas: {width: number; height: 
   const ownerOf = (el: Element) => el.closest<HTMLElement>('[data-vt]')?.dataset.vt ?? null;
   const crossings = crossingsOf([...root.querySelectorAll('*')], root, canvas, texts.flatMap((t, i) => (t.rect.w > 1 && t.rect.h > 1 ? [{text: t.text, rect: t.rect, el: textEls[i]}] : [])), ownerOf);
   const registeredGlobal = [...root.querySelectorAll<HTMLElement>('[data-global] [data-vt]')].map((e) => e.dataset.vt!);
-  return {width: canvas.width, height: canvas.height, objects, texts, crossings, registered, registeredGlobal, caption};
+  const partErrors = (window as unknown as {__visotalkPartErrors?: NonNullable<FrameInspection['partErrors']>}).__visotalkPartErrors ?? [];
+  return {width: canvas.width, height: canvas.height, objects, texts, crossings, registered, registeredGlobal, caption, ...(caption && cap!.dataset.caption === 'words' && {captionWords: true}), ...(partErrors.length && {partErrors})};
 }

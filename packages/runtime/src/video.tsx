@@ -6,6 +6,7 @@
  */
 import React, {useLayoutEffect, useRef} from 'react';
 import {useRuntime, useTime} from './react';
+import {mediaReady} from './media';
 import {useStage} from './stage';
 
 const DRIFT = 0.12;
@@ -23,19 +24,22 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
   const frame = Math.min(frames - 1, Math.max(0, Math.floor(source * fps + 1e-6)));
   const ref = useRef<HTMLVideoElement>(null);
 
+  // a frame moved to is a hold on the clock until the browser has it, and the video plays only while the clock does
   useLayoutEffect(() => {
     const v = ref.current;
     if (!v) return;
-    if (t >= 0 && rt.clock.isPlaying()) {
+    const seekTo = (at: number) => {
+      v.currentTime = at;
+      rt.clock.hold(mediaReady(v, 2));
+    };
+    if (t >= 0 && rt.clock.isPlaying() && !rt.clock.isBuffering()) {
       v.playbackRate = rate;
-      if (v.paused) {
-        v.currentTime = source;
-        void v.play().catch(() => {});
-      } else if (Math.abs(v.currentTime - source) > DRIFT) v.currentTime = source;
+      if (Math.abs(v.currentTime - source) > DRIFT) seekTo(source);
+      if (v.paused && !rt.clock.isBuffering()) void v.play().catch(() => {});
     } else {
       if (!v.paused) v.pause();
       const at = (frame + 0.5) / fps;
-      if (Math.abs(v.currentTime - at) > 1e-4) v.currentTime = at;
+      if (Math.abs(v.currentTime - at) > 1e-4) seekTo(at);
     }
   });
 

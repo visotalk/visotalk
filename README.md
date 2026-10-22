@@ -54,9 +54,45 @@ The video above is [moon-phases](examples/moon-phases/doc.tsx). Each of these pl
     </td>
   </tr>
   <tr>
-    <td valign="top" colspan="2" align="center">
+    <td valign="top">
       <a href="https://visotalk.dev/examples/population/"><img src="https://visotalk.dev/examples/population/preview.gif" alt="The eight billion" width="400"></a><br>
       <b>The eight billion</b><br>One drawn picture, with its own component · <a href="examples/population/doc.tsx">source</a>
+    </td>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/sky-blue/"><img src="https://visotalk.dev/examples/sky-blue/preview.gif" alt="Why the sky is blue, in Mandarin" width="400"></a><br>
+      <b>Why the sky is blue, in Mandarin</b><br>Chinese narration, drawn from the physics · <a href="examples/sky-blue/doc.tsx">source</a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/fourier/"><img src="https://visotalk.dev/examples/fourier/preview.gif" alt="How a Fourier series builds a square wave" width="400"></a><br>
+      <b>How a Fourier series builds a square wave</b><br>One number draws every curve · <a href="examples/fourier/doc.tsx">source</a>
+    </td>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/http-request/"><img src="https://visotalk.dev/examples/http-request/preview.gif" alt="From URL to page" width="400"></a><br>
+      <b>From URL to page</b><br>DNS, a handshake, a request, a painted page · <a href="examples/http-request/doc.tsx">source</a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/fable-stump/"><img src="https://visotalk.dev/examples/fable-stump/preview.gif" alt="The farmer and the stump, in Mandarin" width="400"></a><br>
+      <b>The farmer and the stump, in Mandarin</b><br>A fable as a picture book · <a href="examples/fable-stump/doc.tsx">source</a>
+    </td>
+    <td valign="top">
+      <a href="https://visotalk.dev/examples/shinkansen/"><img src="https://visotalk.dev/examples/shinkansen/preview.gif" alt="Why the Shinkansen is almost never late, in Japanese" width="400"></a><br>
+      <b>Why the Shinkansen is almost never late, in Japanese</b><br>Japanese narration and type · <a href="examples/shinkansen/doc.tsx">source</a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top" colspan="2" align="center">
+      <a href="https://visotalk.dev/examples/moon-phases-vertical/"><img src="https://visotalk.dev/examples/moon-phases-vertical/preview.gif" alt="Why the Moon has phases, a vertical short" width="400"></a><br>
+      <b>Why the Moon has phases, a vertical short</b><br>A 9:16 film of its own, not the horizontal one fitted to a phone · <a href="examples/moon-phases-vertical/doc.tsx">source</a>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top" colspan="2" align="center">
+      <a href="https://visotalk.dev/examples/sky-blue-vertical/"><img src="https://visotalk.dev/examples/sky-blue-vertical/preview.gif" alt="Why the sky is blue, a vertical short in Mandarin" width="400"></a><br>
+      <b>Why the sky is blue, a vertical short in Mandarin</b><br>Large characters typed onto the lower half · <a href="examples/sky-blue-vertical/doc.tsx">source</a>
     </td>
   </tr>
 </table>

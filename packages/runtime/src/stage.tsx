@@ -4,11 +4,10 @@
  * targets they register (`useTarget`, `useProp`, `<Obj>`).
  */
 import React, {createContext, useContext} from 'react';
-import {presenceAt, propAt, type Compiled, type ThemeTokens, type VisoDoc} from '@visotalk/ir';
+import {captionBlocks, presenceAt, propAt, type BlockWord, type Compiled, type ThemeTokens, type VisoDoc} from '@visotalk/ir';
 import {SceneCtx, useDocTime, useTime} from './react';
 import {clamp01} from './motion';
 import {C, F, alpha} from './theme';
-import {captionBlocks} from './caption-blocks';
 
 /** What a part's children are: React nodes, or a function that returns them (so a hook can be called in it) */
 export type PartBody = React.ReactNode | (() => React.ReactNode);
@@ -80,7 +79,7 @@ export function useProp(...args: [string, number | string | boolean] | [string, 
   return propAt(c, id, name, useDocTime(), base, part.scene);
 }
 
-/** The words a part draws, by id: what the document's `texts` say for it, else `base`, the words the part was written with. A person edits these in the Studio. */
+/** The words a part draws, by id: what the document's `texts` say for it, else `base`, the words the part was written with. A person edits these in the web editor. */
 export function useText(id: string, base: string): string {
   return useStage().doc.texts?.[id] ?? base;
 }
@@ -110,10 +109,29 @@ export const useFrame = (): number => Math.round(useTime() * useStage().c.fps);
 
 const Render: React.FC<{fn: () => React.ReactNode}> = ({fn}) => <>{fn()}</>;
 
+/** A part whose code throws draws nothing, and is recorded by id for `qa`: uncaught, the exception would unmount the whole film and name no part */
+class PartBoundary extends React.Component<{part: string; scene?: string; children: React.ReactNode}, {failed: boolean}> {
+  state = {failed: false};
+  static getDerivedStateFromError() {
+    return {failed: true};
+  }
+  componentDidCatch(error: unknown) {
+    const w = window as unknown as {__visotalkPartErrors?: Array<{part: string; scene?: string; message: string}>};
+    const {part, scene} = this.props;
+    w.__visotalkPartErrors ??= [];
+    if (!w.__visotalkPartErrors.some((e) => e.part === part && e.scene === scene)) w.__visotalkPartErrors.push({part, scene, message: String((error as Error)?.message ?? error)});
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 /** A part: invisible until the document appears it. `scene` is the scene it belongs to, absent for a global part */
 const PartHost: React.FC<{part: VisoDoc['scenes'][number]['parts'][number]; body: PartBody; scene?: string}> = ({part, body, scene}) => (
   <PartCtx.Provider value={{id: part.id, scene}}>
-    <PartBox part={part} body={body} />
+    <PartBoundary part={part.id} scene={scene}>
+      <PartBox part={part} body={body} />
+    </PartBoundary>
   </PartCtx.Provider>
 );
 const PartBox: React.FC<{part: VisoDoc['scenes'][number]['parts'][number]; body: PartBody}> = ({part, body}) => {
@@ -128,6 +146,17 @@ const PartBox: React.FC<{part: VisoDoc['scenes'][number]['parts'][number]; body:
   );
 };
 
+/** Consecutive characters of one word (`unit`, within a line) together; every other word alone */
+const groupUnits = (words: BlockWord[]): BlockWord[][] => {
+  const out: BlockWord[][] = [];
+  for (const w of words) {
+    const prev = out.at(-1)?.at(-1);
+    if (prev && w.unit !== undefined && prev.unit === w.unit && prev.line === w.line) out[out.length - 1].push(w);
+    else out.push([w]);
+  }
+  return out;
+};
+
 /** `captions: 'words'`: the block of spoken words that fills the lower half of a tall frame, one word appearing as it is said, the line being said in full ink */
 const WordCaptions: React.FC = () => {
   const {c, preset} = useStage();
@@ -139,17 +168,22 @@ const WordCaptions: React.FC = () => {
   const now = [...block.words].reverse().find((w) => w.t0 <= t)?.line;
   return (
     <div data-caption="words" style={{position: 'absolute', ...(tall ? {left: preset.width * 0.067, right: preset.width * 0.067, top: preset.height * 0.527} : {left: 160, right: 160, bottom: 54, textAlign: 'center'}),
-      fontFamily: F.sans, fontSize: tall ? 60 : 38, fontWeight: 600, lineHeight: 1.5, color: C.text}}>
-      {block.words.map((w, i) => {
-        const p = clamp01((t - w.t0) / 0.16);
-        return <span key={i} style={{display: 'inline-block', marginRight: '0.28em', opacity: p * (w.line === now ? 1 : 0.62), transform: `translateY(${(1 - p) * 10}px)`}}>{w.w}</span>;
+      fontFamily: F.sans, fontSize: tall ? 88 : 38, fontWeight: 700, lineHeight: tall ? 1.35 : 1.5, color: C.text}}>
+      {groupUnits(block.words).map((group, g) => {
+        const spans = group.map((w, i) => {
+          const p = clamp01((t - w.t0) / 0.16);
+          return <span key={`${g}.${i}`} style={{display: 'inline-block', marginRight: w.cjk ? 0 : '0.28em', opacity: p * (w.line === now ? 1 : 0.62), transform: `translateY(${(1 - p) * 10}px)`}}>{w.w}</span>;
+        });
+        // the characters of one word stay on one line
+        return group.length > 1 ? <span key={g} style={{whiteSpace: 'nowrap'}}>{spans}</span> : spans[0];
       })}
     </div>
   );
 };
 
 const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
-  const {c, doc} = useStage();
+  const {c, doc, preset} = useStage();
+  const tall = preset.height > preset.width;
   const t = useDocTime();
   const mode = doc.exports?.captions ?? 'burned';
   if (mode === 'words') return <WordCaptions />;
@@ -159,9 +193,10 @@ const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
   if (!line) return null;
   const o = clamp01((t - line.from) / 0.2) * (1 - clamp01((t - line.from - line.duration) / 0.2));
   return (
-    <div style={{position: 'absolute', left: 0, right: 0, bottom: 54, display: 'flex', justifyContent: 'center', opacity: o}}>
-      <div data-caption={line.id} style={{maxWidth: 1500, textAlign: 'center', fontFamily: F.sans, fontSize: 34, lineHeight: 1.35, color: C.text,
-        background: alpha(C.bg, 0.82), padding: '10px 26px', borderRadius: 10}}>
+    <div style={{position: 'absolute', left: 0, right: 0, bottom: tall ? 110 : 54, display: 'flex', justifyContent: 'center', opacity: o}}>
+      {/* a phone frame is read small: the caption is larger, and keeps clear of the edges */}
+      <div data-caption={line.id} style={{maxWidth: tall ? preset.width * 0.88 : 1500, textAlign: 'center', fontFamily: F.sans, fontSize: tall ? 50 : 34, lineHeight: 1.35, color: C.text,
+        background: alpha(C.bg, 0.82), padding: tall ? '14px 30px' : '10px 26px', borderRadius: 10}}>
         {line.text}
       </div>
     </div>

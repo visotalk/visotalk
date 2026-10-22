@@ -1,5 +1,5 @@
 /**
- * IR validator (semantic rules). Pure: runs in Node (CLI, agent tool) and in the browser (Studio).
+ * IR validator (semantic rules). Pure: runs in Node (CLI, agent tool) and in the browser (the web editor).
  * It reads the skeleton of a document: lines, parts and animations. What a part draws is React, which it does not see;
  * whether an action's target exists inside a part is checked after a run (the runtime lists what parts register).
  */
@@ -56,6 +56,10 @@ export function validate(doc: VisoDoc): Issue[] {
   if (!doc.spec.startsWith(`${minor}.`)) add('spec.version', '/spec', `spec ${doc.spec} is not ${minor}.x`);
   if (doc.theme && !Object.hasOwn(THEMES, doc.theme.id)) add('theme.unknown', '/theme/id', `unknown theme "${doc.theme.id}" (built-in: ${Object.keys(THEMES).join(', ')})`);
   if (!doc.canvas.presets.length) add('canvas.presets', '/canvas/presets', 'a canvas needs at least one preset (the first is the default)');
+  (doc.exports?.variants ?? []).forEach((v, i) => {
+    if (!doc.canvas.presets.some((p) => p.id === v.preset)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the canvas "${v.preset}", which the document does not have (${doc.canvas.presets.map((p) => p.id).join(', ')})`, 'name a canvas of the document, or add it: canvas="16x9,9x16"');
+    if (v.theme !== undefined && !Object.hasOwn(THEMES, v.theme)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the theme "${v.theme}" (built-in: ${Object.keys(THEMES).join(', ')})`);
+  });
   for (const k of ['lead', 'hold', 'tail'] as const) if (doc.pacing?.[k] !== undefined && !seconds(doc.pacing[k])) add('motion.time', `/pacing/${k}`, `${k} is seconds, 0 or more`);
 
   for (const [id, text] of Object.entries(doc.texts ?? {})) {

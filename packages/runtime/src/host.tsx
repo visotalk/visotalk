@@ -14,11 +14,13 @@ import {flushSync} from 'react-dom';
 import {DEFAULT_FPS, solve, soundGain, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {Clock} from './clock';
 import {Readiness} from './readiness';
+import {warm} from './media';
 import {RuntimeProvider, type Runtime} from './react';
 import {partBodies} from './bodies';
 import {Stage, StageProvider} from './stage';
 import {Player} from './player';
 import {installParentBridge} from './bridge';
+import {textAt, textFit} from './text-at';
 import {inspectFrame, type FrameInspection} from './inspect';
 import {C, themeVars} from './theme';
 
@@ -64,6 +66,8 @@ export function mount(opts: MountOptions) {
   const mode = params.get('mode') === 'driven' ? 'driven' : 'live';
   const assetBase = opts.assetBase ?? '';
   const presetId = params.get('preset') ?? opts.doc.canvas.presets[0].id;
+  // a variant's theme (`exports.variants[].theme`) stands in for the document's own; its `theme.tokens` still apply
+  const themeId = params.get('theme');
   // events sit on the frame grid of the frame rate the page is asked for (the exporter passes it), else the document's
   const fpsOf = (d: VisoDoc) => Number(params.get('fps')) || d.exports?.fps || DEFAULT_FPS;
   const presetOf = (d: VisoDoc) => d.canvas.presets.find((p) => p.id === presetId) ?? d.canvas.presets[0];
@@ -75,7 +79,7 @@ export function mount(opts: MountOptions) {
     const fps = fpsOf(doc);
     const compiled = solve(doc, voice, fps);
     const assets = Object.fromEntries((doc.assets ?? []).map((a) => [a.id, a]));
-    const theme = themeTokens(doc.theme);
+    const theme = themeTokens(themeId ? {...doc.theme, id: themeId} : doc.theme);
     const narration = compiled.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
     const sounds = compiled.sounds.map((s) => ({...s, src: assets[s.asset]?.src ?? s.asset}));
     const stage = (
@@ -90,9 +94,10 @@ export function mount(opts: MountOptions) {
 
   let shown = draw(opts.doc, opts.voice);
   const {doc, compiled, preset, fps} = shown;
+  const clock = new Clock(compiled.duration, mode);
   const runtime: Runtime = {
-    clock: new Clock(compiled.duration, mode),
-    readiness: new Readiness(),
+    clock,
+    readiness: new Readiness(mode === 'live' ? clock : undefined),
     width: preset.width,
     height: preset.height,
     pixelRatio: Number(params.get('dpr') ?? 1),
@@ -108,7 +113,8 @@ export function mount(opts: MountOptions) {
   document.body.style.margin = '0';
 
   if (mode === 'live') {
-    const render = () =>
+    const render = () => {
+      warm(shown.doc.assets ?? [], assetBase);
       root.render(
         <RuntimeProvider runtime={runtime}>
           <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} narration={shown.narration} sounds={shown.sounds} gain={(i, t) => soundGain(shown.compiled, shown.compiled.sounds[i], t)} assetBase={assetBase}
@@ -117,6 +123,7 @@ export function mount(opts: MountOptions) {
           </Player>
         </RuntimeProvider>,
       );
+    };
     window.__visotalkPlayer = {clock: runtime.clock, duration: compiled.duration};
     /**
      * The parent hands over the document as it has it now (a box moved, a line reworded) and the player draws that, at the same time, without a build.
@@ -138,7 +145,7 @@ export function mount(opts: MountOptions) {
         // a document that does not solve is not drawn; the player keeps the one it has
       }
     };
-    installParentBridge(runtime.clock, undefined, undefined, take);
+    installParentBridge(runtime.clock, undefined, undefined, take, {at: textAt, fit: textFit});
     render();
     return {compiled, runtime};
   }
