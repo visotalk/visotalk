@@ -5,7 +5,7 @@ export {Readiness} from './readiness';
 export {randomFor as random, type Random} from './random';
 export * from './motion';
 export {RuntimeProvider, useDocTime, useTime, useSceneDuration, useReadiness, useRuntime, type Runtime} from './react';
-export {Stage, StageProvider, Obj, useTarget, useProp, useText, useCanvas, useTheme, useAsset, useFrame, useScenes, type PartBody, type StageData} from './stage';
+export {Stage, StageProvider, Obj, useTarget, useProp, useText, useCanvas, useTheme, useAsset, useFrame, useScenes, useSounds, type PartBody, type StageData} from './stage';
 export {Player} from './player';
 export {installParentBridge} from './bridge';
 export {Video} from './video';

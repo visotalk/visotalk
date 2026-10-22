@@ -14,7 +14,7 @@ import {flushSync} from 'react-dom';
 import {DEFAULT_FPS, solve, soundGain, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {Clock} from './clock';
 import {Readiness} from './readiness';
-import {warm} from './media';
+import {MediaScheduler} from './media';
 import {RuntimeProvider, type Runtime} from './react';
 import {partBodies} from './bodies';
 import {Stage, StageProvider} from './stage';
@@ -33,6 +33,8 @@ export interface MountOptions {
   root?: HTMLElement;
   /** URL prefix for narration and assets (default "") */
   assetBase?: string;
+  /** the film's whole soundtrack as one file (relative to `assetBase`), built with it: played in place of the narration clips and the sounds, and the clock keeps to it */
+  mix?: string;
 }
 
 export interface DrivenApi {
@@ -113,11 +115,15 @@ export function mount(opts: MountOptions) {
   document.body.style.margin = '0';
 
   if (mode === 'live') {
+    // the built soundtrack is the document it was built with: one handed over later (an edit) plays its clips and sounds one by one again
+    const mixed = () => !!opts.mix && shown.doc === opts.doc;
+    const media = new MediaScheduler(runtime.clock, assetBase);
+    runtime.media = media;
     const render = () => {
-      warm(shown.doc.assets ?? [], assetBase);
+      media.set({doc: shown.doc, compiled: shown.compiled, mix: mixed() ? opts.mix : undefined});
       root.render(
         <RuntimeProvider runtime={runtime}>
-          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} narration={shown.narration} sounds={shown.sounds} gain={(i, t) => soundGain(shown.compiled, shown.compiled.sounds[i], t)} assetBase={assetBase}
+          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} media={media} ticks={shown.narration.map((n) => n.at)}
             autoplay={params.has('autoplay')} loop={params.has('loop')} bare={params.has('bare')}>
             {shown.stage}
           </Player>

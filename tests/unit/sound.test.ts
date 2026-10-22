@@ -44,6 +44,16 @@ test('solver: sounds start on their anchors; a loop without dur lasts to the end
   assert.ok(tick.start > l2.from && tick.start < l2.from + l2.duration, 'on a word of the line');
 });
 
+test('solver: a single play of a built audio file ends with the file, to the millisecond; dur still wins', () => {
+  const built = structuredClone(FILM);
+  built.assets!.find((a) => a.id === 'tick')!.analysis = {duration: 0.4321};
+  const tick = solve(built, voice(built)).sounds[1];
+  assert.ok(Math.abs(tick.end! - (tick.start + 0.4321)) < 1e-9, 'not snapped to a frame');
+  built.scenes[0].sounds![1].dur = 0.2;
+  const short = solve(built, voice(built)).sounds[1];
+  assert.equal(short.end, Math.round((short.start + 0.2) * 30) / 30);
+});
+
 test('soundGain: dB, fades in and out, and a step back while the narration speaks', () => {
   const c = solve(FILM, voice(FILM));
   const bed = c.sounds[0];

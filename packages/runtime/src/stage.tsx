@@ -104,6 +104,8 @@ export const useTheme = (): ThemeTokens => useStage().theme;
 export const useAsset = (id: string): string => useStage().assetUrl(id);
 /** The scenes of the film with where each starts and ends, in document seconds: a part that draws progress across scenes (a chapter rail) reads them */
 export const useScenes = (): Array<{id: string; from: number; end: number}> => useStage().c.scenes.map((s) => ({id: s.id, from: s.from, end: s.end}));
+/** The film's sounds (`<Sound>`), each with its asset and when it starts and ends in document seconds: a picture that answers a sound (a flash on a hit, a lamp on a ping) reads them, so the document's sounds are the one list of those moments */
+export const useSounds = (): Array<{asset: string; start: number; end?: number}> => useStage().c.sounds.map((s) => ({asset: s.asset, start: s.start, ...(s.end !== undefined && {end: s.end})}));
 /** The frame the clock is on, at the document's frame rate */
 export const useFrame = (): number => Math.round(useTime() * useStage().c.fps);
 

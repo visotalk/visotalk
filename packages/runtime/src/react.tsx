@@ -4,6 +4,7 @@
  */
 import React, {createContext, useContext, useSyncExternalStore} from 'react';
 import type {Clock} from './clock';
+import type {MediaScheduler} from './media';
 import type {Readiness} from './readiness';
 
 export interface Runtime {
@@ -12,6 +13,8 @@ export interface Runtime {
   width: number;
   height: number;
   pixelRatio: number;
+  /** the web player's media (absent in the export): `<Video>` takes its clips from it */
+  media?: MediaScheduler;
 }
 
 const RuntimeCtx = createContext<Runtime | null>(null);

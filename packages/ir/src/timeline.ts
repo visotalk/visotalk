@@ -52,7 +52,7 @@ export interface TAction {
   props: Record<string, number | string | boolean>;
 }
 
-/** A sound with its start and end in absolute seconds (`end` is the film's end for a looped sound without `dur`; absent for a single play of a file whose length the solver does not know) */
+/** A sound with its start and end in absolute seconds (`end` is the film's end for a looped sound without `dur`; a single play ends with its file, `analysis.duration` of its asset, which a build writes: absent only for a document solved before one) */
 export interface TSound {
   scene: Id;
   asset: Id;
@@ -107,7 +107,7 @@ export function solve(doc: VisoDoc, voice: VoiceManifest, fps: number = doc.expo
   doc.scenes.forEach((scene, i) => compileScene(scene, scenes[i], fps, starts, actions));
   actions.sort((a, b) => a.start - b.start);
   const duration = sn(cursor);
-  const sounds = doc.scenes.flatMap((scene, i) => (scene.sounds ?? []).map((s) => compileSound(s, scenes[i], fps, duration))).sort((a, b) => a.start - b.start);
+  const sounds = doc.scenes.flatMap((scene, i) => (scene.sounds ?? []).map((s) => compileSound(s, scenes[i], fps, duration, doc.assets?.find((a) => a.id === s.asset)?.analysis?.duration))).sort((a, b) => a.start - b.start);
   return {fps, duration, scenes, actions, sounds};
 }
 
@@ -262,9 +262,10 @@ function compileScene(scene: VisoDoc['scenes'][number], sc: TScene, fps: number,
   }
 }
 
-function compileSound(s: Sound, sc: TScene, fps: number, filmEnd: number): TSound {
+function compileSound(s: Sound, sc: TScene, fps: number, filmEnd: number, fileLength?: number): TSound {
   const start = snap(fps, anchorStart(sc, s.at));
-  const end = s.dur !== undefined ? snap(fps, start + s.dur) : s.loop ? filmEnd : undefined;
+  // the end of a file is where it ends, not a frame: snapping it would cut the tail of the sound or hold a silence
+  const end = s.dur !== undefined ? snap(fps, start + s.dur) : s.loop ? filmEnd : fileLength !== undefined ? start + fileLength : undefined;
   return {scene: sc.id, asset: s.asset, start, ...(end !== undefined && {end}), volume: s.volume ?? 0, loop: s.loop ?? false, fadeIn: s.fadeIn ?? 0, fadeOut: s.fadeOut ?? 0, duck: s.duck ?? 0};
 }
 

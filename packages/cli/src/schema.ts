@@ -29,6 +29,7 @@ export const SCHEMA = {
     'useAsset(id)': 'the URL of an <Asset>',
     'useText(id, base)': "words a person may edit: the text written in `<Doc texts={{id: '…'}}>` for this id, or `base` until there is one (id and base are string literals)",
     'useScenes()': 'the scenes as [{id, from, end}] in seconds of the video, for a picture that spans them (a chapter rail)',
+    'useSounds()': 'the <Sound>s as [{asset, start, end?}] in seconds of the video, for a picture that answers a sound (a flash on a hit)',
     '<Video asset in? start? rate? fit?>': 'a clip of an <Asset kind="video">: from `in` seconds of the source at `rate`, starting `start` seconds into the scene; its sound is not used',
     'random(key)': 'a deterministic random generator: the same key gives the same numbers; Math.random is refused',
   },

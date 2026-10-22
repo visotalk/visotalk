@@ -1,126 +1,14 @@
 /**
- * Web player chrome: fits the fixed stage into its box, play/pause, a scrubber with a tick at every narration clip, sound, full screen, keyboard,
- * narration in sync with the clock. `bare` (`?bare` on the page) draws the picture alone, for a page that has controls of its own.
+ * Web player chrome: fits the fixed stage into its box, play/pause, a scrubber with a tick at every narration clip, sound, full screen, keyboard.
+ * The sound itself, and what is loaded when, is the media scheduler's (`media.ts`). `bare` (`?bare` on the page) draws the picture alone, for a page that has controls of its own.
  * The controls are the brand's, not the video theme's: square, a cue-orange play button and playhead;
  * only the greys come from the theme's `--vt-*` variables.
  */
 import React, {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {Clock} from './clock';
-import {follow} from './media';
+import type {MediaScheduler} from './media';
 import {within} from './readiness';
 import {C, F} from './theme';
-
-export interface NarrationClip {
-  at: number;
-  duration: number;
-  src: string;
-}
-
-/**
- * One `Audio` per clip, started and stopped from the clock. A clip the clock has entered that cannot play yet holds the clock
- * (`Clock.hold`), and every clip pauses while the clock waits, so nothing runs ahead of the picture. Browsers (iOS Safari above all) let an element play only
- * after it has been started from a tap, so `unlock` — called from a click handler — starts every clip silently once.
- */
-function useNarration(clock: Clock, clips: NarrationClip[], base: string, muted: React.MutableRefObject<boolean>) {
-  const unlockRef = useRef(() => {});
-  useEffect(() => {
-    const tracks = clips.map((n) => {
-      const el = new Audio(base + n.src);
-      el.preload = 'auto';
-      return {...n, el, unlocking: false, unlocked: false, held: false};
-    });
-    const sync = () => {
-      const t = clock.getTime();
-      for (const tr of tracks) {
-        const inside = !muted.current && clock.isPlaying() && t >= tr.at && t < tr.at + tr.duration;
-        if (tr.unlocking) continue;
-        if (!inside) {
-          tr.held = false;
-          if (!tr.el.paused) tr.el.pause();
-          continue;
-        }
-        if (follow(clock, tr.el, tr, t - tr.at) && tr.el.paused) void tr.el.play().catch(() => {});
-      }
-    };
-    unlockRef.current = () => {
-      for (const tr of tracks) {
-        if (tr.unlocked) continue;
-        tr.unlocked = tr.unlocking = true;
-        tr.el.muted = true;
-        const done = () => { tr.el.pause(); tr.el.muted = false; tr.unlocking = false; sync(); };
-        tr.el.play().then(done, () => { tr.el.muted = false; tr.unlocking = false; tr.unlocked = false; });
-      }
-    };
-    const off = clock.subscribe(sync);
-    return () => {
-      off();
-      tracks.forEach((tr) => tr.el.pause());
-    };
-  }, [clock, clips, base, muted]);
-  return () => unlockRef.current();
-}
-
-const NO_SOUNDS: SoundTrack[] = [];
-const NO_GAIN = () => 1;
-
-export interface SoundTrack {
-  src: string;
-  start: number;
-  /** absent for a single play of a file whose length the document does not know */
-  end?: number;
-  loop: boolean;
-}
-
-/**
- * The sounds of the document (music, effects), each an element routed through a gain node (`gain(i, t)` is the document's own curve: volume, fades, ducking), because
- * an element's `volume` does nothing on iOS. They start and stop from the clock like the narration, and stay with it after a seek. `unlock` is called from a tap.
- */
-function useSounds(clock: Clock, sounds: SoundTrack[], gain: (i: number, t: number) => number, base: string, muted: React.MutableRefObject<boolean>) {
-  const unlockRef = useRef(() => {});
-  const gainRef = useRef(gain);
-  gainRef.current = gain;
-  useEffect(() => {
-    const Ctx = typeof window === 'undefined' ? undefined : window.AudioContext ?? (window as unknown as {webkitAudioContext?: typeof AudioContext}).webkitAudioContext;
-    if (!Ctx || !sounds.length) return undefined;
-    const ctx = new Ctx();
-    const tracks = sounds.map((s) => {
-      const el = new Audio(base + s.src);
-      el.preload = 'auto';
-      el.loop = s.loop;
-      const node = ctx.createGain();
-      node.gain.value = 0;
-      ctx.createMediaElementSource(el).connect(node).connect(ctx.destination);
-      return {...s, el, node, starting: false, held: false};
-    });
-    const sync = () => {
-      const t = clock.getTime();
-      tracks.forEach((tr, i) => {
-        const inside = !muted.current && clock.isPlaying() && t >= tr.start && (tr.end === undefined || t < tr.end);
-        if (!inside) {
-          tr.held = false;
-          if (!tr.el.paused) tr.el.pause();
-          tr.node.gain.value = 0;
-          return;
-        }
-        tr.node.gain.value = gainRef.current(i, t);
-        const len = tr.el.duration;
-        const want = tr.loop && len > 0 ? (t - tr.start) % len : t - tr.start;
-        if (follow(clock, tr.el, tr, want, tr.loop ? len : 0) && tr.el.paused && !tr.starting) {
-          tr.starting = true;
-          void ctx.resume().then(() => tr.el.play()).catch(() => {}).finally(() => { tr.starting = false; });
-        }
-      });
-    };
-    unlockRef.current = () => { void ctx.resume().then(sync); };
-    const off = clock.subscribe(sync);
-    return () => {
-      off();
-      tracks.forEach((tr) => tr.el.pause());
-      void ctx.close();
-    };
-  }, [clock, sounds, base, muted]);
-  return () => unlockRef.current();
-}
 
 /** `cue` and `on-cue` (dark) from docs/brand/tokens.json: the play button and the playhead are playback's colour and nothing else's. */
 const CUE = '#4aa8f2';
@@ -134,8 +22,12 @@ const CSS = `
 .vt-b:focus-visible,.vt-seek:focus-visible{outline:2px solid ${C.text};outline-offset:2px}
 .vt-root:focus{outline:none}
 .vt-seek{position:relative;flex:1;min-width:0;height:40px;cursor:pointer;touch-action:none}
-.vt-wait{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border:3px solid ${C.border};border-top-color:${CUE};animation:vt-spin .8s linear infinite;pointer-events:none}
-@keyframes vt-spin{to{transform:rotate(360deg)}}
+.vt-wait{position:absolute;left:50%;top:50%;display:flex;gap:6px;transform:translate(-50%,-50%);pointer-events:none}
+.vt-wait i{display:block;width:10px;height:10px;background:${CUE};opacity:.15;animation:vt-blink 1.2s ease-in-out infinite}
+.vt-wait i:nth-child(2){animation-delay:.19s}
+.vt-wait i:nth-child(3){animation-delay:.38s}
+@keyframes vt-blink{0%,60%,100%{opacity:.15}25%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.vt-wait i{animation:none;opacity:.7}}
 .vt-ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:square;stroke-linejoin:miter}
 `;
 
@@ -153,13 +45,13 @@ const Glyph: React.FC<{name: 'play' | 'pause' | 'sound' | 'muted' | 'full' | 'ex
 /** 82.53 -> "1:22" */
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export const Player: React.FC<{clock: Clock; width: number; height: number; narration: NarrationClip[]; sounds?: SoundTrack[]; gain?: (i: number, t: number) => number; assetBase: string; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
-  clock: ck, width, height, narration, sounds = NO_SOUNDS, gain = NO_GAIN, assetBase, hint, autoplay, loop, bare, children,
+export const Player: React.FC<{clock: Clock; width: number; height: number; media?: MediaScheduler; ticks?: number[]; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
+  clock: ck, width, height, media, ticks = [], hint, autoplay, loop, bare, children,
 }) => {
   const t = useSyncExternalStore(ck.subscribe, ck.getTime);
   const playing = useSyncExternalStore(ck.subscribe, ck.isPlaying);
   const buffering = useSyncExternalStore(ck.subscribe, ck.isBuffering);
-  // a wait shorter than a blink is not worth a spinner
+  // a wait shorter than a blink is not worth showing
   const [waiting, setWaiting] = useState(false);
   useEffect(() => {
     if (!buffering) { setWaiting(false); return undefined; }
@@ -171,8 +63,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
   const seekBar = useRef<HTMLDivElement>(null);
   // an autoplaying page starts silent (browsers refuse sound before a tap); a tap on Play or Sound turns it on, unless the viewer muted it
   const [muted, setMuted] = useState(!!autoplay);
-  const mutedRef = useRef(muted);
-  mutedRef.current = muted;
+  useEffect(() => media?.setMuted(muted), [media, muted]);
   const viewerMuted = useRef(false);
   // full screen is the player's own box, so the controls come with the picture; a browser that cannot (iPhone Safari) has no button
   const root = useRef<HTMLDivElement>(null);
@@ -185,10 +76,8 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
     return () => document.removeEventListener('fullscreenchange', change);
   }, []);
   const toggleFull = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void root.current?.requestFullscreen().catch(() => {}); };
-  const unlockNarration = useNarration(ck, narration, assetBase, mutedRef);
-  const unlockSounds = useSounds(ck, sounds, gain, assetBase, mutedRef);
-  const unlock = () => { unlockNarration(); unlockSounds(); };
-  const setSound = (on: boolean) => { viewerMuted.current = !on; mutedRef.current = !on; setMuted(!on); if (on) unlock(); };
+  const hasSound = !!media?.hasSound;
+  const setSound = (on: boolean) => { viewerMuted.current = !on; setMuted(!on); if (on) media?.unlock(); };
   const toggle = () => { if (playing) ck.pause(); else { if (!viewerMuted.current) setSound(true); ck.play(); } };
   // a page that frames a bare player has the sound button: `{vt: 'sound', on}` from the parent is a press of it (see `bridge.ts`)
   useEffect(() => {
@@ -199,7 +88,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSound only writes refs and state, and `unlock` forwards to a ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSound only writes a ref and state, and forwards to the scheduler
   }, [bare]);
   useEffect(() => {
     if (autoplay) ck.play();
@@ -244,7 +133,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
     else if (e.key === 'Home') ck.seek(0);
     else if (e.key === 'End') ck.seek(ck.duration);
     else if (e.key === 'f' && canFull && !bare) toggleFull();
-    else if (e.key === 'm' && (narration.length > 0 || sounds.length > 0)) setSound(muted);
+    else if (e.key === 'm' && hasSound) setSound(muted);
     else return;
     e.preventDefault();
   };
@@ -260,7 +149,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
         <div style={{width: width * scale, height: height * scale}}>
           <div style={{transform: `scale(${scale})`, transformOrigin: '0 0'}}>{children}</div>
         </div>
-        {waiting && <div className="vt-wait" role="status" aria-label="Loading" />}
+        {waiting && <div className="vt-wait" role="status" aria-label="Loading"><i /><i /><i /></div>}
         {idle && !bare && (
           <button id="vt-start" type="button" className="vt-b vt-cue" aria-label="Play" onClick={toggle}
             style={{position: 'absolute', left: '50%', top: '50%', width: 72, height: 72, transform: 'translate(-50%, -50%)'}}>
@@ -279,8 +168,8 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
           onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) seekTo(e.clientX); }}>
           <div style={{position: 'absolute', left: 0, right: 0, top: 18, height: 4, background: C.border}}>
             <div style={{width: `${frac * 100}%`, height: 4, background: C.text}} />
-            {narration.map((n) => (
-              <i key={n.src} style={{position: 'absolute', top: -5, left: `${(n.at / ck.duration) * 100}%`, width: 2, height: 14, background: n.at <= t ? C.text : C.faint}} />
+            {ticks.map((at, i) => (
+              <i key={i} style={{position: 'absolute', top: -5, left: `${(at / ck.duration) * 100}%`, width: 2, height: 14, background: at <= t ? C.text : C.faint}} />
             ))}
           </div>
           <i style={{position: 'absolute', top: 11, left: `calc(${frac * 100}% - 3px)`, width: 6, height: 18, background: CUE}} />
@@ -288,7 +177,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; narr
         <span style={{fontFamily: F.mono, fontSize: 12, color: C.muted, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'}}>
           {clock(t)} / {clock(ck.duration)}
         </span>
-        {(narration.length > 0 || sounds.length > 0) && (
+        {hasSound && (
           <button id="vt-sound" type="button" className="vt-b" aria-label={muted ? 'Sound on' : 'Sound off'} aria-pressed={!muted} onClick={() => setSound(muted)}>
             <Glyph name={muted ? 'muted' : 'sound'} />
           </button>

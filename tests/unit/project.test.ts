@@ -179,17 +179,77 @@ export default <Doc id="v" title="V" lang="en" theme="visotalk/dark" canvas="16x
   mkdirSync(dir + '/.visotalk/v', {recursive: true});
   writeFileSync(dir + '/.visotalk/v/voice.json', JSON.stringify({l1: {duration: 2}}));
   const dist = await buildPlayer(load(dir + '/doc.tsx'));
-  assert.deepEqual(JSON.parse(readFileSync(dist + '/media.json', 'utf8')), {clip: {src: 'assets/clip.mp4', fps: 25, frames: 25}});
+  const probed = JSON.parse(readFileSync(dist + '/media.json', 'utf8'));
+  assert.deepEqual(probed, {clip: {src: probed.clip.src, fps: 25, frames: 25}});
+  assert.match(probed.clip.src, /^assets\/[0-9a-f]{12}\.mp4$/, 'named by what it holds');
   // ffmpeg writes the index (moov) after the frames (mdat) unless told otherwise (the fixture above); a host that does not answer
   // range requests, a Claude artifact among them, then never gives the browser the index. The built copy has it first.
   assert.ok(readFileSync(dir + '/media/clip.mp4').indexOf('moov') > readFileSync(dir + '/media/clip.mp4').indexOf('mdat'), 'the fixture has its index last');
-  const bytes = readFileSync(dist + '/assets/clip.mp4');
+  const bytes = readFileSync(dist + '/' + probed.clip.src);
   assert.ok(bytes.indexOf('moov') > 0 && bytes.indexOf('moov') < bytes.indexOf('mdat'), 'the built video has its index before its frames');
   const cache = dir + '/cache';
   assert.deepEqual(await extractMedia(dist, cache), {clip: 25});
   assert.equal(readdirSync(cache + '/clip').length, 25);
   assert.ok(existsSync(cache + '/clip/0.jpg') && existsSync(cache + '/clip/24.jpg'));
   assert.deepEqual(await extractMedia(dist, cache), {clip: 0}, 'a second run decodes nothing');
+});
+
+test('audio: a built sound asset carries its length, and the solver ends a single play with it', async (t) => {
+  const {spawnSync} = await import('node:child_process');
+  const {readFileSync} = await import('node:fs');
+  const {buildPlayer, load} = await import('../../packages/cli/src/project.ts');
+  const {solve} = await import('../../packages/ir/src/index.ts');
+  const dir = mkdtempSync('/tmp/vt-sound-');
+  mkdirSync(dir + '/media');
+  if (spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1.5', dir + '/media/tick.wav']).status !== 0) return t.skip('no ffmpeg');
+  writeFileSync(dir + '/doc.tsx', `import {Doc, Scene, Line, Part, Animation, Appear, Asset, Sound} from '@visotalk/jsx';
+export default <Doc id="s" title="S" lang="en" theme="visotalk/dark" canvas="16x9">
+  <Asset id="tick" kind="audio" src="media/tick.wav" license={{id: 'CC0-1.0', attribution: 'test', obligations: []}} source="https://example.com/"/>
+  <Scene id="s"><Line id="l1">One two three.</Line><Sound asset="tick" at="start"/><Part id="p">{() => <div>x</div>}</Part><Animation><Appear on="p" line="l1" word="two"/></Animation></Scene>
+</Doc>;`);
+  mkdirSync(dir + '/.visotalk/s', {recursive: true});
+  writeFileSync(dir + '/.visotalk/s/voice.json', JSON.stringify({l1: {duration: 2}}));
+  await buildPlayer(load(dir + '/doc.tsx'));
+  const built = JSON.parse(readFileSync(dir + '/.visotalk/s/doc.built.json', 'utf8'));
+  assert.ok(Math.abs(built.assets[0].analysis.duration - 1.5) < 0.01);
+  assert.equal(built['x-media'].sizes.tick, readFileSync(dir + '/media/tick.wav').length, 'a build writes the size of each file for the player to plan by');
+  const sound = solve(built, {l1: {duration: 2, audio: 'l1.wav'}}, 30).sounds[0];
+  assert.ok(Math.abs(sound.end! - sound.start - built.assets[0].analysis.duration) < 1e-9);
+});
+
+test('build: every file but the page is named by its content, and the runtime is the same file whatever the document', async (t) => {
+  const {spawnSync} = await import('node:child_process');
+  const {readdirSync, readFileSync} = await import('node:fs');
+  const {buildPlayer, load} = await import('../../packages/cli/src/project.ts');
+  const dir = mkdtempSync('/tmp/vt-names-');
+  mkdirSync(dir + '/media');
+  if (spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1', dir + '/media/tick.wav']).status !== 0) return t.skip('no ffmpeg');
+  const doc = (id: string, say: string) => `import {Doc, Scene, Line, Part, Animation, Appear, Asset, Sound} from '@visotalk/jsx';
+import {useAsset} from '@visotalk/runtime';
+export default <Doc id="${id}" title="${id}" lang="en" theme="visotalk/dark" canvas="16x9">
+  <Asset id="tick" kind="audio" src="media/tick.wav" license={{id: 'CC0-1.0', attribution: 'test', obligations: []}} source="https://example.com/"/>
+  <Scene id="s"><Line id="l1">${say}</Line><Sound asset="tick" at="start"/><Part id="p">{() => <div data-src={useAsset("tick")}>x</div>}</Part><Animation><Appear on="p" line="l1"/></Animation></Scene>
+</Doc>;`;
+  const build = async (id: string, say: string) => {
+    writeFileSync(`${dir}/${id}.tsx`, doc(id, say));
+    mkdirSync(`${dir}/.visotalk/${id}`, {recursive: true});
+    writeFileSync(`${dir}/.visotalk/${id}/voice.json`, JSON.stringify({l1: {duration: 2}}));
+    const dist = await buildPlayer(load(`${dir}/${id}.tsx`), {out: `${dir}/dist-${id}`});
+    return {dist, files: readdirSync(dist, {recursive: true}).map(String).filter((f) => !f.includes('fonts') && f.includes('.')).sort()};
+  };
+  const a = await build('a', 'One two three.');
+  const b = await build('b', 'Four five six.');
+  const named = (files: string[]) => files.filter((f) => f !== 'index.html');
+  for (const f of named(a.files)) assert.match(f, /^(app|runtime)\.[0-9a-f]{12}\.(js|css)$|^assets\/[0-9a-f]{12}\.wav$|^soundtrack\.[0-9a-f]{12}\.mp3$/, f);
+  const pick = (files: string[], re: RegExp) => files.find((f) => re.test(f));
+  assert.equal(pick(a.files, /^runtime\..*\.js$/), pick(b.files, /^runtime\..*\.js$/), 'the runtime does not depend on the document');
+  assert.notEqual(pick(a.files, /^app\..*\.js$/), pick(b.files, /^app\..*\.js$/), 'the document does');
+  assert.equal(pick(a.files, /^assets\//), pick(b.files, /^assets\//), 'the same file has the same name in both');
+  assert.equal(readFileSync(`${a.dist}/${pick(a.files, /^runtime\..*\.js$/)}`).length, readFileSync(`${b.dist}/${pick(b.files, /^runtime\..*\.js$/)}`).length);
+  // a rebuild into the same directory leaves nothing of the earlier one behind
+  writeFileSync(`${dir}/b.tsx`, doc('b', 'Seven eight nine two.'));
+  const again = await buildPlayer(load(`${dir}/b.tsx`), {out: b.dist});
+  assert.equal(readdirSync(again).filter((f) => f.startsWith('app.') && f.endsWith('.js')).length, 1);
 });
 
 test('narration: a CJK document is spoken by a provider and timed from characters; Kokoro is English only', async () => {
@@ -214,9 +274,9 @@ test('narration: a CJK document is spoken by a provider and timed from character
   assert.ok(Math.abs(estimateVoice(zh).l1.duration - 21 / 4.4) < 0.05);
 });
 
-test('artifact: the player is built with MP3 narration, a page and the list of files to publish', async (t) => {
+test('artifact: the player is built with the soundtrack mixed into one MP3, a page and the list of files to publish', async (t) => {
   const {spawnSync} = await import('node:child_process');
-  const {existsSync, readFileSync} = await import('node:fs');
+  const {existsSync, readFileSync, readdirSync} = await import('node:fs');
   const {buildPlayer, load} = await import('../../packages/cli/src/project.ts');
   const dir = mkdtempSync('/tmp/vt-artifact-');
   const wav = dir + '/l1.wav';
@@ -230,14 +290,30 @@ export default <Doc id="a" title="A <b>" lang="en" theme="visotalk/dark" canvas=
   writeFileSync(dir + '/.visotalk/a/voice.json', JSON.stringify({l1: {duration: 1, audio: 'audio/l1.m4a'}}));
   const dist = await buildPlayer(load(dir + '/doc.tsx'), {artifact: true});
   const list = JSON.parse(readFileSync(dist + '/artifact.json', 'utf8'));
-  assert.deepEqual(list.files, ['app.js', 'audio/l1.mp3']);
-  assert.ok(existsSync(dist + '/audio/l1.mp3') && !existsSync(dist + '/audio/l1.m4a'));
-  assert.match(readFileSync(dist + '/app.js', 'utf8'), /audio\/l1\.mp3/);
+  // one file for the whole film, as long as it, in place of a clip per line
+  assert.deepEqual(list.files.map((f: string) => f.replace(/[0-9a-f]{12}/, '#')), ['app.#.js', 'runtime.#.js', 'soundtrack.#.mp3']);
+  assert.ok(!existsSync(dist + '/audio'));
+  const length = Number(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', dist + '/' + list.files[2]], {encoding: 'utf8'}).stdout);
+  assert.ok(Math.abs(length - 2.6) < 0.1, `soundtrack of ${length} s for a film of 2.6 s`); // lead 0.4, the line 1, its hold 0.4, the tail 0.8 (an MP3 adds a few ms)
+  assert.match(readFileSync(dist + '/' + list.files[0], 'utf8'), /soundtrack\.[0-9a-f]{12}\.mp3/);
   assert.match(readFileSync(dist + '/player.html', 'utf8'), /^<title>A &lt;b>/);
   assert.doesNotMatch(readFileSync(dist + '/player.html', 'utf8'), /replaceState/, 'no output named: the first one plays');
   // an artifact page has no query of its own, so the theme it plays in is set before the player reads it
   const named = await buildPlayer(load(dir + '/doc.tsx'), {artifact: true, theme: 'visotalk/light'});
   assert.match(readFileSync(named + '/player.html', 'utf8'), /history\.replaceState\(null, '', '\?theme=visotalk%2Flight'\)/);
+  // the player of a build that is not for an artifact plays the same track, and keeps the clips beside it for a document edited without a build
+  const plain = await buildPlayer(load(dir + '/doc.tsx'), {out: dir + '/plain'});
+  const plainFiles = readdirSync(plain);
+  assert.ok(plainFiles.some((f: string) => /^soundtrack\.[0-9a-f]{12}\.mp3$/.test(f)));
+  assert.ok(existsSync(plain + '/audio/l1.m4a'));
+  assert.match(readFileSync(plain + '/' + plainFiles.find((f: string) => /^app\./.test(f) && f.endsWith('.js')), 'utf8'), /soundtrack\.[0-9a-f]{12}\.mp3/);
+  // a film with nothing to hear has no soundtrack
+  writeFileSync(dir + '/silent.tsx', `import {Doc, Scene, Part, Animation, Appear} from '@visotalk/jsx';
+export default <Doc id="q" title="Q" lang="en" theme="visotalk/dark" canvas="16x9">
+  <Scene id="s" duration={1}><Part id="p">{() => <div>x</div>}</Part><Animation><Appear on="p" at="start"/></Animation></Scene>
+</Doc>;`);
+  const quiet = await buildPlayer(load(dir + '/silent.tsx'), {artifact: true, out: dir + '/quiet'});
+  assert.deepEqual(JSON.parse(readFileSync(quiet + '/artifact.json', 'utf8')).files.map((f: string) => f.replace(/[0-9a-f]{12}/, '#')), ['app.#.js', 'runtime.#.js']);
 });
 
 test('init: a vertical script gets a 9:16 canvas and word captions, a horizontal one the default', async () => {

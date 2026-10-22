@@ -33,7 +33,8 @@ function project(opts: {voice?: boolean; doc?: string} = {}) {
   if (opts.voice) {
     const work = join(dir, '.visotalk/bundled');
     mkdirSync(join(work, 'audio'), {recursive: true});
-    writeFileSync(join(work, 'audio/abc123.m4a'), Buffer.from('not really aac'));
+    // a build mixes the clips into the soundtrack, so the clip is a real (silent) one
+    spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=24000:cl=mono', '-t', '1.5', '-c:a', 'aac', join(work, 'audio/abc123.m4a')]);
     writeFileSync(join(work, 'voice.json'), JSON.stringify({l1: {duration: 1.5, audio: 'audio/abc123.m4a', key: 'abc123'}}));
   }
   return load(join(dir, 'doc.tsx'));
@@ -306,7 +307,7 @@ test('a player bundle is the built talk: it plays, has no document, and says whe
   assert.equal(built.manifest.id, source.manifest.id);
   assert.deepEqual(built.manifest.lineage, {id: source.manifest.id, revision: source.manifest.revision, relation: 'player'});
   const paths = Object.keys(built.manifest.files);
-  assert.ok(paths.includes('player/index.html') && paths.includes('player/app.js'));
+  assert.ok(paths.includes('player/index.html') && paths.some((f) => /^player\/app\.[0-9a-f]{12}\.js$/.test(f)) && paths.some((f) => /^player\/soundtrack\.[0-9a-f]{12}\.mp3$/.test(f)));
   assert.ok(paths.some((f) => f.startsWith('player/audio/')), 'the clips of the voice are in the player');
   assert.ok(paths.includes('captions/en.srt') && paths.includes('credits.md'));
   assert.ok(!paths.some((f) => f.startsWith('source/') || f.startsWith('voice/') || f.endsWith('doc.tsx')), 'no document, no source: nothing to edit');

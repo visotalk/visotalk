@@ -3,6 +3,7 @@
  * Work files live next to the document in .visotalk/<doc-id>/.
  */
 import {execFileSync, spawn} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {basename, dirname, extname, join, relative, resolve, sep} from 'node:path';
@@ -10,7 +11,8 @@ import {build as esbuild} from 'esbuild';
 import {localImports} from '@visotalk/ir/bundle';
 import {clipKey, kokoroKey} from './clip_key.ts';
 import {fontPlan, writeFontFaces} from './fonts.ts';
-import {DEFAULT_THEME, ID_PATTERN, parseMarkup, sayOf, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {DEFAULT_THEME, ID_PATTERN, mediaHints, parseMarkup, sayOf, solve, soundGain, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {ENV_HZ, muxAudio} from '@visotalk/exporter';
 
 const HERE = import.meta.dirname;
 const RUNTIME = resolve(HERE, '../../runtime/src/index.ts');
@@ -241,8 +243,11 @@ export const voiceProvider = (voice?: string): {provider: string; voice: string}
   return voice && i > 0 ? {provider: voice.slice(0, i), voice: voice.slice(i + 1)} : undefined;
 };
 
-/** What can speak this document: a Kokoro model directory (English only), or the voice provider the document names; undefined when neither */
-export const narrationSource = (p: Project, models?: string) => (isCjk(p.doc.meta.lang) ? undefined : models || process.env.KOKORO_DIR) || voiceProvider(p.doc.voice?.voice)?.provider;
+/** A film with no lines (music and pictures only) has nothing to speak: its narration is ready as soon as `prepare` writes the empty manifest */
+export const speaks = (p: Project) => p.doc.scenes.some((s) => s.lines.length > 0);
+
+/** What can speak this document: a Kokoro model directory (English only), or the voice provider the document names; undefined when neither, and `'none'` for a document with no lines */
+export const narrationSource = (p: Project, models?: string) => (!speaks(p) ? 'none' : (isCjk(p.doc.meta.lang) ? undefined : models || process.env.KOKORO_DIR) || voiceProvider(p.doc.voice?.voice)?.provider);
 
 export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManifest {
   const lines = p.doc.scenes.flatMap((s) => s.lines.map((l) => ({id: l.id, say: sayOf(p.doc, l)})));
@@ -251,6 +256,7 @@ export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManif
   mkdirSync(audioDir, {recursive: true});
   if (!lines.length) {
     writeFileSync(voicePath, '{}');
+    rmSync(estimateMark(p), {force: true});
     return {};
   }
   const third = voiceProvider(p.doc.voice?.voice);
@@ -318,9 +324,19 @@ function alignWords(lang: string, speak: string, wavDir: string, manifestPath: s
   }
 }
 
+/** The length of an audio file in seconds, from ffprobe: what ends a single play of it in the solver */
+function audioLength(id: string, name: string, file: string): number {
+  const duration = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', file], {encoding: 'utf8'}).trim());
+  if (!(duration > 0)) throw new Error(`asset "${id}": cannot read the length of ${name}`);
+  return duration;
+}
+
+/** The name of a built file that holds `bytes`: twelve hex digits of their SHA-256 (the play route keeps such a name for good, `playCacheControl`) */
+const contentName = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex').slice(0, 12);
+
 /**
- * Assets → dist/assets: files copied, with srcs rewritten relative to dist. Returns the document with the bodies of its parts left out (the player
- * gets them from the module). An audio asset is copied too (for an artifact, as a smaller MP3). A video asset is remuxed with its index first (MP4 and MOV), and what ffprobe found about it (`fps`, `frames`: it must have a constant frame rate)
+ * Assets → dist/assets, each named by its content (`assets/<sha256:12>.<ext>`), with srcs rewritten relative to dist. Returns the document with the bodies of its parts left out (the player
+ * gets them from the module), plus `x-media`: which parts show each picture and clip, and the size of each file, for the player to fetch ahead by (`mediaPlan`). An audio asset is copied too, except for an artifact, whose sounds are in its one mixed track (see `buildPlayer`). A video asset is remuxed with its index first (MP4 and MOV), and what ffprobe found about it (`fps`, `frames`: it must have a constant frame rate)
  * goes into its `analysis` and into `dist/media.json`, which the exporter decodes from.
  */
 function ingest(p: Project, dist: string, artifact = false): VisoDoc {
@@ -329,18 +345,28 @@ function ingest(p: Project, dist: string, artifact = false): VisoDoc {
   const outDir = join(dist, 'assets');
   mkdirSync(outDir, {recursive: true});
   const media: Record<string, {src: string; fps: number; frames: number}> = {};
+  const sizes: Record<string, number> = {};
   for (const a of doc.assets ?? []) {
     if (/^https?:/.test(a.src)) continue;
     const src = resolve(p.dir, a.src);
     if (!existsSync(src)) throw new Error(`asset "${a.id}": file not found: ${a.src}`);
-    // an artifact page is small: music and effects go in as 96 kbit/s MP3
-    const file = artifact && a.kind === 'audio' ? `${a.id}.mp3` : `${a.id}${extname(src)}`;
-    if (artifact && a.kind === 'audio') execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-vn', '-c:a', 'libmp3lame', '-b:a', '96k', join(outDir, file)]);
+    if (artifact && a.kind === 'audio') {
+      // an artifact's sounds are in its one mixed track, but the document still needs their lengths: a single play ends with its file
+      a.analysis = {...a.analysis, duration: audioLength(a.id, a.src, src)};
+      continue;
+    }
+    // built under a name of its own, then named by what it holds: a file that is the same in two builds has the same name in both, and a browser keeps it
+    const tmp = join(outDir, `${a.id}.tmp${extname(src)}`);
     // A video is remuxed, not re-encoded, so its index (moov) comes before its frames: a host that does not answer range requests,
     // a Claude artifact among them, otherwise never gives the browser the index, and the video stays blank.
-    else if (a.kind === 'video' && /\.(mp4|m4v|mov)$/i.test(src)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-map', '0:v:0', '-map', '0:a?', '-c', 'copy', '-movflags', '+faststart', join(outDir, file)]);
-    else copyFileSync(src, join(outDir, file));
+    if (a.kind === 'video' && /\.(mp4|m4v|mov)$/i.test(src)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-map', '0:v:0', '-map', '0:a?', '-c', 'copy', '-movflags', '+faststart', tmp]);
+    else copyFileSync(src, tmp);
+    const file = `${contentName(readFileSync(tmp))}${extname(src)}`;
+    renameSync(tmp, join(outDir, file));
     a.src = `assets/${file}`;
+    sizes[a.id] = statSync(join(outDir, file)).size;
+    // an audio file's length is what ends a single play of it in the solver
+    if (a.kind === 'audio') a.analysis = {...a.analysis, duration: audioLength(a.id, a.src, src)};
     if (a.kind === 'video') {
       const probe = Object.fromEntries(execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=r_frame_rate,nb_frames,duration', '-of', 'default=nw=1', src], {encoding: 'utf8'}).trim().split('\n').map((l) => l.split('=')));
       const [num, den] = String(probe.r_frame_rate).split('/').map(Number);
@@ -352,18 +378,88 @@ function ingest(p: Project, dist: string, artifact = false): VisoDoc {
     }
   }
   if (Object.keys(media).length) writeFileSync(join(dist, 'media.json'), JSON.stringify(media));
+  // what the player fetches ahead by: which parts show each picture and clip (read from the bodies deleted above) and how big each file is
+  const hints = mediaHints(p.doc, p.prelude, sizes);
+  if (hints.uses || hints.sizes) doc['x-media'] = hints;
   return doc;
+}
+
+/**
+ * The film's whole soundtrack, as `render` mixes it (`muxAudio`): every narration clip at its line, every sound with its gain envelope from `soundGain`, written as
+ * `soundtrack.<hash>.mp3` in `dist`. A page plays it as one track: one file to fetch, every sound already in its place, and the page sounds as the video does. Returns its
+ * name, or undefined when the film is silent.
+ */
+async function mixSoundtrack(p: Project, doc: VisoDoc, voice: VoiceManifest, dist: string): Promise<string | undefined> {
+  const c = solve(doc, voice);
+  const narration = c.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: join(p.work, l.audio!)}));
+  const files = Object.fromEntries((p.doc.assets ?? []).map((a) => [a.id, resolve(p.dir, a.src)]));
+  const sounds = c.sounds.map((s) => ({src: files[s.asset], at: s.start, end: s.end, loop: s.loop}));
+  if (!narration.length && !sounds.length) return undefined;
+  const count = Math.ceil(c.duration * ENV_HZ);
+  const envelopes = c.sounds.map((s) => Array.from({length: count}, (_, k) => soundGain(c, s, k / ENV_HZ)));
+  const tmp = join(dist, 'soundtrack.mp3');
+  await muxAudio(undefined, tmp, 0, c.duration, {narration, sounds, envelopes}, '');
+  const name = `soundtrack.${contentName(readFileSync(tmp))}.mp3`;
+  renameSync(tmp, join(dist, name));
+  return name;
 }
 
 /** An artifact page has no query string of its own: the theme it plays in is set before the player reads it */
 const artifactQuery = (o: {theme?: string}) => (o.theme ? `<script>history.replaceState(null, '', '?${new URLSearchParams({theme: o.theme})}')</script>\n` : '');
 
-/** Bundle the runtime with this document into dist/ (index.html, app.js, fonts, audio, assets) */
+/** What the runtime entry puts in `globalThis.__visotalkRuntime`, and the packages the document's bundle takes from it: the key, the package, and whether it is a CommonJS package (a `default` that is the whole of it) */
+const SHARED = [
+  {key: 'runtime', spec: '@visotalk/runtime', cjs: false},
+  {key: 'jsx', spec: '@visotalk/jsx', cjs: false},
+  {key: 'react', spec: 'react', cjs: true},
+  {key: 'jsxRuntime', spec: 'react/jsx-runtime', cjs: true},
+  {key: 'reactDom', spec: 'react-dom', cjs: true},
+  {key: 'reactDomClient', spec: 'react-dom/client', cjs: true},
+] as const;
+
+/**
+ * The runtime is built once per engine, apart from any document, and the document's bundle must still import from it by name (`import {Video} from '@visotalk/runtime'`):
+ * the entry of the runtime bundle (everything in `SHARED` in `globalThis.__visotalkRuntime`) and, for each package, a shim that exports every name the package has from
+ * that global. Returns the entry, the aliases that give the runtime bundle one copy of React (`alias`), and the shims the document's bundle is aliased to (`shimmed`).
+ */
+async function runtimeShims(work: string): Promise<{entry: string; alias: Record<string, string>; shimmed: Record<string, string>}> {
+  const req = createRequire(RUNTIME);
+  // one copy of React for the runtime and for the parts, wherever the document lives
+  const alias = {'@visotalk/runtime': RUNTIME, '@visotalk/ir': IR, '@visotalk/jsx': JSX, ...Object.fromEntries(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'].map((n) => [n, req.resolve(n)]))};
+  const dir = join(work, 'shims');
+  mkdirSync(dir, {recursive: true});
+  const entry = join(dir, 'runtime.ts');
+  writeFileSync(entry, `${SHARED.map((m) => `import * as ${m.key} from '${m.spec}';`).join('\n')}\nObject.assign(globalThis, {__visotalkRuntime: {${SHARED.map((m) => m.key).join(', ')}}});\n`);
+  const shimmed: Record<string, string> = {};
+  for (const m of SHARED) {
+    // the names of a package of ours are what its entry exports (esbuild says); a CommonJS package's are what it has
+    let names: string[];
+    if (m.cjs) names = Object.keys(req(m.spec)).filter((n) => n !== 'default');
+    else {
+      const probe = await esbuild({entryPoints: [alias[m.spec]], bundle: true, write: false, metafile: true, outdir: join(dir, 'probe'), format: 'esm', jsx: 'automatic', loader: {'.woff2': 'empty', '.woff': 'empty', '.ttf': 'empty', '.css': 'empty'}, alias, logLevel: 'silent'});
+      names = Object.values(probe.metafile.outputs)[0].exports.filter((n) => n !== 'default');
+    }
+    const file = join(dir, `${m.key}.js`);
+    writeFileSync(file, `const m = globalThis.__visotalkRuntime.${m.key};\nexport const {${names.join(', ')}} = m;\n${m.cjs ? 'export default m.default;\n' : ''}`);
+    shimmed[m.spec] = file;
+  }
+  return {entry, alias, shimmed};
+}
+
+/**
+ * Bundle the runtime with this document into dist/. Every file but the page is named by its content (`assets/<hash>.<ext>`, `audio/<hash>.m4a`,
+ * `fonts/<name>-<hash>.woff2`), and the code is two files: `runtime.<hash>.js`, the runtime with React and the IR, the same for every document one engine version builds,
+ * and `app.<hash>.js`, this document's module and data (with `app.<hash>.css` beside it). A file that is the same in two builds has the same name in both,
+ * so a browser, or a store, that has it needs it no more. The page (`index.html`, or `player.html` for an artifact) is the one fixed name.
+ */
 export async function buildPlayer(p: Project, opts: {out?: string; minify?: boolean; artifact?: boolean; theme?: string} = {}): Promise<string> {
   const voicePath = join(p.work, 'voice.json');
   if (!existsSync(voicePath)) prepare(p);
   const dist = resolve(opts.out ?? join(p.work, 'dist'));
   mkdirSync(dist, {recursive: true});
+  // what an earlier build left under names of its own would be published with this one
+  for (const dir of ['assets', 'audio', 'fonts']) rmSync(join(dist, dir), {recursive: true, force: true});
+  for (const f of readdirSync(dist)) if (/^(app|runtime|soundtrack)\.[0-9a-f]{12}\.(js|css|mp3)$/.test(f)) rmSync(join(dist, f));
   const doc = ingest(p, dist, opts.artifact);
   // CJK faces: the families the document names, or its language's default, cut to the document's characters and embedded (an artifact page loads no stylesheet: its rules go inline in player.html)
   const faces = fontPlan(p.doc);
@@ -374,39 +470,53 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   }
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));
   const entry = join(p.work, 'entry.tsx');
-  // an artifact page serves no .m4a: its narration is MP3, under the same names
-  const artifactVoice = opts.artifact ? Object.fromEntries(Object.entries(JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest).map(([id, v]) => [id, v.audio ? {...v, audio: v.audio.replace(/\.m4a$/, '.mp3')} : v])) : undefined;
-  if (artifactVoice) writeFileSync(join(p.work, 'voice.artifact.json'), JSON.stringify(artifactVoice));
-  // the document is also a module: its parts' React runs in the player
-  writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './${artifactVoice ? 'voice.artifact.json' : 'voice.json'}';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any});\n`);
-  // one copy of React for the runtime and for the parts, wherever the document lives
-  const req = createRequire(RUNTIME);
-  const react = Object.fromEntries(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'].map((n) => [n, req.resolve(n)]));
-  await esbuild({
-    entryPoints: [entry], bundle: true, outdir: dist, entryNames: 'app', format: 'esm', target: 'es2022', minify: opts.minify ?? true,
-    jsx: 'automatic', loader: {'.woff2': 'file', '.woff': 'file', '.ttf': 'file'}, assetNames: 'fonts/[name]-[hash]',
-    alias: {'@visotalk/runtime': RUNTIME, '@visotalk/ir': IR, '@visotalk/jsx': JSX, ...react}, define: {'process.env.NODE_ENV': '"production"'}, logLevel: 'warning',
-  });
-  // only the clips this document's voice manifest names: the work directory also holds those of earlier versions of the lines
   const voice = JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest;
-  for (const v of Object.values(voice)) {
+  // every player plays one track, the film's whole soundtrack mixed as the video's is; the clips and sounds stay beside it for what plays without a build (the Studio's edits)
+  const mix = await mixSoundtrack(p, doc, voice, dist);
+  // the document is also a module: its parts' React runs in the player
+  writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './voice.json';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any${mix ? `, mix: '${mix}'` : ''}});\n`);
+  const shims = await runtimeShims(p.work);
+  const common = {bundle: true, outdir: dist, format: 'esm', target: 'es2022', minify: opts.minify ?? true, jsx: 'automatic', loader: {'.woff2': 'file', '.woff': 'file', '.ttf': 'file'}, assetNames: 'fonts/[name]-[hash]', define: {'process.env.NODE_ENV': '"production"'}, logLevel: 'warning'} as const;
+  // the runtime with React and the IR is a file of its own that does not depend on the document, so it is the same bytes in every build of one engine; it puts what the document imports in `globalThis.__visotalkRuntime`
+  await esbuild({...common, entryPoints: {runtime: shims.entry}, alias: shims.alias});
+  // the document's bundle takes those imports from there (a shim per package, listing the names it exports) and holds only the document
+  await esbuild({...common, entryPoints: {app: entry}, alias: {...shims.shimmed, '@visotalk/ir': IR}});
+  // every file is named by what it holds
+  const named = (file: string) => {
+    if (!existsSync(join(dist, file))) return undefined;
+    const bytes = readFileSync(join(dist, file));
+    const out = file.replace(/(\.[a-z]+)$/, `.${contentName(bytes)}$1`);
+    writeFileSync(join(dist, out), bytes);
+    rmSync(join(dist, file));
+    return out;
+  };
+  const runtimeJs = named('runtime.js')!, runtimeCss = named('runtime.css')!, appJs = named('app.js')!, appCss = named('app.css');
+  // only the clips this document's voice manifest names: the work directory also holds those of earlier versions of the lines
+  if (!opts.artifact) for (const v of Object.values(voice)) {
     if (!v.audio) continue;
     mkdirSync(dirname(join(dist, v.audio)), {recursive: true});
-    if (opts.artifact) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(p.work, v.audio), '-c:a', 'libmp3lame', '-b:a', '64k', join(dist, v.audio.replace(/\.m4a$/, '.mp3'))]);
-    else copyFileSync(join(p.work, v.audio), join(dist, v.audio));
+    copyFileSync(join(p.work, v.audio), join(dist, v.audio));
   }
   const title = p.doc.meta.title.replace(/</g, '&lt;');
   if (opts.artifact) {
     // what the Artifact tool publishes: `player.html` as the page and `artifact.json` listing the files beside it (the stylesheet stays out, since an artifact loads none of its own: the CJK faces are inline rules in the page and files beside it)
     const faceCss = faces.fonts.length ? readFileSync(join(p.work, 'fonts.css'), 'utf8').replaceAll('url(./fonts/', 'url(fonts/') : '';
-    const faceFiles = [...faceCss.matchAll(/url\((fonts\/[^)]+)\)/g)].map((m) => m[1]);
+    // the faces are named by what they hold like every other file
+    const faceFiles: string[] = [];
+    let faceRules = faceCss;
     mkdirSync(join(dist, 'fonts'), {recursive: true});
-    for (const f of faceFiles) copyFileSync(join(p.work, f), join(dist, f));
-    writeFileSync(join(dist, 'player.html'), `<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceCss}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script type="module" src="app.js"></script>\n`);
-    const files = ['app.js', ...faceFiles, ...Object.values(artifactVoice!).flatMap((v) => (v.audio ? [v.audio] : [])), ...(existsSync(join(dist, 'assets')) ? readdirSync(join(dist, 'assets')).map((f) => `assets/${f}`) : [])];
+    for (const f of new Set([...faceCss.matchAll(/url\((fonts\/[^)]+)\)/g)].map((m) => m[1]))) {
+      const face = `fonts/${basename(f, extname(f))}-${contentName(readFileSync(join(p.work, f)))}${extname(f)}`;
+      copyFileSync(join(p.work, f), join(dist, face));
+      faceRules = faceRules.replaceAll(`url(${f})`, `url(${face})`);
+      faceFiles.push(face);
+    }
+    for (const sheet of [runtimeCss, appCss]) if (sheet) rmSync(join(dist, sheet));
+    writeFileSync(join(dist, 'player.html'), `<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script type="module" src="${runtimeJs}"></script>\n<script type="module" src="${appJs}"></script>\n`);
+    const files = [appJs, runtimeJs, ...faceFiles, ...(mix ? [mix] : []), ...(existsSync(join(dist, 'assets')) ? readdirSync(join(dist, 'assets')).map((f) => `assets/${f}`) : [])];
     writeFileSync(join(dist, 'artifact.json'), JSON.stringify({page: 'player.html', title: p.doc.meta.title, files}, null, 1));
     return dist;
   }
-  writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="app.css" />\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div><script type="module" src="app.js"></script></body>\n</html>\n`);
+  writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="${runtimeCss}" />\n${appCss ? `<link rel="stylesheet" href="${appCss}" />\n` : ''}<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div><script type="module" src="${runtimeJs}"></script><script type="module" src="${appJs}"></script></body>\n</html>\n`);
   return dist;
 }

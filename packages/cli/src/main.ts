@@ -28,7 +28,7 @@ import {skeleton, type Script} from './init.ts';
 import {BundleError, openBundle} from '@visotalk/ir/bundle';
 import {exportBundle, importBundle} from './bundle.ts';
 import {SCHEMA} from './schema.ts';
-import {narrationHint, narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
+import {narrationHint, narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, speaks, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
 const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
@@ -175,7 +175,7 @@ async function main() {
   }
   // A look never waits for narration: until it exists the lengths are estimated from the words, and it is started in the background if nobody has.
   const tts = narrationSource(p, opt('tts-models'));
-  if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && narrationPending(p)) {
+  if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && narrationPending(p) && speaks(p)) {
     if (tts && !preparing(p)) console.error(`narration started in the background (${startPrepare(p, opt('tts-models'))}); log: ${join(p.work, 'prepare.log')}`);
     estimateVoice(p);
     console.error(`narration is not ready${tts ? '' : ` (${narrationHint(p)})`}: the lines are timed from their words (about 2.8 a second), so what a word anchor shows will move when it is`);

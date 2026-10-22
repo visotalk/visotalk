@@ -22,6 +22,7 @@ export class Clock {
   private raf = 0;
   private listeners = new Set<Listener>();
   private holds = new Set<Promise<unknown>>();
+  private source?: () => number | undefined;
 
   constructor(duration: number, mode: ClockMode) {
     this.duration = duration;
@@ -55,6 +56,14 @@ export class Clock {
     this.emit();
   }
 
+  /**
+   * While playing, time keeps to `source` when it has a reading (the film's soundtrack, as its element plays it): the picture follows the sound instead of drifting
+   * from it. A reading within a frame of where the clock would be is left alone, so the picture moves smoothly; `undefined` removes the source.
+   */
+  setSource(source?: () => number | undefined): void {
+    this.source = source;
+  }
+
   seek(t: number): void {
     const next = Math.min(Math.max(0, t), this.duration);
     if (next === this.t) return;
@@ -76,7 +85,9 @@ export class Clock {
       }
       const dt = ((now - this.last) / 1000) * this.rate;
       this.last = now;
-      this.t = Math.min(this.duration, this.t + dt);
+      const heard = this.source?.();
+      const next = this.t + dt;
+      this.t = Math.min(this.duration, heard !== undefined && Math.abs(heard - next) > 1 / 60 ? heard : next);
       if (this.t >= this.duration) this.playing = false;
       this.emit();
       if (this.playing) this.raf = requestAnimationFrame(tick);

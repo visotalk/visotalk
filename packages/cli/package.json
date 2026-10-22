@@ -1,6 +1,6 @@
 {
   "name": "visotalk",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "VisoTalk: write a narrated explainer as a document, then validate, preview and render it to video",
   "license": "MIT",
   "repository": {"type": "git", "url": "git+https://github.com/visotalk/visotalk.git", "directory": "packages/cli"},

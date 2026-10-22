@@ -69,7 +69,7 @@ interface Meta {
 }
 
 /** Samples a second of the gain envelope a sound's file is multiplied by: fades and the duck are no faster than 0.1 s */
-const ENV_HZ = 200;
+export const ENV_HZ = 200;
 
 function shuffled<T>(xs: T[], seed = 7): T[] {
   const a = [...xs];
@@ -195,13 +195,15 @@ async function encode(frames: Buffer[], out: string, fps: number, format: string
 /**
  * The soundtrack of a video that starts `offset` seconds into the film and runs `length` seconds. The narration clips each at their start, mixed and loudness-normalised
  * to −16 LUFS, as they are; then each sound of the document: its file (looped if it loops) set at its start, multiplied by its gain envelope (volume, fades, ducking: the
- * curve the player uses), and added to the narration without changing it.
+ * curve the player uses), and added to the narration without changing it. With a `video` it is muxed into a copy of it; without one it is written alone as an MP3 (the
+ * one track a built player plays, so the page sounds as the video does).
  */
-export async function muxAudio(video: string, out: string, offset: number, length: number, meta: Pick<Meta, 'narration' | 'sounds' | 'envelopes'>, root: string) {
+export async function muxAudio(video: string | undefined, out: string, offset: number, length: number, meta: Pick<Meta, 'narration' | 'sounds' | 'envelopes'>, root: string) {
   const lines = meta.narration.map((l) => ({at: l.at - offset, src: join(root, l.src)})).filter((l) => l.at >= 0);
+  const first = video ? 1 : 0; // the input index of the first clip
   const tmp = mkdtempSync(join(tmpdir(), 'visotalk-env-'));
   try {
-    const args = ['-y', '-loglevel', 'error', '-i', video];
+    const args = ['-y', '-loglevel', 'error', ...(video ? ['-i', video] : [])];
     for (const l of lines) args.push('-i', l.src);
     for (const s of meta.sounds) args.push(...(s.loop ? ['-stream_loop', '-1'] : []), '-i', join(root, s.src));
     meta.sounds.forEach((_, k) => {
@@ -213,13 +215,13 @@ export async function muxAudio(video: string, out: string, offset: number, lengt
     const graph: string[] = [];
     const mixed: string[] = [];
     if (lines.length) {
-      graph.push(...lines.map((l, k) => `[${k + 1}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`));
+      graph.push(...lines.map((l, k) => `[${k + first}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`));
       graph.push(`${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad=whole_dur=${length.toFixed(3)}[nar]`); // loudnorm returns 192 kHz, which amix cannot join to 48 kHz inputs without dropping the narration; FFmpeg 5 leaves the mix's channel layout unspecified, which pan refuses, so it is named; loudnorm measures the stereo pair, since a mono level copied to two channels reads 3 LU louder; the pad keeps the track as long as the picture, whose last scene holds after the last word
       mixed.push('[nar]');
     }
     const FMT = 'aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo';
     meta.sounds.forEach((s, k) => {
-      const file = 1 + lines.length + k, env = 1 + lines.length + meta.sounds.length + k;
+      const file = first + lines.length + k, env = first + lines.length + meta.sounds.length + k;
       const at = s.at - offset;
       // a sound that began before this piece is joined part-way in (a looped file keeps its place only to the second; a piece of a long film starts on a cut anyway)
       const place = at >= 0 ? `adelay=${Math.round(at * 1000)}:all=1` : `atrim=start=${(-at).toFixed(3)},asetpts=PTS-STARTPTS`;
@@ -229,7 +231,8 @@ export async function muxAudio(video: string, out: string, offset: number, lengt
       mixed.push(`[m${k}]`);
     });
     graph.push(`${mixed.join('')}amix=inputs=${mixed.length}:normalize=0:duration=longest,alimiter=limit=0.95,atrim=0:${length.toFixed(3)}[aout]`);
-    await run('ffmpeg', [...args, '-filter_complex', graph.join(';'), '-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', out]);
+    const encode = video ? ['-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k'] : ['-map', '[aout]', '-c:a', 'libmp3lame', '-b:a', '96k'];
+    await run('ffmpeg', [...args, '-filter_complex', graph.join(';'), ...encode, '-ar', '48000', out]);
   } finally {
     rmSync(tmp, {recursive: true, force: true});
   }

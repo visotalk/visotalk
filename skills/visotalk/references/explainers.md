@@ -44,6 +44,8 @@ const Rail = ({chapters}: {chapters: Array<{name: string; scenes: string[]}>}) =
 
 A film may carry a bed of music and a few effects (`<Sound>`, `markup.md`). What the product film learned: bring the bed in once the first thing has been said, not under the cold open; set it about −8 dB under its file with `duck={4}` to `6` so it steps back while the narrator speaks and returns in the pauses; fade it in over a second or so and out over several, and let it run on alone for a few seconds after the last word (a scene of `duration` after the narration is how). Effects are the exception: a click on a moment the picture already carries only makes the film busier, so add one only where it tells the viewer something the picture does not. The track is somebody else's file: the asset's `license` and `source` say whose and on what terms (a registered track may draw an automatic claim on upload), and the file itself stays out of the repository. The film is checked with the sound on: the voice must stay the loudest thing.
 
+**A film scored to a beat** (no narration, or a passage without it: `examples/near-light`). Choose a tempo and make every scene a whole number of bars (at 100 BPM a bar is 2.4 s, so `duration={7.2}` is three), then put every event on a beat with `at`: the step of a figure, a cut, a hit, a riser that ends on the downbeat it leads into. The sounds are events in the document like the animation, one `<Sound>` each, so the picture and the sound are moved by editing one file; a part that must answer a sound (a flash on an impact, a lamp on a ping) reads them with `useSounds()` instead of repeating their times. Short sounds made for the film (a synthesised kick, a riser cut to one bar, a tick whose length is its period, looped) are its own material (`license={{id: "user-owned", …}}`); keep the script that makes them beside the document. A sound that follows a number the picture changes continuously (a pitch that falls as something stops) is made for that span and placed on it; the engine does not synthesise.
+
 ## Illustrations
 
 Line art on a clear ground (ink-coloured PNG, white turned into alpha, cropped) reads on any theme. Declare each as `<Asset id kind="image" src="media/x.png" license={{id: "user-owned", obligations: []}} />` and draw it
@@ -65,7 +67,7 @@ look again at the frames you changed.
 
 ## Delivering
 
-The default review copy is the player, not a video: `build doc.tsx --artifact` writes `player.html` and `artifact.json` (the files to publish with it: MP3 narration, your assets; no fonts, so the
+The default review copy is the player, not a video: `build doc.tsx --artifact` writes `player.html` and `artifact.json` (the files to publish with it: the soundtrack as one MP3, mixed as the video's is, your other assets; no fonts, so the
 viewer's system font stands in). Copy them where the publishing tool can read them and publish `player.html` with those files. An MP4 only when it is asked for: `scripts/render-segments.sh doc.tsx <id> <frames>`
 renders in resumable segments of about 2000 frames (a sandbox that goes idle is recycled and takes a background render with it; run it in the foreground and run it again after a restart) and
 joins them with each segment's audio cut to its own picture.
