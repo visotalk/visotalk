@@ -265,7 +265,7 @@ const Title = () => (
   <div style={{fontFamily: SANS, fontSize: 150, fontWeight: 700, lineHeight: 1.18, color: '#fff', textShadow: '0 4px 40px rgba(0,30,90,0.55)'}}>天空为什么<br />是蓝色的</div>
 );
 
-export default <Doc id="sky-blue" title="天空为什么是蓝色的" lang="zh-CN" voice="minimax:Chinese (Mandarin)_News_Anchor" theme="visotalk/dark" canvas="16x9"
+export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的" lang="zh-CN" voice="minimax:Chinese (Mandarin)_Radio_Host" theme="visotalk/dark" canvas="16x9"
   exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
   <Scene id="question">
     <Line id="l1" hold={0.3}>白天的天空是蓝的，可是太阳光看起来明明是白色的。</Line>

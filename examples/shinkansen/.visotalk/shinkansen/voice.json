@@ -1,0 +1,158 @@
+{
+ "f1": {
+  "duration": 5.8863,
+  "audio": "audio/87993ca92d06.m4a",
+  "key": "87993ca92d06",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "f2": {
+  "duration": 3.8778,
+  "audio": "audio/7c110badddf4.m4a",
+  "key": "7c110badddf4",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "o1": {
+  "duration": 4.3886,
+  "audio": "audio/f3ac1c680b43.m4a",
+  "key": "f3ac1c680b43",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "o2": {
+  "duration": 3.9255,
+  "audio": "audio/b342661450a0.m4a",
+  "key": "b342661450a0",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "g1": {
+  "duration": 4.853,
+  "audio": "audio/8467a5003193.m4a",
+  "key": "8467a5003193",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "g2": {
+  "duration": 3.4133,
+  "audio": "audio/c4e5465b5424.m4a",
+  "key": "c4e5465b5424",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "q1": {
+  "duration": 4.5628,
+  "audio": "audio/966e050c4c08.m4a",
+  "key": "966e050c4c08",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "q2": {
+  "duration": 4.2144,
+  "audio": "audio/04821c9207c4.m4a",
+  "key": "04821c9207c4",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "n1": {
+  "duration": 2.9838,
+  "audio": "audio/1b3c4f2dd74e.m4a",
+  "key": "1b3c4f2dd74e",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "n2": {
+  "duration": 4.0519,
+  "audio": "audio/4db3af136cd0.m4a",
+  "key": "4db3af136cd0",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "t1": {
+  "duration": 4.5976,
+  "audio": "audio/f785e1df486a.m4a",
+  "key": "f785e1df486a",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "s1": {
+  "duration": 3.0186,
+  "audio": "audio/a04c1376726b.m4a",
+  "key": "a04c1376726b",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "s2": {
+  "duration": 3.9255,
+  "audio": "audio/7ea827173057.m4a",
+  "key": "7ea827173057",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ }
+}

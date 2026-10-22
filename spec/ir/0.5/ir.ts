@@ -44,6 +44,8 @@ export interface Meta {
   /** BCP-47 primary language of `lines` */
   lang: string;
   description?: string;
+  /** The second of the film the player shows as its cover until it is played (the film itself starts at 0); none: the first frame */
+  poster?: number;
   sources?: Source[];
   generator?: string;
   created?: string; // ISO 8601

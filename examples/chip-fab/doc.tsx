@@ -711,7 +711,7 @@ const PackArt = () => {
   );
 };
 
-export default <Doc id="chip-fab" title="How a Chip Is Made" lang="en" theme="visotalk/dark" canvas="16x9">
+export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="en" theme="visotalk/dark" canvas="16x9">
   <Part id="rail" x={120} y={30} w={1680} h={70}>{() => <Rail />}</Part>
   <Part id="poster" x={160} y={300} w={1600} h={420}>{() => <Poster />}</Part>
   <Scene id="sand">

@@ -1,7 +1,7 @@
 /** What a document is made of and the hooks a part calls: what `visotalk schema` prints. The reference page of the documentation is held to it by a test. */
 export const SCHEMA = {
   tags: {
-    Doc: 'id title lang  [description sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
+    Doc: 'id title lang  [description poster sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
     Scene: 'id  [title duration]   lines, parts, one Animation and any Sounds; a scene without lines needs duration (seconds)',
     Line: 'id  [text hold i18n]   the words spoken are the children (<Mark id="x">phrase</Mark> names a phrase an action can hang on); text is the caption when it differs (digits for numbers spoken as words); hold is silence after the line',
     Part: 'id  [x y w h z]   a box (default: the whole canvas) holding React: elements, or a function that returns them (hooks run inside it). Invisible until an Appear; in a Scene it ends with the scene, in Doc it stays',

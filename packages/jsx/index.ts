@@ -23,7 +23,7 @@ type Tag<P> = (props: P) => null;
 const tag = (name: string) => ({[name]: () => null})[name];
 
 export const Doc: Tag<{
-  id: string; title: string; lang: string; description?: string; sources?: Meta['sources']; generator?: string; created?: string; updated?: string; spec?: string;
+  id: string; title: string; lang: string; description?: string; poster?: number; sources?: Meta['sources']; generator?: string; created?: string; updated?: string; spec?: string;
   theme?: string; tokens?: Partial<ThemeTokens>; voice?: string; speed?: number; lexicon?: Voice['lexicon'];
   /** "16x9,9x16", or a <Canvas> child with <Preset> tags */
   canvas?: string; pacing?: Pacing; texts?: Record<string, string>; exports?: ExportPolicy;

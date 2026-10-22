@@ -83,18 +83,6 @@ The video above is [moon-phases](examples/moon-phases/doc.tsx). Each of these pl
       <b>Why the Shinkansen is almost never late, in Japanese</b><br>Japanese narration and type · <a href="examples/shinkansen/doc.tsx">source</a>
     </td>
   </tr>
-  <tr>
-    <td valign="top" colspan="2" align="center">
-      <a href="https://visotalk.dev/examples/moon-phases-vertical/"><img src="https://visotalk.dev/examples/moon-phases-vertical/preview.gif" alt="Why the Moon has phases, a vertical short" width="400"></a><br>
-      <b>Why the Moon has phases, a vertical short</b><br>A 9:16 film of its own, not the horizontal one fitted to a phone · <a href="examples/moon-phases-vertical/doc.tsx">source</a>
-    </td>
-  </tr>
-  <tr>
-    <td valign="top" colspan="2" align="center">
-      <a href="https://visotalk.dev/examples/sky-blue-vertical/"><img src="https://visotalk.dev/examples/sky-blue-vertical/preview.gif" alt="Why the sky is blue, a vertical short in Mandarin" width="400"></a><br>
-      <b>Why the sky is blue, a vertical short in Mandarin</b><br>Large characters typed onto the lower half · <a href="examples/sky-blue-vertical/doc.tsx">source</a>
-    </td>
-  </tr>
 </table>
 
 

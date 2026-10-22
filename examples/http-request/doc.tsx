@@ -164,7 +164,7 @@ function PageWire() {
 
 // ------------------------------------------------------------------------------------------------ document
 
-export default <Doc id="http-request" title={"From URL to Page"} lang={"en"} theme="visotalk/dark" canvas="16x9">
+export default <Doc id="http-request" poster={33} title={"From URL to Page"} lang={"en"} theme="visotalk/dark" canvas="16x9">
   <Scene id="type">
     <Line id="l1">You type a web address and press Enter.</Line>
     <Line id="l2">A moment later, a page appears.</Line>

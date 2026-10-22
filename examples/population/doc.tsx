@@ -285,7 +285,7 @@ function Finale() {
 
 // ---------------------------------------------------------------------------------------------------- document
 
-export default <Doc id="population" title="The eight billion" lang="en" theme="visotalk/dark" canvas="16x9" exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
+export default <Doc id="population" poster={34} title="The eight billion" lang="en" theme="visotalk/dark" canvas="16x9" exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
   <Scene id="intro">
     <Line id="p1" hold={2.5}>How fast is the world's population really growing? Count it in billions.</Line>
     <Part id="t0" x={100} y={40} w={1720} h={90}><Title>The eight billion</Title></Part>

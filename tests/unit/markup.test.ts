@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {MarkupError, parseMarkup} from '../../packages/ir/src/index.ts';
+import {MarkupError, parseMarkup, validate} from '../../packages/ir/src/index.ts';
 
 const DOC = `import {Doc, Scene, Line, Part, Animation, Appear, Tween, Set, Disappear} from '@visotalk/jsx';
 const years = [1804, 1927];   // module code: not read by the engine
@@ -129,4 +129,11 @@ test('markup: a document may be parenthesised and Canvas and Asset are tags of t
   assert.equal(doc.assets?.[0].id, 'photo');
   assert.deepEqual(doc.theme, {id: 'visotalk/dark'});
   assert.deepEqual(doc.scenes[0], {id: 's', lines: [], duration: 3, parts: [], animations: []});
+});
+
+test('markup: poster is the second the player shows as the cover, and a negative one is refused', () => {
+  const doc = (poster: number) => parseMarkup(DOC.replace('canvas="16x9"', `canvas="16x9" poster={${poster}}`)).doc;
+  assert.equal(doc(12.5).meta.poster, 12.5);
+  assert.ok(validate(doc(-1)).some((i) => i.at === '/meta/poster'));
+  assert.ok(!validate(doc(2)).some((i) => i.at === '/meta/poster'));
 });

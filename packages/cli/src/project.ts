@@ -461,7 +461,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   for (const dir of ['assets', 'audio', 'fonts']) rmSync(join(dist, dir), {recursive: true, force: true});
   for (const f of readdirSync(dist)) if (/^(app|runtime|soundtrack)\.[0-9a-f]{12}\.(js|css|mp3)$/.test(f)) rmSync(join(dist, f));
   const doc = ingest(p, dist, opts.artifact);
-  // CJK faces: the families the document names, or its language's default, cut to the document's characters and embedded (an artifact page loads no stylesheet: its rules go inline in player.html)
+  // the embedded faces: the families the document names, or its language's default, cut to the document's characters and embedded (an artifact page loads no stylesheet: its rules go inline in player.html)
   const faces = fontPlan(p.doc);
   if (faces.fonts.length) {
     if (!process.env.VISOTALK_FONTS) throw new Error(`the font "${faces.fonts[0].family}" is not installed: run visotalk doctor --fix`);
@@ -499,7 +499,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   }
   const title = p.doc.meta.title.replace(/</g, '&lt;');
   if (opts.artifact) {
-    // what the Artifact tool publishes: `player.html` as the page and `artifact.json` listing the files beside it (the stylesheet stays out, since an artifact loads none of its own: the CJK faces are inline rules in the page and files beside it)
+    // what the Artifact tool publishes: `player.html` as the page and `artifact.json` listing the files beside it (the stylesheet stays out, since an artifact loads none of its own: the embedded faces are inline rules in the page and files beside it)
     const faceCss = faces.fonts.length ? readFileSync(join(p.work, 'fonts.css'), 'utf8').replaceAll('url(./fonts/', 'url(fonts/') : '';
     // the faces are named by what they hold like every other file
     const faceFiles: string[] = [];

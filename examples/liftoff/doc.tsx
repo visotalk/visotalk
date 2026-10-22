@@ -418,7 +418,7 @@ function Closing() {
 // ---------------------------------------------------------------------------------------------------- document
 
 export default <Doc
-  id="liftoff"
+  id="liftoff" poster={114.4}
   title="Liftoff, by Eric Berger: a book explainer"
   lang="en"
   sources={[

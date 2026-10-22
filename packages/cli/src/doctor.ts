@@ -2,7 +2,7 @@
  * `visotalk doctor [--fix] [--json]`: what rendering needs, and where it stands on this machine.
  *
  * Without `--fix` it only reports. With `--fix` it installs what is missing into ~/.visotalk (VISOTALK_HOME): the pinned
- * chrome-headless-shell, the Kokoro model, a Python venv with its packages, the word-alignment weights and the CJK fonts, each download
+ * chrome-headless-shell, the Kokoro model, a Python venv with its packages, the word-alignment weights and the fonts a document can embed, each download
  * checked against a size and a SHA-256 and written whole or not at all. `ffmpeg` and Python itself are the user's to install.
  * Every command then finds those files through `applyDefaults`, unless the variable it replaces (VISOTALK_CHROME, KOKORO_DIR,
  * VISOTALK_PYTHON, TORCH_HOME, VISOTALK_FONTS) is already set.
@@ -16,7 +16,7 @@ import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
 import {Browser, computeExecutablePath, detectBrowserPlatform, install} from '@puppeteer/browsers';
 import {PINNED_CHROME} from '@visotalk/exporter';
-import {CJK_FONTS, fontFile, isInstalled} from './fonts.ts';
+import {FONTS, fontFile, isInstalled} from './fonts.ts';
 
 const KOKORO_URL = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0';
 const KOKORO = [
@@ -53,7 +53,7 @@ export function applyDefaults() {
   use('KOKORO_DIR', join(h, 'kokoro'), KOKORO.every((f) => hasSize(join(h, 'kokoro', f.file), f.bytes)));
   use('VISOTALK_PYTHON', venvPython(h), existsSync(venvPython(h)));
   use('TORCH_HOME', join(h, 'torch'), hasSize(weightsIn(join(h, 'torch')), ALIGNER.bytes));
-  use('VISOTALK_FONTS', join(h, 'fonts'), CJK_FONTS.every((f) => isInstalled(join(h, 'fonts'), f)));
+  use('VISOTALK_FONTS', join(h, 'fonts'), FONTS.every((f) => isInstalled(join(h, 'fonts'), f)));
 }
 
 /** Download `url` to `dest`: the file appears only when it has the expected size and SHA-256, so a cut connection never leaves a bad one in place. */
@@ -116,8 +116,8 @@ function check(): Item[] {
   add('aligner', weights, weights ? weightsIn(torchHome) : 'the word-alignment weights are not downloaded', ours(process.env.TORCH_HOME, join(h, 'torch')));
 
   const fonts = process.env.VISOTALK_FONTS;
-  const missing = fonts ? CJK_FONTS.filter((f) => !isInstalled(fonts, f)) : CJK_FONTS;
-  add('fonts', missing.length === 0, missing.length === 0 ? `${fonts} (${CJK_FONTS.map((f) => f.family).join(', ')})` : fonts ? `${fonts} lacks ${missing.map((f) => f.family).join(', ')}` : 'the CJK fonts (Chinese, Japanese and Korean documents) are not installed', ours(fonts, join(h, 'fonts')));
+  const missing = fonts ? FONTS.filter((f) => !isInstalled(fonts, f)) : FONTS;
+  add('fonts', missing.length === 0, missing.length === 0 ? `${fonts} (${FONTS.map((f) => f.family).join(', ')})` : fonts ? `${fonts} lacks ${missing.map((f) => f.family).join(', ')}` : 'the fonts (Chinese, Japanese and Korean documents, and Newsreader) are not installed', ours(fonts, join(h, 'fonts')));
   return items;
 }
 
@@ -140,7 +140,7 @@ const fixers: Record<string, (h: string) => Promise<void>> = {
     if (pip.status !== 0) throw new Error(`pip install ${PIP.join(' ')} failed: ${pip.stderr.trim().split('\n').slice(-3).join(' ')}`);
   },
   async fonts(h) {
-    for (const f of CJK_FONTS) if (!isInstalled(join(h, 'fonts'), f)) await download(f.url, fontFile(join(h, 'fonts'), f), f);
+    for (const f of FONTS) if (!isInstalled(join(h, 'fonts'), f)) await download(f.url, fontFile(join(h, 'fonts'), f), f);
   },
   async aligner(h) {
     const dest = weightsIn(join(h, 'torch'));

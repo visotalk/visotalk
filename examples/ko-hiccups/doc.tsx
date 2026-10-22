@@ -266,7 +266,7 @@ function Traces() {
   );
 }
 
-export default <Doc id="ko-hiccups" title="왜 딸꾹질이 날까" lang="ko" voice="minimax:Korean_IntellectualSenior" theme="visotalk/dark" canvas="16x9">
+export default <Doc id="ko-hiccups" poster={30} title="왜 딸꾹질이 날까" lang="ko" voice="minimax:Korean_CalmLady" theme="visotalk/dark" canvas="16x9">
   <Scene id="hook">
     <Line id="l1">딸꾹! 이 작은 소리는 도대체 어디서 오는 걸까요?</Line>
     <Part id="hook-word" x={0} y={200} w={1920} h={620}>{() => <Hook />}</Part>

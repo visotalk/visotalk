@@ -67,6 +67,8 @@ export function validate(doc: VisoDoc): Issue[] {
     if (typeof text !== 'string') add('text.value', `/texts/${id}`, `text "${id}" is a string`);
   }
 
+  if (doc.meta.poster !== undefined && !seconds(doc.meta.poster)) add('motion.time', '/meta/poster', 'poster is the second of the film shown as its cover, 0 or more');
+
   // the document's id names a directory (`.visotalk/<id>/`, in a bundle's archive too): it is a plain id, never a path
   if (!ID.test(doc.meta.id)) add('id.format', '/meta/id', `document id "${doc.meta.id}" is not a valid id`);
 

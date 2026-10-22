@@ -6,6 +6,10 @@
  *   3. golden       the sampled frames match the stored hashes (tests/regression/golden/<id>.json)
  *   4. qa           layout checks on the sampled frames + static checks report no issue beyond the golden's accepted list
  *
+ * Then one check of its own, on a small document built here: a picture wider than its box (shown a slice at a time, as a map cut
+ * into tiles is) renders the same on its own page and on a host page whose stylesheet caps pictures at their box's width, as a
+ * Claude artifact's page and Tailwind's preflight both do.
+ *
  * Narration timing comes from the golden file, so no TTS is needed: the suite builds with those durations and no audio.
  * Pixel hashes depend on the Chrome build and fonts; when the browser differs from the one that recorded the golden,
  * step 3 is reported as skipped (steps 1–2 still run).
@@ -15,7 +19,9 @@
  * --update records new goldens from the current renders; narration durations are taken from the example's prepared
  * voice manifest (run `visotalk prepare` first) or, failing that, from the existing golden.
  */
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {sampleFrames, solve, staticQa, type VoiceManifest} from '../../packages/ir/src/index.ts';
@@ -138,12 +144,43 @@ async function runExample(name: string): Promise<{name: string; ok: boolean; lin
   return {name, ok: !unstable.length && goldenOk && !fresh.length, lines};
 }
 
+/** The rule a host page brings that a film must not feel: pictures and videos capped at their box's width */
+const HOST_CSS = '<style>img,video{max-width:100%;height:auto}</style>';
+
+async function hostPage(): Promise<{name: string; ok: boolean; lines: string[]}> {
+  const dir = mkdtempSync(join(tmpdir(), 'visotalk-host-'));
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc2=s=1600x400', '-frames:v', '1', join(dir, 'wide.png')]);
+  // a 400 px window onto the middle of a 1600 px picture
+  writeFileSync(join(dir, 'doc.tsx'), `import {Doc, Scene, Part, Asset, Animation, Appear} from '@visotalk/jsx';
+import {useAsset} from '@visotalk/runtime';
+const Slice = () => <div style={{position: 'absolute', left: 760, top: 340, width: 400, height: 400, overflow: 'hidden'}}>
+  <img src={useAsset('wide')} style={{position: 'absolute', left: -600, top: 0, width: 1600, height: 400}} />
+</div>;
+export default <Doc id="host-page" title="Host page" lang="en" theme="visotalk/dark" canvas="16x9">
+  <Asset id="wide" kind="image" src="wide.png" license={{id: "user-owned", obligations: []}} />
+  <Scene id="s" duration={1}><Part id="slice"><Slice /></Part><Animation><Appear on="slice" at="start" dur={0.01} /></Animation></Scene>
+</Doc>;`);
+  const dist = await buildPlayer(load(join(dir, 'doc.tsx')));
+  const hosted = join(dir, 'hosted');
+  cpSync(dist, hosted, {recursive: true});
+  writeFileSync(join(hosted, 'index.html'), HOST_CSS + readFileSync(join(hosted, 'index.html'), 'utf8'));
+  const own = await renderBuilt({dist, out: join(dir, 'own'), fps: FPS, frames: [15], encode: false});
+  const host = await renderBuilt({dist: hosted, out: join(dir, 'host'), fps: FPS, frames: [15], encode: false});
+  const ok = own.hashes[15] === host.hashes[15];
+  return {name: 'host page', ok, lines: [`pictures      ${ok ? 'ok the same on a host page that caps them' : `FAIL a host page's img { max-width: 100% } changes the frame (${dir})`}`]};
+}
+
 const results = [];
+if (!only.length) {
+  const r = await hostPage().catch((e: Error) => ({name: 'host page', ok: false, lines: [`error         ${e.message}`]}));
+  console.log(`\n${r.ok ? '✓' : '✗'} ${r.name}\n${r.lines.map((l) => `  ${l}`).join('\n')}`);
+  results.push(r);
+}
 for (const name of examples) {
   const r = await runExample(name).catch((e: Error) => ({name, ok: false, lines: [`error         ${e.message}`]}));
   console.log(`\n${r.ok ? '✓' : '✗'} ${name}\n${r.lines.map((l) => `  ${l}`).join('\n')}`);
   results.push(r);
 }
 const failed = results.filter((r) => !r.ok);
-console.log(`\n${results.length - failed.length}/${results.length} examples passed`);
+console.log(`\n${results.length - failed.length}/${results.length} passed`);
 process.exit(failed.length ? 1 : 0);

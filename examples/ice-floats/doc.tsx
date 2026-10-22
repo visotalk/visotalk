@@ -164,7 +164,7 @@ function Stat() {
 }
 
 export default (
-  <Doc id="ice-floats" title="Why ice floats" lang="en" theme="visotalk/dark" canvas="16x9">
+  <Doc id="ice-floats" poster={9} title="Why ice floats" lang="en" theme="visotalk/dark" canvas="16x9">
     <Scene id="floats">
       <Line id="l1">Ice floats because water does something strange when it freezes.</Line>
       <Line id="l2">Its molecules lock into an open hexagonal lattice, with gaps between them.</Line>

@@ -399,7 +399,7 @@ const Sum = () => {
 };
 
 export default (
-  <Doc id="shinkansen" title="新幹線はなぜ時間通りに来るのか" lang="ja" voice="minimax:Japanese_IntellectualSenior" canvas="16x9" theme="visotalk/dark"
+  <Doc id="shinkansen" poster={10} title="新幹線はなぜ時間通りに来るのか" lang="ja" voice="minimax:Japanese_KindLady" canvas="16x9" theme="visotalk/dark"
     tokens={{colors: {bg: '#F3F0E8', panel: '#FFFFFF', panel2: '#E7E2D5', border: '#CFC8B8', text: '#101C2B', muted: '#566170', faint: '#C4BEAE', data: '#0B5CAD', grad: '#E8541F', op: '#6A4BB5', good: '#1E8A4C', bad: '#C62F2F', warn: '#E0A100'}}}>
 
     <Scene id="figure">

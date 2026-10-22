@@ -634,23 +634,22 @@ function Pill() {
 function Ending() {
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 1080, fontFamily: SANS, textAlign: 'center'}}>
-      <Obj id="dont" style={{position: 'absolute', left: 0, top: 150, width: 1920, fontSize: 100, fontWeight: 700, color: 'var(--vt-muted)'}}>
+      <Obj id="logo" style={{position: 'absolute', left: 0, top: 295, width: 1920, display: 'flex', justifyContent: 'center'}}>
+        <Lockup width={800} />
+      </Obj>
+      <Obj id="dont" style={{position: 'absolute', left: 0, top: 585, width: 1920, fontSize: 100, fontWeight: 700, color: 'var(--vt-muted)'}}>
         Don’t <span style={{textDecoration: 'line-through', textDecorationColor: 'var(--vt-bad)', textDecorationThickness: 8}}>paint</span> the video.
       </Obj>
-      <Obj id="writeit" style={{position: 'absolute', left: 0, top: 290, width: 1920, fontSize: 220, fontWeight: 700, lineHeight: 1, color: 'var(--vt-text)', letterSpacing: -4}}>
+      <Obj id="writeit" style={{position: 'absolute', left: 0, top: 705, width: 1920, fontSize: 200, fontWeight: 700, lineHeight: 1, color: 'var(--vt-text)', letterSpacing: -4}}>
         Write it.
-        <div style={{width: 560, height: 12, background: 'var(--vt-grad)', margin: '14px auto 0'}} />
-      </Obj>
-      <Obj id="brand" style={{position: 'absolute', left: 0, top: 590, width: 1920, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22}}>
-        <Lockup width={640} />
-        <span style={{fontFamily: MONO, fontSize: 46, color: 'var(--vt-muted)'}}>visotalk.dev</span>
+        <div style={{width: 520, height: 12, background: 'var(--vt-grad)', margin: '14px auto 0'}} />
       </Obj>
     </div>
   );
 }
 
 export default (
-  <Doc id="visotalk-intro" title="What is VisoTalk" lang="en" voice="minimax:English_captivating_female1" theme="visotalk/dark" canvas="16x9"
+  <Doc id="visotalk-intro" poster={155} title="What is VisoTalk" lang="en" theme="visotalk/dark" canvas="16x9"
     tokens={{
       colors: {bg: '#10151c', panel: '#171e28', panel2: '#1e2733', border: '#2c3747', text: '#e6ebf2', muted: '#98a3b3', faint: '#4b586b', data: '#4aa8f2', grad: '#4aa8f2', op: '#9b86ff', good: '#3dd68c', bad: '#ff6b91', warn: '#ffb020'},
       fonts: {sans: '"Schibsted Grotesk", system-ui, sans-serif', mono: '"JetBrains Mono", monospace'},
@@ -834,9 +833,9 @@ export default (
         <Tween on="ask" chars={28} dur={1.8} easing="linear" line="l28" word="ask" offset={0.2} />
         <Disappear on={['pill', 'term', 'ask']} line="l29" word="paint" offset={-0.5} />
         <Appear on="ending" line="l29" word="paint" />
+        <Appear on="logo" line="l29" word="paint" offset={-0.4} />
         <Appear on="dont" line="l29" word="paint" />
         <Appear on="writeit" line="l29" word="Write" />
-        <Appear on="brand" line="l29" edge="end" />
       </Animation>
     </Scene>
   </Doc>

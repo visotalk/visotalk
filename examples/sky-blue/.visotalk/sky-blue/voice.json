@@ -1,0 +1,146 @@
+{
+ "l1": {
+  "duration": 4.3886,
+  "audio": "audio/4a3767ff2c9d.m4a",
+  "key": "4a3767ff2c9d",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l2": {
+  "duration": 2.3452,
+  "audio": "audio/a48c07ce239b.m4a",
+  "key": "a48c07ce239b",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l3": {
+  "duration": 6.7803,
+  "audio": "audio/cf242204c260.m4a",
+  "key": "cf242204c260",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l4": {
+  "duration": 5.0736,
+  "audio": "audio/d4a223e03292.m4a",
+  "key": "d4a223e03292",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l5": {
+  "duration": 7.3375,
+  "audio": "audio/89d1f142a02d.m4a",
+  "key": "89d1f142a02d",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l6": {
+  "duration": 4.2609,
+  "audio": "audio/5cf9367b3656.m4a",
+  "key": "5cf9367b3656",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l7": {
+  "duration": 7.6742,
+  "audio": "audio/1e40e07db8f2.m4a",
+  "key": "1e40e07db8f2",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l8": {
+  "duration": 3.6223,
+  "audio": "audio/03c7c0d95e55.m4a",
+  "key": "03c7c0d95e55",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l9": {
+  "duration": 6.6525,
+  "audio": "audio/3b61037593dd.m4a",
+  "key": "3b61037593dd",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l10": {
+  "duration": 5.2477,
+  "audio": "audio/f24c76746a69.m4a",
+  "key": "f24c76746a69",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l11": {
+  "duration": 4.5976,
+  "audio": "audio/530282403e6e.m4a",
+  "key": "530282403e6e",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l12": {
+  "duration": 1.4861,
+  "audio": "audio/8036abcb1f41.m4a",
+  "key": "8036abcb1f41",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ }
+}

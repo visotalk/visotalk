@@ -179,21 +179,21 @@ const Q4 = () => {
   );
 };
 
-export default <Doc id="sonnet-18" title="Sonnet 18" lang="en" voice="bm_george" speed={1.25} theme="visotalk/dark" canvas="9x16" exports={{captions: 'none'}}>
+export default <Doc id="sonnet-18" poster={36} title="Sonnet 18" lang="en" voice="bf_emma" speed={0.85} theme="visotalk/light" canvas="9x16" exports={{captions: 'none'}}>
   <Scene id="poem">
-    <Line id="l1" hold={0.1}>Shall I compare thee to a summer's day?</Line>
-    <Line id="l2" hold={0.1}>Thou art more lovely and more temperate:</Line>
-    <Line id="l3" hold={0.1}>Rough winds do shake the darling buds of May,</Line>
-    <Line id="l4" hold={0.15}>And summer's lease hath all too short a date;</Line>
-    <Line id="l5" hold={0.1}>Sometime too hot the eye of heaven shines,</Line>
-    <Line id="l6" hold={0.1}>And often is his gold complexion dimm'd;</Line>
-    <Line id="l7" hold={0.1}>And every fair from fair sometime declines,</Line>
-    <Line id="l8" hold={0.15}>By chance or nature's changing course untrimm'd;</Line>
-    <Line id="l9" hold={0.1}>But thy eternal summer shall not fade,</Line>
-    <Line id="l10" hold={0.1}>Nor lose possession of that fair thou ow'st;</Line>
-    <Line id="l11" hold={0.1}>Nor shall death brag thou wander'st in his shade,</Line>
-    <Line id="l12" hold={0.15}>When in eternal lines to time thou grow'st:</Line>
-    <Line id="l13" hold={0.1}>So long as men can breathe or eyes can see,</Line>
+    <Line id="l1" hold={0.5}>Shall I compare thee to a summer's day?</Line>
+    <Line id="l2" hold={0.5}>Thou art more lovely and more temperate:</Line>
+    <Line id="l3" hold={0.5}>Rough winds do shake the darling buds of May,</Line>
+    <Line id="l4" hold={1.0}>And summer's lease hath all too short a date;</Line>
+    <Line id="l5" hold={0.5}>Sometime too hot the eye of heaven shines,</Line>
+    <Line id="l6" hold={0.5}>And often is his gold complexion dimm'd;</Line>
+    <Line id="l7" hold={0.5}>And every fair from fair sometime declines,</Line>
+    <Line id="l8" hold={1.0}>By chance or nature's changing course untrimm'd;</Line>
+    <Line id="l9" hold={0.5}>But thy eternal summer shall not fade,</Line>
+    <Line id="l10" hold={0.5}>Nor lose possession of that fair thou ow'st;</Line>
+    <Line id="l11" hold={0.5}>Nor shall death brag thou wander'st in his shade,</Line>
+    <Line id="l12" hold={1.0}>When in eternal lines to time thou grow'st:</Line>
+    <Line id="l13" hold={0.5}>So long as men can breathe or eyes can see,</Line>
     <Line id="l14" hold={2.2}>So long lives this, and this gives life to thee.</Line>
 
     <Part id="q1" z={1}><Q1 /></Part>

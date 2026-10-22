@@ -123,7 +123,7 @@ export function mount(opts: MountOptions) {
       media.set({doc: shown.doc, compiled: shown.compiled, mix: mixed() ? opts.mix : undefined});
       root.render(
         <RuntimeProvider runtime={runtime}>
-          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} media={media} ticks={shown.narration.map((n) => n.at)}
+          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} poster={shown.doc.meta.poster} media={media} ticks={shown.narration.map((n) => n.at)}
             autoplay={params.has('autoplay')} loop={params.has('loop')} bare={params.has('bare')}>
             {shown.stage}
           </Player>

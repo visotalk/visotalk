@@ -296,7 +296,7 @@ class Parser {
 
 // ------------------------------------------------------------------------------------------------ compiler
 
-const META_EXTRA = ['description', 'sources', 'generator', 'created', 'updated'];
+const META_EXTRA = ['description', 'poster', 'sources', 'generator', 'created', 'updated'];
 const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing', 'texts', 'exports'];
 const SCENE_ATTRS = ['id', 'title', 'duration'];
 const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];

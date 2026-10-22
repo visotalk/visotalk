@@ -205,6 +205,13 @@ const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
   );
 };
 
+/**
+ * What a host page's stylesheet must not do to a film: a Claude artifact's page and Tailwind's preflight both cap pictures and videos
+ * at their box's width (img, video { max-width: 100% }), which squeezes a picture drawn wider than its box, a map shown a tile at a time.
+ * Scoped to the stage and more specific than the host's rule; a part's own inline style still wins.
+ */
+const STAGE_CSS = '.vt-stage img,.vt-stage video,.vt-stage canvas,.vt-stage svg{max-width:none;max-height:none}';
+
 /** The scene on screen at the document time: its parts and the document's, then the caption */
 export const Stage: React.FC = () => {
   const {doc, c, bodies} = useStage();
@@ -221,7 +228,8 @@ export const Stage: React.FC = () => {
   ].map((e, i) => ({...e, i})).sort((a, b) => (a.part.z ?? 0) - (b.part.z ?? 0) || a.i - b.i);
   return (
     <SceneCtx.Provider value={{from: sc.from, duration: sc.duration}}>
-      <div style={{position: 'absolute', inset: 0, background: C.bg, overflow: 'hidden'}}>
+      <div className="vt-stage" style={{position: 'absolute', inset: 0, background: C.bg, overflow: 'hidden'}}>
+        <style>{STAGE_CSS}</style>
         {parts.map(({part, body, scene: s}) => <PartHost key={`${s ?? ''}:${part.id}`} part={part} body={body} scene={s} />)}
         <Captions sceneId={sc.id} />
       </div>

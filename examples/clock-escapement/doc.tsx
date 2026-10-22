@@ -248,7 +248,7 @@ function Movement() {
   );
 }
 
-export default <Doc id="clock-escapement" title="How a clock keeps time" lang="en" theme="visotalk/light" canvas="16x9">
+export default <Doc id="clock-escapement" poster={45} title="How a clock keeps time" lang="en" theme="visotalk/light" canvas="16x9">
   <Part id="clock">{() => <Movement />}</Part>
 
   <Scene id="energy">

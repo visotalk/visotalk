@@ -101,7 +101,7 @@ const Formula = () => {
   );
 };
 
-export default <Doc id="fourier" title="How a Fourier series builds a square wave" lang="en" theme="visotalk/dark" canvas="16x9"
+export default <Doc id="fourier" poster={30} title="How a Fourier series builds a square wave" lang="en" theme="visotalk/dark" canvas="16x9"
   exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
   <Part id="scope" x={0} y={0} w={1920} h={880}><Scope /></Part>
 

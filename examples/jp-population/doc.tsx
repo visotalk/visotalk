@@ -284,7 +284,7 @@ const WalkChart = () => {
   );
 };
 
-export default <Doc id="jp-population" title="日本の人口はなぜ減るのか" lang="ja" voice="minimax:Japanese_IntellectualSenior" theme="visotalk/dark" canvas="16x9">
+export default <Doc id="jp-population" poster={30} title="日本の人口はなぜ減るのか" lang="ja" voice="minimax:Japanese_KindLady" theme="visotalk/dark" canvas="16x9">
   <Scene id="intro">
     <Line id="i1">日本の人口は、なぜ減っているのか。</Line>
     <Part id="poster" x={140} y={140} w={1640} h={800}>{() => <Poster />}</Part>

@@ -132,7 +132,7 @@ const Phone = () => {
   );
 };
 
-export default <Doc id="app-demo" title="Quiet Hours in Nook" lang="en" theme="visotalk/dark" canvas="9x16" exports={{captions: 'words'}}>
+export default <Doc id="app-demo" poster={20} title="Quiet Hours in Nook" lang="en" theme="visotalk/dark" canvas="9x16" exports={{captions: 'words'}}>
   <Scene id="demo">
     <Line id="l1">Meet Quiet Hours, the new feature in Nook.</Line>
     <Line id="l2">Reminders, shared edits and comments all buzz at once.</Line>

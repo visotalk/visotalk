@@ -284,7 +284,7 @@ function Platforms() {
   );
 }
 
-export default <Doc id="uv" title="uv, the one tool for Python projects" lang="en" theme="visotalk/dark" canvas="16x9">
+export default <Doc id="uv" poster={79} title="uv, the one tool for Python projects" lang="en" theme="visotalk/dark" canvas="16x9">
   <Part id="title" x={0} y={40} w={1920} h={170}>{() => <Heading />}</Part>
 
   <Scene id="tools">

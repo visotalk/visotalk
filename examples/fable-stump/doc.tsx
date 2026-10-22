@@ -414,10 +414,10 @@ const PINYIN = 'shǒu  zhū  dài  tù';
 
 export default (
   <Doc
-    id="fable-stump"
+    id="fable-stump" poster={2.5}
     title="守株待兔"
     lang="zh-CN"
-    voice="minimax:Chinese (Mandarin)_News_Anchor"
+    voice="minimax:Chinese (Mandarin)_Radio_Host"
     theme="visotalk/dark"
     canvas="16x9"
     tokens={{

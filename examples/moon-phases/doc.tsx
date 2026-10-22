@@ -19,7 +19,7 @@ const Note = ({color, children}: {color: string; children: string}) => (
  * 180 full moon, 270 last quarter) on the words that name each phase. Within a scene a lap is written 0 to 360, then a Set puts the angle back to 0, which looks
  * the same, so every other angle in the file is a phase.
  */
-export default <Doc id="moon-phases" title="Why the Moon has phases" lang="en" theme="visotalk/dark" canvas="16x9"
+export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases" lang="en" theme="visotalk/dark" canvas="16x9"
   exports={{variants: [{preset: "16x9"}, {preset: "16x9", theme: "visotalk/light"}], fps: 30, captions: "burned"}}>
   <Scene id="change">
     <Line id="m1" hold={0.3}>Look up on different nights and the Moon seems to change shape: a sliver, a half, a full disc.</Line>

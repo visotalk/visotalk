@@ -1,6 +1,13 @@
 node_modules/
 dist/
 .visotalk/
+# a film's narration is kept (its clips and the manifest that names them) so a rebuild does not speak it again; the rest of an example's work directory is rebuilt
+!examples/*/.visotalk/
+examples/*/.visotalk/*
+!examples/*/.visotalk/*/
+examples/*/.visotalk/*/*
+!examples/*/.visotalk/*/voice.json
+!examples/*/.visotalk/*/audio/
 *.tsbuildinfo
 .DS_Store
 .env

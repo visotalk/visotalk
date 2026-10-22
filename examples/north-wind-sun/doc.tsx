@@ -272,7 +272,7 @@ const World = () => {
   );
 };
 
-export default <Doc id="north-wind-sun" title="The North Wind and the Sun" lang="en" theme="visotalk/dark" canvas="16x9">
+export default <Doc id="north-wind-sun" poster={40} title="The North Wind and the Sun" lang="en" theme="visotalk/dark" canvas="16x9">
   <Part id="world" x={0} y={0} w={1920} h={1080}>{() => <World />}</Part>
 
   <Scene id="argument">

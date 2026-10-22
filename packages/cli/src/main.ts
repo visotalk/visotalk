@@ -201,7 +201,7 @@ async function main() {
     const big = files.find((f) => statSync(join(dist, f)).size > 16e6);
     if (big) throw new Error(`${big} is over the 16 MB an artifact allows for one file`);
     const bytes = files.reduce((n, f) => n + statSync(join(dist, f)).size, 0);
-    return void console.log(`built ${dist}: publish player.html with the ${files.length} files of artifact.json (${(bytes / 1e6).toFixed(1)} MB; the Latin fonts stay out, the player uses the system's; a CJK face goes with it)`);
+    return void console.log(`built ${dist}: publish player.html with the ${files.length} files of artifact.json (${(bytes / 1e6).toFixed(1)} MB; a face the document names, or its CJK default, goes with it; otherwise the player uses the system's)`);
   }
   if (cmd === 'build') return void console.log(`built ${dist}`);
 

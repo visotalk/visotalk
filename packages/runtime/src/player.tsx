@@ -2,7 +2,8 @@
  * Web player chrome: fits the fixed stage into its box, play/pause, a scrubber with a tick at every narration clip, sound, full screen, keyboard.
  * The sound itself, and what is loaded when, is the media scheduler's (`media.ts`). `bare` (`?bare` on the page) draws the picture alone, for a page that has controls of its own.
  * The controls are the brand's, not the video theme's: square, a cue-orange play button and playhead;
- * only the greys come from the theme's `--vt-*` variables.
+ * only the greys and the ground (the letterbox and the control bar) come from the theme's `--vt-*` variables, so a light film gets a light player.
+ * A document's `meta.poster` is its cover: until the first Play the stage shows that second of the film and the big Play stands over it; Play starts the film from 0.
  */
 import React, {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {Clock} from './clock';
@@ -45,8 +46,8 @@ const Glyph: React.FC<{name: 'play' | 'pause' | 'sound' | 'muted' | 'full' | 'ex
 /** 82.53 -> "1:22" */
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export const Player: React.FC<{clock: Clock; width: number; height: number; media?: MediaScheduler; ticks?: number[]; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
-  clock: ck, width, height, media, ticks = [], hint, autoplay, loop, bare, children,
+export const Player: React.FC<{clock: Clock; width: number; height: number; poster?: number; media?: MediaScheduler; ticks?: number[]; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
+  clock: ck, width, height, poster, media, ticks = [], hint, autoplay, loop, bare, children,
 }) => {
   const t = useSyncExternalStore(ck.subscribe, ck.getTime);
   const playing = useSyncExternalStore(ck.subscribe, ck.isPlaying);
@@ -78,7 +79,22 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; medi
   const toggleFull = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void root.current?.requestFullscreen().catch(() => {}); };
   const hasSound = !!media?.hasSound;
   const setSound = (on: boolean) => { viewerMuted.current = !on; setMuted(!on); if (on) media?.unlock(); };
-  const toggle = () => { if (playing) ck.pause(); else { if (!viewerMuted.current) setSound(true); ck.play(); } };
+  // the cover: the stage waits on the poster second until the film is played or moved
+  const [covered, setCovered] = useState(poster !== undefined && !autoplay);
+  const coverAt = useRef(0);
+  useEffect(() => {
+    if (!covered) return undefined;
+    ck.seek(poster!);
+    coverAt.current = ck.getTime();
+    return ck.subscribe(() => { if (ck.isPlaying() || ck.getTime() !== coverAt.current) setCovered(false); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the cover is decided once, when the player mounts
+  }, []);
+  const toggle = () => {
+    if (playing) { ck.pause(); return; }
+    if (!viewerMuted.current) setSound(true);
+    if (covered) { setCovered(false); ck.seek(0); }
+    ck.play();
+  };
   // a page that frames a bare player has the sound button: `{vt: 'sound', on}` from the parent is a press of it (see `bridge.ts`)
   useEffect(() => {
     if (!bare) return undefined;
@@ -139,11 +155,11 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; medi
   };
   const frac = ck.duration > 0 ? t / ck.duration : 0;
   // the first and the last frame are not a reason to press anything: a big Play says what to do
-  const idle = !playing && (t <= 0 || t >= ck.duration);
+  const idle = !playing && (covered || t <= 0 || t >= ck.duration);
 
   return (
     <div ref={root} className="vt-root" tabIndex={0} onKeyDown={onKey} onPointerDown={(e) => (e.currentTarget as HTMLElement).focus({preventScroll: true})}
-      style={{height: '100%', minHeight: 320, display: 'flex', flexDirection: 'column', background: '#05070a'}}>
+      style={{height: '100%', minHeight: 320, display: 'flex', flexDirection: 'column', background: C.bg}}>
       <style>{CSS}</style>
       <div ref={box} style={{position: 'relative', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'}}>
         <div style={{width: width * scale, height: height * scale}}>
