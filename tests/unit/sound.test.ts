@@ -105,3 +105,36 @@ test('muxAudio: narration alone is as long as the picture and sits at -16 LUFS i
     rmSync(dir, {recursive: true, force: true});
   }
 });
+
+test('muxAudio: a sound plays from its start at its envelope, a loop fills its span, and a piece joins a sound part-way in', async () => {
+  const {mkdtempSync, rmSync} = await import('node:fs');
+  const {execFileSync} = await import('node:child_process');
+  const {tmpdir} = await import('node:os');
+  const {join} = await import('node:path');
+  const {muxAudio, ENV_HZ} = await import('../../packages/exporter/src/index.ts');
+  const dir = mkdtempSync(join(tmpdir(), 'visotalk-mix-'));
+  try {
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=f=440:d=0.5:sample_rate=48000', '-af', 'volume=0.5', join(dir, 's.wav')]);
+    // the envelope of each sound over a 4-second film, at ENV_HZ: half gain for the single play, full for the loop
+    const env = (from: number, to: number, g: number) => Array.from({length: 4 * ENV_HZ}, (_, k) => (k / ENV_HZ >= from && k / ENV_HZ < to ? g : 0));
+    const meta = {narration: [], sounds: [{src: 's.wav', at: 1}, {src: 's.wav', at: 2, loop: true}], envelopes: [env(1, 1.5, 0.5), env(2, 3.5, 1)]};
+    const rms = (file: string, from: number, to: number) => {
+      const b = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', file, '-ss', String(from), '-t', String(to - from), '-f', 'f32le', '-ac', '1', '-ar', '48000', 'pipe:1']);
+      const x = new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4);
+      return Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
+    };
+    const tone = rms(join(dir, 's.wav'), 0.05, 0.45); // the file's own level
+    await muxAudio(undefined, join(dir, 'whole.mp3'), 0, 4, meta as never, dir);
+    const whole = join(dir, 'whole.mp3');
+    assert.ok(rms(whole, 0.2, 0.9) < 0.002, 'silent before the first sound');
+    assert.ok(Math.abs(rms(whole, 1.1, 1.4) / tone - 0.5) < 0.05, `the single play at half gain: ${rms(whole, 1.1, 1.4) / tone}`);
+    assert.ok(rms(whole, 1.6, 1.9) < 0.002, 'a single play ends with its file');
+    assert.ok(Math.abs(rms(whole, 2.6, 3.4) / tone - 1) < 0.05, 'the loop keeps sounding past the end of its file');
+    // a piece of the film that starts inside the single play: the sound is joined 0.2 s in, at the film's own envelope
+    await muxAudio(undefined, join(dir, 'piece.mp3'), 1.2, 1, meta as never, dir);
+    assert.ok(Math.abs(rms(join(dir, 'piece.mp3'), 0.05, 0.25) / tone - 0.5) < 0.05);
+    assert.ok(rms(join(dir, 'piece.mp3'), 0.4, 0.75) < 0.002);
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
+});

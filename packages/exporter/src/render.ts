@@ -192,47 +192,66 @@ async function encode(frames: Buffer[], out: string, fps: number, format: string
   });
 }
 
+const SR = 48000;
+/** What ffmpeg writes to its stdout, whole (a decoded file, a mixed bus) */
+function capture(args: string[]): Promise<Buffer> {
+  return new Promise((ok, fail) => {
+    const p = spawn('ffmpeg', ['-y', '-loglevel', 'error', ...args, '-f', 'f32le', '-ar', String(SR), '-ac', '2', 'pipe:1'], {stdio: ['ignore', 'pipe', 'pipe']});
+    const out: Buffer[] = [];
+    let err = '';
+    p.stdout!.on('data', (d: Buffer) => out.push(d));
+    p.stderr!.on('data', (d) => (err += d));
+    p.on('close', (code) => (code === 0 ? ok(Buffer.concat(out)) : fail(new Error(`ffmpeg exited ${code}: ${err.slice(-2000)}`))));
+  });
+}
+const samples = (b: Buffer) => new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4);
+
 /**
  * The soundtrack of a video that starts `offset` seconds into the film and runs `length` seconds. The narration clips each at their start, mixed and loudness-normalised
  * to −16 LUFS, as they are; then each sound of the document: its file (looped if it loops) set at its start, multiplied by its gain envelope (volume, fades, ducking: the
  * curve the player uses), and added to the narration without changing it. With a `video` it is muxed into a copy of it; without one it is written alone as an MP3 (the
  * one track a built player plays, so the page sounds as the video does).
+ *
+ * The narration goes through ffmpeg (it needs loudnorm); the sounds are summed here: each file is decoded once, to 48 kHz stereo, and each play of it touches only the
+ * samples where it sounds. Doing that in an ffmpeg graph meant padding every sound and its envelope to the whole film, which cost as many film lengths as there were sounds
+ * (a five-minute film with 150 sounds took fifteen minutes to mix).
  */
 export async function muxAudio(video: string | undefined, out: string, offset: number, length: number, meta: Pick<Meta, 'narration' | 'sounds' | 'envelopes'>, root: string) {
   const lines = meta.narration.map((l) => ({at: l.at - offset, src: join(root, l.src)})).filter((l) => l.at >= 0);
-  const first = video ? 1 : 0; // the input index of the first clip
-  const tmp = mkdtempSync(join(tmpdir(), 'visotalk-env-'));
-  try {
-    const args = ['-y', '-loglevel', 'error', ...(video ? ['-i', video] : [])];
-    for (const l of lines) args.push('-i', l.src);
-    for (const s of meta.sounds) args.push(...(s.loop ? ['-stream_loop', '-1'] : []), '-i', join(root, s.src));
-    meta.sounds.forEach((_, k) => {
-      const slice = Float32Array.from(meta.envelopes[k].slice(Math.round(offset * ENV_HZ), Math.round((offset + length) * ENV_HZ)));
-      const file = join(tmp, `env${k}.raw`);
-      writeFileSync(file, Buffer.from(slice.buffer));
-      args.push('-f', 'f32le', '-ar', String(ENV_HZ), '-ac', '1', '-i', file);
-    });
-    const graph: string[] = [];
-    const mixed: string[] = [];
-    if (lines.length) {
-      graph.push(...lines.map((l, k) => `[${k + first}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`));
-      graph.push(`${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad=whole_dur=${length.toFixed(3)}[nar]`); // loudnorm returns 192 kHz, which amix cannot join to 48 kHz inputs without dropping the narration; FFmpeg 5 leaves the mix's channel layout unspecified, which pan refuses, so it is named; loudnorm measures the stereo pair, since a mono level copied to two channels reads 3 LU louder; the pad keeps the track as long as the picture, whose last scene holds after the last word
-      mixed.push('[nar]');
+  const n = Math.round(length * SR), mix = new Float32Array(n * 2);
+  if (lines.length) {
+    const graph = [...lines.map((l, k) => `[${k}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`),
+      `${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=${SR},apad=whole_dur=${length.toFixed(3)},atrim=0:${length.toFixed(3)}[nar]`]; // loudnorm returns 192 kHz, so it is resampled back; FFmpeg 5 leaves the mix's channel layout unspecified, which pan refuses, so it is named; loudnorm measures the stereo pair, since a mono level copied to two channels reads 3 LU louder; the pad keeps the track as long as the picture, whose last scene holds after the last word
+    const nar = samples(await capture([...lines.flatMap((l) => ['-i', l.src]), '-filter_complex', graph.join(';'), '-map', '[nar]']));
+    for (let i = 0; i < Math.min(nar.length, mix.length); i++) mix[i] += nar[i];
+  }
+  const decoded = new Map<string, Float32Array>();
+  for (const [k, s] of meta.sounds.entries()) {
+    const src = join(root, s.src);
+    if (!decoded.has(src)) decoded.set(src, samples(await capture(['-i', src, '-af', `aresample=${SR},aformat=sample_fmts=flt:sample_rates=${SR}:channel_layouts=stereo`])));
+    const pcm = decoded.get(src)!, frames = pcm.length / 2, env = meta.envelopes[k];
+    if (!frames) continue;
+    // a sound that began before this piece is joined part-way in
+    const i0 = Math.round((s.at - offset) * SR), from = Math.max(0, i0), to = s.loop ? n : Math.min(n, i0 + frames);
+    for (let i = from; i < to; i++) {
+      const pos = (offset + i / SR) * ENV_HZ, e = Math.floor(pos), f = pos - e;
+      const gain = (env[e] ?? 0) * (1 - f) + (env[e + 1] ?? 0) * f; // the 200 Hz envelope, drawn straight between its points
+      if (gain === 0) continue;
+      const j = 2 * (s.loop ? (i - i0) % frames : i - i0);
+      mix[2 * i] += pcm[j] * gain;
+      mix[2 * i + 1] += pcm[j + 1] * gain;
     }
-    const FMT = 'aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo';
-    meta.sounds.forEach((s, k) => {
-      const file = first + lines.length + k, env = first + lines.length + meta.sounds.length + k;
-      const at = s.at - offset;
-      // a sound that began before this piece is joined part-way in (a looped file keeps its place only to the second; a piece of a long film starts on a cut anyway)
-      const place = at >= 0 ? `adelay=${Math.round(at * 1000)}:all=1` : `atrim=start=${(-at).toFixed(3)},asetpts=PTS-STARTPTS`;
-      graph.push(`[${file}:a]aresample=48000,${FMT},${place},apad=whole_dur=${length.toFixed(3)},atrim=0:${length.toFixed(3)}[s${k}]`);
-      graph.push(`[${env}:a]aresample=48000,pan=stereo|c0=c0|c1=c0,${FMT},apad=whole_dur=${length.toFixed(3)},atrim=0:${length.toFixed(3)}[e${k}]`);
-      graph.push(`[s${k}][e${k}]amultiply[m${k}]`);
-      mixed.push(`[m${k}]`);
-    });
-    graph.push(`${mixed.join('')}amix=inputs=${mixed.length}:normalize=0:duration=longest,alimiter=limit=0.95,atrim=0:${length.toFixed(3)}[aout]`);
-    const encode = video ? ['-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k'] : ['-map', '[aout]', '-c:a', 'libmp3lame', '-b:a', '96k'];
-    await run('ffmpeg', [...args, '-filter_complex', graph.join(';'), ...encode, '-ar', '48000', out]);
+  }
+  const tmp = mkdtempSync(join(tmpdir(), 'visotalk-mix-'));
+  try {
+    const raw = join(tmp, 'mix.f32');
+    writeFileSync(raw, Buffer.from(mix.buffer));
+    const input = ['-f', 'f32le', '-ar', String(SR), '-ac', '2', '-i', raw];
+    const limit = `alimiter=limit=0.95,atrim=0:${length.toFixed(3)}`;
+    const encode = video
+      ? ['-i', video, ...input, '-filter_complex', `[1:a]${limit}[aout]`, '-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k']
+      : [...input, '-af', limit, '-c:a', 'libmp3lame', '-b:a', '96k'];
+    await run('ffmpeg', ['-y', '-loglevel', 'error', ...encode, '-ar', String(SR), out]);
   } finally {
     rmSync(tmp, {recursive: true, force: true});
   }
