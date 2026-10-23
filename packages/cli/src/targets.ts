@@ -1,7 +1,7 @@
 /**
  * Where to look: the window of every line, the frames at which every target an action names should be on the page, and what a run found there.
  */
-import {captionBlocks, type Compiled, type VisoDoc} from '@visotalk/ir';
+import {captionBlocks, resolveStarts, type Compiled, type VisoDoc} from '@visotalk/ir';
 import type {FrameInspection} from '@visotalk/exporter';
 import type {Project} from './project.ts';
 
@@ -38,7 +38,7 @@ export function blockFrames(doc: VisoDoc, c: Compiled, fps: number): Array<{fram
   });
 }
 
-export function targetIssues(p: Project, c: Compiled, fps: number, inspections: Record<number, unknown>): Array<{code: string; at: string; message: string; fix: string}> {
+export function targetIssues(p: Project, c: Compiled, fps: number, inspections: Record<number, unknown>, range?: [number, number]): Array<{code: string; at: string; message: string; fix: string}> {
   const issues: Array<{code: string; at: string; message: string; fix: string}> = [];
   const clashes = new Set<string>();
   // a part whose code threw draws nothing: name it, and do not also report every target inside it as missing
@@ -48,8 +48,10 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
     issues.push({code: 'part.error', at: e.scene ? `/scenes/${e.scene}/parts/${e.part}` : `/parts/${e.part}`, message: `part "${e.part}"${e.scene ? ` of scene "${e.scene}"` : ' (global)'} threw: ${e.message}`,
       fix: `read the message and the part's code: a prop of the wrong type (a number where it maps over a list) or a value read before it exists is the usual cause; \`validate\` cannot see it`});
   }
+  const starts = range && resolveStarts(p.doc, c.scenes, fps);
   p.doc.scenes.forEach((scene, i) => {
     const sc = c.scenes[i];
+    if (range && (sc.end * fps <= range[0] || sc.from * fps >= range[1])) return;
     const seen = new Set<string>();
     const broken = [...crashed.values()].some((e) => e.scene === undefined || e.scene === scene.id);
     for (const [f, ins] of Object.entries(inspections)) {
@@ -67,6 +69,9 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
       }
     }
     scene.animations.forEach((a, k) => {
+      // a render of part of the film looks only at the actions that start in it (`range`, in frames)
+      const start = starts?.get(a);
+      if (range && start !== undefined && (Math.round(start * fps) < range[0] || Math.round(start * fps) >= range[1])) return;
       for (const id of [a.on].flat()) {
         if (seen.has(id) || broken) continue;
         issues.push({code: 'target.unregistered', at: `/scenes/${scene.id}/animations/${a.id ?? k}`,

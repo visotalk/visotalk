@@ -91,7 +91,9 @@ function check(): Item[] {
   add('node', major >= 22, major >= 22 ? process.version : `${process.version}; Node 22 or later is needed`);
 
   const ff = run('ffmpeg', ['-version']);
-  add('ffmpeg', ff.status === 0, ff.status === 0 ? ff.stdout.split('\n')[0].replace(/ Copyright.*/, '') : 'not on the PATH; install it (brew install ffmpeg, apt install ffmpeg, winget install ffmpeg)');
+  // render checks each segment it keeps with ffprobe, which every ffmpeg package ships beside it
+  const fp = run('ffprobe', ['-version']);
+  add('ffmpeg', ff.status === 0 && fp.status === 0, ff.status !== 0 ? 'not on the PATH; install it (brew install ffmpeg, apt install ffmpeg, winget install ffmpeg)' : fp.status !== 0 ? 'ffprobe is not on the PATH beside it; install the full ffmpeg package' : ff.stdout.split('\n')[0].replace(/ Copyright.*/, ''));
 
   const chrome = process.env.VISOTALK_CHROME;
   if (!chrome) add('chrome', false, `pinned chrome-headless-shell ${PINNED_CHROME} is not installed`, true);

@@ -1,5 +1,5 @@
 import {Doc, Asset, Scene, Line, Part, Animation, Appear, Disappear, Tween, Set, Sound} from '@visotalk/jsx';
-import {useProp, useAsset, useText, Obj} from '@visotalk/runtime';
+import {useProp, useAsset, useText, useDocTime, Obj} from '@visotalk/runtime';
 
 // ---- helpers ----------------------------------------------------------------
 const frac = (v: number) => v - Math.floor(v);
@@ -50,6 +50,20 @@ function Lockup({width}: {width: number}) {
       <path transform="translate(74.82 3)" fill={MARK} d="M9.06 39.07 0.68 16.93H7.5L12.99 34.73H12.42L17.88 16.93H24.7L16.33 39.07ZM27.88 39.07V16.93H33.99V39.07ZM30.94 14.28Q29.11 14.28 28 13.18Q26.9 12.07 26.9 10.24Q26.9 8.4 28 7.3Q29.11 6.2 30.94 6.2Q32.78 6.2 33.88 7.3Q34.98 8.4 34.98 10.24Q34.98 12.07 33.88 13.18Q32.78 14.28 30.94 14.28ZM48.37 39.61Q45.87 39.61 43.66 38.89Q41.44 38.16 39.93 36.62Q38.42 35.08 38 32.61L43.57 31.51Q43.76 33.38 44.9 34.33Q46.04 35.28 48.14 35.28Q50.17 35.28 51.16 34.47Q52.15 33.66 52.15 32.57Q52.15 31.61 51.38 30.91Q50.6 30.21 48.73 29.93L46.71 29.6Q45.54 29.42 44.19 29.09Q42.84 28.77 41.65 28.13Q40.46 27.48 39.7 26.34Q38.95 25.2 38.95 23.38Q38.95 21.19 40.12 19.63Q41.3 18.06 43.39 17.23Q45.47 16.39 48.18 16.39Q50.66 16.39 52.71 17.11Q54.76 17.84 56.14 19.25Q57.52 20.66 57.93 22.73L52.36 23.88Q52.21 23.03 51.81 22.29Q51.41 21.55 50.59 21.1Q49.78 20.64 48.37 20.64Q46.79 20.64 45.86 21.26Q44.93 21.87 44.93 22.93Q44.93 23.71 45.45 24.21Q45.98 24.7 46.89 25Q47.8 25.3 48.95 25.51L51.25 25.9Q53.01 26.18 54.6 26.88Q56.19 27.59 57.19 28.9Q58.19 30.21 58.19 32.35Q58.19 34.71 56.91 36.33Q55.63 37.95 53.41 38.78Q51.19 39.61 48.37 39.61ZM72.71 39.61Q69.36 39.61 66.81 38.14Q64.26 36.66 62.83 34.04Q61.4 31.42 61.4 27.99Q61.4 24.56 62.83 21.95Q64.26 19.33 66.81 17.86Q69.36 16.39 72.71 16.39Q76.07 16.39 78.62 17.86Q81.17 19.33 82.61 21.95Q84.04 24.56 84.04 28Q84.04 31.44 82.61 34.05Q81.17 36.67 78.61 38.14Q76.06 39.61 72.71 39.61ZM72.72 35.11Q75.01 35.11 76.33 33.2Q77.65 31.29 77.65 28Q77.65 24.71 76.33 22.8Q75 20.89 72.72 20.89Q70.43 20.89 69.11 22.8Q67.79 24.71 67.79 28Q67.79 31.3 69.11 33.2Q70.43 35.11 72.72 35.11Z" />
       <path transform="translate(74.82 3)" fill="var(--vt-text)" d="M94.5 39.07Q92.03 39.07 90.71 37.88Q89.4 36.68 89.4 34.42V21.4H86.23V16.93H89.4V12.58L95.51 11.1V16.93H99.6V21.4H95.51V33.46Q95.51 34.14 95.7 34.37Q95.9 34.6 96.53 34.6H99.92V39.07ZM110.36 39.6Q108.24 39.6 106.46 38.86Q104.67 38.12 103.59 36.63Q102.52 35.15 102.52 32.94Q102.52 30.56 103.9 28.9Q105.28 27.23 107.9 26.36Q110.51 25.49 114.23 25.49H117.35L116.98 26.05V24.78Q116.98 22.58 116.19 21.51Q115.39 20.44 113.54 20.44Q111.77 20.44 110.84 21.37Q109.9 22.31 109.7 24.03L103.48 22.95Q103.81 21.11 105.05 19.62Q106.3 18.13 108.49 17.25Q110.69 16.36 113.89 16.36Q116.82 16.36 118.85 17.3Q120.88 18.23 121.94 20.33Q123 22.43 123 25.93V33.46Q123 34.14 123.19 34.37Q123.39 34.6 124.02 34.6H125.02V39.07H122.1Q119.72 39.07 118.47 37.87Q117.23 36.66 117.23 34.42V33.38L118.3 33.78Q118.03 34.67 117.51 35.67Q116.99 36.67 116.09 37.57Q115.19 38.46 113.79 39.03Q112.39 39.6 110.36 39.6ZM112.12 35.43Q113.56 35.43 114.66 34.77Q115.77 34.11 116.4 32.79Q117.04 31.47 117.04 29.51V29.02H114.46Q112.27 29.02 111.04 29.6Q109.82 30.17 109.33 31Q108.84 31.83 108.84 32.62Q108.84 33.24 109.13 33.89Q109.43 34.54 110.14 34.99Q110.85 35.43 112.12 35.43ZM134.17 39.07Q131.69 39.07 130.38 37.88Q129.06 36.68 129.06 34.42V8.31H135.17V33.46Q135.17 34.14 135.36 34.37Q135.56 34.6 136.19 34.6H137.9V39.07ZM141.78 39.07V8.31H147.89V25.45L156.44 16.93H163.42L155.08 25.22L163.73 39.07H156.92L150.98 29.43L147.89 32.51V39.07Z" />
     </svg>
+  );
+}
+
+/** One slow backdrop behind the whole film: two soft blooms of the brand's blue and violet drifting over a faint dot grid */
+function Backdrop() {
+  const t = useDocTime();
+  const bloom = (cx: number, cy: number, color: string, a: number) => `radial-gradient(ellipse 46% 56% at ${cx}% ${cy}%, color-mix(in srgb, ${color} ${a}%, transparent) 0%, transparent 100%)`;
+  return (
+    <div style={{position: 'absolute', inset: 0, background: [
+      'radial-gradient(rgba(230,235,242,0.07) 1.5px, transparent 1.6px) 0 0 / 56px 56px',
+      bloom(24 + 12 * Math.sin(t * 0.07), 30 + 10 * Math.cos(t * 0.05), ENGINE, 22),
+      bloom(78 + 10 * Math.cos(t * 0.06), 72 + 12 * Math.sin(t * 0.08), AGENT, 20),
+      '#0c1118',
+    ].join(', ')}} />
   );
 }
 
@@ -119,6 +133,11 @@ function Mosaic({baseShuffle, baseFlow}: {baseShuffle: number; baseFlow: number}
       </svg>
     </div>
   );
+}
+
+/** The poster at 1.5 times its drawn size, centred in 1920 x 900 */
+function Big({children}: {children: React.ReactNode}) {
+  return <div style={{position: 'absolute', left: 60, top: 0, width: 1200, height: 600, transform: 'scale(1.5)', transformOrigin: '0 0'}}>{children}</div>;
 }
 
 function Regen() {
@@ -245,7 +264,7 @@ function Clock() {
           const pinned = i === 3;
           const added = k.a[0] === k.a[1];
           return (
-            <div key={i} style={{position: 'absolute', left: X0 + s * PPS, top: 150, width: w, height: 92, boxSizing: 'border-box', borderRadius: 18, border: `3px ${added ? 'dashed' : 'solid'} ${pinned ? 'var(--vt-grad)' : added ? 'var(--vt-good)' : 'var(--vt-border)'}`, background: pinned ? 'color-mix(in srgb, var(--vt-grad) 16%, var(--vt-panel))' : 'var(--vt-panel)', color: 'var(--vt-text)', fontSize: 44, fontWeight: pinned ? 700 : 400, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', whiteSpace: 'nowrap'}}>
+            <div key={i} style={{position: 'absolute', left: X0 + s * PPS, top: 150, width: w, height: 92, boxSizing: 'border-box', borderRadius: 18, border: `3px ${added ? 'dashed' : 'solid'} ${pinned ? 'var(--vt-grad)' : added ? 'var(--vt-good)' : 'var(--vt-border)'}`, background: pinned ? 'color-mix(in srgb, var(--vt-grad) 16%, var(--vt-panel))' : 'var(--vt-panel)', color: 'var(--vt-text)', fontSize: pinned ? 38 : 42, fontWeight: pinned ? 700 : 400, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', whiteSpace: 'nowrap'}}>
               {words[i]}
             </div>
           );
@@ -516,15 +535,16 @@ function Unchanged() {
 
 // ---- Scene 7: films made the same way -----------------------------------------------
 const WALL = [
-  {id: 'ice', asset: 'p-ice', x: 105, y: 110},
-  {id: 'chip', asset: 'p-chip', x: 690, y: 110},
-  {id: 'jp', asset: 'p-jp', x: 1275, y: 110},
-  {id: 'sonnet', asset: 'p-sonnet', x: 397, y: 490},
-  {id: 'app', asset: 'p-app', x: 982, y: 490},
+  {id: 'ice', asset: 'p-ice', x: 70, y: 90, tilt: -2.2, ph: 0},
+  {id: 'chip', asset: 'p-chip', x: 680, y: 90, tilt: 1.2, ph: 1.3},
+  {id: 'jp', asset: 'p-jp', x: 1290, y: 90, tilt: 2.4, ph: 2.6},
+  {id: 'sonnet', asset: 'p-sonnet', x: 375, y: 480, tilt: 1.8, ph: 3.9},
+  {id: 'app', asset: 'p-app', x: 985, y: 480, tilt: -1.6, ph: 5.2},
 ];
 
 function Wall() {
   const glow = clamp(useProp('glow', 0));
+  const t = useDocTime();
   const labels: Record<string, string> = {
     ice: useText('wall-ice', 'Why ice floats'),
     chip: useText('wall-chip', 'From sand to a processor'),
@@ -534,10 +554,12 @@ function Wall() {
   };
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 1080, fontFamily: SANS}}>
-      {WALL.map((t) => (
-        <Obj key={t.id} id={`t-${t.id}`} style={{position: 'absolute', left: t.x, top: t.y, width: 540}}>
-          <img src={useAsset(t.asset)} width={540} height={304} style={{display: 'block', borderRadius: 16, boxSizing: 'border-box', border: '4px solid', borderColor: `color-mix(in srgb, var(--vt-grad) ${Math.round(glow * 100)}%, var(--vt-border))`}} />
-          <div style={{marginTop: 14, fontSize: 30, color: 'var(--vt-text)', whiteSpace: 'nowrap'}}>{labels[t.id]}</div>
+      {WALL.map((k) => (
+        <Obj key={k.id} id={`t-${k.id}`} style={{position: 'absolute', left: k.x - 30, top: k.y - 30, width: 620, height: 450, padding: 30, boxSizing: 'border-box'}}>
+          <div style={{transform: `rotate(${k.tilt * (1 - 0.6 * glow)}deg) translateY(${Math.sin(t * 0.9 + k.ph) * 7}px)`, transformOrigin: '50% 50%'}}>
+            <img src={useAsset(k.asset)} width={560} height={315} style={{display: 'block', borderRadius: 18, boxSizing: 'border-box', border: '5px solid', boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 ${Math.round(glow * 60)}px color-mix(in srgb, var(--vt-grad) 60%, transparent)`, borderColor: `color-mix(in srgb, var(--vt-grad) ${Math.round(glow * 100)}%, var(--vt-border))`}} />
+            <div style={{marginTop: 16, fontSize: 30, lineHeight: 1.15, fontWeight: 700, color: 'var(--vt-text)'}}>{labels[k.id]}</div>
+          </div>
         </Obj>
       ))}
     </div>
@@ -620,7 +642,7 @@ const INSTALL = 'npx skills add visotalk/visotalk -g';
 function Terminal() {
   const chars = useProp('chars', 0);
   return (
-    <div style={{width: 1200, height: 150, borderRadius: 22, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)', display: 'flex', alignItems: 'center', padding: '0 44px', boxSizing: 'border-box', fontFamily: MONO, fontSize: 46, color: 'var(--vt-text)'}}>
+    <div style={{width: 1440, height: 180, borderRadius: 26, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)', display: 'flex', alignItems: 'center', padding: '0 54px', boxSizing: 'border-box', fontFamily: MONO, fontSize: 56, boxShadow: '0 30px 80px rgba(0,0,0,0.45)', color: 'var(--vt-text)'}}>
       <span style={{color: 'var(--vt-grad)', marginRight: 24}}>$</span>
       {typed(INSTALL, chars)}
     </div>
@@ -631,8 +653,8 @@ function Ask() {
   const type = clamp(useProp('type', 0));
   const ask = useText('ask', 'Explain why the sky is blue.');
   return (
-    <div style={{width: 1200, height: 150, borderRadius: 22, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)', display: 'flex', alignItems: 'center', gap: 28, padding: '0 44px', boxSizing: 'border-box', fontFamily: SANS, fontSize: 48, color: 'var(--vt-text)'}}>
-      <Spark size={56} color="var(--vt-op)" />
+    <div style={{width: 1440, height: 180, borderRadius: 26, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)', display: 'flex', alignItems: 'center', gap: 32, padding: '0 54px', boxSizing: 'border-box', fontFamily: SANS, fontSize: 58, boxShadow: '0 30px 80px rgba(0,0,0,0.45)', color: 'var(--vt-text)'}}>
+      <Spark size={68} color="var(--vt-op)" />
       {typed(ask, type * ask.length)}
     </div>
   );
@@ -650,15 +672,15 @@ function Pill() {
 function Ending() {
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 1080, fontFamily: SANS, textAlign: 'center'}}>
-      <Obj id="logo" style={{position: 'absolute', left: 0, top: 295, width: 1920, display: 'flex', justifyContent: 'center'}}>
-        <Lockup width={800} />
+      <Obj id="logo" style={{position: 'absolute', left: 0, top: 215, width: 1920, display: 'flex', justifyContent: 'center', filter: 'drop-shadow(0 0 50px rgba(74,168,242,0.45))'}}>
+        <Lockup width={1000} />
       </Obj>
-      <Obj id="dont" style={{position: 'absolute', left: 0, top: 585, width: 1920, fontSize: 100, fontWeight: 700, color: 'var(--vt-muted)'}}>
+      <Obj id="dont" style={{position: 'absolute', left: 0, top: 545, width: 1920, fontSize: 110, fontWeight: 700, color: 'var(--vt-muted)'}}>
         {useText('dont-a', 'Don’t ')}<span style={{textDecoration: 'line-through', textDecorationColor: 'var(--vt-bad)', textDecorationThickness: 8}}>{useText('dont-b', 'paint')}</span>{useText('dont-c', ' the video.')}
       </Obj>
-      <Obj id="writeit" style={{position: 'absolute', left: 0, top: 705, width: 1920, fontSize: 200, fontWeight: 700, lineHeight: 1, color: 'var(--vt-text)', letterSpacing: -4}}>
+      <Obj id="writeit" style={{position: 'absolute', left: 0, top: 665, width: 1920, fontSize: 230, fontWeight: 700, lineHeight: 1, color: 'var(--vt-text)', letterSpacing: -6}}>
         {useText('writeit', 'Write it.')}
-        <div style={{width: 520, height: 12, background: 'var(--vt-grad)', margin: '14px auto 0'}} />
+        <div style={{width: 640, height: 14, borderRadius: 7, background: 'var(--vt-grad)', boxShadow: '0 0 40px rgba(74,168,242,0.7)', margin: '10px auto 0'}} />
       </Obj>
     </div>
   );
@@ -679,17 +701,20 @@ export default (
     <Asset id="bed" kind="audio" src="audio/music.mp3" source="https://pixabay.com/music/corporate-tutorial-technology-182513/"
       license={{id: "pixabay-content", attribution: "Tutorial technology by PaulYudin, Pixabay", url: "https://pixabay.com/service/license-summary/", obligations: []}} />
 
+    <Part id="backdrop" z={0} x={0} y={0} w={1920} h={1080}>{() => <Backdrop />}</Part>
+
     <Scene id="pain">
       <Line id="l1">Be honest. Have you ever asked an AI to make you an explainer video?</Line>
       <Line id="l2" text="It looks gorgeous. Then you spot it. The chart says 42%. It should say 27%.">It looks gorgeous. Then you spot it. The chart says forty-two percent. It should say twenty-seven.</Line>
       <Line id="l3">One wrong number. So you hit regenerate.</Line>
       <Line id="l4">And everything changes. New colours, new bars, new everything. The number? Still wrong.</Line>
       <Line id="l5" hold={2.6}>That's not editing. That's a slot machine.</Line>
-      <Part id="film" x={360} y={110} w={1200} h={600}>{() => <Mosaic baseShuffle={0} baseFlow={0} />}</Part>
-      <Part id="regen" x={750} y={750} w={420} h={84}>{() => <Regen />}</Part>
+      <Part id="film" x={0} y={0} w={1920} h={900}>{() => <Big><Mosaic baseShuffle={0} baseFlow={0} /></Big>}</Part>
+      <Part id="regen" z={2} x={750} y={760} w={420} h={84}>{() => <Regen />}</Part>
       {/* the bed comes in once the pain has been said and has a few seconds to itself, then sits 8 dB under the voice and steps back 3 dB while it speaks */}
       <Sound asset="bed" line="l5" edge="end" loop volume={-8} duck={3} fadeIn={1.2} fadeOut={4} />
       <Animation>
+        <Appear on="backdrop" at="start" dur={0} />
         <Appear on="film" at="start" dur={0} />
         <Appear on="ring" line="l2" word="chart says" />
         <Appear on="regen" line="l3" word="regenerate" />
@@ -703,7 +728,7 @@ export default (
       <Line id="l6" text="VisoTalk starts from a different idea.">Veezo Talk starts from a different idea.</Line>
       <Line id="l7">A video is a document.</Line>
       <Line id="l8">A script, the pictures that explain it, and the exact word each picture arrives on.</Line>
-      <Part id="pixels" x={360} y={110} w={1200} h={600}>{() => <Mosaic baseShuffle={1} baseFlow={0} />}</Part>
+      <Part id="pixels" x={0} y={0} w={1920} h={900}>{() => <Big><Mosaic baseShuffle={1} baseFlow={0} /></Big>}</Part>
       <Part id="sheet" x={210} y={130} w={1500} h={640}>{() => <Sheet />}</Part>
       <Animation>
         <Appear on="pixels" at="start" dur={0} />
@@ -837,9 +862,9 @@ export default (
       <Line id="l27" text="VisoTalk is open source. One command adds the skill to Claude Code, Codex, and other agents.">Veezo Talk is open source. One command adds the skill to Claude Code, Codex, and other agents.</Line>
       <Line id="l28">Then just ask: explain why the sky is blue.</Line>
       <Line id="l29" text="Don't paint the video. Write it. visotalk.dev" hold={2.6}>Don't paint the video. Write it. visotalk dot dev.</Line>
-      <Part id="pill" x={360} y={120} w={420} h={70}>{() => <Pill />}</Part>
-      <Part id="term" x={360} y={230} w={1200} h={150}>{() => <Terminal />}</Part>
-      <Part id="ask" x={360} y={430} w={1200} h={150}>{() => <Ask />}</Part>
+      <Part id="pill" x={240} y={110} w={420} h={70}>{() => <Pill />}</Part>
+      <Part id="term" x={240} y={230} w={1440} h={180}>{() => <Terminal />}</Part>
+      <Part id="ask" x={240} y={470} w={1440} h={180}>{() => <Ask />}</Part>
       <Part id="ending" x={0} y={0} w={1920} h={1080}>{() => <Ending />}</Part>
       <Animation>
         <Appear on="pill" line="l27" word="open source" />

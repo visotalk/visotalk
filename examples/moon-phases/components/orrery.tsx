@@ -17,7 +17,7 @@
  * The Sun's label (`sun-tag`) and the Moon's (`moon-tag`) are targets inside their parts, so a scene can bring a label in on its own word.
  */
 import React from 'react';
-import {Obj, useProp} from '@visotalk/runtime';
+import {Obj, useDocTime, useProp} from '@visotalk/runtime';
 import {DEG, Label, Layer, MoonFace, arc, clamp, litPath, sunHalf, usePalette} from './moon.tsx';
 
 const SUN = {x: 282, y: 520, r: 92};
@@ -80,14 +80,14 @@ function labelAt(m: Disc, focus: number, text: string, size: number) {
 
 /** The orbit circle, drawn to `draw` (0 to 1) of the way round */
 export function Orbit() {
-  const draw = useProp('draw', 1);
-  return <Layer>{draw > 0 && <path d={orbitArc(0, 360 * draw)} fill="none" stroke="var(--vt-muted)" strokeWidth={3} strokeDasharray="10 12" opacity={0.6} />}</Layer>;
+  const draw = useProp('draw', 1), pal = usePalette();
+  return <Layer>{draw > 0 && <path d={orbitArc(0, 360 * draw)} fill="none" stroke={pal.muted} strokeWidth={3} strokeDasharray="10 12" opacity={0.6} />}</Layer>;
 }
 
 /** The Earth's shadow, drawn to `reach` (0 to 1) of its length */
 export function Shadow() {
   const reach = useProp('reach', 0), pal = usePalette();
-  return <Layer>{reach > 0 && <path d={shadowPath(reach)} fill={pal.shadow} stroke="var(--vt-muted)" strokeWidth={3} strokeDasharray="12 10" />}</Layer>;
+  return <Layer>{reach > 0 && <path d={shadowPath(reach)} fill={pal.shadow} stroke={pal.muted} strokeWidth={3} strokeDasharray="12 10" />}</Layer>;
 }
 
 /** The lamp's parallel rays reaching the ball. A ray stops where it hits the ball. */
@@ -98,30 +98,49 @@ export function Rays() {
       {[-120, -80, -40, 0, 40, 80, 120].map((dy) => {
         const y = SUN.y + dy, off = y - m.y;
         const to = Math.abs(off) < m.r ? m.x - Math.sqrt(m.r * m.r - off * off) : m.x - m.r;
-        return <line key={dy} x1={SUN.x + SUN.r * 2 + 6} y1={y} x2={to} y2={y} stroke={SUN_COLOR} strokeWidth={3} opacity={pal.rays} />;
+        return <line key={dy} x1={SUN.x + SUN.r * 2 + 6} y1={y} x2={to} y2={y} stroke={SUN_COLOR} strokeWidth={3} opacity={pal.rays} strokeDasharray="14 12" />;
       })}
     </Layer>
   );
 }
 
-/** The Sun: a disc with a halo and a corona, and its label (`sun-tag`) */
+const frac = (x: number) => x - Math.floor(x);
+/** Soft beams of light of uneven width and length, spread by the golden angle so no two neighbours are alike; they share one gradient that fades them out */
+const BEAMS = Array.from({length: 14}, (_, i) => {
+  const a = i * 137.5 * DEG, len = 0.9 + 0.7 * frac(i * 0.618), w = 0.07 + 0.06 * frac(i * 0.37), op = 0.6 + 0.4 * frac(i * 0.83);
+  const p = (r: number, da: number) => `${(SUN.x + r * Math.cos(a + da)).toFixed(1)},${(SUN.y + r * Math.sin(a + da)).toFixed(1)}`;
+  return {points: `${p(SUN.r * 0.9, -w)} ${p(SUN.r * (1 + len), 0)} ${p(SUN.r * 0.9, w)}`, op};
+});
+/** The Sun's slow motion, from the time alone: the beams turn 4 degrees a second and each one glints in its own rhythm, and the corona breathes */
+const sunTurn = (t: number) => (t * 4).toFixed(2);
+const beamGlint = (t: number, i: number) => 0.75 + 0.25 * Math.sin(t * 1.5 + i * 1.7);
+const sunBreath = (t: number) => 0.85 + 0.15 * Math.sin(t * 1.1);
+/** The surface: small bright and dark cells scattered over the disc (r in units of the Sun's radius) */
+const CELLS = Array.from({length: 48}, (_, i) => {
+  const d = 0.9 * Math.sqrt(frac(i * 0.7548776662)), a = 2 * Math.PI * frac(i * 0.5698402909);
+  return {x: SUN.x + d * SUN.r * Math.cos(a), y: SUN.y + d * SUN.r * Math.sin(a), r: SUN.r * (0.05 + 0.07 * frac(i * 0.311)), fill: i % 3 ? 'rgba(255,250,200,0.22)' : 'rgba(214,100,20,0.16)'};
+});
+
+/** The Sun: a limb-darkened disc with a granulated surface and a thin rim, a close warm corona, soft beams that fade out; and its label (`sun-tag`) */
 export function Sun() {
-  const pal = usePalette();
-  const corona = Array.from({length: 16}, (_, i) => {
-    const a = i * 22.5 * DEG, len = i % 2 ? 20 : 36, w = 0.11;
-    const p = (r: number, da: number) => `${(SUN.x + r * Math.cos(a + da)).toFixed(1)},${(SUN.y + r * Math.sin(a + da)).toFixed(1)}`;
-    return `${p(SUN.r + 6, -w)} ${p(SUN.r + 6 + len, 0)} ${p(SUN.r + 6, w)}`;
-  });
+  const pal = usePalette(), t = useDocTime();
   return (
     <Layer>
       <defs>
-        <radialGradient id="sun-core"><stop offset="0" stopColor="#fff6c8" /><stop offset=".6" stopColor={SUN_COLOR} /><stop offset="1" stopColor="#ff9d2e" /></radialGradient>
-        <radialGradient id="sun-halo"><stop offset="0" stopColor={SUN_COLOR} stopOpacity=".45" /><stop offset="1" stopColor={SUN_COLOR} stopOpacity="0" /></radialGradient>
+        <radialGradient id="sun-core"><stop offset="0" stopColor="#fffbe0" /><stop offset=".5" stopColor="#ffe27a" /><stop offset=".85" stopColor="#ffb83a" /><stop offset="1" stopColor="#f28a1e" /></radialGradient>
+        <radialGradient id="sun-corona" gradientUnits="userSpaceOnUse" cx={SUN.x} cy={SUN.y} r={SUN.r * 1.9}><stop offset=".5" stopColor="#ffb54d" stopOpacity=".4" /><stop offset=".62" stopColor="#ffb54d" stopOpacity=".12" /><stop offset="1" stopColor="#ffb54d" stopOpacity="0" /></radialGradient>
+        <radialGradient id="sun-halo" gradientUnits="userSpaceOnUse" cx={SUN.x} cy={SUN.y} r={SUN.r * 2}><stop offset="0" stopColor={SUN_COLOR} stopOpacity=".16" /><stop offset=".5" stopColor={SUN_COLOR} stopOpacity=".05" /><stop offset="1" stopColor={SUN_COLOR} stopOpacity="0" /></radialGradient>
+        <radialGradient id="sun-ray" gradientUnits="userSpaceOnUse" cx={SUN.x} cy={SUN.y} r={SUN.r * 2.7}><stop offset=".3" stopColor="#ffd36b" stopOpacity=".5" /><stop offset=".65" stopColor="#ffd36b" stopOpacity=".15" /><stop offset="1" stopColor="#ffd36b" stopOpacity="0" /></radialGradient>
+        <clipPath id="sun-disc"><circle cx={SUN.x} cy={SUN.y} r={SUN.r} /></clipPath>
       </defs>
-      <circle cx={SUN.x} cy={SUN.y} r={SUN.r * 2} fill="url(#sun-halo)" />
-      {corona.map((points, i) => <polygon key={i} points={points} fill={SUN_COLOR} opacity={0.85} />)}
+      {/* the halo is a square a little wider than itself, so no edge of a shape runs through the label under the Sun */}
+      <rect x={SUN.x - SUN.r * 2.5} y={SUN.y - SUN.r * 2.5} width={SUN.r * 5} height={SUN.r * 5} fill="url(#sun-halo)" />
+      <rect x={SUN.x - SUN.r * 2.5} y={SUN.y - SUN.r * 2.5} width={SUN.r * 5} height={SUN.r * 5} fill="url(#sun-corona)" opacity={sunBreath(t)} />
+      <g transform={`rotate(${sunTurn(t)} ${SUN.x} ${SUN.y})`}>{BEAMS.map((b, i) => <polygon key={i} points={b.points} fill="url(#sun-ray)" opacity={b.op * beamGlint(t, i)} />)}</g>
       <circle cx={SUN.x} cy={SUN.y} r={SUN.r} fill="url(#sun-core)" />
-      <Obj id="sun-tag" as="g"><Label x={SUN.x} y={SUN.y + SUN.r + 80} fill={pal.light ? pal.sunLabel : SUN_COLOR}>Sun</Label></Obj>
+      <g clipPath="url(#sun-disc)">{CELLS.map((c, i) => <circle key={i} cx={c.x} cy={c.y} r={c.r} fill={c.fill} />)}</g>
+      <circle cx={SUN.x} cy={SUN.y} r={SUN.r - 1.5} fill="none" stroke="rgba(255,110,30,0.55)" strokeWidth={3} />
+      <Obj id="sun-tag" as="g"><Label x={SUN.x} y={SUN.y + SUN.r + 96} fill={pal.light ? pal.sunLabel : SUN_COLOR}>Sun</Label></Obj>
     </Layer>
   );
 }
@@ -133,26 +152,28 @@ export function Earth() {
     <Layer>
       <defs>
         <linearGradient id="earth-day" x1="0" x2="1"><stop offset="0" stopColor="#5fa0e8" /><stop offset="1" stopColor="#2d5fa8" /></linearGradient>
+        <radialGradient id="earth-air"><stop offset=".8" stopColor="#6fb0ee" stopOpacity=".35" /><stop offset="1" stopColor="#6fb0ee" stopOpacity="0" /></radialGradient>
         <clipPath id="earth-lit"><path d={sunHalf(EARTH.x, EARTH.y, EARTH.r)} /></clipPath>
       </defs>
+      <circle cx={EARTH.x} cy={EARTH.y} r={EARTH.r + 10} fill="url(#earth-air)" />
       <circle cx={EARTH.x} cy={EARTH.y} r={EARTH.r} fill="#1b2b52" />
       <g clipPath="url(#earth-lit)">
         <circle cx={EARTH.x} cy={EARTH.y} r={EARTH.r} fill="url(#earth-day)" />
         <g fill="rgba(90,170,110,0.9)"><circle cx={EARTH.x - 30} cy={EARTH.y - 24} r={16} /><circle cx={EARTH.x - 14} cy={EARTH.y + 30} r={10} /></g>
       </g>
-      <Label x={EARTH.x} y={EARTH.y} fill={pal.earthLabel} halo={pal.earthHalo} size={28}>{tag}</Label>
+      <Label x={EARTH.x} y={EARTH.y} fill={pal.earthLabel} halo={pal.earthHalo} size={44}>{tag}</Label>
     </Layer>
   );
 }
 
 /** The line of sight from the Earth to the Moon, drawn more strongly as `emphasis` (0 to 1) grows */
 export function Sightline() {
-  const m = useMoon(), emphasis = useProp('emphasis', 0);
+  const m = useMoon(), emphasis = useProp('emphasis', 0), pal = usePalette();
   const dx = m.x - EARTH.x, dy = m.y - EARTH.y, d = Math.hypot(dx, dy) || 1;
   return (
     <Layer>
       <line x1={EARTH.x + (dx / d) * (EARTH.r + GAP)} y1={EARTH.y + (dy / d) * (EARTH.r + GAP)} x2={m.x - (dx / d) * (m.r + GAP)} y2={m.y - (dy / d) * (m.r + GAP)}
-        stroke="var(--vt-data)" strokeWidth={2 + 3 * emphasis} opacity={0.35 + 0.65 * emphasis} />
+        stroke={pal.data} strokeWidth={2 + 3 * emphasis} opacity={0.35 + 0.65 * emphasis} />
     </Layer>
   );
 }
@@ -171,17 +192,17 @@ export function Ghosts() {
 
 /** The dashed rim between the lit half of the Moon and the dark half */
 export function Rim() {
-  const m = useMoon();
-  return <Layer><line x1={m.x} y1={m.y - m.r - 22} x2={m.x} y2={m.y + m.r + 22} stroke="var(--vt-warn)" strokeWidth={4} strokeDasharray="10 8" /></Layer>;
+  const m = useMoon(), pal = usePalette();
+  return <Layer><line x1={m.x} y1={m.y - m.r - 22} x2={m.x} y2={m.y + m.r + 22} stroke={pal.warn} strokeWidth={4} strokeDasharray="10 8" /></Layer>;
 }
 
 /** Last night's Moon: an outline at the new-moon position and the arc the Moon has moved along since */
 export function Yesterday() {
-  const m = useMoon(), then = moonAt(0, 0);
+  const m = useMoon(), then = moonAt(0, 0), pal = usePalette();
   return (
     <Layer>
-      <circle cx={then.x} cy={then.y} r={MOON_R} fill="none" stroke="var(--vt-muted)" strokeWidth={4} strokeDasharray="6 6" opacity={0.55} />
-      <path d={orbitArc(0, m.angle)} fill="none" stroke="var(--vt-warn)" strokeWidth={8} />
+      <circle cx={then.x} cy={then.y} r={MOON_R} fill="none" stroke={pal.muted} strokeWidth={4} strokeDasharray="6 6" opacity={0.55} />
+      <path d={orbitArc(0, m.angle)} fill="none" stroke={pal.warn} strokeWidth={8} />
     </Layer>
   );
 }
@@ -191,17 +212,17 @@ export function Moon() {
   const pal = usePalette();
   const angle = useProp('angle', 0), focus = useProp('focus', 0), glow = useProp('glow', 0.6), face = useProp('face', 0), tag = useProp('text', 'Moon');
   const m = moonAt(angle, focus), tint = useEclipse({...m, focus});
-  const at = labelAt(m, focus, tag, 32);
+  const at = labelAt(m, focus, tag, 54);
   const dx = EARTH.x - m.x, dy = EARTH.y - m.y, d = Math.hypot(dx, dy) || 1;
   return (
     <Layer>
       <g style={{filter: `drop-shadow(-6px 0 ${14 * glow}px rgba(255,201,77,${0.9 * glow}))`}}>
-        <MoonFace id="moon-lit" cx={m.x} cy={m.y} r={m.r} lit={sunHalf(m.x, m.y, m.r)} tint={tint} />
+        <MoonFace id="moon-lit" cx={m.x} cy={m.y} r={m.r} lit={sunHalf(m.x, m.y, m.r)} tint={tint} maria={focus > 0.5} />
       </g>
       {face > 0 && (
         <g opacity={face * (1 - focus)}>
-          <circle cx={m.x + (dx / d) * m.r * 0.62} cy={m.y + (dy / d) * m.r * 0.62} r={9} fill="var(--vt-warn)" />
-          <circle cx={m.x + (dx / d) * m.r * 0.62} cy={m.y + (dy / d) * m.r * 0.62} r={17} fill="none" stroke="var(--vt-warn)" strokeWidth={3} />
+          <circle cx={m.x + (dx / d) * m.r * 0.62} cy={m.y + (dy / d) * m.r * 0.62} r={9} fill={pal.warn} />
+          <circle cx={m.x + (dx / d) * m.r * 0.62} cy={m.y + (dy / d) * m.r * 0.62} r={17} fill="none" stroke={pal.warn} strokeWidth={3} />
         </g>
       )}
       <Obj id="moon-tag" as="g"><Label x={at.x} y={at.y} fill={pal.moonLabel}>{tag}</Label></Obj>
@@ -214,19 +235,21 @@ export function View() {
   const m = useMoon(), tint = useEclipse(m), pal = usePalette();
   return (
     <Layer>
-      <circle cx={VIEW.x} cy={VIEW.y} r={VIEW.r + 22} fill={pal.frame} stroke="var(--vt-data)" strokeWidth={3} />
+      <circle cx={VIEW.x} cy={VIEW.y} r={VIEW.r + 22} fill={pal.frame} stroke={pal.data} strokeWidth={3} />
       <MoonFace id="view-lit" cx={VIEW.x} cy={VIEW.y} r={VIEW.r} lit={litPath(VIEW.x, VIEW.y, VIEW.r, m.angle)} night={pal.frameNight} maria tint={tint} stroke={pal.light ? pal.rim : 'none'} />
-      <Label x={VIEW.x} y={VIEW.y + VIEW.r + 62} fill="var(--vt-data)" size={30}>What we see</Label>
+      <Label x={VIEW.x} y={VIEW.y + VIEW.r + 90} fill={pal.data} size={50}>What we see</Label>
     </Layer>
   );
 }
 
 /** The name of the phase above the frame (`phase-name.text`) */
 export function PhaseName() {
-  return <Layer><Label x={VIEW.x} y={VIEW.y - VIEW.r - 100} fill="var(--vt-data)" size={48}>{useProp('text', 'New moon')}</Label></Layer>;
+  const pal = usePalette();
+  return <Layer><Label x={VIEW.x} y={VIEW.y - VIEW.r - 112} fill={pal.data} size={70}>{useProp('text', 'New moon')}</Label></Layer>;
 }
 
 /** The count of days above the frame (`days.value`) */
 export function Days() {
-  return <Layer><Label x={VIEW.x} y={VIEW.y - VIEW.r - 100} fill="var(--vt-data)" size={64}>{useProp('value', 0).toFixed(1)} days</Label></Layer>;
+  const pal = usePalette();
+  return <Layer><Label x={VIEW.x} y={VIEW.y - VIEW.r - 112} fill={pal.data} size={84}>{useProp('value', 0).toFixed(1)} days</Label></Layer>;
 }

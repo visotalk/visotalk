@@ -68,9 +68,8 @@ look again at the frames you changed.
 ## Delivering
 
 The default review copy is the player, not a video: `build doc.tsx --artifact` writes `player.html` and `artifact.json` (the files to publish with it: the soundtrack as one MP3, mixed as the video's is, your other assets, and the faces the
-document names or its CJK default; otherwise the viewer's system font stands in). Copy them where the publishing tool can read them and publish `player.html` with those files. An MP4 only when it is asked for: `scripts/render-segments.sh doc.tsx <id> <frames>`
-renders in resumable segments of about 2000 frames (a sandbox that goes idle is recycled and takes a background render with it; run it in the foreground and run it again after a restart) and
-joins them with each segment's audio cut to its own picture.
+document names or its CJK default; otherwise the viewer's system font stands in). Copy them where the publishing tool can read them and publish `player.html` with those files. An MP4 only when it is asked for: `render doc.tsx`
+renders in segments of 3000 frames and keeps each once it is whole, so the same command run again after an interruption picks up at the segment it stopped in (a sandbox that goes idle is recycled and takes a background render with it; run it in the foreground and run it again after a restart).
 
 ## Gotchas met on the way
 

@@ -3,7 +3,7 @@
  *
  *   node review-frames.mjs <doc.tsx> [--cli "npx visotalk@latest"] [--parts 3]
  *
- * It reads the film `visotalk render` made (.visotalk/<id>/out/final.mp4; `render-segments.sh` writes .visotalk/<id>/final.mp4: copy it there), takes the frame 85% of the way through each line (the pictures a line
+ * It reads the film `visotalk render` made (.visotalk/<id>/out/final.mp4), takes the frame 85% of the way through each line (the pictures a line
  * names have normally appeared by then) and writes, beside the work files, review/<n>-<scene>-<line>.png, review/manifest.json (line, time, the exact
  * narration, the frame) and review/part1.json .. partN.json: the same entries cut for N reviewers. Hand each reviewer one part, the frames it names
  * and the list of sources the figures come from; never your own verdict on the film.

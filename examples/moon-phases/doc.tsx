@@ -1,15 +1,16 @@
 import {Doc, Scene, Line, Part, Animation, Appear, Disappear, Tween, Set} from '@visotalk/jsx';
 import {useProp} from '@visotalk/runtime';
-import {PhaseDiscs} from './components/moon.tsx';
+import {PhaseDiscs, usePalette} from './components/moon.tsx';
 import {Days, Earth, Ghosts, Moon, Orbit, PhaseName, Rays, Rim, Shadow, Sightline, Sun, View, Yesterday} from './components/orrery.tsx';
 
 /** The small text parts: a scene's kicker and a note under it. A note's words can be changed by `<Set text>`. */
 const Kicker = ({children}: {children: string}) => (
-  <div style={{fontFamily: 'var(--vt-sans)', fontSize: 32, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--vt-data)'}}>{children}</div>
+  <div style={{fontFamily: 'var(--vt-sans)', fontSize: 56, lineHeight: '56px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: usePalette().data}}>{children}</div>
 );
-const Note = ({color, children}: {color: string; children: string}) => (
-  <div style={{fontFamily: 'var(--vt-sans)', fontSize: 44, fontWeight: 700, textAlign: 'center', color: `var(--vt-${color})`}}>{useProp('text', children)}</div>
-);
+const Note = ({color, children}: {color: 'data' | 'warn' | 'bad'; children: string}) => {
+  const pal = usePalette();
+  return <div style={{fontFamily: 'var(--vt-sans)', fontSize: 66, lineHeight: '72px', fontWeight: 700, textAlign: 'center', color: pal[color], WebkitTextStroke: `14px ${pal.ink}`, paintOrder: 'stroke fill'}}>{useProp('text', children)}</div>;
+};
 
 /**
  * Why the Moon has phases, in two looks from this one document: the dark one, and the light theme (`exports.variants`). The parts take the colours that are not theme
@@ -24,9 +25,10 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
   <Scene id="change">
     <Line id="m1" hold={0.3}>Look up on different nights and the Moon seems to change shape: a sliver, a half, a full disc.</Line>
     <Line id="m2" hold={1}>But the Moon does not change shape. It only looks like it does.</Line>
-    <Part id="t-change" x={96} y={44} w={1000} h={56}><Kicker>A month of Moons</Kicker></Part>
+
+    <Part id="t-change" x={96} y={44} w={1500} h={56}><Kicker>A month of Moons</Kicker></Part>
     <Part id="phases"><PhaseDiscs /></Part>
-    <Part id="n-same" x={360} y={104} w={1200} h={70}><Note color="data">Same Moon, different light</Note></Part>
+    <Part id="n-same" x={360} y={140} w={1200} h={72}><Note color="data">Same Moon, different light</Note></Part>
     <Animation>
       <Appear on={["t-change", "phases"]} at="start" />
       <Appear on="sliver" line="m1" word="sliver" />
@@ -40,12 +42,13 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
   <Scene id="lit">
     <Line id="m3">Think of a ball held up in front of a lamp: one half is always bright.</Line>
     <Line id="m4" hold={1}>Half of the Moon is always lit by the Sun.</Line>
-    <Part id="t-lit" x={96} y={44} w={1000} h={56}><Kicker>Half is always lit</Kicker></Part>
+
+    <Part id="t-lit" x={96} y={44} w={1500} h={56}><Kicker>Half is always lit</Kicker></Part>
     <Part id="rays"><Rays /></Part>
     <Part id="sun"><Sun /></Part>
     <Part id="moon"><Moon /></Part>
     <Part id="rim"><Rim /></Part>
-    <Part id="n-lit" x={360} y={104} w={1200} h={70}><Note color="warn">Always half lit</Note></Part>
+    <Part id="n-lit" x={360} y={140} w={1200} h={72}><Note color="warn">Always half lit</Note></Part>
     <Animation>
       <Appear on="t-lit" at="start" />
       <Set on="moon" focus={1} at="start" />
@@ -65,7 +68,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Line id="m8" hold={0.5}>At full moon, the Earth is between the Sun and the Moon, so we see the whole lit face.</Line>
     <Line id="m9" hold={0.5}>In every phase the Moon is lit in just the same way. Only our viewpoint changes.</Line>
     <Line id="m10" hold={1.5}>Then the light shrinks again, through last quarter, back to new.</Line>
-    <Part id="t-orbit" x={96} y={44} w={1000} h={56}><Kicker>The view from Earth</Kicker></Part>
+
+    <Part id="t-orbit" x={96} y={44} w={1500} h={56}><Kicker>The view from Earth</Kicker></Part>
     <Part id="orbit"><Orbit /></Part>
     <Part id="sun"><Sun /></Part>
     <Part id="earth"><Earth /></Part>
@@ -114,7 +118,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
   <Scene id="cycle">
     <Line id="m11" text="One full cycle takes about 29.5 days." hold={1.5}>One full cycle takes about twenty nine and a half days.</Line>
     <Line id="m12" hold={2}>In between, the Moon moves a little each night, so it rises later each night.</Line>
-    <Part id="t-cycle" x={96} y={44} w={1000} h={56}><Kicker>One lap</Kicker></Part>
+
+    <Part id="t-cycle" x={96} y={44} w={1500} h={56}><Kicker>One lap</Kicker></Part>
     <Part id="orbit"><Orbit /></Part>
     <Part id="sun"><Sun /></Part>
     <Part id="earth"><Earth /></Part>
@@ -123,7 +128,7 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="moon"><Moon /></Part>
     <Part id="view"><View /></Part>
     <Part id="days"><Days /></Part>
-    <Part id="n-late" x={360} y={104} w={1200} h={70}><Note color="warn">Rises later each night</Note></Part>
+    <Part id="n-late" x={360} y={140} w={1200} h={72}><Note color="warn">Rises later each night</Note></Part>
     <Animation>
       <Appear on={["t-cycle", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
       <Tween id="lap2" on="moon" angle={360} line="m11" word="One full cycle" dur={4} />
@@ -141,7 +146,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
   <Scene id="side">
     <Line id="m13" hold={0.5}>And we always see the same side of the Moon, whatever the phase.</Line>
     <Line id="m14" hold={1.5}>It is not the Earth's shadow. That only happens in a lunar eclipse, which is much rarer.</Line>
-    <Part id="t-side" x={96} y={44} w={1000} h={56}><Kicker>Not what you might think</Kicker></Part>
+
+    <Part id="t-side" x={96} y={44} w={1500} h={56}><Kicker>Not what you might think</Kicker></Part>
     <Part id="orbit"><Orbit /></Part>
     <Part id="shadow"><Shadow /></Part>
     <Part id="sun"><Sun /></Part>
@@ -149,8 +155,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="sightline"><Sightline /></Part>
     <Part id="moon"><Moon /></Part>
     <Part id="view"><View /></Part>
-    <Part id="n-side" x={360} y={104} w={1200} h={70}><Note color="warn">Same face, every night</Note></Part>
-    <Part id="n-ecl" x={360} y={104} w={1200} h={70}><Note color="bad">Lunar eclipse</Note></Part>
+    <Part id="n-side" x={360} y={140} w={1200} h={72}><Note color="warn">Same face, every night</Note></Part>
+    <Part id="n-ecl" x={360} y={140} w={1200} h={72}><Note color="bad">Lunar eclipse</Note></Part>
     <Animation>
       <Appear on={["t-side", "orbit", "shadow", "sun", "earth", "sightline", "moon", "view"]} at="start" />
       <Tween id="lap3" on="moon" angle={360} line="m13" word="always see" dur={4} />
@@ -168,7 +174,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
 
   <Scene id="geometry">
     <Line id="m15" hold={2.5}>So the phases are just geometry: where the Moon is, and where we are looking from.</Line>
-    <Part id="t-geo" x={96} y={44} w={1000} h={56}><Kicker>Just geometry</Kicker></Part>
+
+    <Part id="t-geo" x={96} y={44} w={1500} h={56}><Kicker>Just geometry</Kicker></Part>
     <Part id="orbit"><Orbit /></Part>
     <Part id="sun"><Sun /></Part>
     <Part id="earth"><Earth /></Part>

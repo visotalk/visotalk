@@ -30,9 +30,36 @@ export function findChrome(explicit?: string): string {
   return c;
 }
 
-/** `scale` is device pixels per CSS pixel (`--force-device-scale-factor`): 2 paints a 1920 x 1080 page as 3840 x 2160 */
-export const launch = (chrome: string, extraArgs: string[] = [], scale = 1): Promise<Browser> =>
-  puppeteer.launch({executablePath: chrome, headless: 'shell', args: [...CHROME_ARGS.map((a) => (a.startsWith('--force-device-scale-factor=') ? `--force-device-scale-factor=${scale}` : a)), ...extraArgs], defaultViewport: null});
+/** The flags that keep drawing off the GPU; `gpu` replaces them with `gpuGl` (where Chrome then finds no GPU it still draws in software: Mesa's llvmpipe through EGL on Linux) */
+const SOFTWARE_GL = ['--use-angle=swiftshader', '--disable-gpu-rasterization'];
+
+/**
+ * ANGLE on the platform's own graphics API, which chrome-headless-shell does not pick by itself: left to choose, it stays on SwiftShader. Direct3D 11 on
+ * Windows, Metal on macOS, GL over EGL on Linux (HyperFrames' browserManager.ts notes that `--use-gl=egl` alone makes the GPU process exit), with raster on
+ * the GPU too.
+ */
+export const gpuGl = (platform: NodeJS.Platform = process.platform): string[] => [
+  '--use-gl=angle', `--use-angle=${platform === 'win32' ? 'd3d11' : platform === 'darwin' ? 'metal' : 'gl-egl'}`,
+  '--enable-gpu', '--ignore-gpu-blocklist', '--enable-gpu-rasterization',
+];
+
+/**
+ * `scale` is device pixels per CSS pixel (`--force-device-scale-factor`): 2 paints a 1920 x 1080 page as 3840 x 2160. `gpu` draws on the machine's GPU
+ * when Chrome can reach one: faster for heavy canvases, but its pixels depend on the GPU and its driver, so it is never used for goldens.
+ */
+export const launch = (chrome: string, extraArgs: string[] = [], scale = 1, gpu = false): Promise<Browser> =>
+  puppeteer.launch({executablePath: chrome, headless: 'shell', defaultViewport: null, args: [...chromeArgs(scale, gpu), ...extraArgs]});
+
+/** The flags `launch` passes: `CHROME_ARGS` at the scale, and with `gpu` the platform's GL in place of software GL */
+export const chromeArgs = (scale = 1, gpu = false, platform: NodeJS.Platform = process.platform): string[] => [
+  ...CHROME_ARGS.filter((a) => !gpu || !SOFTWARE_GL.includes(a)).map((a) => (a.startsWith('--force-device-scale-factor=') ? `--force-device-scale-factor=${scale}` : a)),
+  ...(gpu ? gpuGl(platform) : []),
+];
+
+/** The GL renderer a page draws with, as WebGL names it ("ANGLE (NVIDIA, … Direct3D11 …)"; SwiftShader is software) */
+export const glRenderer = (page: Page): Promise<string> =>
+  page.evaluate(`(() => { const gl = document.createElement('canvas').getContext('webgl'); const x = gl && gl.getExtension('WEBGL_debug_renderer_info');
+    return gl ? String(gl.getParameter(x ? x.UNMASKED_RENDERER_WEBGL : gl.RENDERER)) : 'no WebGL'; })()`) as Promise<string>;
 
 export interface DrivenPage {
   page: Page;

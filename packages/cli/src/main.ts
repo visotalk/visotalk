@@ -7,7 +7,7 @@
  *   visotalk validate <doc.tsx> [--json] [--limit 30] [--anchors]   issues carry a `fix` where there is a standard answer; --anchors lists each word anchor with the words it finds marked in the line
  *   visotalk prepare  <doc.tsx> [--tts-models DIR]
  *   visotalk build    <doc.tsx> [--out DIR] [--artifact [--theme ID]]   the player as static files; --artifact: MP3 narration, no Latin fonts (a CJK document's faces go with it) and a player.html + artifact.json to publish as a Claude artifact
- *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--theme ID] [--scale 2] [--chrome PATH]
+ *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--png] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--theme ID] [--scale 2] [--gpu] [--chrome PATH]
  *   visotalk play     <doc.tsx | FILE.visotalk> [--port 4800]   a document, or a player bundle (`export --player`), served as a page
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
  *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--limit 30]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.png
@@ -23,7 +23,7 @@ import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync, mkdtempSyn
 import {tmpdir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
 import {alignmentIssues, captionsSrt, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
-import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, servePlayer, type FrameInspection} from '@visotalk/exporter';
+import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, renderSegmented, servePlayer, type FrameInspection, type RenderOptions} from '@visotalk/exporter';
 import {blockFrames, lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
 import {skeleton, type Script} from './init.ts';
@@ -217,9 +217,14 @@ async function main() {
     {
       const fps = Number(opt('fps', '30'));
       const c = solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, fps);
-      const frames = targetFrames(c, fps);
-      const probe = await renderBuilt({dist, out: join(p.work, 'targets'), fps, frames, inspect: true, concurrency: 1, encode: false, chrome: opt('chrome')});
-      const missing = targetIssues(p, c, fps, probe.inspections!);
+      // a render of part of the film (--from, --to: a segment) looks for the targets of that part only, so a long film in segments is checked once, not once a segment
+      const range: [number, number] = [opt('from') ? Number(opt('from')) : 0, opt('to') ? Number(opt('to')) : Math.round(c.duration * fps)];
+      const whole = range[0] === 0 && range[1] >= Math.round(c.duration * fps);
+      const frames = targetFrames(c, fps).filter((f) => f >= range[0] && f < range[1]);
+      console.error(`looking for the animation targets at ${frames.length} frames`);
+      // it reads what the parts register, not pixels: as many browsers as the machine allows, and the GPU when the render takes it
+      const probe = await renderBuilt({dist, out: join(p.work, 'targets'), fps, frames, inspect: true, concurrency: 'auto', gpu: flag('gpu'), encode: false, chrome: opt('chrome')});
+      const missing = targetIssues(p, c, fps, probe.inspections!, whole ? undefined : range);
       if (missing.length) {
         report(missing, console.error, {name: basename(p.file), locs: p.locs});
         console.error(`render stops: ${missing.length} animation target(s) are on no page; fix them`);
@@ -227,9 +232,13 @@ async function main() {
       }
     }
     const out = resolve(opt('out', join(p.work, 'out'))!);
-    const r = await renderBuilt({dist, out, fps: Number(opt('fps', '30')), format: flag('jpeg') ? 'jpeg' : 'png', concurrency: Number(opt('concurrency', '1')),
+    // the frames only feed the encoder, which compresses them again: JPEG is cheaper to make and to pass on
+    const options = {dist, out, fps: Number(opt('fps', '30')), format: flag('png') ? 'png' : 'jpeg', concurrency: opt('concurrency') ? Number(opt('concurrency')) : 'auto',
       from: opt('from') ? Number(opt('from')) : undefined, to: opt('to') ? Number(opt('to')) : undefined, saveFrames: flag('frames'),
-      encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), theme: opt('theme'), scale: opt('scale') ? Number(opt('scale')) : undefined, chrome: opt('chrome'), log: (s) => console.error(s),});
+      encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), theme: opt('theme'), scale: opt('scale') ? Number(opt('scale')) : undefined, gpu: flag('gpu'), chrome: opt('chrome'), log: renderLog, progressMs: process.stderr.isTTY ? 1000 : 5000} satisfies RenderOptions;
+    // a video is rendered in segments, so the same command run again after an interruption picks up where it stopped; kept frames or no video, in one pass
+    const r = options.encode && !options.saveFrames ? await renderSegmented(options) : await renderBuilt(options);
+    endProgress();
     writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc));
     if (p.doc.exports?.captions === 'sidecar') writeFileSync(join(out, 'captions.srt'), captionsSrt(solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, Number(opt('fps', '30')))));
     console.log(JSON.stringify({...r, hashes: undefined}, null, 1));
@@ -341,9 +350,26 @@ async function main() {
   }
 }
 
+/** On a terminal, render's progress line is rewritten in place (`\r`, then erase to the end of the line); any other output ends it first. Piped to a file, every line stays */
+let progressOpen = false;
+const endProgress = () => {
+  if (progressOpen) process.stderr.write('\n');
+  progressOpen = false;
+};
+const renderLog = (s: string) => {
+  if (process.stderr.isTTY && s.startsWith('frames ')) {
+    process.stderr.write(`\r${s}\x1b[K`);
+    progressOpen = true;
+  } else {
+    endProgress();
+    console.error(s);
+  }
+};
+
 main().then(() => {
   if (cmd !== 'play') process.exit(0);
 }, (e) => {
+  endProgress();
   if (e instanceof MarkupError) console.error(`${basename(file ?? '')}:${e.line}:${e.col}  syntax  ${e.message}`);
   else console.error(e instanceof Error ? e.message : e);
   process.exit(1);

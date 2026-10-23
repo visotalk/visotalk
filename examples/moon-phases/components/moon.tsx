@@ -1,6 +1,6 @@
 /** Drawing shared by the Moon parts: a lit disc, the Moon's grey patches, labels, and the layer every part draws on. All SVG, so frames can be measured. */
 import React from 'react';
-import {Obj, useProp, useTheme} from '@visotalk/runtime';
+import {Obj, useProp, useSceneDuration, useTheme, useTime} from '@visotalk/runtime';
 
 export const CREAM = '#efe8cf';
 export const NIGHT = '#343a52';
@@ -20,9 +20,18 @@ export interface Palette {
   frameNight: string;
   shadow: string;
   rays: number;
+  /** the film's own blue, amber, red, grey and white, and the near-black behind a label's outline (the light theme uses its tokens) */
+  data: string;
+  warn: string;
+  bad: string;
+  muted: string;
+  text: string;
+  ink: string;
 }
-const DARK: Palette = {light: false, lit: ['#fff8e0', CREAM], night: NIGHT, rim: 'var(--vt-border)', moonLabel: '#efe8cf', sunLabel: '#ffc94d', earthLabel: 'var(--vt-text)', earthHalo: 'var(--vt-bg)', frame: '#10131f', frameNight: '#2b3047', shadow: 'rgba(0,0,0,0.5)', rays: 0.18};
-const LIGHT: Palette = {light: true, lit: ['#fffdf4', '#fbefc4'], night: '#8d97b5', rim: '#5a6277', moonLabel: 'var(--vt-text)', sunLabel: 'var(--vt-warn)', earthLabel: '#ffffff', earthHalo: '#1b2b52', frame: '#E4DED0', frameNight: '#9aa3bd', shadow: 'rgba(29,35,48,0.28)', rays: 0.4};
+const DARK: Palette = {light: false, lit: ['#fff8e0', CREAM], night: NIGHT, rim: 'var(--vt-border)', moonLabel: '#efe8cf', sunLabel: '#ffc94d', earthLabel: '#f4f6fb', earthHalo: '#070914', frame: '#10131f', frameNight: '#2b3047', shadow: 'rgba(0,0,0,0.5)', rays: 0.35,
+  data: '#7ab8ff', warn: '#ffc94d', bad: '#ff7a6b', muted: '#8d97ad', text: '#f4f6fb', ink: '#070914'};
+const LIGHT: Palette = {light: true, lit: ['#fffdf4', '#fbefc4'], night: '#8d97b5', rim: '#5a6277', moonLabel: 'var(--vt-text)', sunLabel: 'var(--vt-warn)', earthLabel: '#ffffff', earthHalo: '#1b2b52', frame: '#E4DED0', frameNight: '#9aa3bd', shadow: 'rgba(29,35,48,0.28)', rays: 0.4,
+  data: 'var(--vt-data)', warn: 'var(--vt-warn)', bad: 'var(--vt-bad)', muted: 'var(--vt-muted)', text: 'var(--vt-text)', ink: 'var(--vt-bg)'};
 
 /** The palette for the theme being drawn: the light one when the ground is pale */
 export function usePalette(): Palette {
@@ -33,24 +42,31 @@ export function usePalette(): Palette {
 export const DEG = Math.PI / 180;
 export const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
 
-/** The canvas is 1920 x 1080; every layer draws in those coordinates, above y = 880 (the captions use the band below) */
+/**
+ * The canvas is 1920 x 1080; every layer draws in those coordinates, above y = 880 (the captions use the band below). The picture slowly closes in over a scene
+ * (3.5% by its end, about the centre), while the kicker and the note stay put.
+ */
 export const Layer = ({children}: {children: React.ReactNode}) => {
   const {lit} = usePalette();
+  const x = clamp(useTime() / useSceneDuration());
   return (
     <svg viewBox="0 0 1920 1080" width="100%" height="100%" style={{display: 'block'}}>
       <defs>
         <radialGradient id="moon-cream" cx=".35" cy=".35" r=".8"><stop offset="0" stopColor={lit[0]} /><stop offset="1" stopColor={lit[1]} /></radialGradient>
       </defs>
-      {children}
+      <g style={{transform: `scale(${1 + 0.035 * x})`, transformOrigin: '960px 540px'}}>{children}</g>
     </svg>
   );
 };
 
 /** A label with an outline in the background colour, so a line passing behind it does not cut the letters */
-export const Label = ({x, y, children, fill = 'var(--vt-text)', size = 32, anchor = 'middle', halo = 'var(--vt-bg)'}: {x: number; y: number; children: React.ReactNode; fill?: string; size?: number; anchor?: 'start' | 'middle' | 'end'; halo?: string}) => (
-  <text x={x} y={y} textAnchor={anchor} dominantBaseline="central" fontSize={size} fontWeight={700} fontFamily="var(--vt-sans)" fill={fill}
-    stroke={halo} strokeWidth={10} strokeLinejoin="round" paintOrder="stroke">{children}</text>
-);
+export const Label = ({x, y, children, fill, size = 54, anchor = 'middle', halo}: {x: number; y: number; children: React.ReactNode; fill?: string; size?: number; anchor?: 'start' | 'middle' | 'end'; halo?: string}) => {
+  const pal = usePalette();
+  return (
+    <text x={x} y={y} textAnchor={anchor} dominantBaseline="central" fontSize={size} fontWeight={700} fontFamily="var(--vt-sans)" fill={fill ?? pal.text}
+      stroke={halo ?? pal.ink} strokeWidth={14} strokeLinejoin="round" paintOrder="stroke">{children}</text>
+  );
+};
 
 /** The lit part of a disc seen from Earth; phase 0 is the new moon, 90 first quarter, 180 full moon, 270 last quarter (the lit side is on the right while it waxes) */
 export function litPath(cx: number, cy: number, r: number, phase: number): string {
@@ -104,7 +120,7 @@ export function MoonFace({id, cx, cy, r, lit, night, maria = false, tint = 0, st
 }
 
 const DISC_Y = 500, DISC_R = 150;
-const DISCS = [{id: 'sliver', phase: 40, x: 384}, {id: 'half', phase: 90, x: 960}, {id: 'full-disc', phase: 180, x: 1536}];
+const DISCS = [{id: 'sliver', phase: 40, x: 384}, {id: 'half', phase: 100, x: 960}, {id: 'full-disc', phase: 180, x: 1536}];
 
 /**
  * Three discs of the Moon (a sliver, a half, a full disc) that turn out to be one sphere. The part `phases` takes `whole`: 0 shows only what is lit,
@@ -117,8 +133,8 @@ export function PhaseDiscs() {
       {DISCS.map((d) => (
         <Obj key={d.id} id={d.id} as="g">
           <MoonFace id={`${d.id}-lit`} cx={d.x} cy={DISC_Y} r={DISC_R} lit={litPath(d.x, DISC_Y, DISC_R, d.phase)} maria night={pal.light ? pal.night : `rgba(70,76,96,${0.35 + 0.35 * whole})`} stroke={pal.light ? pal.rim : 'none'} />
-          {whole > 0 && <path d={arc(d.x, DISC_Y, DISC_R + 16, 0, 360 * whole)} fill="none" stroke="var(--vt-data)" strokeWidth={4} strokeDasharray="14 12" />}
-          <Label x={d.x} y={DISC_Y + DISC_R + 62} fill="var(--vt-muted)" size={34}>{d.id === 'full-disc' ? 'full' : d.id}</Label>
+          {whole > 0 && <path d={arc(d.x, DISC_Y, DISC_R + 16, 0, 360 * whole)} fill="none" stroke={pal.data} strokeWidth={4} strokeDasharray="14 12" />}
+          <Label x={d.x} y={DISC_Y + DISC_R + 80} fill={pal.muted}>{d.id === 'full-disc' ? 'full' : d.id}</Label>
         </Obj>
       ))}
     </Layer>

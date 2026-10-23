@@ -89,6 +89,11 @@ export default <Doc id="d" title="t" lang="en"><Scene id="s"><Line id="l">One tw
   const crash = targetIssues(p, c, 30, threw);
   assert.deepEqual(crash.map((i) => [i.code, i.at]), [['part.error', '/scenes/s/parts/p']]);
   assert.match(crash[0].message, /part "p" of scene "s" threw: t\.map is not a function/);
+  // a render of part of the film (a segment) samples only its frames, and judges only the actions that start in it: "barr" starts at the scene's end
+  const early: [number, number] = [0, Math.round(2.5 * 30)];
+  const part = Object.fromEntries(frames.filter((f) => f < early[1]).map((f) => [f, page(['p', 'bar'])]));
+  assert.deepEqual(targetIssues(p, c, 30, part, early), []);
+  assert.deepEqual(targetIssues(p, c, 30, part).map((i) => i.code), ['target.unregistered'], 'the same frames, judged as the whole film, still miss it');
 });
 
 test('check: the engine\'s clock is the only one a part may draw by, in the document and in the files it imports', async () => {
