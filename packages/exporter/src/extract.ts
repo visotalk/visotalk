@@ -4,20 +4,22 @@
  * What `visotalk build` found about each video is in `<dist>/media.json`: `{asset: {src, fps, frames}}`.
  */
 import {spawn} from 'node:child_process';
-import {existsSync, mkdirSync, readdirSync, readFileSync, rmSync} from 'node:fs';
+import {existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 
 export type MediaIndex = Record<string, {src: string; fps: number; frames: number}>;
 
 export const readMedia = (dist: string): MediaIndex => (existsSync(join(dist, 'media.json')) ? JSON.parse(readFileSync(join(dist, 'media.json'), 'utf8')) : {});
 
-/** Decodes the video assets of a built player into `cache`; an asset already decoded (every frame present) is left alone */
+/** Decodes the video assets of a built player into `cache`; an asset already decoded from the same file (every frame present) is left alone */
 export async function extractMedia(dist: string, cache: string): Promise<Record<string, number>> {
   const done: Record<string, number> = {};
   for (const [id, m] of Object.entries(readMedia(dist))) {
     const dir = join(cache, id);
     mkdirSync(dir, {recursive: true});
-    if (readdirSync(dir).filter((f) => f.endsWith('.jpg')).length === m.frames) { done[id] = 0; continue; }
+    // a built file is named by its content, so the cache remembers which file it decoded: a replaced take with the same number of frames is decoded again
+    const kept = existsSync(join(dir, '.source')) ? readFileSync(join(dir, '.source'), 'utf8') : '';
+    if (kept === m.src && readdirSync(dir).filter((f) => f.endsWith('.jpg')).length === m.frames) { done[id] = 0; continue; }
     rmSync(dir, {recursive: true, force: true});
     mkdirSync(dir, {recursive: true});
     await new Promise<void>((ok, fail) => {
@@ -26,6 +28,7 @@ export async function extractMedia(dist: string, cache: string): Promise<Record<
       p.stderr!.on('data', (d) => (err += d));
       p.on('close', (c) => (c === 0 ? ok() : fail(new Error(`ffmpeg ${c} decoding ${m.src}: ${err.slice(-1000)}`))));
     });
+    writeFileSync(join(dir, '.source'), m.src);
     done[id] = m.frames;
   }
   return done;

@@ -35,7 +35,7 @@ export const Asset: Tag<IRAsset> = tag('Asset');
 
 export const Scene: Tag<{id: string; title?: string; /** a scene without lines needs it, seconds */ duration?: number; children?: ReactNode}> = tag('Scene');
 /** The words spoken are the children; `text` is the caption when it differs from them (digits for numbers spoken as words) */
-export const Line: Tag<Pick<IRLine, 'id' | 'hold' | 'i18n'> & {text?: string; children: ReactNode}> = tag('Line');
+export const Line: Tag<Pick<IRLine, 'id' | 'hold'> & {text?: string; children: ReactNode}> = tag('Line');
 /** A phrase of a line an action hangs on by name (`mark="…"`): the way to name a place when a phrase that occurs twice, or an unspaced language, makes `word` awkward */
 export const Mark: Tag<{id: string; children: string}> = tag('Mark');
 

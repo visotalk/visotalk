@@ -30,8 +30,9 @@ export function findChrome(explicit?: string): string {
   return c;
 }
 
-export const launch = (chrome: string, extraArgs: string[] = []): Promise<Browser> =>
-  puppeteer.launch({executablePath: chrome, headless: 'shell', args: [...CHROME_ARGS, ...extraArgs], defaultViewport: null});
+/** `scale` is device pixels per CSS pixel (`--force-device-scale-factor`): 2 paints a 1920 x 1080 page as 3840 x 2160 */
+export const launch = (chrome: string, extraArgs: string[] = [], scale = 1): Promise<Browser> =>
+  puppeteer.launch({executablePath: chrome, headless: 'shell', args: [...CHROME_ARGS.map((a) => (a.startsWith('--force-device-scale-factor=') ? `--force-device-scale-factor=${scale}` : a)), ...extraArgs], defaultViewport: null});
 
 export interface DrivenPage {
   page: Page;
@@ -40,13 +41,13 @@ export interface DrivenPage {
 }
 
 /** A page whose compositor only produces frames on HeadlessExperimental.beginFrame */
-export async function openDrivenPage(browser: Browser, url: string, width: number, height: number, fps: number): Promise<DrivenPage> {
+export async function openDrivenPage(browser: Browser, url: string, width: number, height: number, fps: number, scale = 1): Promise<DrivenPage> {
   const bcdp = await browser.target().createCDPSession();
   const {targetId} = await bcdp.send('Target.createTarget', {url: 'about:blank', width, height, enableBeginFrameControl: true});
   const target = await browser.waitForTarget((t) => (t as unknown as {_targetId: string})._targetId === targetId);
   const page = (await target.page())!;
   const cdp = await page.createCDPSession();
-  await cdp.send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: false});
+  await cdp.send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: scale, mobile: false});
   page.on('pageerror', (e) => console.error(`[page error] ${e}`));
   page.on('response', (r) => r.status() >= 400 && console.error(`[http ${r.status()}] ${r.url()}`));
   await page.goto(url, {waitUntil: 'domcontentloaded'});

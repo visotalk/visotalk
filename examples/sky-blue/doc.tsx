@@ -1,11 +1,13 @@
 import {Doc, Scene, Line, Part, Animation, Appear, Disappear, Tween, Set} from '@visotalk/jsx';
-import {Obj, useProp} from '@visotalk/runtime';
+import {Obj, useProp, useText} from '@visotalk/runtime';
 
 /**
  * Why the sky is blue, narrated in Mandarin. Six scenes, one idea each: sunlight is white, white light is every colour, short waves
  * scatter more, so the blue is thrown across the whole sky; violet loses on three counts; and a low Sun makes the same light red.
  * The pictures are drawn from numbers (the wavelengths, the scattering ratio, the Earth's geometry), not from stock art.
  * Kokoro speaks English only, so the narration is MiniMax's. Word times in Chinese are placed by character position (the aligner is English only), so anchors are short runs of characters.
+ * `doc.en.json` beside it is the same film in English: its lines, the phrase each anchor names in them, and every word drawn on screen,
+ * which is why each of those is read through `useText`.
  */
 
 /** The theme's sans: a Chinese document gets Noto Sans SC embedded by `build` (`packages/cli/src/fonts.ts`), so no fallback list is needed. */
@@ -33,8 +35,11 @@ const lcg = (seed: number) => () => ((seed = (seed * 1664525 + 1013904223) % 429
 const mix = (a: [number, number, number], b: [number, number, number], t: number) =>
   `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
 
-const Kicker = ({children}: {children: string}) => (
-  <div style={{fontFamily: SANS, fontSize: 36, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--vt-data)'}}>{children}</div>
+/** Words drawn on screen: the document's own, or a language overlay's under the same id */
+const T = ({id, children}: {id: string; children: string}) => <>{useText(id, children)}</>;
+
+const Kicker = ({id, children}: {id: string; children: string}) => (
+  <div style={{fontFamily: SANS, fontSize: 36, fontWeight: 700, letterSpacing: '0.12em', color: 'var(--vt-data)'}}>{useText(id, children)}</div>
 );
 
 /** One stroke that draws itself: `pathLength` 1 makes the dash a fraction of the line. */
@@ -72,10 +77,11 @@ const Prism = () => {
 };
 const Ray = ({band, y}: {band: (typeof BANDS)[number]; y: number}) => {
   const draw = useProp(`ray-${band.id}`, 'draw', 0);
+  const name = useText(`band-${band.id}`, band.name);
   return (
     <Obj as="g" id={`ray-${band.id}`}>
       <Stroke d={`M 934 360 L 1690 ${y}`} color={band.color} width={16} draw={draw} />
-      <text x="1722" y={y + 20} fontFamily={SANS} fontSize="60" fontWeight="700" fill={band.color}>{band.name}</text>
+      <text x="1722" y={y + 20} fontFamily={SANS} fontSize={name.length > 1 ? 46 : 60} fontWeight="700" fill={band.color}>{name}</text>
     </Obj>
   );
 };
@@ -92,7 +98,7 @@ const Wave = ({id, color, base, lambda, label, nm}: {id: string; color: string; 
   return (
     <Obj as="g" id={id}>
       <text x={WAVE_X0} y={base - 112} fontFamily={SANS} fontSize="52" fontWeight="700" fill={color}>{label}</text>
-      <text x={WAVE_X0 + 400} y={base - 112} fontFamily={SANS} fontSize="40" fill="var(--vt-muted)">{`波长约 ${nm} 纳米`}</text>
+      <text x={WAVE_X0 + 400} y={base - 112} fontFamily={SANS} fontSize="40" fill="var(--vt-muted)">{useText('wave-nm', '波长约 {nm} 纳米').replace('{nm}', String(nm))}</text>
       <Stroke d={wavePath(base, lambda)} color={color} width={9} draw={draw} />
       {/* one wavelength, bracketed */}
       <g opacity={draw > 0.95 ? 1 : 0} stroke="var(--vt-text)" strokeWidth="3">
@@ -105,8 +111,8 @@ const Wave = ({id, color, base, lambda, label, nm}: {id: string; color: string; 
 };
 const Waves = () => (
   <svg viewBox="0 0 1920 720" width="1920" height="720">
-    <Wave id="wave-r" color={RED} base={190} lambda={560} label="红光" nm={700} />
-    <Wave id="wave-b" color={BLUE} base={520} lambda={360} label="蓝光" nm={450} />
+    <Wave id="wave-r" color={RED} base={190} lambda={560} label={useText('red-light', '红光')} nm={700} />
+    <Wave id="wave-b" color={BLUE} base={520} lambda={360} label={useText('blue-light', '蓝光')} nm={450} />
   </svg>
 );
 const Bars = () => {
@@ -121,9 +127,9 @@ const Bars = () => {
   );
   return (
     <div style={{position: 'absolute', left: 160, top: 90, width: 1600}}>
-      <Obj id="bars-title" style={{fontFamily: SANS, fontSize: 48, color: 'var(--vt-muted)', marginBottom: 40}}>被空气分子散射的强度</Obj>
-      <Obj id="bar-r">{row('红光', RED, wr, '×1')}</Obj>
-      <Obj id="bar-b">{row('蓝光', BLUE, wb, `约 ×${Math.round(RATIO)}`)}</Obj>
+      <Obj id="bars-title" style={{fontFamily: SANS, fontSize: 48, color: 'var(--vt-muted)', marginBottom: 40}}><T id="bars-title">被空气分子散射的强度</T></Obj>
+      <Obj id="bar-r">{row(useText('bar-red', '红光'), RED, wr, '×1')}</Obj>
+      <Obj id="bar-b">{row(useText('bar-blue', '蓝光'), BLUE, wb, useText('about-times', '约 ×{n}').replace('{n}', String(Math.round(RATIO))))}</Obj>
     </div>
   );
 };
@@ -149,14 +155,14 @@ const Air = () => {
     <svg viewBox="0 0 1920 740" width="1920" height="740">
       <Obj as="g" id="band">
         <rect x={BAND.x0} y={BAND.y0} width={BAND.x1 - BAND.x0} height={BAND.y1 - BAND.y0} rx="14" fill={`rgba(77,163,255,${0.1 + glow * 0.38})`} stroke="rgba(180,215,255,0.7)" strokeWidth="3" strokeDasharray="14 10" />
-        <text x={(BAND.x0 + BAND.x1) / 2} y={BAND.y0 - 22} textAnchor="middle" fontFamily={SANS} fontSize="48" fontWeight="700" fill="var(--vt-text)">大气层</text>
+        <text x={(BAND.x0 + BAND.x1) / 2} y={BAND.y0 - 22} textAnchor="middle" fontFamily={SANS} fontSize="48" fontWeight="700" fill="var(--vt-text)"><T id="atmosphere">大气层</T></text>
       </Obj>
       <Obj as="g" id="molecules">
         {MOLECULES.map((m) => <circle key={m.i} cx={m.x} cy={m.y} r="7" fill="rgba(235,245,255,0.8)" />)}
       </Obj>
       <Obj as="g" id="mol-tag">
         <line x1="990" y1="570" x2="930" y2="520" stroke="var(--vt-text)" strokeWidth="3" />
-        <text x="1000" y="590" fontFamily={SANS} fontSize="44" fontWeight="700" fill="var(--vt-text)">气体分子</text>
+        <text x="1000" y="590" fontFamily={SANS} fontSize="44" fontWeight="700" fill="var(--vt-text)"><T id="gas-molecules">气体分子</T></text>
       </Obj>
       <Obj as="g" id="beam"><Stroke d="M 100 370 L 1300 370" color="#fff" width={12} draw={beam} /></Obj>
       <Obj as="g" id="scatter">
@@ -184,12 +190,12 @@ const Spectrum = () => {
       {[400, 450, 500, 600, 700].map((nm) => (
         <div key={nm} style={{position: 'absolute', left: SX(nm) - 60, top: 340, width: 120, textAlign: 'center', fontFamily: 'var(--vt-mono)', fontSize: 32, color: 'var(--vt-muted)'}}>{nm}</div>
       ))}
-      <div style={{position: 'absolute', left: 1180, top: 395, fontFamily: SANS, fontSize: 32, color: 'var(--vt-muted)'}}>波长，纳米</div>
+      <div style={{position: 'absolute', left: 1180, top: 395, fontFamily: SANS, fontSize: 32, color: 'var(--vt-muted)'}}><T id="wavelength-axis">波长，纳米</T></div>
       <Obj id="q" style={{position: 'absolute', left: SX(380) + 20, top: 40, fontFamily: SANS, fontSize: 150, fontWeight: 700, color: BANDS[6].color}}>？</Obj>
-      <Obj id="few" style={{position: 'absolute', left: 0, top: 130, fontFamily: SANS, fontSize: 44, fontWeight: 700, color: 'var(--vt-text)'}}>太阳光里很少</Obj>
+      <Obj id="few" style={{position: 'absolute', left: 0, top: 130, fontFamily: SANS, fontSize: 44, fontWeight: 700, color: 'var(--vt-text)'}}><T id="few">太阳光里很少</T></Obj>
       <Obj as="div" id="absorbed" style={{position: 'absolute', left: 0, top: 330, width: 500, height: 130}}>
         <div style={{position: 'absolute', left: 14, top: 0, width: 4, height: 70, background: 'var(--vt-warn)'}} />
-        <div style={{position: 'absolute', left: 0, top: 70, fontFamily: SANS, fontSize: 44, fontWeight: 700, color: 'var(--vt-warn)'}}>还被大气吸收</div>
+        <div style={{position: 'absolute', left: 0, top: 70, fontFamily: SANS, fontSize: 44, fontWeight: 700, color: 'var(--vt-warn)'}}><T id="absorbed">还被大气吸收</T></div>
       </Obj>
       <Obj as="div" id="eye" style={{position: 'absolute', left: SX(470) - 120, top: 40}}>
         <svg viewBox="0 0 520 240" width="520" height="240">
@@ -198,7 +204,7 @@ const Spectrum = () => {
             <circle cx="120" cy="60" r="28" fill={BLUE} />
             <circle cx="120" cy="60" r="11" fill="#0a1020" />
           </g>
-          <text x="270" y="82" fontFamily={SANS} fontSize="46" fontWeight="700" fill="var(--vt-text)">眼睛最敏感</text>
+          <text x="270" y="82" fontFamily={SANS} fontSize="46" fontWeight="700" fill="var(--vt-text)"><T id="eye-peak">眼睛最敏感</T></text>
           <path d="M 120 140 L 120 188" stroke="var(--vt-text)" strokeWidth="5" />
         </svg>
       </Obj>
@@ -237,7 +243,7 @@ const Dusk = () => {
       <Obj as="g" id="noon">
         <line x1={ME.x} y1="120" x2={ME.x} y2={ME.y - 8} stroke="#fff" strokeWidth="8" strokeDasharray="18 12" />
         <circle cx={ME.x} cy="96" r="42" fill="#fff" />
-        <text x={ME.x + 50} y="330" fontFamily={SANS} fontSize="48" fontWeight="700" fill="#fff">正午：穿过的大气薄</text>
+        <text x={ME.x + 50} y="330" fontFamily={SANS} fontSize="48" fontWeight="700" fill="#fff"><T id="noon">正午：穿过的大气薄</T></text>
       </Obj>
       <Obj as="g" id="sun-low"><circle cx="150" cy={ME.y} r="64" fill="#fff4e0" /></Obj>
       <Obj as="g" id="path">
@@ -252,17 +258,17 @@ const Dusk = () => {
       </Obj>
       <Obj as="g" id="viewer">
         <circle cx={ME.x} cy={ME.y - 20} r="14" fill="#fff" />
-        <text x={ME.x + 30} y={ME.y - 36} fontFamily={SANS} fontSize="44" fontWeight="700" fill="#fff">你</text>
+        <text x={ME.x + 30} y={ME.y - 36} fontFamily={SANS} fontSize="44" fontWeight="700" fill="#fff"><T id="you">你</T></text>
       </Obj>
       <Obj as="g" id="thick">
-        <text x="140" y="400" fontFamily={SANS} fontSize="48" fontWeight="700" fill="#fff">傍晚：要穿过更厚的大气</text>
+        <text x="140" y="400" fontFamily={SANS} fontSize="48" fontWeight="700" fill="#fff"><T id="evening">傍晚：要穿过更厚的大气</T></text>
       </Obj>
     </svg>
   );
 };
 
 const Title = () => (
-  <div style={{fontFamily: SANS, fontSize: 150, fontWeight: 700, lineHeight: 1.18, color: '#fff', textShadow: '0 4px 40px rgba(0,30,90,0.55)'}}>天空为什么<br />是蓝色的</div>
+  <div style={{fontFamily: SANS, fontSize: 150, fontWeight: 700, lineHeight: 1.18, whiteSpace: 'pre-line', color: '#fff', textShadow: '0 4px 40px rgba(0,30,90,0.55)'}}><T id="title">{'天空为什么\n是蓝色的'}</T></div>
 );
 
 export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的" lang="zh-CN" voice="minimax:Chinese (Mandarin)_Radio_Host" theme="visotalk/dark" canvas="16x9"
@@ -273,7 +279,7 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="sky"><Sky /></Part>
     <Part id="sun"><Sun /></Part>
     <Part id="title" x={120} y={300} w={1100} h={420}><Title /></Part>
-    <Part id="white" x={1230} y={470} w={440} h={90}>{() => <div style={{fontFamily: SANS, fontSize: 56, fontWeight: 700, textAlign: 'center', color: '#fff'}}>白色的光</div>}</Part>
+    <Part id="white" x={1230} y={470} w={440} h={90}>{() => <div style={{fontFamily: SANS, fontSize: 56, fontWeight: 700, textAlign: 'center', color: '#fff'}}><T id="white">白色的光</T></div>}</Part>
     <Part id="mark" x={1140} y={560} w={420} h={300}>{() => <div style={{fontFamily: SANS, fontSize: 300, fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: 1}}>？</div>}</Part>
     <Animation>
       <Appear on="sky" line="l1" word="天空是蓝" dur={1.2} />
@@ -286,7 +292,7 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
 
   <Scene id="prism">
     <Line id="l3" hold={1.5}>其实，白光是由红、橙、黄、绿、青、蓝、紫七种颜色混合而成的。</Line>
-    <Part id="t-prism" x={96} y={44} w={1000} h={56}><Kicker>白光里有七种颜色</Kicker></Part>
+    <Part id="t-prism" x={96} y={44} w={1000} h={56}><Kicker id="k-prism">白光里有七种颜色</Kicker></Part>
     <Part id="prism" x={0} y={140} w={1920} h={720}><Prism /></Part>
     <Animation>
       <Appear on={["t-prism", "prism"]} at="start" />
@@ -305,7 +311,7 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
   <Scene id="waves">
     <Line id="l4" hold={0.5}>不同颜色的光，波长不一样：红光的波长长，蓝光的波长短。</Line>
     <Line id="l5" hold={2}>而波长越短的光，越容易被空气分子散射，蓝光被散射的本领，大约是红光的六倍。</Line>
-    <Part id="t-waves" x={96} y={44} w={1000} h={56}><Kicker>波长越短，散射越强</Kicker></Part>
+    <Part id="t-waves" x={96} y={44} w={1000} h={56}><Kicker id="k-waves">波长越短，散射越强</Kicker></Part>
     <Part id="waves" x={0} y={150} w={1920} h={720}><Waves /></Part>
     <Part id="bars" x={0} y={150} w={1920} h={720}><Bars /></Part>
     <Animation>
@@ -326,7 +332,7 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
   <Scene id="air">
     <Line id="l6" hold={0.4}>阳光穿过大气层的时候，会不断撞上空气里的气体分子。</Line>
     <Line id="l7" hold={2}>蓝光被打散到天空的各个方向，红光却大多径直穿过，所以我们抬头，到处都是蓝色。</Line>
-    <Part id="t-air" x={96} y={44} w={1000} h={56}><Kicker>光穿过大气层</Kicker></Part>
+    <Part id="t-air" x={96} y={44} w={1000} h={56}><Kicker id="k-air">光穿过大气层</Kicker></Part>
     <Part id="air" x={0} y={150} w={1920} h={740}><Air /></Part>
     <Animation>
       <Appear on={["t-air", "air"]} at="start" />
@@ -344,7 +350,7 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
   <Scene id="violet">
     <Line id="l8" hold={0.4}>可是紫光的波长更短，为什么天空不是紫色的？</Line>
     <Line id="l9" hold={2.5}>因为太阳光里的紫光本来就少，一部分还被大气吸收了，而且我们的眼睛对蓝色更敏感。</Line>
-    <Part id="t-violet" x={96} y={44} w={1000} h={56}><Kicker>为什么不是紫色</Kicker></Part>
+    <Part id="t-violet" x={96} y={44} w={1000} h={56}><Kicker id="k-violet">为什么不是紫色</Kicker></Part>
     <Part id="spec" x={0} y={240} w={1920} h={640}><Spectrum /></Part>
     <Animation>
       <Appear on="t-violet" at="start" />

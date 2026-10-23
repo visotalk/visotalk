@@ -189,9 +189,12 @@ export default <Doc id="v" title="V" lang="en" theme="visotalk/dark" canvas="16x
   assert.ok(bytes.indexOf('moov') > 0 && bytes.indexOf('moov') < bytes.indexOf('mdat'), 'the built video has its index before its frames');
   const cache = dir + '/cache';
   assert.deepEqual(await extractMedia(dist, cache), {clip: 25});
-  assert.equal(readdirSync(cache + '/clip').length, 25);
+  assert.equal(readdirSync(cache + '/clip').filter((f) => f.endsWith('.jpg')).length, 25);
   assert.ok(existsSync(cache + '/clip/0.jpg') && existsSync(cache + '/clip/24.jpg'));
   assert.deepEqual(await extractMedia(dist, cache), {clip: 0}, 'a second run decodes nothing');
+  // a new take of the same length is another file, and its frames are decoded again
+  spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc2=size=160x90:rate=25:duration=1', '-pix_fmt', 'yuv420p', dir + '/media/clip.mp4']);
+  assert.deepEqual(await extractMedia(await buildPlayer(load(dir + '/doc.tsx')), cache), {clip: 25}, 'a replaced clip of the same length is decoded again');
 });
 
 test('audio: a built sound asset carries its length, and the solver ends a single play with it', async (t) => {

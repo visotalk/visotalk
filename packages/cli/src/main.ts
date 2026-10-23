@@ -7,7 +7,7 @@
  *   visotalk validate <doc.tsx> [--json] [--limit 30] [--anchors]   issues carry a `fix` where there is a standard answer; --anchors lists each word anchor with the words it finds marked in the line
  *   visotalk prepare  <doc.tsx> [--tts-models DIR]
  *   visotalk build    <doc.tsx> [--out DIR] [--artifact [--theme ID]]   the player as static files; --artifact: MP3 narration, no Latin fonts (a CJK document's faces go with it) and a player.html + artifact.json to publish as a Claude artifact
- *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--theme ID] [--chrome PATH]
+ *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--jpeg] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--theme ID] [--scale 2] [--chrome PATH]
  *   visotalk play     <doc.tsx | FILE.visotalk> [--port 4800]   a document, or a player bundle (`export --player`), served as a page
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
  *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--limit 30]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.png
@@ -16,6 +16,8 @@
  *   visotalk export   <doc.tsx> [--out FILE.visotalk] [--cover FILE] [--player]   the talk as one file: its source, its voice if it is prepared, captions and credits; --player: the built talk instead, which plays and has no document to open
  *   visotalk import   <FILE.visotalk> [DIR] [--remix] [--allow-voice-module]   unpack a source bundle into a new directory, checked as any document is; --remix starts a talk of its own
  *   visotalk schema   [tags | hooks | motions] [--json]   what a document is made of and the hooks a part calls
+ *
+ * Every command that reads a document but export takes --lang LANG: the document in the language of the overlay doc.<lang>.json beside it.
  */
 import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -136,7 +138,8 @@ async function main() {
   if (cmd === 'import') return importCmd();
   if (cmd === 'play' && file?.endsWith('.visotalk')) return playBundle();
   if (!cmd || !file) usage();
-  const p = load(file);
+  if (cmd === 'export' && opt('lang')) throw new Error('export writes the document in its own language: a bundle does not carry its language overlays yet');
+  const p = load(file, opt('lang'));
 
   const issues = check(p);
   if (issues.length) {
@@ -226,7 +229,7 @@ async function main() {
     const out = resolve(opt('out', join(p.work, 'out'))!);
     const r = await renderBuilt({dist, out, fps: Number(opt('fps', '30')), format: flag('jpeg') ? 'jpeg' : 'png', concurrency: Number(opt('concurrency', '1')),
       from: opt('from') ? Number(opt('from')) : undefined, to: opt('to') ? Number(opt('to')) : undefined, saveFrames: flag('frames'),
-      encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), theme: opt('theme'), chrome: opt('chrome'), log: (s) => console.error(s),});
+      encode: !flag('no-encode'), audio: !flag('no-audio'), preset: opt('preset'), theme: opt('theme'), scale: opt('scale') ? Number(opt('scale')) : undefined, chrome: opt('chrome'), log: (s) => console.error(s),});
     writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc));
     if (p.doc.exports?.captions === 'sidecar') writeFileSync(join(out, 'captions.srt'), captionsSrt(solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, Number(opt('fps', '30')))));
     console.log(JSON.stringify({...r, hashes: undefined}, null, 1));

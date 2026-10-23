@@ -1,0 +1,143 @@
+{
+  "lang": "en",
+  "meta": {
+    "title": "Why is the sky blue?"
+  },
+  "voice": {
+    "voice": "af_heart"
+  },
+  "lines": {
+    "l1": {
+      "text": "In the daytime the sky is blue, yet sunlight looks white."
+    },
+    "l2": {
+      "text": "So where does the blue come from?"
+    },
+    "l3": {
+      "text": "In fact, white light is a mix of seven colours: red, orange, yellow, green, cyan, blue and violet.",
+      "say": "In fact, white light is a mix of seven colours: red, orange, yellow, green, sigh-an, blue and violet."
+    },
+    "l4": {
+      "text": "Light of different colours has different wavelengths: red light has a long wavelength, blue light a short one."
+    },
+    "l5": {
+      "text": "And the shorter the wavelength, the more air molecules scatter it: red light once, blue light about six times as strongly."
+    },
+    "l6": {
+      "text": "As sunlight passes through the atmosphere, it keeps hitting the gas molecules in the air."
+    },
+    "l7": {
+      "text": "Blue light is knocked about in every direction, while red mostly passes straight through, so wherever we look up, it is blue."
+    },
+    "l8": {
+      "text": "But violet has an even shorter wavelength, so why isn't the sky violet?"
+    },
+    "l9": {
+      "text": "Because sunlight holds little violet to begin with, some of it is absorbed by the atmosphere, and our eyes are more sensitive to blue."
+    },
+    "l10": {
+      "text": "In the evening the Sun sinks to the horizon, and its light has to cross a much thicker atmosphere."
+    },
+    "l11": {
+      "text": "Along the way, nearly all the blue is scattered out, leaving only red and orange light."
+    },
+    "l12": {
+      "text": "That is the colour of a sunset."
+    }
+  },
+  "anchors": {
+    "l1": {
+      "天空是蓝": "sky is blue",
+      "太阳光": "sunlight",
+      "白色的": "white"
+    },
+    "l2": {
+      "哪里来": "where"
+    },
+    "l3": {
+      "白光": "white light",
+      "红": "red",
+      "橙": "orange",
+      "黄": "yellow",
+      "绿": "green",
+      "青": "sigh-an",
+      "蓝": "blue",
+      "紫": "violet"
+    },
+    "l4": {
+      "红光的波长长": "red light",
+      "蓝光的波长短": "blue light"
+    },
+    "l5": {
+      "波长越短": "the shorter",
+      "空气分子散射": "air molecules",
+      "红光": "red light",
+      "六倍": "six times"
+    },
+    "l6": {
+      "阳光穿过": "sunlight passes",
+      "大气层": "atmosphere",
+      "气体分子": "gas molecules"
+    },
+    "l7": {
+      "打散": "knocked about",
+      "径直穿过": "straight through",
+      "到处都是蓝色": "it is blue"
+    },
+    "l8": {
+      "紫光": "violet has",
+      "不是紫色": "sky violet"
+    },
+    "l9": {
+      "太阳光": "sunlight",
+      "本来就少": "little violet",
+      "被大气吸收": "absorbed by",
+      "更敏感": "more sensitive",
+      "我们的眼睛": "our eyes"
+    },
+    "l10": {
+      "太阳落到": "the Sun sinks",
+      "阳光要穿过": "cross a much",
+      "傍晚": "In the evening",
+      "厚得多": "much thicker"
+    },
+    "l11": {
+      "蓝光": "scattered out",
+      "红色和橙色": "red and orange"
+    },
+    "l12": {
+      "晚霞": "sunset"
+    }
+  },
+  "texts": {
+    "title": "Why is the\nsky blue?",
+    "white": "White light",
+    "k-prism": "White light holds seven colours",
+    "k-waves": "Shorter wavelength, stronger scattering",
+    "k-air": "Light crosses the atmosphere",
+    "k-violet": "Why not violet?",
+    "band-red": "red",
+    "band-orange": "orange",
+    "band-yellow": "yellow",
+    "band-green": "green",
+    "band-cyan": "cyan",
+    "band-blue": "blue",
+    "band-violet": "violet",
+    "wave-nm": "wavelength ≈ {nm} nm",
+    "red-light": "Red light",
+    "blue-light": "Blue light",
+    "bars-title": "Scattering by air molecules",
+    "bar-red": "Red",
+    "bar-blue": "Blue",
+    "about-times": "≈ ×{n}",
+    "atmosphere": "Atmosphere",
+    "gas-molecules": "Gas molecules",
+    "wavelength-axis": "Wavelength, nm",
+    "few": "Little violet",
+    "absorbed": "Also absorbed",
+    "eye-peak": "Eyes peak",
+    "noon": "Noon: thin atmosphere",
+    "you": "You",
+    "evening": "Evening: thick atmosphere"
+  }
+}

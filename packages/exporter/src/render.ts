@@ -8,6 +8,7 @@
  */
 import {createHash} from 'node:crypto';
 import {mkdirSync, mkdtempSync, rmSync, writeFileSync} from 'node:fs';
+import {writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join, resolve} from 'node:path';
 import {spawn} from 'node:child_process';
@@ -32,6 +33,8 @@ export interface RenderOptions {
   chrome?: string;
   /** canvas preset id */
   preset?: string;
+  /** device pixels per canvas pixel: 2 renders a 1920 x 1080 canvas as 3840 x 2160, laid out as at 1 (a part's canvas reads it as `devicePixelRatio`) */
+  scale?: number;
   /** a built-in theme drawn in place of the document's own (a variant's `theme`) */
   theme?: string;
   /** per-frame paint reset (default flow) */
@@ -92,12 +95,14 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
   const chrome = findChrome(o.chrome);
   const out = resolve(o.out);
   mkdirSync(out, {recursive: true});
+  if (o.scale !== undefined && !(o.scale > 0 && o.scale <= 4)) throw new Error(`scale must be a number above 0 and at most 4, not ${o.scale}`);
   if (o.saveFrames) mkdirSync(join(out, 'frames'), {recursive: true});
   const mediaCache = resolve(o.dist, '..', '.media-cache');
   await extractMedia(resolve(o.dist), mediaCache);
   const player = await servePlayer(o.dist, 0, mediaCache);
   const query = new URLSearchParams({mode: 'driven', fps: String(fps), media: '/__media', reset: o.reset ?? 'flow', ...(o.preset ? {preset: o.preset} : {}), ...(o.theme ? {theme: o.theme} : {})});
   const url = `${player.url}?${query}`;
+  let frameTmp: string | undefined;
   try {
     // 1. probe
     const probeBrowser = await launch(chrome);
@@ -126,14 +131,15 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
     const size = Math.ceil(order.length / conc);
     const chunks = Array.from({length: conc}, (_, c) => order.slice(c * size, (c + 1) * size)).filter((c) => c.length);
     const hashes: string[] = new Array(total).fill('');
-    const frames: Buffer[] = new Array(total);
+    const ext = format === 'jpeg' ? 'jpg' : 'png';
+    const frameDir = (frameTmp = o.saveFrames ? undefined : mkdtempSync(join(out, '.frames-'))) ?? join(out, 'frames');
     const inspections: Record<number, unknown> = {};
     let seekMs = 0, captureMs = 0;
     const t0 = performance.now();
     await Promise.all(chunks.map(async (chunk) => {
-      const browser = await launch(chrome);
+      const browser = await launch(chrome, [], o.scale);
       try {
-        const d = await openDrivenPage(browser, url, meta.width, meta.height, fps);
+        const d = await openDrivenPage(browser, url, meta.width, meta.height, fps, o.scale);
         for (const [k, i] of chunk.entries()) {
           const a = performance.now();
           await d.page.evaluate(`window.__visotalk.seek(${i})`);
@@ -143,8 +149,8 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
           seekMs += b - a;
           captureMs += performance.now() - b;
           hashes[i] = createHash('sha256').update(img).digest('hex').slice(0, 16);
-          if (o.encode) frames[i] = img;
-          if (o.saveFrames) writeFileSync(join(out, 'frames', `${String(i).padStart(5, '0')}.${format === 'jpeg' ? 'jpg' : 'png'}`), img);
+          // frames go to disk, never into memory: a 4K film is tens of gigabytes of them (beside the output, not in a /tmp that may be RAM)
+          if (o.encode || o.saveFrames) await writeFile(join(frameDir, `${String(i).padStart(5, '0')}.${ext}`), img);
           o.onFrame?.(i, img);
           if (k % 150 === 0) log(`frame ${i} (${k + 1}/${chunk.length})`);
         }
@@ -157,7 +163,7 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
     let encodeMs = 0;
     if (o.encode) {
       const e0 = performance.now();
-      await encode(frames.slice(from, to), join(out, 'video.mp4'), fps, format);
+      await encode(frameDir, ext, from, to - from, join(out, 'video.mp4'), fps);
       if (o.audio !== false && (meta.narration.length || meta.sounds.length)) await muxAudio(join(out, 'video.mp4'), join(out, 'final.mp4'), from / fps, (to - from) / fps, meta, resolve(o.dist));
       encodeMs = performance.now() - e0;
     }
@@ -171,6 +177,7 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
     return report;
   } finally {
     player.close();
+    if (frameTmp) rmSync(frameTmp, {recursive: true, force: true});
   }
 }
 
@@ -184,12 +191,9 @@ function run(cmd: string, args: string[], input?: (stdin: NodeJS.WritableStream)
   });
 }
 
-async function encode(frames: Buffer[], out: string, fps: number, format: string) {
-  await run('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', format === 'jpeg' ? 'mjpeg' : 'png', '-framerate', String(fps), '-i', '-',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out],
-  async (stdin) => {
-    for (const f of frames) if (!stdin.write(f)) await new Promise((r) => stdin.once('drain', r));
-  });
+async function encode(dir: string, ext: string, from: number, count: number, out: string, fps: number) {
+  await run('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(fps), '-start_number', String(from), '-i', join(dir, `%05d.${ext}`), '-frames:v', String(count),
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out]);
 }
 
 const SR = 48000;

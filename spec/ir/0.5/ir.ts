@@ -1,7 +1,7 @@
 /**
  * VisoTalk IR — spec 0.5.0 (DRAFT)
  *
- * A document is lines, parts and animations (ADR 0017): the narration with its captions, what is on screen, and the actions that
+ * A document is lines, parts and animations: the narration with its captions, what is on screen, and the actions that
  * connect them in time. What a part draws is ordinary React and is not described here; the engine knows a part's id, its box and the
  * ids and numeric props it registers, never its contents.
  *
@@ -193,7 +193,6 @@ export interface Line {
   hold?: Seconds;
   /** Word timings in seconds from the line start (filled by forced alignment; estimated when absent) */
   words?: Array<{w: string; t0: Seconds; t1: Seconds; /** how sure the aligner was, 0 to 1; absent for a word without letters */ p?: number}>;
-  i18n?: Record<string, {text: string; say?: string}>;
 }
 
 // ---------------------------------------------------------------------------------------------- animation
@@ -267,4 +266,29 @@ export interface ExportPolicy {
   fps?: number; // default 30
   /** `words`: the spoken words in a block of large type in the lower half of a tall frame (from 53% of its height, 88 px, up to about six lines), each on the second it is said */
   captions?: 'burned' | 'sidecar' | 'both' | 'none' | 'words';
+}
+
+// ---------------------------------------------------------------------------------------------- languages
+
+/**
+ * One language of a document: `doc.<lang>.json` beside `doc.tsx`. It holds only what the language changes; `localize` makes the document
+ * in that language before anything else runs. It names the document's line ids, anchor phrases, `texts` ids and asset ids, and changes no scene,
+ * part or animation.
+ */
+export interface Overlay {
+  /** BCP-47, as `meta.lang` */
+  lang: string;
+  meta?: {title?: string; description?: string; poster?: number};
+  voice?: Partial<Voice>;
+  /** The theme's font stacks in this language (a Latin face for a CJK document, say) */
+  fonts?: {sans?: string; mono?: string};
+  captions?: ExportPolicy['captions'];
+  /** Every line of the document: its caption, the words spoken when they differ (numbers as words), and its silence after */
+  lines: Record<Id, {text: string; say?: string; hold?: Seconds}>;
+  /** By line id, each phrase an action or a sound of the document names in that line, and its phrase in this language */
+  anchors?: Record<Id, Record<string, string | {word: string; nth?: number}>>;
+  /** The words a part draws, by id, as the document's own `texts` */
+  texts?: Record<string, string>;
+  /** By asset id, another file in this language (a music bed cut to this narration) */
+  assets?: Record<Id, {src: string; license?: License}>;
 }

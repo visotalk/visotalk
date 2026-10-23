@@ -11,7 +11,7 @@ import {build as esbuild} from 'esbuild';
 import {localImports} from '@visotalk/ir/bundle';
 import {clipKey, kokoroKey} from './clip_key.ts';
 import {fontPlan, writeFontFaces} from './fonts.ts';
-import {DEFAULT_THEME, ID_PATTERN, mediaHints, parseMarkup, sayOf, solve, soundGain, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {checkOverlay, DEFAULT_THEME, ID_PATTERN, localize, mediaHints, type Overlay, parseMarkup, sayOf, solve, soundGain, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {ENV_HZ, muxAudio} from '@visotalk/exporter';
 
 const HERE = import.meta.dirname;
@@ -30,19 +30,32 @@ export interface Project {
   locs: Map<string, Loc>;
   /** the module's own code before `export default`: what the parts' React may use */
   prelude: string;
+  /** the language overlay the document was localized with (`--lang`): its file, its text and what is wrong with it */
+  overlay?: {lang: string; file: string; text: string; issues: Issue[]};
 }
 
-export function load(file: string): Project {
+/** A document, in its own language or, with `lang`, in the language of its overlay `doc.<lang>.json` beside it */
+export function load(file: string, lang?: string): Project {
   const path = resolve(file);
   const text = readFileSync(path, 'utf8');
   if (extname(path) !== '.tsx') throw new Error(`a document is a .tsx file (got ${basename(path)}); JSON documents are no longer read`);
   const markup = parseMarkup(text);
-  const doc = markup.doc;
+  let doc = markup.doc, overlay: Project['overlay'];
   // the id names the work directory, and a document may come from anywhere: never a path
   if (!ID_PATTERN.test(doc.meta.id)) throw new Error(`the document id "${doc.meta.id}" is not a valid id (${path})`);
+  if (lang) {
+    const of = path.replace(/\.tsx$/, `.${lang}.json`);
+    if (!existsSync(of)) throw new Error(`no ${basename(of)} beside ${basename(path)}: a language of a document is an overlay file there (see the IR spec, "Languages")`);
+    const ot = readFileSync(of, 'utf8');
+    const o = JSON.parse(ot) as Overlay;
+    const issues = checkOverlay(doc, o);
+    if (o.lang !== lang) issues.unshift({code: 'overlay.lang', at: '/lang', message: `${basename(of)} says it is in "${o.lang}"`});
+    overlay = {lang, file: of, text: ot, issues};
+    doc = localize(doc, o);
+  }
   const work = join(dirname(path), '.visotalk', doc.meta.id);
   mkdirSync(work, {recursive: true});
-  return {file: path, dir: dirname(path), work, doc, locs: markup.locs, prelude: markup.prelude};
+  return {file: path, dir: dirname(path), work, doc, locs: markup.locs, prelude: markup.prelude, ...(overlay && {overlay})};
 }
 
 /** The source files a document's code imports from its own project (relative paths), followed through their own imports */
@@ -98,7 +111,7 @@ export function codeIssues(p: Project): Issue[] {
 }
 
 export function check(p: Project): Issue[] {
-  return [...validate(p.doc), ...codeIssues(p)];
+  return [...(p.overlay?.issues ?? []), ...validate(p.doc), ...codeIssues(p)];
 }
 
 /**
@@ -224,7 +237,7 @@ export function prepareMarked(p: Project, models?: string): VoiceManifest {
 /** Start `prepare` in a process of its own, logging to `prepare.log`: the picture does not wait for the narration */
 export function startPrepare(p: Project, models?: string): number {
   const log = openSync(join(p.work, 'prepare.log'), 'w');
-  const child = spawn(process.execPath, [...process.execArgv, process.argv[1], 'prepare', p.file, ...(models ? ['--tts-models', models] : [])], {detached: true, stdio: ['ignore', log, log], env: process.env});
+  const child = spawn(process.execPath, [...process.execArgv, process.argv[1], 'prepare', p.file, ...(p.overlay ? ['--lang', p.overlay.lang] : []), ...(models ? ['--tts-models', models] : [])], {detached: true, stdio: ['ignore', log, log], env: process.env});
   child.unref();
   closeSync(log);
   writeFileSync(preparePid(p), String(child.pid));
@@ -465,7 +478,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   const faces = fontPlan(p.doc);
   if (faces.fonts.length) {
     if (!process.env.VISOTALK_FONTS) throw new Error(`the font "${faces.fonts[0].family}" is not installed: run visotalk doctor --fix`);
-    writeFontFaces(faces.fonts, process.env.VISOTALK_FONTS, PYTHON(), [readFileSync(p.file, 'utf8'), ...localSources(p).map((x) => x.text)].join('\n'), p.work);
+    writeFontFaces(faces.fonts, process.env.VISOTALK_FONTS, PYTHON(), [readFileSync(p.file, 'utf8'), p.overlay?.text ?? '', ...localSources(p).map((x) => x.text)].join('\n'), p.work);
     doc.theme = {id: doc.theme?.id ?? DEFAULT_THEME, tokens: {...doc.theme?.tokens, fonts: {...themeTokens(doc.theme).fonts, sans: faces.sans}}};
   }
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));

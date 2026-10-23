@@ -1,5 +1,5 @@
 import {Doc, Asset, Scene, Line, Part, Animation, Appear, Disappear, Tween, Set, Sound} from '@visotalk/jsx';
-import {useProp, useAsset, Obj} from '@visotalk/runtime';
+import {useProp, useAsset, useText, Obj} from '@visotalk/runtime';
 
 // ---- helpers ----------------------------------------------------------------
 const frac = (v: number) => v - Math.floor(v);
@@ -130,13 +130,15 @@ function Regen() {
           <path d="M31 4v8h-8" />
         </svg>
       </Obj>
-      Generate again
+      {useText('regen', 'Generate again')}
     </div>
   );
 }
 
 // ---- Scene 2: the document -----------------------------------------------------
 const CW = 21.6; // one character of the 36 px mono face
+const CJK = 36; // and one CJK character, which the mono face lacks
+const monoWidth = (s: string) => [...s].reduce((w, c) => w + (c.charCodeAt(0) >= 0x2e80 ? CJK : CW), 0);
 const CODE = {fontFamily: MONO, fontSize: 36, color: 'var(--vt-text)', whiteSpace: 'pre' as const, position: 'absolute' as const, left: 60};
 const TAG = {color: 'var(--vt-muted)'};
 
@@ -154,6 +156,12 @@ function Sheet() {
   const grow = useProp('grow', 0);
   const word = (extra: object = {}) => ({color: `color-mix(in srgb, var(--vt-grad) ${Math.round(hi * 100)}%, var(--vt-text))`, fontWeight: 700, ...extra});
   const g = ease(clamp(grow));
+  const before = useText('sheet-before', 'Revenue ');
+  const doubled = useText('sheet-word', 'doubled');
+  const after = useText('sheet-after', ' in March.');
+  // where the dashed line leaves the word in the sentence and where it arrives at the word in the anchor below, in this language's widths
+  const x1 = 60 + monoWidth(`<Line id="l1">${before}`) + monoWidth(doubled) / 2;
+  const x2 = 60 + 35 * CW + monoWidth(doubled) / 2;
   return (
     <div style={{position: 'relative', width: 1500, height: 640, borderRadius: 26, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)'}}>
       <div style={{position: 'absolute', left: 0, top: 0, width: 1500, height: 72, boxSizing: 'border-box', borderRadius: '24px 24px 0 0', background: 'var(--vt-panel2)', borderBottom: '2px solid var(--vt-border)', display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 28}}>
@@ -163,13 +171,13 @@ function Sheet() {
         <span style={{marginLeft: 20, fontFamily: MONO, fontSize: 30, color: 'var(--vt-muted)'}}>doc.tsx</span>
       </div>
       <Obj id="r-line" style={{position: 'absolute', left: 0, top: 0}}>
-        <RowLabel y={104} color="var(--vt-op)">SENTENCE</RowLabel>
+        <RowLabel y={104} color="var(--vt-op)">{useText('row-sentence', 'SENTENCE')}</RowLabel>
         <div style={{...CODE, top: 150}}>
-          <span style={TAG}>{'<Line id="l1">'}</span>Revenue <span style={word()}>doubled</span> in March.<span style={TAG}>{'</Line>'}</span>
+          <span style={TAG}>{'<Line id="l1">'}</span>{before}<span style={word()}>{doubled}</span>{after}<span style={TAG}>{'</Line>'}</span>
         </div>
       </Obj>
       <Obj id="r-part" style={{position: 'absolute', left: 0, top: 0}}>
-        <RowLabel y={264} color="var(--vt-warn)">PICTURE</RowLabel>
+        <RowLabel y={264} color="var(--vt-warn)">{useText('row-picture', 'PICTURE')}</RowLabel>
         <div style={{...CODE, top: 310}}>
           <span style={TAG}>{'<Part id="chart">'}</span>…<span style={TAG}>{'</Part>'}</span>
         </div>
@@ -178,23 +186,23 @@ function Sheet() {
             <line x1={40} y1={400} x2={310} y2={400} stroke="var(--vt-faint)" strokeWidth={3} />
             <rect x={70} y={400 - 130} width={80} height={130} rx={8} fill="var(--vt-data)" opacity={0.55} />
             <rect x={200} y={400 - lerp(130, 260, g)} width={80} height={lerp(130, 260, g)} rx={8} fill="var(--vt-data)" />
-            <text x={110} y={444} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={28} fill="var(--vt-muted)">Feb</text>
-            <text x={240} y={444} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={28} fill="var(--vt-muted)">Mar</text>
+            <text x={110} y={444} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={28} fill="var(--vt-muted)">{useText('feb', 'Feb')}</text>
+            <text x={240} y={444} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={28} fill="var(--vt-muted)">{useText('mar', 'Mar')}</text>
           </svg>
         </div>
       </Obj>
       <Obj id="r-anim" style={{position: 'absolute', left: 0, top: 0}}>
-        <RowLabel y={424} color={CUE}>THE WORD IT ARRIVES ON</RowLabel>
+        <RowLabel y={424} color={CUE}>{useText('row-word', 'THE WORD IT ARRIVES ON')}</RowLabel>
         <div style={{...CODE, top: 470}}>
           <span style={TAG}>{'<Appear on="chart" line="l1" word="'}</span>
-          <span style={word()}>doubled</span>
+          <span style={word()}>{doubled}</span>
           <span style={TAG}>{'"/>'}</span>
         </div>
       </Obj>
       <Obj as="div" id="link" style={{position: 'absolute', left: 0, top: 0}}>
         <svg width={1500} height={640} style={{position: 'absolute', left: 0, top: 0}}>
-          <path d={`M${60 + 35 * CW + 75} 466 V262 Q${60 + 35 * CW + 75} 232 ${60 + 35 * CW + 40} 232 H${60 + 22 * CW + 90} Q${60 + 22 * CW + 75} 232 ${60 + 22 * CW + 75} 216`} fill="none" stroke="var(--vt-grad)" strokeWidth={4} strokeDasharray="10 10" strokeLinecap="round" />
-          <path d={`M${60 + 22 * CW + 75 - 10} 226 L${60 + 22 * CW + 75} 208 L${60 + 22 * CW + 75 + 10} 226 Z`} fill="var(--vt-grad)" />
+          <path d={`M${x2} 466 V262 Q${x2} 232 ${x2 - 35} 232 H${x1 + 15} Q${x1} 232 ${x1} 216`} fill="none" stroke="var(--vt-grad)" strokeWidth={4} strokeDasharray="10 10" strokeLinecap="round" />
+          <path d={`M${x1 - 10} 226 L${x1} 208 L${x1 + 10} 226 Z`} fill="var(--vt-grad)" />
         </svg>
       </Obj>
     </div>
@@ -209,7 +217,7 @@ const WORDS = [
   {w: 'Revenue', a: [0, 0.65], b: [0, 0.65]},
   {w: 'quite', a: [0.65, 0.65], b: [0.65, 1.05]},
   {w: 'suddenly', a: [0.65, 0.65], b: [1.05, 1.85]},
-  {w: 'doubled', a: [0.65, 1.25], b: [1.85, 2.5]},
+  {w: 'doubled', a: [0.65, 1.25], b: [1.85, 2.5]}, // the word the bar rises on
   {w: 'in', a: [1.25, 1.5], b: [2.5, 2.75]},
   {w: 'March', a: [1.5, 2.1], b: [2.75, 3.35]},
 ];
@@ -225,6 +233,7 @@ function Clock() {
   const rise = ease(clamp((play - pinT) / 0.5));
   const marH = lerp(150, 300, rise);
   const flash = clamp(1 - Math.abs(play - pinT) / 0.25) * (play > 0 ? 1 : 0);
+  const words = [useText('w0', 'Revenue'), useText('w1', 'quite'), useText('w2', 'suddenly'), useText('w3', 'doubled'), useText('w4', 'in'), useText('w5', 'March')];
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 1080, fontFamily: SANS}}>
       <Obj id="chips" style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 400}}>
@@ -233,11 +242,11 @@ function Clock() {
           const e = lerp(k.a[1], k.b[1], edit);
           const w = Math.max(0, (e - s) * PPS - 8);
           if (w < 6) return null;
-          const pinned = k.w === 'doubled';
+          const pinned = i === 3;
           const added = k.a[0] === k.a[1];
           return (
             <div key={i} style={{position: 'absolute', left: X0 + s * PPS, top: 150, width: w, height: 92, boxSizing: 'border-box', borderRadius: 18, border: `3px ${added ? 'dashed' : 'solid'} ${pinned ? 'var(--vt-grad)' : added ? 'var(--vt-good)' : 'var(--vt-border)'}`, background: pinned ? 'color-mix(in srgb, var(--vt-grad) 16%, var(--vt-panel))' : 'var(--vt-panel)', color: 'var(--vt-text)', fontSize: 44, fontWeight: pinned ? 700 : 400, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', whiteSpace: 'nowrap'}}>
-              {k.w}
+              {words[i]}
             </div>
           );
         })}
@@ -251,7 +260,7 @@ function Clock() {
           {Array.from({length: 5}, (_, i) => (
             <text key={i} x={X0 + i * PPS} y={352} textAnchor="middle" fontFamily="var(--vt-mono)" fontSize={28} fill="var(--vt-muted)">{i}s</text>
           ))}
-          <text x={X0 + 4.4 * PPS} y={400} textAnchor="end" fontFamily="var(--vt-sans)" fontSize={28} fill="var(--vt-muted)">measured from the voice</text>
+          <text x={X0 + 4.4 * PPS} y={400} textAnchor="end" fontFamily="var(--vt-sans)" fontSize={28} fill="var(--vt-muted)">{useText('measured', 'measured from the voice')}</text>
         </Obj>
         <Obj as="g" id="link">
           <path d={`M${pinX} 296 V405 H995 V450`} fill="none" stroke="var(--vt-grad)" strokeWidth={4} strokeDasharray="10 10" strokeLinecap="round" opacity={0.9} />
@@ -262,29 +271,24 @@ function Clock() {
           <line x1={500} y1={BAR_BASE} x2={1120} y2={BAR_BASE} stroke="var(--vt-faint)" strokeWidth={3} />
           <rect x={560} y={BAR_BASE - 150} width={190} height={150} rx={10} fill="var(--vt-data)" opacity={0.55} />
           <rect x={900} y={BAR_BASE - marH} width={190} height={marH} rx={10} fill="var(--vt-data)" />
-          <text x={655} y={BAR_BASE + 52} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={36} fill="var(--vt-muted)">Feb</text>
-          <text x={995} y={BAR_BASE + 52} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={36} fill="var(--vt-muted)">Mar</text>
+          <text x={655} y={BAR_BASE + 52} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={36} fill="var(--vt-muted)">{useText('feb', 'Feb')}</text>
+          <text x={995} y={BAR_BASE + 52} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={36} fill="var(--vt-muted)">{useText('mar', 'Mar')}</text>
         </Obj>
       </svg>
       <Obj id="zero-a" style={{position: 'absolute', left: 1300, top: 440, width: 500}}>
         <div style={{fontSize: 150, fontWeight: 700, lineHeight: 1, color: 'var(--vt-good)'}}>0</div>
-        <div style={{fontSize: 40, color: 'var(--vt-muted)', marginTop: 6}}>timestamps to rewrite</div>
+        <div style={{fontSize: 40, color: 'var(--vt-muted)', marginTop: 6}}>{useText('zero-a', 'timestamps to rewrite')}</div>
       </Obj>
       <Obj id="zero-b" style={{position: 'absolute', left: 1300, top: 640, width: 500}}>
         <div style={{fontSize: 150, fontWeight: 700, lineHeight: 1, color: 'var(--vt-good)'}}>0</div>
-        <div style={{fontSize: 40, color: 'var(--vt-muted)', marginTop: 6}}>videos to generate again</div>
+        <div style={{fontSize: 40, color: 'var(--vt-muted)', marginTop: 6}}>{useText('zero-b', 'videos to generate again')}</div>
       </Obj>
     </div>
   );
 }
 
 // ---- Scene 4: one document, three passes ------------------------------------------
-const ROWS4 = [
-  {t: 'Light from the Sun looks white.', tc: '0:00'},
-  {t: 'Air scatters blue light the most.', tc: '0:04'},
-  {t: 'So blue reaches your eyes from every side.', tc: '0:08'},
-  {t: 'At sunset the light travels farther.', tc: '0:13'},
-];
+const ROWS4 = [{tc: '0:00'}, {tc: '0:04'}, {tc: '0:08'}, {tc: '0:13'}];
 
 function Thumb({i}: {i: number}) {
   return (
@@ -380,11 +384,12 @@ function Role({id, y, color, name, owns, icon}: {id: string; y: number; color: s
 function Passes() {
   const type = useProp('type', 0);
   const render = clamp(useProp('render', 0));
+  const script = [useText('script-0', 'Light from the Sun looks white.'), useText('script-1', 'Air scatters blue light the most.'), useText('script-2', 'So blue reaches your eyes from every side.'), useText('script-3', 'At sunset the light travels farther.')];
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 1080, fontFamily: SANS}}>
-      <Role id="role-agent" y={140} color={AGENT} name="Agent" owns="the writer" icon={<Spark size={64} color="var(--vt-op)" />} />
-      <Role id="role-skill" y={370} color={SKILL} name="Skill" owns="the editor with taste" icon={<Checks size={64} color="var(--vt-warn)" />} />
-      <Role id="role-engine" y={600} color={ENGINE} name="Engine" owns="the crew" icon={<Gear size={64} color="var(--vt-data)" />} />
+      <Role id="role-agent" y={140} color={AGENT} name={useText('agent', 'Agent')} owns={useText('agent-is', 'the writer')} icon={<Spark size={64} color="var(--vt-op)" />} />
+      <Role id="role-skill" y={370} color={SKILL} name={useText('skill', 'Skill')} owns={useText('skill-is', 'the editor with taste')} icon={<Checks size={64} color="var(--vt-warn)" />} />
+      <Role id="role-engine" y={600} color={ENGINE} name={useText('engine', 'Engine')} owns={useText('engine-is', 'the crew')} icon={<Gear size={64} color="var(--vt-data)" />} />
       <Obj id="nodeck" style={{position: 'absolute', left: 190, top: 506, display: 'flex', alignItems: 'center', gap: 14, fontFamily: SANS, fontSize: 30, color: 'var(--vt-muted)'}}>
         <svg width={64} height={44} viewBox="0 0 64 44">
           {[0, 1, 2].map((k) => (
@@ -392,13 +397,13 @@ function Passes() {
           ))}
           <path d="M4 40 L60 4" stroke="var(--vt-bad)" strokeWidth={5} strokeLinecap="round" />
         </svg>
-        slide deck
+        {useText('slide-deck', 'slide deck')}
       </Obj>
       <div style={{position: 'absolute', left: 640, top: 110, width: 960, height: 690, borderRadius: 26, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)', overflow: 'hidden'}}>
         {ROWS4.map((r, i) => (
           <div key={i} style={{position: 'absolute', left: 0, top: 16 + i * 162, width: 960, height: 150, display: 'flex', alignItems: 'center'}}>
             <Obj id={`tc-${i}`} style={{width: 150, textAlign: 'center', fontFamily: MONO, fontSize: 34, color: 'var(--vt-data)'}}>{r.tc}</Obj>
-            <div style={{width: 520, fontSize: 38, lineHeight: 1.2, color: 'var(--vt-text)', paddingRight: 20, minHeight: 90}}>{typed(r.t, clamp(type - i) * r.t.length)}</div>
+            <div style={{width: 520, fontSize: 38, lineHeight: 1.2, color: 'var(--vt-text)', paddingRight: 20, minHeight: 90}}>{typed(script[i], clamp(type - i) * script[i].length)}</div>
             <Obj id={`thumb-${i}`} style={{position: 'relative', width: 200, height: 112}}>
               <Thumb i={i} />
               <Obj id={`frame-${i}`} style={{position: 'absolute', left: 0, top: 0, width: 200, height: 112, boxSizing: 'border-box', border: '4px solid var(--vt-data)', borderRadius: 14}} />
@@ -468,7 +473,7 @@ function Sheet5() {
         {bad && (
           <g>
             <rect x={20} y={134} width={i === 4 ? 188 : 206} height={44} rx={22} fill="var(--vt-bad)" />
-            <text x={i === 4 ? 114 : 123} y={165} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={28} fontWeight={700} fill="#fff">{i === 4 ? 'text collides' : 'off the edge'}</text>
+            <text x={i === 4 ? 114 : 123} y={165} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={28} fontWeight={700} fill="#fff">{i === 4 ? useText('collides', 'text collides') : useText('off-edge', 'off the edge')}</text>
           </g>
         )}
       </g>,
@@ -504,28 +509,35 @@ function Unchanged() {
       <svg width={52} height={52} viewBox="0 0 52 52" fill="none" stroke="var(--vt-good)" strokeWidth={7} strokeLinecap="round" strokeLinejoin="round">
         <path d="M8 27l12 12 24-26" />
       </svg>
-      Everything else: unchanged
+      {useText('unchanged', 'Everything else: unchanged')}
     </div>
   );
 }
 
 // ---- Scene 7: films made the same way -----------------------------------------------
 const WALL = [
-  {id: 'ice', asset: 'p-ice', label: 'Why ice floats', x: 105, y: 110},
-  {id: 'chip', asset: 'p-chip', label: 'From sand to a processor', x: 690, y: 110},
-  {id: 'jp', asset: 'p-jp', label: 'Japan’s population, in Japanese', x: 1275, y: 110},
-  {id: 'sonnet', asset: 'p-sonnet', label: 'A sonnet, in type alone', x: 397, y: 490},
-  {id: 'app', asset: 'p-app', label: 'A launch film for an app we made up', x: 982, y: 490},
+  {id: 'ice', asset: 'p-ice', x: 105, y: 110},
+  {id: 'chip', asset: 'p-chip', x: 690, y: 110},
+  {id: 'jp', asset: 'p-jp', x: 1275, y: 110},
+  {id: 'sonnet', asset: 'p-sonnet', x: 397, y: 490},
+  {id: 'app', asset: 'p-app', x: 982, y: 490},
 ];
 
 function Wall() {
   const glow = clamp(useProp('glow', 0));
+  const labels: Record<string, string> = {
+    ice: useText('wall-ice', 'Why ice floats'),
+    chip: useText('wall-chip', 'From sand to a processor'),
+    jp: useText('wall-jp', 'Japan’s population, in Japanese'),
+    sonnet: useText('wall-sonnet', 'A sonnet, in type alone'),
+    app: useText('wall-app', 'A launch film for an app we made up'),
+  };
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1920, height: 1080, fontFamily: SANS}}>
       {WALL.map((t) => (
         <Obj key={t.id} id={`t-${t.id}`} style={{position: 'absolute', left: t.x, top: t.y, width: 540}}>
           <img src={useAsset(t.asset)} width={540} height={304} style={{display: 'block', borderRadius: 16, boxSizing: 'border-box', border: '4px solid', borderColor: `color-mix(in srgb, var(--vt-grad) ${Math.round(glow * 100)}%, var(--vt-border))`}} />
-          <div style={{marginTop: 14, fontSize: 30, color: 'var(--vt-text)', whiteSpace: 'nowrap'}}>{t.label}</div>
+          <div style={{marginTop: 14, fontSize: 30, color: 'var(--vt-text)', whiteSpace: 'nowrap'}}>{labels[t.id]}</div>
         </Obj>
       ))}
     </div>
@@ -535,10 +547,14 @@ function Wall() {
 // ---- Scene 6: one document, three outputs ------------------------------------------
 function Pic({w, h}: {w: number; h: number}) {
   const tall = h > w;
+  const title = useText('pic-title', 'Revenue');
+  const before = useText('sheet-before', 'Revenue ');
+  const doubled = useText('sheet-word', 'doubled');
+  const after = useText('sheet-after', ' in March.');
   const bars = [0.3, 0.5, 0.68, 1];
   return (
     <div style={{position: 'relative', width: w, height: h, background: 'var(--vt-bg)', fontFamily: SANS, overflow: 'hidden'}}>
-      <div style={{position: 'absolute', left: tall ? 24 : 48, top: tall ? 28 : 36, fontSize: tall ? 40 : 56, fontWeight: 700, color: 'var(--vt-text)'}}>Revenue</div>
+      <div style={{position: 'absolute', left: tall ? 24 : 48, top: tall ? 28 : 36, fontSize: tall ? 40 : 56, fontWeight: 700, color: 'var(--vt-text)'}}>{title}</div>
       <div style={{position: 'absolute', left: tall ? 24 : 48, right: tall ? 24 : 48, bottom: tall ? h * 0.46 : 40, top: tall ? 100 : 130, display: 'flex', alignItems: 'flex-end', gap: tall ? 14 : 30}}>
         {bars.map((b, i) => (
           <div key={i} style={{flex: 1, height: `${b * 100}%`, borderRadius: 8, background: i === 3 ? 'var(--vt-grad)' : 'var(--vt-data)', opacity: i === 3 ? 1 : 0.6}} />
@@ -546,7 +562,7 @@ function Pic({w, h}: {w: number; h: number}) {
       </div>
       {tall && (
         <div style={{position: 'absolute', left: 24, right: 24, bottom: 36, fontSize: 40, lineHeight: 1.15, fontWeight: 700, color: 'var(--vt-text)'}}>
-          Revenue <span style={{color: 'var(--vt-grad)'}}>doubled</span> in March.
+          {before}<span style={{color: 'var(--vt-grad)'}}>{doubled}</span>{after}
         </div>
       )}
     </div>
@@ -592,7 +608,7 @@ function Outputs() {
       <Obj id="file" style={{position: 'absolute', left: 1500, top: 300, width: 330, height: 220, borderRadius: 22, border: '3px solid var(--vt-data)', background: 'var(--vt-panel)', padding: 28, boxSizing: 'border-box'}}>
         <div style={{fontFamily: MONO, fontSize: 44, fontWeight: 700, color: 'var(--vt-data)'}}>final.mp4</div>
         <div style={{fontFamily: MONO, fontSize: 30, color: 'var(--vt-muted)', marginTop: 12}}>1920 × 1080</div>
-        <div style={{fontFamily: MONO, fontSize: 30, color: 'var(--vt-text)', marginTop: 28}}>frame {String(n).padStart(5, '0')}</div>
+        <div style={{fontFamily: MONO, fontSize: 30, color: 'var(--vt-text)', marginTop: 28}}>{useText('frame-n', 'frame {n}').replace('{n}', String(n).padStart(5, '0'))}</div>
       </Obj>
     </div>
   );
@@ -600,7 +616,6 @@ function Outputs() {
 
 // ---- Scene 7: how to start ---------------------------------------------------------
 const INSTALL = 'npx skills add visotalk/visotalk -g';
-const ASK = 'Explain why the sky is blue.';
 
 function Terminal() {
   const chars = useProp('chars', 0);
@@ -613,11 +628,12 @@ function Terminal() {
 }
 
 function Ask() {
-  const chars = useProp('chars', 0);
+  const type = clamp(useProp('type', 0));
+  const ask = useText('ask', 'Explain why the sky is blue.');
   return (
     <div style={{width: 1200, height: 150, borderRadius: 22, background: 'var(--vt-panel)', border: '2px solid var(--vt-border)', display: 'flex', alignItems: 'center', gap: 28, padding: '0 44px', boxSizing: 'border-box', fontFamily: SANS, fontSize: 48, color: 'var(--vt-text)'}}>
       <Spark size={56} color="var(--vt-op)" />
-      {typed(ASK, chars)}
+      {typed(ask, type * ask.length)}
     </div>
   );
 }
@@ -626,7 +642,7 @@ function Pill() {
   return (
     <div style={{display: 'inline-flex', alignItems: 'center', gap: 16, height: 64, padding: '0 30px', borderRadius: 32, border: '3px solid var(--vt-good)', fontFamily: SANS, fontSize: 34, fontWeight: 700, color: 'var(--vt-good)'}}>
       <span style={{width: 14, height: 14, borderRadius: 7, background: 'var(--vt-good)'}} />
-      Open source · MIT
+      {useText('pill', 'Open source · MIT')}
     </div>
   );
 }
@@ -638,10 +654,10 @@ function Ending() {
         <Lockup width={800} />
       </Obj>
       <Obj id="dont" style={{position: 'absolute', left: 0, top: 585, width: 1920, fontSize: 100, fontWeight: 700, color: 'var(--vt-muted)'}}>
-        Don’t <span style={{textDecoration: 'line-through', textDecorationColor: 'var(--vt-bad)', textDecorationThickness: 8}}>paint</span> the video.
+        {useText('dont-a', 'Don’t ')}<span style={{textDecoration: 'line-through', textDecorationColor: 'var(--vt-bad)', textDecorationThickness: 8}}>{useText('dont-b', 'paint')}</span>{useText('dont-c', ' the video.')}
       </Obj>
       <Obj id="writeit" style={{position: 'absolute', left: 0, top: 705, width: 1920, fontSize: 200, fontWeight: 700, lineHeight: 1, color: 'var(--vt-text)', letterSpacing: -4}}>
-        Write it.
+        {useText('writeit', 'Write it.')}
         <div style={{width: 520, height: 12, background: 'var(--vt-grad)', margin: '14px auto 0'}} />
       </Obj>
     </div>
@@ -830,7 +846,7 @@ export default (
         <Appear on="term" line="l27" word="One command" />
         <Tween on="term" chars={35} dur={2.2} easing="linear" line="l27" word="One command" offset={0.3} />
         <Appear on="ask" line="l28" word="ask" />
-        <Tween on="ask" chars={28} dur={1.8} easing="linear" line="l28" word="ask" offset={0.2} />
+        <Tween on="ask" type={1} dur={1.8} easing="linear" line="l28" word="ask" offset={0.2} />
         <Disappear on={['pill', 'term', 'ask']} line="l29" word="paint" offset={-0.5} />
         <Appear on="ending" line="l29" word="paint" />
         <Appear on="logo" line="l29" word="paint" offset={-0.4} />

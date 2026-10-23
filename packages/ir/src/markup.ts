@@ -300,7 +300,7 @@ const META_EXTRA = ['description', 'poster', 'sources', 'generator', 'created', 
 const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing', 'texts', 'exports'];
 const SCENE_ATTRS = ['id', 'title', 'duration'];
 const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
-const LINE_ATTRS = ['id', 'text', 'hold', 'i18n'];
+const LINE_ATTRS = ['id', 'text', 'hold'];
 /** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
 const SOUND_ATTRS = ['id', 'asset', 'dur', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 const ACTION_ATTRS = ['on', 'id', 'dur', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
@@ -500,7 +500,7 @@ class Compiler {
     }
     this.marks.set(`${scene}/${a.id}`, byId);
     const text = (a.text as string | undefined) ?? say;
-    return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number}), ...(a.i18n !== undefined && {i18n: a.i18n as Line['i18n']})};
+    return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number})};
   }
 
   /** Where a motion or a sound starts: one of a word of a line (`line`, with `word` or `mark`, `nth`), `after` another action (motions only), or `at` seconds into the scene, "start" or "end" */

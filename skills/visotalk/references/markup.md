@@ -45,7 +45,7 @@ Attributes of the skeleton: `id="text"` is a string read as JSX reads it (no esc
 
 What an action acts on is a **target**: a part (by its id) or an element a part registers. Register an element with `<Obj id="bar0" style={{…}}>` (a div; `as="g"` for an svg group) or by spreading `{...useTarget("bar0")}` on any element (merge your own style over the returned one, never replace it). `Obj` is imported from `@visotalk/runtime`. Ids are unique within a scene (line ids in the whole document: `l1` in two scenes is `id.duplicate`), and a part is a target by its own id, so do not reuse the part's id inside it. An action whose target nothing registers is reported by `qa` and stops `render` (`target.unregistered`).
 
-**Words a person may edit** (in the web editor): draw them with `useText('title', 'The words as written')` (`import {useText} from '@visotalk/runtime'`; the id and the words are string literals). `<Doc texts={{title: '…'}}>` then holds what the person wrote in their place and the call keeps the words you wrote until it does. Use it for the few words worth editing, not for every label.
+**Words a person may edit** (in the web editor): draw them with `useText('title', 'The words as written')` (`import {useText} from '@visotalk/runtime'`; the id and the words are string literals). `<Doc texts={{title: '…'}}>` then holds what the person wrote in their place and the call keeps the words you wrote until it does. Use it for the few words worth editing, not for every label, and for every word a language overlay must change (below).
 
 The engine drives a target's opacity (`appear`, `disappear`) and, with `<Tween>`/`<Set>` on `x`, `y` (px), `scale`, `rotate` (deg), its transform. Any other number you tween is yours to read: `const w = useProp("bar0", "w", 2)` (the value now; `2` before the first tween), then use `w` however the picture needs (`useProp("w", 2)` reads a prop of the part the hook runs in): one `angle` on one target can move everything a component draws from it.
 
@@ -83,3 +83,33 @@ Motions: `<Appear>`, `<Disappear>` (`dur` default 0.45 and 0.3 s), `<Tween>` (nu
 - `still --at` on a line can land in trailing silence, where no sentence is spoken: pass `--time` for an exact second.
 - Large lowercase letters in the sans font can read as capitals (a short lowercase name): use the mono font for such a name.
 - Words you draw inside a part are not narration: they are not anchors, not captions and not translated. Keep them short (a label, a figure).
+
+## Languages
+
+One film in several languages is one document and an overlay per language: `doc.en.json` beside `doc.tsx` (the document's own language is its `lang`).
+The overlay holds only what the language changes; scenes, parts and animation stay the document's. Example: `examples/sky-blue/doc.en.json`.
+
+```json
+{
+  "lang": "en",
+  "meta": {"title": "Why is the sky blue?"},
+  "voice": {"voice": "af_heart"},
+  "lines": {
+    "l1": {"text": "In the daytime the sky is blue, yet sunlight looks white."},
+    "l3": {"text": "…green, cyan, blue and violet.", "say": "…green, sigh-an, blue and violet.", "hold": 1.5}
+  },
+  "anchors": {"l1": {"<phrase in the source line>": "sky is blue"}, "l9": {"<phrase>": {"word": "violet", "nth": 2}}},
+  "texts": {"title": "Why is the\nsky blue?", "band-red": "red"}
+}
+```
+
+- **Every line** of the document has its `text` (the caption), and `say` where the spoken words differ. Write the language as a native speaker would say it, not
+  a translation of the source's sentences: its own idiom, its own terms, numbers spoken as its speakers say them.
+- **Every anchor** the document uses (an action's or a sound's `word`) has its phrase in that line of this language, under `anchors` by line id. The action
+  then follows that word in every language: anchor on words and scene edges, not on seconds inside a narrated scene.
+- **Words on screen** are drawn with `useText(id, base)` in the document and given in `texts`. A part whose layout depends on them reads what it is given
+  (a longer name, a smaller size: `name.length > 1 ? 46 : 60`), never the language.
+- Optional: `meta` (`title`, `description`, `poster`), `voice` (a voice of this language: Kokoro's `af_heart` for English, a provider's for the others), `fonts`
+  (`sans`, `mono`), `captions` (`sidecar` for a platform that shows its own subtitles), `assets` (another `src` for an asset id).
+- Work on it with `--lang en` on any command: `validate` reports a line, an anchor or an id the overlay lacks or the document does not have, and an anchor
+  phrase that is not in its line. The language's narration is `.visotalk/<id>-en/`. `export` writes the document's own language only.

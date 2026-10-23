@@ -10,3 +10,4 @@ export * from './markup-edit.ts';
 export * from './captions.ts';
 export * from './caption-blocks.ts';
 export * from './media.ts';
+export * from './overlay.ts';

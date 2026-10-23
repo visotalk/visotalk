@@ -10,7 +10,10 @@ import {useRuntime, useTime} from './react';
 import {mediaReady} from './media';
 import {useStage} from './stage';
 
-const DRIFT = 0.12;
+/** How far a playing video may be from the clock before it is moved there, and the clock waits for the frame; nearer than this it is pulled back by its rate */
+const DRIFT = 0.6;
+/** The most the rate is changed by to pull a video back to the clock: a quarter faster or slower */
+const NUDGE = 0.25;
 
 export const Video: React.FC<{asset: string; start?: number; in?: number; rate?: number; fit?: 'cover' | 'contain' | 'fill'; style?: React.CSSProperties}> = ({
   asset, start = 0, in: from = 0, rate = 1, fit = 'cover', style,
@@ -25,6 +28,8 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
   const playing = useSyncExternalStore(rt.clock.subscribe, rt.clock.isPlaying);
   const source = from + Math.max(0, t) * rate;
   const frame = Math.min(frames - 1, Math.max(0, Math.floor(source * fps + 1e-6)));
+  // the middle of the last frame: a scene that outlasts its clip holds there, and nothing asks the element for a time it does not have
+  const last = (frames - 0.5) / fps;
   const url = assetUrl(asset);
   // the scheduler's element for the clip, else (the export, or the clip is on screen twice) one of this component's own
   const video = useMemo(() => {
@@ -59,9 +64,17 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
       v.currentTime = at;
       rt.clock.hold(mediaReady(v, 2));
     };
-    if (t >= 0 && playing && !rt.clock.isBuffering()) {
+    if (t >= 0 && playing && !rt.clock.isBuffering() && source >= last) {
+      if (!v.paused) v.pause();
       v.playbackRate = rate;
-      if (Math.abs(v.currentTime - source) > DRIFT) seekTo(source);
+      if (Math.abs(v.currentTime - last) > 0.5 / fps) v.currentTime = last;
+    } else if (t >= 0 && playing && !rt.clock.isBuffering()) {
+      // a video that has only just started (or a decoder a little behind) is caught up by its rate, so the narration never stops for it
+      const behind = source - v.currentTime;
+      if (Math.abs(behind) > DRIFT) {
+        seekTo(source);
+        v.playbackRate = rate;
+      } else v.playbackRate = rate * (1 + Math.max(-NUDGE, Math.min(NUDGE, behind)));
       if (v.paused && !rt.clock.isBuffering()) void v.play().catch(() => {});
     } else {
       if (!v.paused) v.pause();
