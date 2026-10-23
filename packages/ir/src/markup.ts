@@ -302,8 +302,8 @@ const SCENE_ATTRS = ['id', 'title', 'duration'];
 const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
 const LINE_ATTRS = ['id', 'text', 'hold'];
 /** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
-const SOUND_ATTRS = ['id', 'asset', 'dur', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
-const ACTION_ATTRS = ['on', 'id', 'dur', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
+const SOUND_ATTRS = ['id', 'asset', 'dur', 'until', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
+const ACTION_ATTRS = ['on', 'id', 'dur', 'until', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 
 type Obj = {[k: string]: unknown};
 
@@ -520,6 +520,20 @@ class Compiler {
     return at;
   }
 
+  /** Where an action or a sound ends: "start" or "end" of the scene, seconds into it, or an anchor object: {line, word?, nth?, edge?, offset?}, {scene, offset?} or {at} */
+  until(el: El, v: unknown): Anchor | undefined {
+    if (v === undefined) return undefined;
+    if (v === 'start' || v === 'end') return {scene: v};
+    if (typeof v === 'number') return {at: v};
+    const o = v as Record<string, unknown>;
+    const keys = (allowed: string[]) => o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).every((k) => allowed.includes(k));
+    const offset = o?.offset === undefined || typeof o.offset === 'number';
+    if (keys(['line', 'word', 'nth', 'edge', 'offset']) && typeof o.line === 'string' && (o.word === undefined || typeof o.word === 'string') && (o.nth === undefined || typeof o.nth === 'number') && (o.edge === undefined || o.edge === 'start' || o.edge === 'end') && offset) return o as Anchor;
+    if (keys(['scene', 'offset']) && (o.scene === 'start' || o.scene === 'end') && offset) return o as Anchor;
+    if (keys(['at']) && typeof o.at === 'number') return o as Anchor;
+    this.fail('until is "end", "start", seconds into the scene, or {{line: "id", word: "…", nth?, edge?, offset?}} or {{scene: "end", offset: 1.5}}', el.loc);
+  }
+
   sound(el: El): Sound {
     const a: Obj = this.attrs(el, SOUND_ATTRS);
     this.elements(el);
@@ -527,9 +541,10 @@ class Compiler {
     if (typeof a.asset !== 'string') this.fail('<Sound> needs asset="id": an <Asset kind="audio"> of the document', el.loc);
     if (a.loop !== undefined && typeof a.loop !== 'boolean') this.fail('loop is true or false: <Sound loop …/>', el.loc);
     const at = this.anchor(el, a, false);
+    const until = this.until(el, a.until);
     return {
       ...(a.id !== undefined && {id: a.id as string}), asset: a.asset, at: at as Anchor,
-      ...(a.dur !== undefined && {dur: a.dur as number}), ...(a.volume !== undefined && {volume: a.volume as number}), ...(a.loop !== undefined && {loop: a.loop}),
+      ...(a.dur !== undefined && {dur: a.dur as number}), ...(until && {until}), ...(a.volume !== undefined && {volume: a.volume as number}), ...(a.loop !== undefined && {loop: a.loop}),
       ...(a.fadeIn !== undefined && {fadeIn: a.fadeIn as number}), ...(a.fadeOut !== undefined && {fadeOut: a.fadeOut as number}), ...(a.duck !== undefined && {duck: a.duck as number}),
     };
   }
@@ -551,9 +566,10 @@ class Compiler {
     this.numbers(el, a, ['dur', 'stagger', 'offset', 'nth', 'repeat', ...(typeof a.at === 'string' ? [] : ['at'])]);
     if (a.on === undefined || !(typeof a.on === 'string' || (Array.isArray(a.on) && a.on.every((x) => typeof x === 'string')))) this.fail(`<${el.tag}> needs on="id" (a part, or an element a part registers), or on={["id", "id"]}`, el.loc);
     const at = this.anchor(el, a, true);
+    const until = this.until(el, a.until);
     return {
       ...(a.id !== undefined && {id: a.id as string}), motion, on: a.on as string | string[], at,
-      ...(a.dur !== undefined && {dur: a.dur as number}), ...(a.stagger !== undefined && {stagger: a.stagger as number}), ...(a.easing !== undefined && {easing: a.easing as Action['easing']}),
+      ...(a.dur !== undefined && {dur: a.dur as number}), ...(until && {until}), ...(a.stagger !== undefined && {stagger: a.stagger as number}), ...(a.easing !== undefined && {easing: a.easing as Action['easing']}),
       ...(a.repeat !== undefined && {repeat: a.repeat as number}), ...(a.yoyo !== undefined && {yoyo: a.yoyo as boolean}),
       ...(takesProps && Object.keys(props).length && {props}),
     };

@@ -98,7 +98,9 @@ export function solve(doc: VisoDoc, voice: VoiceManifest, fps: number = doc.expo
       lines.push({id: l.id, text: l.text, say: sayOf(doc, l), words: l.words ?? v.words, from: sn(t), duration: v.duration, audio: v.audio});
       t += v.duration + (l.hold ?? pace.hold);
     }
-    const end = lines.length ? t + pace.tail : from + (scene.duration ?? 0);
+    let end = lines.length ? t + pace.tail : from + (scene.duration ?? 0);
+    // a scene scored to a beat ends on a grid line: its last hold is longer by what it takes (a hair under a whole cell is not one more)
+    if (lines.length && pace.grid) end = from + Math.ceil((end - from) / pace.grid - 1e-6) * pace.grid;
     scenes.push({id: scene.id, from: sn(from), end: sn(end), duration: sn(end) - sn(from), lines});
     cursor = end;
   }
@@ -247,7 +249,7 @@ export function resolveStarts(doc: VisoDoc, scenes: TScene[], fps: number): Map<
   };
   const endOf = (e: Entry): number => {
     const last = snap(fps, startOf(e) + ([e.a.on].flat().length - 1) * (e.a.stagger ?? 0));
-    return e.a.motion === 'set' ? last : last + playTime(e.a);
+    return e.a.motion === 'set' ? last : e.a.until ? Math.max(last, snap(fps, anchorStart(e.sc, e.a.until))) : last + playTime(e.a);
   };
   entries.forEach(startOf);
   return starts;
@@ -256,8 +258,11 @@ export function resolveStarts(doc: VisoDoc, scenes: TScene[], fps: number): Map<
 function compileScene(scene: VisoDoc['scenes'][number], sc: TScene, fps: number, starts: Map<Action, number>, actions: TAction[]) {
   for (const a of scene.animations) {
     const start = starts.get(a)!;
+    // `until`: each target runs from its own start to the one end, so a staggered target is the shorter by its delay
+    const until = a.until && snap(fps, anchorStart(sc, a.until));
     [a.on].flat().forEach((on, k) => {
-      actions.push({scene: sc.id, on, motion: a.motion, start: snap(fps, start + k * (a.stagger ?? 0)), dur: a.dur ?? MOTION_DUR[a.motion], easing: a.easing, ...(a.repeat !== undefined && {repeat: a.repeat}), ...(a.yoyo !== undefined && {yoyo: a.yoyo}), props: a.props ?? {}});
+      const at = snap(fps, start + k * (a.stagger ?? 0));
+      actions.push({scene: sc.id, on, motion: a.motion, start: at, dur: until !== undefined ? Math.max(0, until - at) : a.dur ?? MOTION_DUR[a.motion], easing: a.easing, ...(a.repeat !== undefined && {repeat: a.repeat}), ...(a.yoyo !== undefined && {yoyo: a.yoyo}), props: a.props ?? {}});
     });
   }
 }
@@ -265,7 +270,7 @@ function compileScene(scene: VisoDoc['scenes'][number], sc: TScene, fps: number,
 function compileSound(s: Sound, sc: TScene, fps: number, filmEnd: number, fileLength?: number): TSound {
   const start = snap(fps, anchorStart(sc, s.at));
   // the end of a file is where it ends, not a frame: snapping it would cut the tail of the sound or hold a silence
-  const end = s.dur !== undefined ? snap(fps, start + s.dur) : s.loop ? filmEnd : fileLength !== undefined ? start + fileLength : undefined;
+  const end = s.until ? Math.max(start, snap(fps, anchorStart(sc, s.until))) : s.dur !== undefined ? snap(fps, start + s.dur) : s.loop ? filmEnd : fileLength !== undefined ? start + fileLength : undefined;
   return {scene: sc.id, asset: s.asset, start, ...(end !== undefined && {end}), volume: s.volume ?? 0, loop: s.loop ?? false, fadeIn: s.fadeIn ?? 0, fadeOut: s.fadeOut ?? 0, duck: s.duck ?? 0};
 }
 

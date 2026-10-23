@@ -90,6 +90,9 @@ export interface Pacing {
   hold?: Seconds;
   /** extra silence after a scene's last line (0.8) */
   tail?: Seconds;
+  /** A narrated scene's length is rounded up to a whole number of these by lengthening its last hold (none): a film scored to a beat sets one bar, so
+   * every scene in every language starts on a bar line */
+  grid?: Seconds;
 }
 
 export interface Voice {
@@ -223,6 +226,9 @@ export interface Action {
   on: Id | Id[];
   at: ActionAnchor;
   dur?: Seconds;
+  /** Where it ends, instead of `dur`: the action runs from its start to this anchor (a word, a scene time or a scene edge of its scene), however long the
+   * narration makes that in each language. Not with `repeat` */
+  until?: Anchor;
   /** Delay between multiple targets */
   stagger?: Seconds;
   easing?: Easing;
@@ -248,6 +254,8 @@ export interface Sound {
   at: Anchor;
   /** Seconds it sounds. Without it: the file's length, or with `loop` the rest of the film. `fadeOut` needs one or the other. */
   dur?: Seconds;
+  /** Where it stops, instead of `dur`: a word, a scene time or a scene edge of its scene (with `offset`, past it) */
+  until?: Anchor;
   /** dB against the file (0); negative is quieter */
   volume?: number;
   /** Play again from the start when the file ends, for as long as it sounds */

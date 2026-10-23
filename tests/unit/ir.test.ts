@@ -260,3 +260,33 @@ test('exports: a variant names a canvas the document has and a built-in theme, a
   assert.notEqual(light.colors.bg, dark.colors.bg);
   assert.deepEqual(light.fonts, dark.fonts);
 });
+
+test('solver: `until` ends an action or a sound on an anchor of its scene, so its length follows the narration', () => {
+  const d = doc(`<Asset id="bed" kind="audio" src="bed.wav" license={{id: "user-owned", obligations: []}}/>
+  <Scene id="a"><Line id="l1">One two three.</Line><Line id="l2">Four five six.</Line><Part id="p"/>
+    <Animation><Tween on="p" x={10} at="start" until="end" easing="linear"/><Appear on="p" at={0.5} until={{line: "l2", word: "five"}}/></Animation>
+    <Sound asset="bed" at="start" until={{scene: "end", offset: 1.5}} fadeOut={1}/></Scene>
+  <Scene id="b"><Line id="l3">Next.</Line></Scene>`);
+  assert.deepEqual(validate(d), []);
+  const c = solve(d, voice(d));
+  const a = c.scenes[0];
+  const [tween, appear] = c.actions.filter((x) => x.scene === 'a');
+  assert.equal(tween.start, a.from);
+  assert.ok(Math.abs(tween.start + tween.dur - a.end) < 1e-9, 'the tween lasts the whole scene');
+  assert.ok(Math.abs(appear.start + appear.dur - wordTime(a.lines[1], 'five', 'start')) < 1 / 30, 'the appear ends on the word');
+  assert.ok(Math.abs(c.sounds[0].end! - (a.end + 1.5)) < 1e-9, 'the sound runs 1.5 s past the scene');
+  const bad = doc(`<Scene id="a"><Line id="l1">One two.</Line><Part id="p"/><Animation><Tween on="p" x={1} at="start" dur={1} until="end"/><Set on="p" x={2} at="start" until="end"/>
+    <Tween on="p" x={1} at="start" until={{line: "l9"}}/><Appear on="p" at="start"/></Animation></Scene>`);
+  assert.deepEqual(codes(bad).sort(), ['anchor.line', 'motion.until', 'motion.until']);
+  assert.throws(() => doc(`<Scene id="a"><Line id="l1">x</Line><Part id="p"/><Animation><Appear on="p" at="start" until={{after: "x"}}/></Animation></Scene>`), /until is/);
+});
+
+test('solver: `pacing.grid` rounds every narrated scene up to whole cells, so a scored film starts each scene on a bar', () => {
+  const bar = 10 / 3;
+  const d = doc(`<Scene id="a"><Line id="l1" hold={0}>One.</Line></Scene><Scene id="b"><Line id="l2">Two.</Line><Line id="l3">Three.</Line></Scene>`, `pacing={{grid: ${bar}}}`);
+  const c = solve(d, voice(d));
+  // a: 0.4 + 2 + 0 + 0.8 = 3.2 s → one bar; b: 0.4 + (2 + 0.4) × 2 + 0.8 = 6 s → two bars
+  assert.deepEqual(c.scenes.map((s) => Math.round((s.end - s.from) / bar * 1000) / 1000), [1, 2]);
+  assert.ok(Math.abs(c.scenes[1].from - bar) < 1 / 60, 'the second scene starts on the bar line');
+  assert.ok(Math.abs(c.scenes[1].lines[1].from - (c.scenes[1].from + 0.4 + 2.4)) < 1 / 60, 'the lines are placed as without a grid; only the scene end moves');
+});

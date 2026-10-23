@@ -51,15 +51,20 @@ export const Animation: Tag<{children?: ReactNode}> = tag('Animation');
  * seconds (`fadeOut` needs `dur` or `loop`); `duck` is how many dB it steps back while the narration is speaking. `<Sound asset="bed" at="start" loop volume={-8} duck={4} fadeIn={1.2} fadeOut={4}/>`.
  */
 export const Sound: Tag<{
-  asset: string; id?: string; dur?: number; volume?: number; loop?: boolean; fadeIn?: number; fadeOut?: number; duck?: number;
+  asset: string; id?: string; dur?: number; until?: Until; volume?: number; loop?: boolean; fadeIn?: number; fadeOut?: number; duck?: number;
   at?: number | 'start' | 'end'; line?: string; word?: string; nth?: number; mark?: string; edge?: 'start' | 'end'; offset?: number;
 }> = tag('Sound');
+
+/** Where an action or a sound ends, instead of `dur`: "end" (or "start") of its scene, seconds into it, a word of a line, or a scene edge with an offset: `until="end"`, `until={{line: "l3", word: "the curve"}}`, `until={{scene: "end", offset: 1.5}}` */
+type Until = 'start' | 'end' | number | {line: string; word?: string; nth?: number; edge?: 'start' | 'end'; offset?: number} | {scene: 'start' | 'end'; offset?: number} | {at: number};
 
 /** A motion needs exactly one place to start: a word of a line (`line` + `word`, `nth` for the nth occurrence), `after` another action, or `at` seconds into the scene (or "start", "end") */
 interface MotionProps {
   /** a part, or an element a part registers with `useTarget` or `<Obj>`: ids are unique within a scene */
   on: string | string[];
   id?: string; dur?: number; stagger?: number; easing?: Easing;
+  /** where it ends, instead of `dur` (not on `<Set>`, nor with `repeat`) */
+  until?: Until;
   /** `<Tween>` only: plays again this many times (-1: for the whole film); `yoyo` makes every other play run backwards */
   repeat?: number; yoyo?: boolean;
   at?: number | 'start' | 'end';

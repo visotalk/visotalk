@@ -4,7 +4,7 @@
  * whether an action's target exists inside a part is checked after a run (the runtime lists what parts register).
  */
 import {THEMES} from './themes.ts';
-import {SPEC_VERSION, type Action, type ActionAnchor, type Scene, type Sound, type VisoDoc} from './spec.ts';
+import {SPEC_VERSION, type Action, type ActionAnchor, type Anchor, type Scene, type Sound, type VisoDoc} from './spec.ts';
 import {sayOf} from './normalize.ts';
 import {easingFn, occurrences, phraseContexts, playTime, tweenable} from './timeline.ts';
 
@@ -38,6 +38,7 @@ const FIXES: Record<string, string> = {
   'motion.easing': 'easing is linear, easeIn, easeOut, easeInOut, one of those with Sine, Quad, Quart, Quint or Back (easeOutQuart, easeOutBack(2.2)), or cubic-bezier(x1, y1, x2, y2)',
   'motion.repeat': '`repeat` (0 or more extra plays, or -1 to go on for the whole film) and `yoyo` belong to <Tween>',
   'motion.time': '`dur`, `stagger` and `hold` are seconds, 0 or more',
+  'motion.until': 'end it on a word, a scene time or a scene edge of its own scene, with no `dur`: until="end", until={{line: "l3", word: "the curve"}}, until={{scene: "end", offset: 1.5}}',
   'sound.asset': 'declare the file as <Asset id="…" kind="audio" src="…" license={{…}}/> and name its id: <Sound asset="id" …/>',
   'sound.params': '`volume` and `duck` are dB (numbers), `loop` is true or false, `fadeIn`, `fadeOut` and `dur` are seconds, 0 or more; `fadeOut` needs `dur` or `loop`',
 };
@@ -60,7 +61,7 @@ export function validate(doc: VisoDoc): Issue[] {
     if (!doc.canvas.presets.some((p) => p.id === v.preset)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the canvas "${v.preset}", which the document does not have (${doc.canvas.presets.map((p) => p.id).join(', ')})`, 'name a canvas of the document, or add it: canvas="16x9,9x16"');
     if (v.theme !== undefined && !Object.hasOwn(THEMES, v.theme)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the theme "${v.theme}" (built-in: ${Object.keys(THEMES).join(', ')})`);
   });
-  for (const k of ['lead', 'hold', 'tail'] as const) if (doc.pacing?.[k] !== undefined && !seconds(doc.pacing[k])) add('motion.time', `/pacing/${k}`, `${k} is seconds, 0 or more`);
+  for (const k of ['lead', 'hold', 'tail', 'grid'] as const) if (doc.pacing?.[k] !== undefined && !seconds(doc.pacing[k])) add('motion.time', `/pacing/${k}`, `${k} is seconds, 0 or more`);
 
   for (const [id, text] of Object.entries(doc.texts ?? {})) {
     if (!ID.test(id)) add('id.format', `/texts/${id}`, `text id "${id}" is lowercase letters, digits, - and _, starting with a letter`);
@@ -142,11 +143,19 @@ function checkAnchor(doc: VisoDoc, scene: Scene, a: ActionAnchor, at: string, ad
   else if (a.nth !== undefined && a.nth > n) add('anchor.nth', at, `"${a.word}" occurs ${n} time${n > 1 ? 's' : ''} in line "${line.id}", not ${a.nth}`);
 }
 
+/** Where an action or a sound ends: an anchor of its own scene, never another action; `wrong` is what else makes it wrong, if anything */
+function checkUntil(doc: VisoDoc, scene: Scene, until: Anchor, at: string, add: (c: string, at: string, m: string) => void, wrong?: string) {
+  if (wrong) add('motion.until', `${at}/until`, wrong);
+  if ('after' in (until as ActionAnchor)) add('motion.until', `${at}/until`, '`until` is a word, a scene time or a scene edge, not another action');
+  else checkAnchor(doc, scene, until, `${at}/until`, add);
+}
+
 function checkAction(doc: VisoDoc, scene: Scene, a: Action, at: string, add: (c: string, at: string, m: string) => void) {
   if (![a.on].flat().length) add('action.on', `${at}/on`, 'an action with no targets does nothing');
   for (const t of [a.on].flat()) if (!ID.test(t)) add('id.format', `${at}/on`, `target "${t}" is not a valid id`);
   checkAnchor(doc, scene, a.at, `${at}/at`, add);
   for (const k of ['dur', 'stagger'] as const) if (a[k] !== undefined && !seconds(a[k])) add('motion.time', `${at}/${k}`, `${k} is seconds, 0 or more`);
+  if (a.until !== undefined) checkUntil(doc, scene, a.until, at, add, a.dur !== undefined ? '`until` replaces `dur`: give one of them' : a.repeat !== undefined ? 'a repeated tween plays `dur` each time, so it takes `dur`, not `until`' : a.motion === 'set' ? 'a set happens at once: it has no `until`' : undefined);
   if (a.easing !== undefined && !easingFn(a.easing)) add('motion.easing', `${at}/easing`, `unknown easing "${a.easing}"`);
   if ((a.repeat !== undefined || a.yoyo !== undefined) && (a.motion !== 'tween' || (a.repeat !== undefined && !(Number.isInteger(a.repeat) && a.repeat >= -1)) || (a.yoyo !== undefined && typeof a.yoyo !== 'boolean'))) add('motion.repeat', at, a.motion === 'tween' ? '`repeat` is a whole number, -1 or more; `yoyo` is true or false' : `${a.motion} does not repeat`);
   const props = a.props ?? {};
@@ -161,10 +170,11 @@ function checkSound(doc: VisoDoc, scene: Scene, s: Sound, at: string, add: (c: s
   else if (asset.kind !== 'audio') add('sound.asset', `${at}/asset`, `asset "${s.asset}" is a ${asset.kind}, not audio`);
   if ('after' in (s.at as ActionAnchor)) add('anchor.at', `${at}/at`, 'a sound starts on a word, a scene time or a scene edge, not after an action');
   else checkAnchor(doc, scene, s.at, `${at}/at`, add);
+  if (s.until !== undefined) checkUntil(doc, scene, s.until, at, add, s.dur !== undefined || s.loop ? '`until` replaces `dur` (and `loop`): give one of them' : undefined);
   const num = (v: unknown) => v === undefined || (typeof v === 'number' && Number.isFinite(v));
   const secs = (v: unknown) => v === undefined || seconds(v);
   if (!num(s.volume) || !num(s.duck) || !secs(s.dur) || !secs(s.fadeIn) || !secs(s.fadeOut) || (s.loop !== undefined && typeof s.loop !== 'boolean')) add('sound.params', at, 'a sound takes dB for volume and duck, seconds for dur, fadeIn and fadeOut, true or false for loop');
-  else if (s.fadeOut !== undefined && s.fadeOut > 0 && s.dur === undefined && !s.loop) add('sound.params', at, '`fadeOut` needs `dur` (the sound ends then) or `loop` (it ends with the film)');
+  else if (s.fadeOut !== undefined && s.fadeOut > 0 && s.dur === undefined && s.until === undefined && !s.loop) add('sound.params', at, '`fadeOut` needs `dur` or `until` (the sound ends then) or `loop` (it ends with the film)');
   else if (s.duck !== undefined && s.duck < 0) add('sound.params', at, '`duck` is how many dB it steps back: 0 or more');
 }
 

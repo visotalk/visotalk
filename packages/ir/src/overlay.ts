@@ -17,8 +17,8 @@ function wordAnchors(doc: VisoDoc): Array<{line: string; word: string; at: strin
     if (x && typeof x.line === 'string' && typeof x.word === 'string') out.push({line: x.line, word: x.word, at});
   };
   for (const sc of doc.scenes) {
-    sc.animations.forEach((a, i) => visit(a.at, `/scenes/${sc.id}/animations/${i}/at`));
-    (sc.sounds ?? []).forEach((s, i) => visit(s.at, `/scenes/${sc.id}/sounds/${i}/at`));
+    sc.animations.forEach((a, i) => { visit(a.at, `/scenes/${sc.id}/animations/${i}/at`); visit(a.until, `/scenes/${sc.id}/animations/${i}/until`); });
+    (sc.sounds ?? []).forEach((s, i) => { visit(s.at, `/scenes/${sc.id}/sounds/${i}/at`); visit(s.until, `/scenes/${sc.id}/sounds/${i}/until`); });
   }
   return out;
 }
@@ -67,15 +67,16 @@ export function localize(doc: VisoDoc, o: Overlay): VisoDoc {
       const {say: _say, words: _words, ...rest} = l;
       return {...rest, text: t.text, ...(t.say !== undefined && {say: t.say}), ...(t.hold !== undefined && {hold: t.hold})};
     });
-    const move = (at: Anchor) => {
+    const move = (at: Anchor | undefined) => {
+      if (!at) return;
       const x = at as {line?: string; word?: string; nth?: number};
       if (typeof x.line !== 'string' || typeof x.word !== 'string') return;
       const to = o.anchors?.[x.line]?.[x.word];
       if (to === undefined) return;
       if (typeof to === 'string') { x.word = to; delete x.nth; } else { x.word = to.word; if (to.nth === undefined) delete x.nth; else x.nth = to.nth; }
     };
-    for (const a of sc.animations) move(a.at as Anchor);
-    for (const s of sc.sounds ?? []) move(s.at);
+    for (const a of sc.animations) { move(a.at as Anchor); move(a.until); }
+    for (const s of sc.sounds ?? []) { move(s.at); move(s.until); }
   }
   return d;
 }

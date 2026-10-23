@@ -46,6 +46,12 @@ export interface RenderOptions {
   log?: (s: string) => void;
 }
 
+/** 754.2 s → "12:34", 3725 s → "1:02:05" */
+const clock = (s: number) => {
+  const t = Math.max(0, Math.round(s)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = String(t % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+};
+
 export interface RenderReport {
   doc: string;
   chrome: string;
@@ -136,11 +142,21 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
     const inspections: Record<number, unknown> = {};
     let seekMs = 0, captureMs = 0;
     const t0 = performance.now();
+    // progress across every browser at once, at most every five seconds (and at the last frame): done, rate, and the time left at that rate
+    let done = 0, shown = t0;
+    const progress = () => {
+      done++;
+      const now = performance.now();
+      if (now - shown < 5000 && done < order.length) return;
+      shown = now;
+      const rate = done / ((now - t0) / 1000), left = (order.length - done) / rate;
+      log(`frames ${done}/${order.length} (${Math.floor((100 * done) / order.length)}%) · ${rate.toFixed(1)} fps · ${done < order.length ? `${clock(left)} left` : `${clock((now - t0) / 1000)} in all`}`);
+    };
     await Promise.all(chunks.map(async (chunk) => {
       const browser = await launch(chrome, [], o.scale);
       try {
         const d = await openDrivenPage(browser, url, meta.width, meta.height, fps, o.scale);
-        for (const [k, i] of chunk.entries()) {
+        for (const i of chunk) {
           const a = performance.now();
           await d.page.evaluate(`window.__visotalk.seek(${i})`);
           if (o.inspect) inspections[i] = await d.page.evaluate('window.__visotalk.inspect()');
@@ -152,7 +168,7 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
           // frames go to disk, never into memory: a 4K film is tens of gigabytes of them (beside the output, not in a /tmp that may be RAM)
           if (o.encode || o.saveFrames) await writeFile(join(frameDir, `${String(i).padStart(5, '0')}.${ext}`), img);
           o.onFrame?.(i, img);
-          if (k % 150 === 0) log(`frame ${i} (${k + 1}/${chunk.length})`);
+          progress();
         }
       } finally {
         await browser.close();
@@ -163,8 +179,12 @@ async function renderUnlocked(o: RenderOptions): Promise<RenderReport> {
     let encodeMs = 0;
     if (o.encode) {
       const e0 = performance.now();
+      log(`encoding ${to - from} frames`);
       await encode(frameDir, ext, from, to - from, join(out, 'video.mp4'), fps);
-      if (o.audio !== false && (meta.narration.length || meta.sounds.length)) await muxAudio(join(out, 'video.mp4'), join(out, 'final.mp4'), from / fps, (to - from) / fps, meta, resolve(o.dist));
+      if (o.audio !== false && (meta.narration.length || meta.sounds.length)) {
+        log('mixing the soundtrack');
+        await muxAudio(join(out, 'video.mp4'), join(out, 'final.mp4'), from / fps, (to - from) / fps, meta, resolve(o.dist));
+      }
       encodeMs = performance.now() - e0;
     }
     const n = order.length;
