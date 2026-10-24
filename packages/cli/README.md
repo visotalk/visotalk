@@ -1,8 +1,9 @@
 # visotalk
 
-Write a narrated explainer video as a document (`doc.tsx`), check it, and render it to MP4. The document holds the
-narration, the pictures it shows (parts of ordinary React) and the words each thing appears on; the engine owns time and rendering,
-and the same document renders to the same frames every time.
+Explainer videos whose timeline is the narration: write one as `doc.tsx`, check it, and render it to MP4. The document holds the
+narration, the pictures it shows (parts of ordinary React) and the words each thing appears on; the engine times every word and solves
+the timeline from them, so a rewritten line, another voice or another language keeps the picture in sync, and the same document renders
+to the same frames every time.
 
 ```sh
 npx visotalk validate doc.tsx
