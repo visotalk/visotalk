@@ -2,7 +2,6 @@
 import {strict as assert} from 'node:assert';
 import {EventEmitter} from 'node:events';
 import {test} from 'node:test';
-import type {Page} from 'puppeteer-core';
 import {loadPlayer} from '../../packages/exporter/src/chrome.ts';
 
 test('player navigation reports HTTP, failed requests and page errors, and removes listeners', async () => {
@@ -16,7 +15,7 @@ test('player navigation reports HTTP, failed requests and page errors, and remov
     },
     waitForFunction: async () => undefined,
   });
-  await assert.rejects(loadPlayer(page as unknown as Page, 'http://127.0.0.1:1234/?token=secret'), (error: Error) => {
+  await assert.rejects(loadPlayer(page as unknown as Parameters<typeof loadPlayer>[0], 'http://127.0.0.1:1234/?token=secret'), (error: Error) => {
     assert.match(error.message, /200 text\/html/);
     assert.match(error.message, /net::ERR_ABORTED/);
     assert.match(error.message, /document failed/);
@@ -33,7 +32,7 @@ test('player readiness failure is reported too, with bounded evidence', async ()
     goto: async () => { for (let n = 0; n < 100; n++) page.emit('pageerror', new Error('x'.repeat(1000))); },
     waitForFunction: async () => { throw new Error('readiness timed out'); },
   });
-  await assert.rejects(loadPlayer(page as unknown as Page, 'http://127.0.0.1:1234/'), (error: Error) => {
+  await assert.rejects(loadPlayer(page as unknown as Parameters<typeof loadPlayer>[0], 'http://127.0.0.1:1234/'), (error: Error) => {
     assert.match(error.message, /readiness timed out/);
     assert.ok(error.message.length < 3000);
     return true;

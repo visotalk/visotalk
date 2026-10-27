@@ -256,3 +256,52 @@ test('a picture whose part is on screen stops the clock until it has arrived, ho
   assert.equal(clock.isBuffering(), false, 'a picture that is not on screen yet is fetched, not waited for');
   clock.pause();
 });
+
+test('the warm-up play the first tap starts holds the clock: the film does not run ahead of a soundtrack that cannot start yet', async () => {
+  const doc = FILM();
+  const frames: ((now: number) => void)[] = [];
+  const g = globalThis as unknown as Record<string, unknown>;
+  g.requestAnimationFrame = (f: (now: number) => void) => frames.push(f);
+  g.cancelAnimationFrame = () => {};
+  // the soundtrack element as a phone gives it: nothing is fetched before play(), and play() answers once the data is there
+  class FakeAudio {
+    preload = '';
+    muted = false;
+    paused = true;
+    seeking = false;
+    readyState = 0;
+    currentTime = 0;
+    error = null;
+    src: string;
+    private gate: (() => void) | null = null;
+    constructor(src: string) { this.src = src; }
+    getAttribute(name: string) { return name === 'src' ? this.src : null; }
+    play() {
+      if (this.readyState < 3) return new Promise<void>((ok) => { this.gate = () => { this.paused = false; ok(); }; });
+      this.paused = false;
+      return Promise.resolve();
+    }
+    pause() { this.paused = true; }
+    arrive() { this.readyState = 3; this.gate?.(); }
+    addEventListener() {}
+    removeEventListener() {}
+  }
+  g.Audio = FakeAudio;
+  const compiled = solve(doc, voice(doc), 30);
+  const clock = new Clock(compiled.duration, 'live');
+  const fetchFake = (async () => ({ok: true, arrayBuffer: async () => new ArrayBuffer(1000)})) as unknown as typeof fetch;
+  const media = new MediaScheduler(clock, '', {AudioContext: function () { return new FakeCtx(); } as unknown as typeof AudioContext, fetch: fetchFake});
+  media.set({doc, compiled, mix: 'soundtrack.mp3'});
+  media.unlock();
+  clock.play();
+  let now = 1000;
+  frames.shift()?.(now += 16);
+  assert.equal(clock.isBuffering(), true, 'the soundtrack cannot start yet: the clock waits');
+  assert.equal(clock.getTime(), 0, 'and the film stands still');
+  const el = (media as unknown as {mix: {el: FakeAudio}}).mix.el;
+  el.arrive();
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(clock.isBuffering(), false, 'let go once the sound can start');
+  assert.equal(el.currentTime, 0, 'and the track was never moved past its start');
+  clock.pause();
+});

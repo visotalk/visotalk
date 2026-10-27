@@ -2,12 +2,13 @@
  * <Video>: an asset of kind video, played by the scene's clock.
  *  - driven (export): an <img> of the exact source frame, extracted beforehand by the exporter (`mediaBase/<asset>/<frame>.jpg`).
  *  - live (player):   a <video> slaved to the clock: native playback while playing, frame-centre seeks otherwise. The element is the media scheduler's, made ahead of the
- *                     clip's time and mounted here; a second <Video> of the same clip at the same time makes its own.
+ *                     clip's time and mounted here; a second <Video> of the same clip at the same time makes its own. A clip due with nothing to play yet holds the clock
+ *                     once (bounded, as a narration clip's wait is), then plays on.
  * The source time is `in + (time - start) * rate`, `time` being seconds since the scene on screen started.
  */
 import React, {useLayoutEffect, useMemo, useRef, useSyncExternalStore} from 'react';
 import {useRuntime, useTime} from './react';
-import {mediaReady} from './media';
+import {mediaReady, mediaReadyNow} from './media';
 import {useStage} from './stage';
 
 /** How far a playing video may be from the clock before it is moved there, and the clock waits for the frame; nearer than this it is pulled back by its rate */
@@ -56,6 +57,7 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
   }, [video, rt.media, url]);
 
   // a frame moved to is a hold on the clock until the browser has it, and the video plays only while the clock does
+  const waited = useRef(false);
   useLayoutEffect(() => {
     const v = video?.el;
     if (!v) return;
@@ -64,6 +66,18 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
       v.currentTime = at;
       rt.clock.hold(mediaReady(v, 2));
     };
+    // a clip due on screen with nothing to play yet holds the clock once, as a narration clip does; past the bound it plays on
+    if (t < 0 || mediaReadyNow(v)) waited.current = false;
+    else if (playing && !rt.clock.isBuffering()) {
+      if (!v.paused) v.pause();
+      if (!waited.current) {
+        waited.current = true;
+        const at = Math.min(source, last);
+        if (Math.abs(v.currentTime - at) > 1e-4) v.currentTime = at;
+        rt.clock.hold(mediaReady(v));
+      }
+      return;
+    }
     if (t >= 0 && playing && !rt.clock.isBuffering() && source >= last) {
       if (!v.paused) v.pause();
       v.playbackRate = rate;

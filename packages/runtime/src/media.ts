@@ -1,7 +1,7 @@
 /**
  * Media in the web player: what a clip, a sound or a video must satisfy before the clock may go on, what is fetched ahead of its time, and the sound itself.
  * `MediaScheduler` is the one owner of all three. Time stands still through `Clock.hold` while the narration, the
- * soundtrack or a picture on screen is not there yet; the export has its own barrier (`readiness.ts`).
+ * soundtrack, a clip due on screen or a picture on screen is not there yet; the export has its own barrier (`readiness.ts`).
  */
 import {mediaPlan, soundGain, type Compiled, type MediaItem, type VisoDoc} from '@visotalk/ir';
 import type {Clock} from './clock.ts';
@@ -137,7 +137,8 @@ export interface SchedulerEnv {
  * a clip is a `<video>` made ahead and handed to `<Video>`. Sound is the audio context's: each use is a node started at its time on the context's own clock,
  * with the document's gain curve set as automation, and while the nodes run the clock keeps to the context (`Clock.setSource`), so the picture, the narration and
  * the effects share one timebase. A page with a soundtrack, and a sound longer than `LONG_AUDIO`, are streamed by elements instead and moved with the clock.
- * Only what the viewer cannot do without stops the clock: a narration clip, the soundtrack (and a picture on screen, which `Player` holds on). A sound never does.
+ * Only what the viewer cannot do without stops the clock: a narration clip, the soundtrack, a clip due on screen (`<Video>`
+ * holds on it, once, then plays on) and a picture on screen (which `Player` holds on). A sound never does.
  */
 export class MediaScheduler {
   /** what a test or the bench reads: loads started, bytes decoded now, every start of a sound against its time (`late`: seconds of its head that were gone when it began), sounds left out, and the largest gap between clock and audio */
@@ -252,11 +253,11 @@ export class MediaScheduler {
     if (this.master && this.ctx) this.master.gain.setTargetAtTime(muted ? 0 : 1, this.ctx.currentTime, 0.01);
   }
 
-  /** From the viewer's tap: browsers let the audio context and the elements sound only after one */
+  /** From the viewer's tap: browsers let the audio context and the elements sound only after one. The clock waits for the warm-up, so the picture never runs ahead of a sound that cannot start yet */
   unlock(): void {
     const ctx = this.ctx;
     if (ctx) {
-      void ctx.resume().then(() => this.evaluate());
+      this.clock.hold(within(ctx.resume().then(() => this.evaluate()), WAIT_MS, 'the audio context'));
       // the old trick for iOS, where a context sounds after a tap only once something has been started in it
       const blip = ctx.createBufferSource();
       blip.buffer = ctx.createBuffer(1, 1, 22050);
@@ -276,7 +277,7 @@ export class MediaScheduler {
       e.unlocked = e.unlocking = true;
       el.muted = true;
       const done = () => { el.pause(); el.muted = this.mix?.el === el ? this.muted : false; e.unlocking = false; this.evaluate(); };
-      el.play().then(done, () => { el.muted = false; e.unlocking = false; e.unlocked = false; });
+      this.clock.hold(within(el.play().then(done, () => { el.muted = false; e.unlocking = false; e.unlocked = false; }), WAIT_MS, el.currentSrc || el.src));
     }
   }
 
