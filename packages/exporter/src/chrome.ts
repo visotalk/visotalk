@@ -82,8 +82,8 @@ export async function loadPlayer(page: Page, url: string): Promise<void> {
     if (r.request().isNavigationRequest() || r.status() >= 400) keep(`HTTP ${r.status()} ${r.headers()['content-type'] ?? 'no content type'} ${location(r.url())}`);
   };
   const failed = (r: HTTPRequest) => keep(`request failed: ${r.failure()?.errorText ?? 'unknown'} ${location(r.url())}`);
-  const pageError = (error: Error) => keep(`page error: ${error.message}`);
-  const crash = (error: Error) => keep(`browser error: ${error.message}`);
+  const pageError = (error: unknown) => keep(`page error: ${error instanceof Error ? error.message : String(error)}`);
+  const crash = (error: unknown) => keep(`browser error: ${error instanceof Error ? error.message : String(error)}`);
   page.on('response', response);
   page.on('requestfailed', failed);
   page.on('pageerror', pageError);

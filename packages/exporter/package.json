@@ -5,5 +5,5 @@
   "license": "MIT",
   "type": "module",
   "exports": {".": "./src/index.ts"},
-  "dependencies": {"@visotalk/ir": "workspace:*", "puppeteer-core": "23.6.0"}
+  "dependencies": {"@visotalk/ir": "workspace:*", "puppeteer-core": "25.16.0"}
 }

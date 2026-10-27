@@ -20,7 +20,7 @@ The commands are listed in the header of the executable and in the agent skill t
 
 ## Requirements
 
-- Node.js 22 or later and `ffmpeg` on the `PATH`.
+- Node.js 22.12 or later and `ffmpeg` on the `PATH`.
 - Python 3.9 or later.
 - Rendering uses a pinned `chrome-headless-shell` ([Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/)).
 - Narration uses a local [Kokoro](https://github.com/thewh1teagle/kokoro-onnx) model, and word timing (English) a wav2vec2 aligner, both through Python.

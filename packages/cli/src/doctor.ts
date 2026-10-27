@@ -87,8 +87,9 @@ function check(): Item[] {
   const items: Item[] = [];
   const add = (id: string, ok: boolean, detail: string, fixable = false) => void items.push({id, ok, detail, fixable});
 
-  const major = Number(process.versions.node.split('.')[0]);
-  add('node', major >= 22, major >= 22 ? process.version : `${process.version}; Node 22 or later is needed`);
+  const [major, minor] = process.versions.node.split('.').map(Number);
+  const supported = major > 22 || (major === 22 && minor >= 12);
+  add('node', supported, supported ? process.version : `${process.version}; Node 22.12 or later is needed`);
 
   const ff = run('ffmpeg', ['-version']);
   // render checks each segment it keeps with ffprobe, which every ffmpeg package ships beside it

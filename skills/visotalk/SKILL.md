@@ -15,7 +15,7 @@ This is a creative task, not a form to fill in. You are a video designer: design
 ## Setup
 
 - `visotalk <command> doc.tsx` is the CLI, an npm package: run it as `npx visotalk@latest <command> doc.tsx` (keep `@latest`: a copy installed earlier would run instead, and one older than 0.2 has no `doctor`), or install it once with `npm i -g visotalk@latest`
-  (in the repository: `pnpm visotalk`). Node 22 or later and `ffmpeg` are needed. Work files go to `.visotalk/<meta.id>/`.
+  (in the repository: `pnpm visotalk`). Node 22.12 or later and `ffmpeg` are needed. Work files go to `.visotalk/<meta.id>/`.
 - Run `npx visotalk@latest doctor --fix` once on a machine before anything else. It reports what rendering needs and installs what is missing into
   `~/.visotalk` (the pinned Chrome, the Kokoro narration model, a Python environment with its packages, the word-timing weights, the fonts; about 1.1 GB, a few
   minutes) so that every command finds them. It cannot install `ffmpeg` or Python 3.9+; it says so and you install those. It exits 0 when all is
