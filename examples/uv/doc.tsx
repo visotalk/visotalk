@@ -85,7 +85,7 @@ function Icon({name, size, color}: {name: string; size: number; color: string}) 
   );
 }
 
-/** The kicker and the title, on every scene; each scene sets their text with `<Set on="head" text="…">`. */
+/** The kicker and the title, on every scene; each scene sets their text with `<Set target="head" to={{text: "…"}}/>`. */
 function Heading() {
   const kick = String(useProp('kick', 'text', ''));
   const head = String(useProp('head', 'text', ''));
@@ -293,35 +293,35 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
     <Line id="h3l" hold={2.5}>uv, from Astral, the team behind Ruff, replaces all of them with a single binary, written in Rust.</Line>
     <Part id="toolbox" x={0} y={230} w={1920} h={650}>{() => <Toolbox />}</Part>
     <Animation>
-      <Appear on={["title", "toolbox"]} at="start"/>
-      <Set on="head" text="Python project setup" at="start"/>
-      <Set on="kick" text="Astral" at="start"/>
-      <Appear on="head" line="h1l" word="Python project"/>
+      <Appear target={["title", "toolbox"]} at="start"/>
+      <Set target="head" to={{text: "Python project setup"}} at="start"/>
+      <Set target="kick" to={{text: "Astral"}} at="start"/>
+      <Appear target="head" line="h1l" word="Python project"/>
 
-      <Appear on="t-pip" line="h2l" word="pip"/>
-      <Appear on="j-pip" line="h2l" word="install packages"/>
-      <Appear on="t-virtualenv" line="h2l" word="virtualenv"/>
-      <Appear on="j-virtualenv" line="h2l" word="environments"/>
-      <Appear on="t-pip-tools" line="h2l" word="pip-tools"/>
-      <Appear on="j-pip-tools" line="h2l" word="pin versions"/>
-      <Appear on="t-pipx" line="h2l" word="pipx"/>
-      <Appear on="j-pipx" line="h2l" word="command line tools"/>
-      <Appear on="t-pyenv" line="h2l" word="pyenv"/>
-      <Appear on="j-pyenv" line="h2l" word="Python itself"/>
-      <Appear on="t-poetry" line="h2l" word="poetry"/>
-      <Appear on="t-twine" line="h2l" word="twine"/>
-      <Appear on={["j-poetry", "j-twine"]} line="h2l" word="publish"/>
+      <Appear target="t-pip" line="h2l" word="pip"/>
+      <Appear target="j-pip" line="h2l" word="install packages"/>
+      <Appear target="t-virtualenv" line="h2l" word="virtualenv"/>
+      <Appear target="j-virtualenv" line="h2l" word="environments"/>
+      <Appear target="t-pip-tools" line="h2l" word="pip-tools"/>
+      <Appear target="j-pip-tools" line="h2l" word="pin versions"/>
+      <Appear target="t-pipx" line="h2l" word="pipx"/>
+      <Appear target="j-pipx" line="h2l" word="command line tools"/>
+      <Appear target="t-pyenv" line="h2l" word="pyenv"/>
+      <Appear target="j-pyenv" line="h2l" word="Python itself"/>
+      <Appear target="t-poetry" line="h2l" word="poetry"/>
+      <Appear target="t-twine" line="h2l" word="twine"/>
+      <Appear target={["j-poetry", "j-twine"]} line="h2l" word="publish"/>
 
-      <Set on="head" text="uv" line="h3l" word="uv"/>
-      <Appear on="kick" line="h3l" word="Astral"/>
-      <Set on="kick" text="Astral, the team behind Ruff" line="h3l" word="Ruff"/>
-      <Disappear on={["j-pip", "j-virtualenv", "j-pip-tools", "j-pipx", "j-pyenv", "j-poetry", "j-twine"]} stagger={0.05} line="h3l" word="replaces"/>
-      <Tween id="mv" on="toolbox" merge={1} dur={0.8} line="h3l" word="them"/>
-      <Appear on="uvblock" after="mv"/>
-      <Tween on="uvblock" w={1000} h={260} dur={0.7} after="mv"/>
-      <Appear on="uvtxt" after="mv" offset={0.7}/>
-      <Appear on="bin" line="h3l" word="single binary"/>
-      <Appear on="rust" line="h3l" word="Rust"/>
+      <Set target="head" to={{text: "uv"}} line="h3l" word="uv"/>
+      <Appear target="kick" line="h3l" word="Astral"/>
+      <Set target="kick" to={{text: "Astral, the team behind Ruff"}} line="h3l" word="Ruff"/>
+      <Disappear target={["j-pip", "j-virtualenv", "j-pip-tools", "j-pipx", "j-pyenv", "j-poetry", "j-twine"]} stagger={0.05} line="h3l" word="replaces"/>
+      <Tween id="mv" target="toolbox" to={{merge: 1}} dur={0.8} line="h3l" word="them"/>
+      <Appear target="uvblock" after="mv"/>
+      <Tween target="uvblock" to={{w: 1000, h: 260}} dur={0.7} after="mv"/>
+      <Appear target="uvtxt" after="mv" offset={0.7}/>
+      <Appear target="bin" line="h3l" word="single binary"/>
+      <Appear target="rust" line="h3l" word="Rust"/>
     </Animation>
   </Scene>
 
@@ -334,42 +334,42 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
     <Part id="bench" x={0} y={230} w={1920} h={650}>{() => <Bench />}</Part>
     <Part id="bars" x={0} y={230} w={1920} h={650}>{() => <Bars />}</Part>
     <Animation>
-      <Appear on="ruler" at="start"/>
-      <Set on="head" text="10x to 100x faster than pip?" at="start"/>
-      <Set on="kick" text="The README claim" at="start"/>
-      <Appear on="r-line" line="s1l" word="speed"/>
-      <Tween on="r-line" draw={1} dur={0.8} line="s1l" word="speed"/>
-      <Appear on="r-ticks" line="s1l" word="README"/>
-      <Appear on="r-band" line="s1l" word="ten to a hundred"/>
-      <Tween on="r-band" fill={1} dur={1} line="s1l" word="ten to a hundred"/>
-      <Appear on="r-pip" line="s1l" word="pip"/>
+      <Appear target="ruler" at="start"/>
+      <Set target="head" to={{text: "10x to 100x faster than pip?"}} at="start"/>
+      <Set target="kick" to={{text: "The README claim"}} at="start"/>
+      <Appear target="r-line" line="s1l" word="speed"/>
+      <Tween target="r-line" to={{draw: 1}} dur={0.8} line="s1l" word="speed"/>
+      <Appear target="r-ticks" line="s1l" word="README"/>
+      <Appear target="r-band" line="s1l" word="ten to a hundred"/>
+      <Tween target="r-band" to={{fill: 1}} dur={1} line="s1l" word="ten to a hundred"/>
+      <Appear target="r-pip" line="s1l" word="pip"/>
 
-      <Disappear on="ruler" line="s2l"/>
-      <Set on="head" text="The benchmark" line="s2l"/>
-      <Set on="kick" text="" line="s2l"/>
-      <Appear on="bench" line="s2l"/>
-      <Appear on="k-machine" line="s2l" word="same machine"/>
-      <Appear on="k-python" line="s2l" word="same Python"/>
-      <Appear on="k-cache" line="s2l" word="warm cache"/>
-      <Appear on="k-packages" line="s2l" word="thirty eight packages"/>
-      <Appear on="k-source" line="s2l" word="Trio's documentation"/>
+      <Disappear target="ruler" line="s2l"/>
+      <Set target="head" to={{text: "The benchmark"}} line="s2l"/>
+      <Set target="kick" to={{text: ""}} line="s2l"/>
+      <Appear target="bench" line="s2l"/>
+      <Appear target="k-machine" line="s2l" word="same machine"/>
+      <Appear target="k-python" line="s2l" word="same Python"/>
+      <Appear target="k-cache" line="s2l" word="warm cache"/>
+      <Appear target="k-packages" line="s2l" word="thirty eight packages"/>
+      <Appear target="k-source" line="s2l" word="Trio's documentation"/>
 
-      <Disappear on="bench" line="s2l" edge="end" offset={1.1}/>
-      <Appear on="bars" line="s3l"/>
-      <Set on="head" text="Install time" line="s3l" word="uv"/>
-      <Appear on={["b-uv-name", "b-uv"]} line="s3l" word="uv"/>
-      <Tween on="b-uv" t={0.17} dur={0.3} line="s3l" word="uv"/>
-      <Appear on="b-uv-time" line="s3l" word="sixth of a second"/>
-      <Appear on={["b-pip-name", "b-pip"]} line="s3l" word="pip needs"/>
-      <Tween on="b-pip" t={8} dur={1.6} line="s3l" word="pip needs"/>
-      <Appear on="b-pip-time" line="s3l" word="more than eight"/>
+      <Disappear target="bench" line="s2l" edge="end" offset={1.1}/>
+      <Appear target="bars" line="s3l"/>
+      <Set target="head" to={{text: "Install time"}} line="s3l" word="uv"/>
+      <Appear target={["b-uv-name", "b-uv"]} line="s3l" word="uv"/>
+      <Tween target="b-uv" to={{t: 0.17}} dur={0.3} line="s3l" word="uv"/>
+      <Appear target="b-uv-time" line="s3l" word="sixth of a second"/>
+      <Appear target={["b-pip-name", "b-pip"]} line="s3l" word="pip needs"/>
+      <Tween target="b-pip" to={{t: 8}} dur={1.6} line="s3l" word="pip needs"/>
+      <Appear target="b-pip-time" line="s3l" word="more than eight"/>
 
-      <Disappear on="bars" line="s3l" edge="end" offset={1.4}/>
-      <Appear on="ruler" line="s4l"/>
-      <Set on="head" text="10x to 100x faster than pip?" line="s4l"/>
-      <Set on="kick" text="The README claim" line="s4l"/>
-      <Appear on="r-mark" line="s4l" word="fifty"/>
-      <Appear on="r-50" line="s4l" word="times faster"/>
+      <Disappear target="bars" line="s3l" edge="end" offset={1.4}/>
+      <Appear target="ruler" line="s4l"/>
+      <Set target="head" to={{text: "10x to 100x faster than pip?"}} line="s4l"/>
+      <Set target="kick" to={{text: "The README claim"}} line="s4l"/>
+      <Appear target="r-mark" line="s4l" word="fifty"/>
+      <Appear target="r-50" line="s4l" word="times faster"/>
     </Animation>
   </Scene>
 
@@ -385,29 +385,29 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
     <Part id="files" x={1010} y={230} w={800} h={340}>{() => <Files />}</Part>
     <Part id="outcome" x={1010} y={600} w={830} h={260}>{() => <><Activate /><Platforms /></>}</Part>
     <Animation>
-      <Set on="head" text="A full project manager" at="start"/>
-      <Set on="kick" text="" at="start"/>
-      <Appear on={["files", "outcome"]} line="p1l" word="project manager"/>
-      <Appear on="poetry" line="p1l" word="Poetry"/>
+      <Set target="head" to={{text: "A full project manager"}} at="start"/>
+      <Set target="kick" to={{text: ""}} at="start"/>
+      <Appear target={["files", "outcome"]} line="p1l" word="project manager"/>
+      <Appear target="poetry" line="p1l" word="Poetry"/>
 
-      <Disappear on="poetry" line="p1l" edge="end" offset={1.6}/>
-      <Appear on="term" line="p2l" word="uv init"/>
-      <Tween on="step-init" p={1} dur={1} line="p2l" word="uv init"/>
-      <Appear on="f-pyproject" line="p2l" word="creates a project"/>
-      <Tween on="step-add" p={1} dur={1.6} line="p2l" word="uv add"/>
-      <Appear on="f-lock" line="p2l" word="locks"/>
-      <Appear on="f-venv" line="p2l" word="virtual environment"/>
+      <Disappear target="poetry" line="p1l" edge="end" offset={1.6}/>
+      <Appear target="term" line="p2l" word="uv init"/>
+      <Tween target="step-init" to={{p: 1}} dur={1} line="p2l" word="uv init"/>
+      <Appear target="f-pyproject" line="p2l" word="creates a project"/>
+      <Tween target="step-add" to={{p: 1}} dur={1.6} line="p2l" word="uv add"/>
+      <Appear target="f-lock" line="p2l" word="locks"/>
+      <Appear target="f-venv" line="p2l" word="virtual environment"/>
 
-      <Tween on="step-run" p={1} dur={1.2} line="p3l" word="uv run"/>
-      <Appear on="act" line="p3l" word="no activate step"/>
-      <Appear on="act-x" line="p3l" word="to forget"/>
-      <Tween on="act-x" draw={1} dur={0.6} line="p3l" word="to forget"/>
+      <Tween target="step-run" to={{p: 1}} dur={1.2} line="p3l" word="uv run"/>
+      <Appear target="act" line="p3l" word="no activate step"/>
+      <Appear target="act-x" line="p3l" word="to forget"/>
+      <Tween target="act-x" to={{draw: 1}} dur={0.6} line="p3l" word="to forget"/>
 
-      <Disappear on="act" line="p4l"/>
-      <Tween on="step-lock" p={1} dur={1} line="p4l" word="uv lock"/>
-      <Appear on={["p-linux", "p-mac", "p-win"]} stagger={0.25} line="p4l" word="platforms"/>
-      <Appear on="edges" line="p4l" word="platforms" offset={0.4}/>
-      <Tween on="edges" draw={1} dur={0.6} line="p4l" word="platforms" offset={0.4}/>
+      <Disappear target="act" line="p4l"/>
+      <Tween target="step-lock" to={{p: 1}} dur={1} line="p4l" word="uv lock"/>
+      <Appear target={["p-linux", "p-mac", "p-win"]} stagger={0.25} line="p4l" word="platforms"/>
+      <Appear target="edges" line="p4l" word="platforms" offset={0.4}/>
+      <Tween target="edges" to={{draw: 1}} dur={0.6} line="p4l" word="platforms" offset={0.4}/>
     </Animation>
   </Scene>
 </Doc>;

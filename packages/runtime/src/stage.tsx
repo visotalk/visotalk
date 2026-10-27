@@ -3,7 +3,7 @@
  * it ends. A part is a box, invisible until an `appear`; its children are React, which draw by the clock and read what the document's animations do to the
  * targets they register (`useTarget`, `useProp`, `<Obj>`).
  */
-import React, {createContext, useContext} from 'react';
+import React, {createContext, useContext, useSyncExternalStore} from 'react';
 import {captionBlocks, presenceAt, propAt, type BlockWord, type Compiled, type ThemeTokens, type VisoDoc} from '@visotalk/ir';
 import {SceneCtx, useDocTime, useTime} from './react';
 import {clamp01} from './motion';
@@ -22,6 +22,24 @@ export interface StageData {
   assetUrl: (id: string) => string;
   /** the web player, not the export (an export with `exports.captions` of `none` or `sidecar` paints none, and neither does the player) */
   live: boolean;
+  /** the part the page's host is inspecting (`{vt: 'solo'}`): all other parts are hidden, without changing animation state */
+  solo: Solo;
+}
+
+/** The part a host is looking at, if any. Like the clock, a store a component subscribes to, so a paused picture still answers a change. */
+export class Solo {
+  private part: string | null = null;
+  private listeners = new Set<() => void>();
+  subscribe = (fn: () => void): (() => void) => {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  };
+  get = (): string | null => this.part;
+  set(part: string | null): void {
+    if (part === this.part) return;
+    this.part = part;
+    for (const fn of this.listeners) fn();
+  }
 }
 
 const StageCtx = createContext<StageData | null>(null);
@@ -63,7 +81,7 @@ function useTargetOf(id: string, hidden: boolean): {'data-vt': string; style: Re
 
 /**
  * A prop of a target that the document changes with `<Tween>` and `<Set>`: its value now, `base` until the first one. `useProp(name, base)` reads the part
- * the hook runs in (`<Set on="note" text="…">` for `<Part id="note">`); `useProp(id, name, base)` reads the target `id`.
+ * the hook runs in (`<Set target="note" to={{text: '…'}}/>` for `<Part id="note">`); `useProp(id, name, base)` reads the target `id`.
  */
 export function useProp(name: string, base: number): number;
 export function useProp(name: string, base: string): string;
@@ -137,13 +155,17 @@ const PartHost: React.FC<{part: VisoDoc['scenes'][number]['parts'][number]; body
   </PartCtx.Provider>
 );
 const PartBox: React.FC<{part: VisoDoc['scenes'][number]['parts'][number]; body: PartBody}> = ({part, body}) => {
-  const {preset} = useStage();
+  const {preset, solo} = useStage();
   const {scene} = useContext(PartCtx);
   const t = useTargetOf(part.id, true);
+  const soloed = useSyncExternalStore(solo.subscribe, solo.get);
   const x = part.x ?? 0, y = part.y ?? 0;
   return (
     <div data-part={part.id} {...(scene === undefined && {'data-global': ''})} {...t} style={{position: 'absolute', left: x, top: y, width: part.w ?? preset.width - x, height: part.h ?? preset.height - y, ...t.style}}>
-      {typeof body === 'function' ? <Render fn={body} /> : body}
+      {/* A separate opacity gate cannot be overridden by a descendant's visibility or the part's animated opacity. */}
+      <div style={{position: 'absolute', inset: 0, opacity: soloed !== null && soloed !== part.id ? 0 : 1, pointerEvents: soloed !== null && soloed !== part.id ? 'none' : undefined}}>
+        {typeof body === 'function' ? <Render fn={body} /> : body}
+      </div>
     </div>
   );
 };

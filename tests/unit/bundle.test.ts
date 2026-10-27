@@ -20,7 +20,7 @@ export default <Doc id="bundled" title="Bundled" lang="en"${voice}>
   <Scene id="s1">
     <Line id="l1">Hello there, world.</Line>
     <Part id="box">{() => <div>box</div>}</Part>
-    <Animation><Appear on="box" line="l1" word="world"/></Animation>
+    <Animation><Appear target="box" line="l1" word="world"/></Animation>
   </Scene>${extra}
 </Doc>;`;
 
@@ -74,7 +74,7 @@ test('export, then import, gives the talk back: the same files, the same revisio
   assert.deepEqual(Object.keys(first.manifest.files).sort(), ['captions/en.srt', 'credits.md', 'source/doc.tsx', 'source/media/pic.png', 'voice/audio/abc123.m4a', 'voice/voice.json']);
   assert.equal(first.manifest.entry, 'source/doc.tsx');
   assert.deepEqual(first.manifest.voice, {}, 'a voice is carried, and the document names none');
-  assert.equal(first.manifest.spec, '0.5');
+  assert.equal(first.manifest.spec, '0.6');
   assert.equal(first.manifest.created, '2025-10-09T08:53:20Z');
 
   const back = join(tmp('back'), 'talk');
@@ -171,7 +171,7 @@ async function forge(files: Record<string, string>, change: (m: BundleManifest) 
   const listed: BundleManifest['files'] = {};
   for (const [k, v] of entries) if (!skip.includes(k)) listed[k] = {size: v.length, sha256: await sha256(v)};
   const m: BundleManifest = {
-    format: 'visotalk.bundle', kind: 'source', formatVersion: '0.1.0', id: 'x', revision: await revisionOf(listed), spec: '0.5', generator: {name: 'test'},
+    format: 'visotalk.bundle', kind: 'source', formatVersion: '0.1.0', id: 'x', revision: await revisionOf(listed), spec: '0.6', generator: {name: 'test'},
     created: '2026-10-19T00:00:00Z', summary: {title: 'T', lang: 'en', canvases: []}, entry: 'source/doc.tsx', license: {id: 'all-rights-reserved'}, files: listed,
   };
   change(m);

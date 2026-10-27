@@ -20,7 +20,7 @@ export interface Issue {
 const FIXES: Record<string, string> = {
   'id.format': 'start with a lowercase letter, then use only a-z, 0-9, _ and -',
   'id.duplicate': 'give every scene, line and action its own id; a part its own within its scene (and not a global part\'s)',
-  'part.appear': 'a part is invisible until an appear shows it: <Appear on="id" at="start"/>, or on a word of a line',
+  'part.appear': 'a part is invisible until an appear shows it: <Appear target="id" at="start"/>, or on a word of a line',
   'scene.duration': 'a scene without lines needs `duration` (seconds)',
   'anchor.line': 'anchor a line of the same scene: its id is on a <Line> of the scene that holds the <Animation>',
   'anchor.word': 'write the phrase as it is spoken (case aside, numbers spelled out: the aligner hears "nineteen twenty seven", not 1927)',
@@ -29,12 +29,12 @@ const FIXES: Record<string, string> = {
   'anchor.at': '`at` is seconds from the start of the scene, 0 or more',
   'action.id': 'give every action that has an `id` a document-wide unique one: `after` names it',
   'anchor.action': 'name the `id` of an action in the document: <Appear after="id" …/>',
-  'action.on': 'name one or more targets: <Appear on="id" …/> or on={["id", "id"]}',
+  'action.target': 'name one or more targets: <Appear target="id" …/> or target={["id", "id"]}',
   'anchor.cycle': 'anchor one action of the cycle on a word, a scene time or a scene edge',
   'anchor.after-negative': 'raise `offset` so the action does not start before the action it hangs on',
-  'motion.tween': 'a tween needs numbers, colours ("#426894", "hsl(212 46% 68%)") or lengths ("12px"): <Tween on="id" name={0.5}/>',
-  'motion.set': 'a set needs the props it sets: <Set on="id" name={value}/>',
-  'motion.props': 'appear and disappear take no props: change a prop with <Set> or <Tween>',
+  'motion.tween': 'a tween needs numbers, colours ("#426894", "hsl(212 46% 68%)") or lengths ("12px"): <Tween target="id" to={{name: 0.5}} at="start"/>',
+  'motion.set': 'a set needs values in `to`: <Set target="id" to={{name: 1}} at="start"/>',
+  'motion.to': 'appear and disappear take no `to`: change a value with <Set> or <Tween>',
   'motion.easing': 'easing is linear, easeIn, easeOut, easeInOut, one of those with Sine, Quad, Quart, Quint or Back (easeOutQuart, easeOutBack(2.2)), or cubic-bezier(x1, y1, x2, y2)',
   'motion.repeat': '`repeat` (0 or more extra plays, or -1 to go on for the whole film) and `yoyo` belong to <Tween>',
   'motion.time': '`dur`, `stagger` and `hold` are seconds, 0 or more',
@@ -95,7 +95,7 @@ export function validate(doc: VisoDoc): Issue[] {
   }
   // part id → where an appear shows it: a scene's part by an appear in its scene, a global part by an appear in any scene
   const shown = new Set<string>();
-  for (const scene of doc.scenes) for (const a of scene.animations) if (a.motion === 'appear') for (const t of [a.on].flat()) shown.add(global.has(t) ? t : `${scene.id}:${t}`);
+  for (const scene of doc.scenes) for (const a of scene.animations) if (a.motion === 'appear') for (const t of [a.target].flat()) shown.add(global.has(t) ? t : `${scene.id}:${t}`);
 
   const lineIds = new Set<string>();
   for (const scene of doc.scenes) {
@@ -151,17 +151,17 @@ function checkUntil(doc: VisoDoc, scene: Scene, until: Anchor, at: string, add: 
 }
 
 function checkAction(doc: VisoDoc, scene: Scene, a: Action, at: string, add: (c: string, at: string, m: string) => void) {
-  if (![a.on].flat().length) add('action.on', `${at}/on`, 'an action with no targets does nothing');
-  for (const t of [a.on].flat()) if (!ID.test(t)) add('id.format', `${at}/on`, `target "${t}" is not a valid id`);
+  if (![a.target].flat().length) add('action.target', `${at}/target`, 'an action with no targets does nothing');
+  for (const t of [a.target].flat()) if (!ID.test(t)) add('id.format', `${at}/target`, `target "${t}" is not a valid id`);
   checkAnchor(doc, scene, a.at, `${at}/at`, add);
   for (const k of ['dur', 'stagger'] as const) if (a[k] !== undefined && !seconds(a[k])) add('motion.time', `${at}/${k}`, `${k} is seconds, 0 or more`);
   if (a.until !== undefined) checkUntil(doc, scene, a.until, at, add, a.dur !== undefined ? '`until` replaces `dur`: give one of them' : a.repeat !== undefined ? 'a repeated tween plays `dur` each time, so it takes `dur`, not `until`' : a.motion === 'set' ? 'a set happens at once: it has no `until`' : undefined);
   if (a.easing !== undefined && !easingFn(a.easing)) add('motion.easing', `${at}/easing`, `unknown easing "${a.easing}"`);
   if ((a.repeat !== undefined || a.yoyo !== undefined) && (a.motion !== 'tween' || (a.repeat !== undefined && !(Number.isInteger(a.repeat) && a.repeat >= -1)) || (a.yoyo !== undefined && typeof a.yoyo !== 'boolean'))) add('motion.repeat', at, a.motion === 'tween' ? '`repeat` is a whole number, -1 or more; `yoyo` is true or false' : `${a.motion} does not repeat`);
-  const props = a.props ?? {};
-  if (a.motion === 'tween' && (!Object.keys(props).length || !Object.values(props).every((v) => tweenable(v) && (typeof v !== 'number' || Number.isFinite(v))))) add('motion.tween', at, 'a tween needs one or more props, each a number, a colour or a length');
-  if (a.motion === 'set' && !Object.keys(props).length) add('motion.set', at, 'a set needs one or more props');
-  if ((a.motion === 'appear' || a.motion === 'disappear') && Object.keys(props).length) add('motion.props', at, `${a.motion} takes no props`);
+  const to = a.to ?? {};
+  if (a.motion === 'tween' && (!Object.keys(to).length || !Object.values(to).every((v) => tweenable(v) && (typeof v !== 'number' || Number.isFinite(v))))) add('motion.tween', at, 'a tween needs one or more values in `to`, each a number, a colour or a length');
+  if (a.motion === 'set' && (!Object.keys(to).length || !Object.values(to).every((v) => typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))))) add('motion.set', at, 'a set needs one or more number, string or boolean values in `to`');
+  if ((a.motion === 'appear' || a.motion === 'disappear') && a.to !== undefined) add('motion.to', at, `${a.motion} takes no to values`);
 }
 
 function checkSound(doc: VisoDoc, scene: Scene, s: Sound, at: string, add: (c: string, at: string, m: string) => void) {
@@ -202,7 +202,7 @@ function checkAfter(doc: VisoDoc, add: (c: string, at: string, m: string) => voi
       else if (state.get(ref) === 'visiting') add('anchor.cycle', `${at}/at`, `actions anchored after one another form a cycle: ${[...path, a.id ?? '?', ref.id].join(' → ')}`);
       else {
         // from the head's first target to its edge: the solver's `endOf` is its last target's start plus `dur`
-        const stagger = Math.max(0, [ref.on].flat().length - 1) * (ref.stagger ?? 0);
+        const stagger = Math.max(0, [ref.target].flat().length - 1) * (ref.stagger ?? 0);
         const span = a.at.edge === 'start' ? 0 : stagger + (ref.motion === 'set' ? 0 : playTime(ref));
         if ((a.at.offset ?? 0) < -span) add('anchor.after-negative', `${at}/at`, `\`offset\` ${a.at.offset} puts the action before the start of "${ref.id}"`);
         visit(ref, [...path, a.id ?? '?']);

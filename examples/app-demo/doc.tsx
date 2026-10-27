@@ -148,37 +148,37 @@ export default <Doc id="app-demo" poster={20} title="Quiet Hours in Nook" lang="
     <Line id="l10" hold={2.5}>Quiet Hours, new in Nook.</Line>
     <Part id="phone" x={0} y={160} w={1080} h={820}>{() => <Phone />}</Part>
     <Animation>
-      <Appear on="phone" at="start" dur={0}/>
-      <Appear on="b1" line="l2" word="reminders"/>
-      <Tween on="phone" bn1={1} line="l2" word="reminders" dur={0.5} easing="easeOut"/>
-      <Appear on="b2" line="l2" word="shared edits"/>
-      <Tween on="phone" bn2={1} line="l2" word="shared edits" dur={0.5} easing="easeOut"/>
-      <Appear on="b3" line="l2" word="comments"/>
-      <Tween on="phone" bn3={1} line="l2" word="comments" dur={0.5} easing="easeOut"/>
-      <Tween on="phone" tapA={1} line="l3" word="settings" dur={0.6}/>
-      <Disappear on={["b1", "b2", "b3"]} line="l3" word="sheet"/>
-      <Tween on="phone" bn1={0} bn2={0} bn3={0} line="l3" word="sheet" dur={0.4}/>
-      <Tween on="phone" sheet={1} line="l3" word="sheet" dur={1.0} easing="easeOut"/>
-      <Tween on="phone" g={1} line="l4" word="edges" dur={0.3}/>
-      <Tween on="phone" rA={22} line="l5" word="ten at night" dur={0.9} easing="easeInOut"/>
-      <Tween on="phone" rB={31} line="l5" word="seven in the morning" dur={0.9} easing="easeInOut"/>
-      <Tween on="phone" g={0} line="l5" edge="end" dur={0.3}/>
-      <Tween on="phone" tapB={1} line="l6" word="flip" dur={0.6}/>
-      <Tween on="phone" tog={1} line="l6" word="switch" dur={0.35}/>
-      <Appear on="heldchip" line="l6b" word="held"/>
-      <Appear on="urgent" line="l7" word="urgent contact"/>
-      <Appear on="b4" line="l7" word="still gets through"/>
-      <Tween on="phone" bn4={1} line="l7" word="still gets through" dur={0.5} easing="easeOut"/>
-      <Disappear on="b4" line="l8" word="delivers"/>
-      <Tween on="phone" bn4={0} line="l8" word="delivers" dur={0.4}/>
-      <Tween on="phone" sheet={0} line="l8" word="hours end" dur={0.8} easing="easeIn"/>
-      <Tween on="phone" clock={31} line="l8" word="hours end" dur={1.5} easing="easeInOut"/>
-      <Appear on="sumcard" line="l8" word="summary"/>
-      <Tween on="phone" sum={1} push={1} line="l8" word="summary" dur={0.8} easing="easeOut"/>
-      <Appear on={["r1", "r2", "r3"]} stagger={0.35} line="l9" word="you missed"/>
-      <Tween on="phone" px={40} line="l10" word="quiet hours" dur={1} easing="easeInOut"/>
-      <Appear on="closing" line="l10" word="quiet hours" offset={0.8}/>
-      <Appear on="tagline" line="l10" word="new in nook"/>
+      <Appear target="phone" at="start" dur={0}/>
+      <Appear target="b1" line="l2" word="reminders"/>
+      <Tween target="phone" to={{bn1: 1}} line="l2" word="reminders" dur={0.5} easing="easeOut"/>
+      <Appear target="b2" line="l2" word="shared edits"/>
+      <Tween target="phone" to={{bn2: 1}} line="l2" word="shared edits" dur={0.5} easing="easeOut"/>
+      <Appear target="b3" line="l2" word="comments"/>
+      <Tween target="phone" to={{bn3: 1}} line="l2" word="comments" dur={0.5} easing="easeOut"/>
+      <Tween target="phone" to={{tapA: 1}} line="l3" word="settings" dur={0.6}/>
+      <Disappear target={["b1", "b2", "b3"]} line="l3" word="sheet"/>
+      <Tween target="phone" to={{bn1: 0, bn2: 0, bn3: 0}} line="l3" word="sheet" dur={0.4}/>
+      <Tween target="phone" to={{sheet: 1}} line="l3" word="sheet" dur={1.0} easing="easeOut"/>
+      <Tween target="phone" to={{g: 1}} line="l4" word="edges" dur={0.3}/>
+      <Tween target="phone" to={{rA: 22}} line="l5" word="ten at night" dur={0.9} easing="easeInOut"/>
+      <Tween target="phone" to={{rB: 31}} line="l5" word="seven in the morning" dur={0.9} easing="easeInOut"/>
+      <Tween target="phone" to={{g: 0}} line="l5" edge="end" dur={0.3}/>
+      <Tween target="phone" to={{tapB: 1}} line="l6" word="flip" dur={0.6}/>
+      <Tween target="phone" to={{tog: 1}} line="l6" word="switch" dur={0.35}/>
+      <Appear target="heldchip" line="l6b" word="held"/>
+      <Appear target="urgent" line="l7" word="urgent contact"/>
+      <Appear target="b4" line="l7" word="still gets through"/>
+      <Tween target="phone" to={{bn4: 1}} line="l7" word="still gets through" dur={0.5} easing="easeOut"/>
+      <Disappear target="b4" line="l8" word="delivers"/>
+      <Tween target="phone" to={{bn4: 0}} line="l8" word="delivers" dur={0.4}/>
+      <Tween target="phone" to={{sheet: 0}} line="l8" word="hours end" dur={0.8} easing="easeIn"/>
+      <Tween target="phone" to={{clock: 31}} line="l8" word="hours end" dur={1.5} easing="easeInOut"/>
+      <Appear target="sumcard" line="l8" word="summary"/>
+      <Tween target="phone" to={{sum: 1, push: 1}} line="l8" word="summary" dur={0.8} easing="easeOut"/>
+      <Appear target={["r1", "r2", "r3"]} stagger={0.35} line="l9" word="you missed"/>
+      <Tween target="phone" to={{px: 40}} line="l10" word="quiet hours" dur={1} easing="easeInOut"/>
+      <Appear target="closing" line="l10" word="quiet hours" offset={0.8}/>
+      <Appear target="tagline" line="l10" word="new in nook"/>
     </Animation>
   </Scene>
 </Doc>;

@@ -223,7 +223,7 @@ test('a picture whose part is on screen stops the clock until it has arrived, ho
   <Scene id="a" duration={20}><Line id="l1">One.</Line>
     <Part id="p" x={0} y={0} w={100} h={100}>{() => <div style={{backgroundImage: \`url(\${useAsset("bg")})\`}} />}</Part>
     <Part id="q" x={0} y={0} w={100} h={100}>{() => <div style={{backgroundImage: \`url(\${useAsset("later")})\`}} />}</Part>
-    <Animation><Appear on="p" at={2}/><Appear on="q" at={12}/></Animation></Scene></Doc>;`);
+    <Animation><Appear target="p" at={2}/><Appear target="q" at={12}/></Animation></Scene></Doc>;`);
   const doc = structuredClone(parsed.doc);
   doc['x-media'] = mediaHints(parsed.doc, '', {});
   const gates = new Map<string, () => void>();

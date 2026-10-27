@@ -5,9 +5,9 @@ syntax is in `markup.md`.
 
 ## The first frame
 
-Frame 0 is the thumbnail and the first thing a viewer sees. Give it a part that appears at the start with no fade: `<Appear on="poster" at="start" dur={0}/>`, and the same for
+Frame 0 is the thumbnail and the first thing a viewer sees. Give it a part that appears at the start with no fade: `<Appear target="poster" at="start" dur={0}/>`, and the same for
 a chapter rail if the film has one. A poster is one illustration, one big figure and one short line, nothing else; the next scene's picture replaces it a few seconds in
-(`<Disappear on="poster" line="l1" word="…"/>`). A cover for a platform is that frame; a vertical film whose lower half is the caption block gets a cover with the poster
+(`<Disappear target="poster" line="l1" word="…"/>`). A cover for a platform is that frame; a vertical film whose lower half is the caption block gets a cover with the poster
 lifted to the middle of the canvas, made from `still --time 0` and a crop.
 
 ## A phone screen (9x16)

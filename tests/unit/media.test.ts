@@ -14,10 +14,10 @@ const SRC = `export default <Doc id="d" title="t" lang="en">
     <Part id="pa" x={0} y={0} w={100} h={100}>{() => <img src={useAsset("a")} />}</Part>
     <Part id="pn" x={0} y={0} w={100} h={100}>{() => <img src={useAsset("never")} />}</Part>
     <Sound asset="tick" line="l2" word="five" volume={-3}/>
-    <Animation><Appear on="pa" line="l2"/><Appear on="logo" at="start"/></Animation></Scene>
+    <Animation><Appear target="pa" line="l2"/><Appear target="logo" at="start"/></Animation></Scene>
   <Scene id="s2"><Line id="l3">Seven.</Line>
     <Part id="pc" x={0} y={0} w={100} h={100}>{() => <img src={useAsset(key)} />}</Part>
-    <Animation><Appear on="pc" at="start"/><Disappear on="logo" at="start"/></Animation></Scene>
+    <Animation><Appear target="pc" at="start"/><Disappear target="logo" at="start"/></Animation></Scene>
 </Doc>;`;
 const parsed = parseMarkup(SRC);
 const built = (prelude = ''): VisoDoc => {
@@ -59,7 +59,7 @@ test('mediaPlan: each file with the stretches it is heard or seen in, critical o
   // a picture of a scene part: from the part's first appearance to the end of its scene, not before it
   const a = by('assets/a.jpg');
   assert.ok(a.critical && a.bytes === 1000);
-  assert.ok(Math.abs(a.windows[0][0] - c.actions.find((x) => x.on === 'pa')!.start) < 0.26 && a.windows[0][1] === s1.end, JSON.stringify(a.windows));
+  assert.ok(Math.abs(a.windows[0][0] - c.actions.find((x) => x.target === 'pa')!.start) < 0.26 && a.windows[0][1] === s1.end, JSON.stringify(a.windows));
   // a picture of a global part: while the part is on screen, across scenes (appears at the start, disappears at the start of scene 2)
   const b = by('assets/b.jpg');
   assert.equal(b.windows.length, 1);

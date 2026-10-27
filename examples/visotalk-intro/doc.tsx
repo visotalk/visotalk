@@ -638,10 +638,10 @@ const DOC_LINES: Array<{parts: Array<[string, string]>; tag?: string}> = [
   {parts: [['tag', '<Scene'], ['attr', ' id'], ['p', '='], ['str', '"growth"'], ['tag', '>']], tag: 'scene'},
   {parts: [['p', '  '], ['tag', '<Line'], ['attr', ' id'], ['p', '='], ['str', '"l1"'], ['tag', '>'], ['t', 'Sales tripled in a year.'], ['tag', '</Line>']], tag: 'line'},
   {parts: [['p', '  '], ['tag', '<Part'], ['attr', ' id'], ['p', '='], ['str', '"chart"'], ['tag', '>'], ['t', '<Bars data={SALES} />'], ['tag', '</Part>']], tag: 'part'},
-  {parts: [['p', '  '], ['tag', '<Appear'], ['attr', ' on'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" word="sales"'], ['tag', ' />']], tag: 'appear'},
-  {parts: [['p', '  '], ['tag', '<Tween'], ['attr', ' on'], ['p', '='], ['str', '"bar-4"'], ['attr', ' h'], ['p', '='], ['str', '{3}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'tween'},
-  {parts: [['p', '  '], ['tag', '<Set'], ['attr', ' on'], ['p', '='], ['str', '"label"'], ['attr', ' text'], ['p', '='], ['str', '"×3"'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'set'},
-  {parts: [['p', '  '], ['tag', '<Disappear'], ['attr', ' on'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" edge="end"'], ['tag', ' />']], tag: 'disappear'},
+  {parts: [['p', '  '], ['tag', '<Appear'], ['attr', ' target'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" word="sales"'], ['tag', ' />']], tag: 'appear'},
+  {parts: [['p', '  '], ['tag', '<Tween'], ['attr', ' target'], ['p', '='], ['str', '"bar-4"'], ['attr', ' to'], ['p', '='], ['str', '{{h: 3}}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'tween'},
+  {parts: [['p', '  '], ['tag', '<Set'], ['attr', ' target'], ['p', '='], ['str', '"label"'], ['attr', ' to'], ['p', '='], ['str', '{{text: "×3"}}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'set'},
+  {parts: [['p', '  '], ['tag', '<Disappear'], ['attr', ' target'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" edge="end"'], ['tag', ' />']], tag: 'disappear'},
   {parts: [['tag', '</Scene>']], tag: 'scene'},
 ];
 const SALES = [1, 1.3, 1.6, 1];
@@ -1028,7 +1028,7 @@ function FlowCards() {
           <span style={{color: CODE.tag}}>{'<Scene '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>"proof"</span><span style={{color: CODE.tag}}>{'>\n'}</span>
           {'  '}<span style={{color: CODE.tag}}>{'<Line '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>"l18"</span><span style={{color: CODE.tag}}>{'>'}</span>{useText('script-line', 'Rewrite a line…')}<span style={{color: CODE.tag}}>{'</Line>\n'}</span>
           {'  '}<span style={{color: CODE.tag}}>{'<Part '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>"rail"</span><span style={{color: CODE.tag}}>{'>'}</span>{'<Rail />'}<span style={{color: CODE.tag}}>{'</Part>\n'}</span>
-          {'  '}<span style={{color: CODE.tag}}>{'<Tween '}</span><span style={{color: CODE.attr}}>on</span>=<span style={{color: CODE.str}}>"rail"</span>{' ins2={1}\n         '}<span style={{color: CUE}}>{`word="${useText('script-anchor', 'rewrite a line')}"`}</span><span style={{color: CODE.tag}}>{' />\n'}</span>
+          {'  '}<span style={{color: CODE.tag}}>{'<Tween '}</span><span style={{color: CODE.attr}}>target</span>=<span style={{color: CODE.str}}>"rail"</span>{' to={{ins2: 1}}\n         '}<span style={{color: CUE}}>{`word="${useText('script-anchor', 'rewrite a line')}"`}</span><span style={{color: CODE.tag}}>{' />\n'}</span>
           <span style={{color: CODE.tag}}>{'</Scene>'}</span>
         </div>
       </Card>
@@ -1155,7 +1155,7 @@ function WebPlayer() {
             <span style={{color: CODE.tag}}>{'  <Line '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>{`"l${i + 1}"`}</span><span style={{color: CODE.tag}}>{'>'}</span><span style={{color: TEXT}}>{says[i].split(' ').join(sep)}</span>
           </div>
         ))}
-        <div><span style={{color: CODE.tag}}>{'  <Appear '}</span><span style={{color: CODE.attr}}>on</span>=<span style={{color: CODE.str}}>"moon"</span> <span style={{color: k === 0 ? CUE : CODE.attr}}>{`word="${useText('play-anchor', 'Moon')}"`}</span><span style={{color: CODE.tag}}>{' />'}</span></div>
+        <div><span style={{color: CODE.tag}}>{'  <Appear '}</span><span style={{color: CODE.attr}}>target</span>=<span style={{color: CODE.str}}>"moon"</span> <span style={{color: k === 0 ? CUE : CODE.attr}}>{`word="${useText('play-anchor', 'Moon')}"`}</span><span style={{color: CODE.tag}}>{' />'}</span></div>
       </div>
       <div style={{position: 'absolute', left: L + 24, top: T + 20, padding: '8px 16px', borderRadius: 8, background: CUE, color: '#14100c', fontFamily: MONO, fontSize: 22, fontWeight: 700, opacity: live}}>LIVE · doc.tsx</div>
       <div style={{position: 'absolute', left: L + IW / 2 - 50, top: T + 150, width: 100, height: 100, borderRadius: 50, background: 'rgba(11,14,20,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, opacity: pause}}>
@@ -1296,26 +1296,26 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Line id="l4" hold={1.2}>So change one sentence, and every animation after it lands a beat late.</Line>
     <Part id="coder"><Coder /></Part>
     <Animation>
-      <Appear on={["ground", "chapter"]} at="start" dur={0} />
-      <Appear on="coder" at="start" dur={0.6} />
-      <Tween on="coder" code={1} line="l1" word="ai agents" until={{line: "l1", word: "code that draws", edge: "end"}} easing="linear" />
-      <Tween on="coder" orbit={1} line="l1" word="code that moves" dur={1.2} />
-      <Disappear on="coder" line="l2" word="but an explainer" dur={0.5} />
-      <Appear on="rail" line="l2" word="but an explainer" offset={0.5} dur={0} />
-      <Appear on="script-frame" line="l2" word="also has a voice" dur={0.5} />
-      <Tween on="rail" type={1} line="l2" word="also has a voice" dur={1.3} easing="linear" />
-      <Tween on="rail" head={1} line="l2" word="the moment" dur={2.52} easing="linear" />
+      <Appear target={["ground", "chapter"]} at="start" dur={0} />
+      <Appear target="coder" at="start" dur={0.6} />
+      <Tween target="coder" to={{code: 1}} line="l1" word="ai agents" until={{line: "l1", word: "code that draws", edge: "end"}} easing="linear" />
+      <Tween target="coder" to={{orbit: 1}} line="l1" word="code that moves" dur={1.2} />
+      <Disappear target="coder" line="l2" word="but an explainer" dur={0.5} />
+      <Appear target="rail" line="l2" word="but an explainer" offset={0.5} dur={0} />
+      <Appear target="script-frame" line="l2" word="also has a voice" dur={0.5} />
+      <Tween target="rail" to={{type: 1}} line="l2" word="also has a voice" dur={1.3} easing="linear" />
+      <Tween target="rail" to={{head: 1}} line="l2" word="the moment" dur={2.52} easing="linear" />
       {/* the playhead crosses the sentence in a fixed 2.52 s (so this holds in every language); each picture comes in as it passes the picture's word (0.13, 0.43, 0.68, 0.95 of the way) */}
-      <Appear on="pic-moon" line="l2" word="the moment" offset={0.33} dur={0.25} />
-      <Appear on="pic-earth" line="l2" word="the moment" offset={1.07} dur={0.25} />
-      <Appear on="pic-sun" line="l2" word="the moment" offset={1.73} dur={0.25} />
-      <Appear on="pic-half" line="l2" word="the moment" offset={2.38} dur={0.25} />
-      <Disappear on="script-frame" line="l3" word="built on a timeline" />
-      <Tween on="rail" ruler={1} line="l3" word="built on a timeline" dur={1.1} easing="easeOut" />
-      <Set on="rail" pinned={1} line="l3" word="pinned" />
-      <Tween on="rail" thread={1} line="l3" word="pinned" dur={0.8} />
-      <Tween on="rail" ins={1} line="l4" word="change one sentence" dur={0.9} />
-      <Tween on="rail" late={1} line="l4" word="a beat late" dur={0.5} />
+      <Appear target="pic-moon" line="l2" word="the moment" offset={0.33} dur={0.25} />
+      <Appear target="pic-earth" line="l2" word="the moment" offset={1.07} dur={0.25} />
+      <Appear target="pic-sun" line="l2" word="the moment" offset={1.73} dur={0.25} />
+      <Appear target="pic-half" line="l2" word="the moment" offset={2.38} dur={0.25} />
+      <Disappear target="script-frame" line="l3" word="built on a timeline" />
+      <Tween target="rail" to={{ruler: 1}} line="l3" word="built on a timeline" dur={1.1} easing="easeOut" />
+      <Set target="rail" to={{pinned: 1}} line="l3" word="pinned" />
+      <Tween target="rail" to={{thread: 1}} line="l3" word="pinned" dur={0.8} />
+      <Tween target="rail" to={{ins: 1}} line="l4" word="change one sentence" dur={0.9} />
+      <Tween target="rail" to={{late: 1}} line="l4" word="a beat late" dur={0.5} />
     </Animation>
     <Sound asset="ding" line="l2" word="the moment" offset={0.33} volume={-13} />
     <Sound asset="ding" line="l2" word="the moment" offset={1.07} volume={-13} />
@@ -1331,12 +1331,12 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
       <div style={{textAlign: 'center', fontFamily: SANS, fontWeight: 800, fontSize: 76, letterSpacing: '-0.03em', color: TEXT}}>{useText('hear-a', 'What you hear is what you ')}<span style={{color: CUE}}>{useText('hear-b', 'see')}</span>{useText('hear-c', '.')}</div>
     )}</Part>
     <Animation>
-      <Set on="chapter" n="02" name="The question" at="start" />
-      <Tween on="rail" wave={1} line="l5" word="its narration" dur={1.2} easing="linear" />
-      <Tween on="rail" marks={1} line="l5" word="its narration" offset={0.6} dur={0.5} />
-      <Tween on="rail" ruler={0} late={0} line="l6" word="hang each picture" dur={0.7} />
-      <Tween on="rail" pinned={0} line="l6" word="on the word" dur={1.1} easing="easeInOutBack(1.4)" />
-      <Appear on="hear" line="l6" word="what you hear" dur={0.6} />
+      <Set target="chapter" to={{n: "02", name: "The question"}} at="start" />
+      <Tween target="rail" to={{wave: 1}} line="l5" word="its narration" dur={1.2} easing="linear" />
+      <Tween target="rail" to={{marks: 1}} line="l5" word="its narration" offset={0.6} dur={0.5} />
+      <Tween target="rail" to={{ruler: 0, late: 0}} line="l6" word="hang each picture" dur={0.7} />
+      <Tween target="rail" to={{pinned: 0}} line="l6" word="on the word" dur={1.1} easing="easeInOutBack(1.4)" />
+      <Appear target="hear" line="l6" word="what you hear" dur={0.6} />
     </Animation>
     <Sound asset="tick" line="l6" word="on the word" offset={0.5} volume={-10} />
   </Scene>
@@ -1346,11 +1346,11 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Line id="l8" hold={1.4}>Its one rule: narration is the new timeline.</Line>
     <Part id="intro"><Intro /></Part>
     <Animation>
-      <Disappear on={["rail", "chapter"]} at="start" dur={0.5} />
-      <Appear on="intro" at="start" dur={0} />
-      <Tween on="intro" draw={1} at="start" offset={0.3} dur={2.15} easing="linear" />
-      <Appear on="intro-tag" line="l7" word="an agent skill" dur={0.6} />
-      <Appear on="intro-rule" line="l8" word="narration" dur={0.6} />
+      <Disappear target={["rail", "chapter"]} at="start" dur={0.5} />
+      <Appear target="intro" at="start" dur={0} />
+      <Tween target="intro" to={{draw: 1}} at="start" offset={0.3} dur={2.15} easing="linear" />
+      <Appear target="intro-tag" line="l7" word="an agent skill" dur={0.6} />
+      <Appear target="intro-rule" line="l8" word="narration" dur={0.6} />
     </Animation>
     {/* the music comes in once VisoTalk's rule has been said: 8 dB under the voice, 3 dB further back while it speaks */}
     <Sound asset="music" line="l8" edge="end" loop volume={-8} duck={3} fadeIn={1.2} fadeOut={4} />
@@ -1382,37 +1382,37 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
       </div>
     )}</Part>
     <Animation>
-      <Set on="chapter" n="03" name="Hung on words" at="start" />
-      <Appear on={["rail", "chapter", "badge"]} at="start" dur={0.6} />
-      <Tween on="rail" wave={0} marks={0} at="start" dur={0.4} />
-      <Tween on="rail" dark={1} line="l9" word="watch the sun" dur={0.8} />
-      <Appear on="clock" line="l9" word="on a timeline" dur={0.5} />
-      <Appear on="gagcode" line="l9" word="pinned to a second" dur={0} />
-      <Appear on="gag-clock" line="l9" word="pinned to a second" />
-      <Disappear on="gag-clock" line="l12" word="now" dur={0.4} />
-      <Appear on="gag-word" line="l12" word="hang the light on the word" />
-      <Disappear on="gag-word" line="l16" dur={0.4} />
-      <Tween on="clock" clk={4.4} line="l10" dur={4.4} easing="linear" />
-      <Appear on="sunlight" line="l10" offset={1.2} dur={0.25} />
-      <Appear on="early" line="l10" offset={1.45} dur={0.3} />
-      <Disappear on={["sunlight", "early"]} line="l12" word="now" dur={0.4} />
-      <Set on="clock" clk={0} line="l12" word="now" />
-      <Tween on="clock" hang={1} line="l12" word="hang the light" dur={0.9} easing="easeInOut" />
-      <Tween on="clock" clk={4.4} line="l13" dur={4.4} easing="linear" />
-      <Appear on="sunlight" line="l14" word="light" dur={0.25} />
-      <Disappear on="clock" line="l16" dur={0.4} />
-      <Appear on="nope" line="l16" word="a second" dur={0} />
-      <Appear on="nope-s" line="l16" word="a second" />
-      <Appear on="nope-f" line="l16" word="a frame" />
-      <Disappear on={["nope-s", "nope-f"]} line="l16" word="for a word" />
-      <Appear on="code" line="l16" word="every animation" />
-      <Tween on="rail" hl={1} line="l16" word="for a word" dur={0.4} />
-      <Disappear on="code" line="l17" word="speaks the script" />
-      <Disappear on="sunlight" line="l17" word="speaks the script" dur={0.6} />
-      <Tween on="rail" dark={0} hl={0} line="l17" word="speaks the script" dur={0.6} />
-      <Tween on="rail" wave={1} line="l17" word="speaks the script" dur={1.2} easing="linear" />
-      <Tween on="rail" marks={1} line="l17" word="times each word" dur={0.5} />
-      <Tween on="rail" stamps={1} line="l17" word="solves the timeline" dur={0.6} />
+      <Set target="chapter" to={{n: "03", name: "Hung on words"}} at="start" />
+      <Appear target={["rail", "chapter", "badge"]} at="start" dur={0.6} />
+      <Tween target="rail" to={{wave: 0, marks: 0}} at="start" dur={0.4} />
+      <Tween target="rail" to={{dark: 1}} line="l9" word="watch the sun" dur={0.8} />
+      <Appear target="clock" line="l9" word="on a timeline" dur={0.5} />
+      <Appear target="gagcode" line="l9" word="pinned to a second" dur={0} />
+      <Appear target="gag-clock" line="l9" word="pinned to a second" />
+      <Disappear target="gag-clock" line="l12" word="now" dur={0.4} />
+      <Appear target="gag-word" line="l12" word="hang the light on the word" />
+      <Disappear target="gag-word" line="l16" dur={0.4} />
+      <Tween target="clock" to={{clk: 4.4}} line="l10" dur={4.4} easing="linear" />
+      <Appear target="sunlight" line="l10" offset={1.2} dur={0.25} />
+      <Appear target="early" line="l10" offset={1.45} dur={0.3} />
+      <Disappear target={["sunlight", "early"]} line="l12" word="now" dur={0.4} />
+      <Set target="clock" to={{clk: 0}} line="l12" word="now" />
+      <Tween target="clock" to={{hang: 1}} line="l12" word="hang the light" dur={0.9} easing="easeInOut" />
+      <Tween target="clock" to={{clk: 4.4}} line="l13" dur={4.4} easing="linear" />
+      <Appear target="sunlight" line="l14" word="light" dur={0.25} />
+      <Disappear target="clock" line="l16" dur={0.4} />
+      <Appear target="nope" line="l16" word="a second" dur={0} />
+      <Appear target="nope-s" line="l16" word="a second" />
+      <Appear target="nope-f" line="l16" word="a frame" />
+      <Disappear target={["nope-s", "nope-f"]} line="l16" word="for a word" />
+      <Appear target="code" line="l16" word="every animation" />
+      <Tween target="rail" to={{hl: 1}} line="l16" word="for a word" dur={0.4} />
+      <Disappear target="code" line="l17" word="speaks the script" />
+      <Disappear target="sunlight" line="l17" word="speaks the script" dur={0.6} />
+      <Tween target="rail" to={{dark: 0, hl: 0}} line="l17" word="speaks the script" dur={0.6} />
+      <Tween target="rail" to={{wave: 1}} line="l17" word="speaks the script" dur={1.2} easing="linear" />
+      <Tween target="rail" to={{marks: 1}} line="l17" word="times each word" dur={0.5} />
+      <Tween target="rail" to={{stamps: 1}} line="l17" word="solves the timeline" dur={0.6} />
     </Animation>
     <Sound asset="light" line="l10" offset={1.2} volume={-6} />
     <Sound asset="miss" line="l10" offset={1.5} volume={-12} />
@@ -1426,25 +1426,25 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Line id="l21" hold={1.6}>One source, every language.</Line>
     <Part id="files" x={0} y={850} w={1920} h={110}><LangFiles /></Part>
     <Animation>
-      <Set on="chapter" n="04" name="What it buys you" at="start" />
-      <Tween on="rail" ins2={1} line="l18" word="rewrite a line" dur={0.9} />
-      <Tween on="rail" ok={1} line="l18" word="picture follows" dur={0.4} />
-      <Tween on="rail" ok={0} line="l19" word="another voice" dur={0.4} />
-      <Tween on="rail" pace={1.45} line="l19" word="slower" dur={0.5} />
-      <Set on="rail" spd="0.75×" line="l19" word="slower" />
-      <Tween on="rail" pace={0.7} line="l19" word="faster" dur={0.5} />
-      <Set on="rail" spd="1.25×" line="l19" word="faster" />
-      <Tween on="rail" pace={1} line="l19" word="follows again" dur={0.6} />
-      <Set on="rail" spd="" line="l19" word="follows again" offset={0.6} />
-      <Tween on="rail" langs={1} line="l20" word="translate it" dur={0.5} />
-      <Tween on="rail" lang={1} line="l20" edge="end" offset={0.3} dur={0.5} />
-      <Tween on="rail" lang={2} line="l20" edge="end" offset={1.3} dur={0.5} />
-      <Tween on="rail" lang={3} line="l20" edge="end" offset={2.3} dur={0.5} />
-      <Tween on="rail" lang={4} line="l20" edge="end" offset={3.3} dur={0.5} />
-      <Tween on="rail" ok={1} line="l20" edge="end" offset={0.8} dur={0.4} />
-      <Appear on="files" line="l21" word="one source" dur={0} />
-      <Appear on="lang-src" line="l21" word="one source" />
-      <Appear on="lang-over" line="l21" word="every language" />
+      <Set target="chapter" to={{n: "04", name: "What it buys you"}} at="start" />
+      <Tween target="rail" to={{ins2: 1}} line="l18" word="rewrite a line" dur={0.9} />
+      <Tween target="rail" to={{ok: 1}} line="l18" word="picture follows" dur={0.4} />
+      <Tween target="rail" to={{ok: 0}} line="l19" word="another voice" dur={0.4} />
+      <Tween target="rail" to={{pace: 1.45}} line="l19" word="slower" dur={0.5} />
+      <Set target="rail" to={{spd: "0.75×"}} line="l19" word="slower" />
+      <Tween target="rail" to={{pace: 0.7}} line="l19" word="faster" dur={0.5} />
+      <Set target="rail" to={{spd: "1.25×"}} line="l19" word="faster" />
+      <Tween target="rail" to={{pace: 1}} line="l19" word="follows again" dur={0.6} />
+      <Set target="rail" to={{spd: ""}} line="l19" word="follows again" offset={0.6} />
+      <Tween target="rail" to={{langs: 1}} line="l20" word="translate it" dur={0.5} />
+      <Tween target="rail" to={{lang: 1}} line="l20" edge="end" offset={0.3} dur={0.5} />
+      <Tween target="rail" to={{lang: 2}} line="l20" edge="end" offset={1.3} dur={0.5} />
+      <Tween target="rail" to={{lang: 3}} line="l20" edge="end" offset={2.3} dur={0.5} />
+      <Tween target="rail" to={{lang: 4}} line="l20" edge="end" offset={3.3} dur={0.5} />
+      <Tween target="rail" to={{ok: 1}} line="l20" edge="end" offset={0.8} dur={0.4} />
+      <Appear target="files" line="l21" word="one source" dur={0} />
+      <Appear target="lang-src" line="l21" word="one source" />
+      <Appear target="lang-over" line="l21" word="every language" />
     </Animation>
     {/* each language's name, said in that language (say-1 … say-4, in the order of rail-others: a native MiniMax voice each, see README), as the sentence switches to it */}
     <Sound asset="say-1" line="l20" edge="end" offset={0.3} />
@@ -1463,32 +1463,32 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Part id="doc"><DocTags /></Part>
     <Part id="kinds"><Kinds /></Part>
     <Animation>
-      <Set on="chapter" n="05" name="The document" at="start" />
-      <Disappear on="rail" at="start" dur={0.5} />
-      <Appear on="doc" at="start" offset={0.3} dur={0.5} />
-      <Tween on="doc" type={1} line="l22" word="one document" until={{line: "l22", edge: "end"}} easing="linear" />
-      <Set on="doc" hl="scene" line="l23" word="a scene" />
-      <Set on="doc" hl="scene,line" line="l23" word="holds lines" />
-      <Tween on="doc" say={1} line="l23" word="the words" until={{line: "l23", edge: "end"}} easing="linear" />
-      <Set on="doc" hl="part" line="l24" word="a part" />
-      <Tween on="doc" ghost={1} line="l24" word="ordinary react" dur={0.6} />
-      <Set on="doc" hl="appear" line="l25" word="appear" />
-      <Tween on="doc" ghost={0} line="l25" word="brings it in" dur={0.3} />
-      <Appear on="v-chart" line="l25" word="brings it in" dur={0.5} />
-      <Set on="doc" hl="tween" line="l25" word="tween" />
-      <Tween on="doc" grow={1} line="l25" word="moves it" dur={0.8} />
-      <Set on="doc" hl="set" line="l25" word="set changes" />
-      <Set on="doc" label="×3" line="l25" word="a value" />
-      <Set on="doc" hl="disappear" line="l25" word="disappear" />
-      <Disappear on="v-chart" line="l25" word="clears it away" dur={0.5} />
-      <Set on="doc" hl="appear,tween,set,disappear" line="l26" word="each one" />
-      <Tween on="doc" anchors={1} line="l26" word="a line and a word" dur={0.6} />
-      <Disappear on="doc" line="l27" dur={0.5} />
-      <Appear on="kinds" line="l27" offset={0.4} dur={0} />
-      <Appear on="kind-react" line="l27" word="a react element" />
-      <Appear on="kind-video" line="l27" word="a video clip" />
-      <Appear on="kind-music" line="l27" word="the music" />
-      <Appear on="kind-sfx" line="l27" word="a sound effect" />
+      <Set target="chapter" to={{n: "05", name: "The document"}} at="start" />
+      <Disappear target="rail" at="start" dur={0.5} />
+      <Appear target="doc" at="start" offset={0.3} dur={0.5} />
+      <Tween target="doc" to={{type: 1}} line="l22" word="one document" until={{line: "l22", edge: "end"}} easing="linear" />
+      <Set target="doc" to={{hl: "scene"}} line="l23" word="a scene" />
+      <Set target="doc" to={{hl: "scene,line"}} line="l23" word="holds lines" />
+      <Tween target="doc" to={{say: 1}} line="l23" word="the words" until={{line: "l23", edge: "end"}} easing="linear" />
+      <Set target="doc" to={{hl: "part"}} line="l24" word="a part" />
+      <Tween target="doc" to={{ghost: 1}} line="l24" word="ordinary react" dur={0.6} />
+      <Set target="doc" to={{hl: "appear"}} line="l25" word="appear" />
+      <Tween target="doc" to={{ghost: 0}} line="l25" word="brings it in" dur={0.3} />
+      <Appear target="v-chart" line="l25" word="brings it in" dur={0.5} />
+      <Set target="doc" to={{hl: "tween"}} line="l25" word="tween" />
+      <Tween target="doc" to={{grow: 1}} line="l25" word="moves it" dur={0.8} />
+      <Set target="doc" to={{hl: "set"}} line="l25" word="set changes" />
+      <Set target="doc" to={{label: "×3"}} line="l25" word="a value" />
+      <Set target="doc" to={{hl: "disappear"}} line="l25" word="disappear" />
+      <Disappear target="v-chart" line="l25" word="clears it away" dur={0.5} />
+      <Set target="doc" to={{hl: "appear,tween,set,disappear"}} line="l26" word="each one" />
+      <Tween target="doc" to={{anchors: 1}} line="l26" word="a line and a word" dur={0.6} />
+      <Disappear target="doc" line="l27" dur={0.5} />
+      <Appear target="kinds" line="l27" offset={0.4} dur={0} />
+      <Appear target="kind-react" line="l27" word="a react element" />
+      <Appear target="kind-video" line="l27" word="a video clip" />
+      <Appear target="kind-music" line="l27" word="the music" />
+      <Appear target="kind-sfx" line="l27" word="a sound effect" />
     </Animation>
     <Sound asset="ding" line="l25" word="brings it in" volume={-12} />
     <Sound asset="swoosh" line="l25" word="moves it" volume={-16} />
@@ -1508,27 +1508,27 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Part id="film"><LongFilm /></Part>
     <Part id="outline"><Outline /></Part>
     <Animation>
-      <Set on="chapter" n="06" name="Long form" at="start" />
-      <Appear on="cover" line="l28" word="gets long" dur={0.7} />
-      <Disappear on="cover" line="l29" word="seven minutes" dur={0.5} />
-      <Appear on="film" line="l29" word="seven minutes" dur={0} />
-      <Tween on="film" strip={1} line="l29" word="seven minutes" dur={1.4} easing="easeInOut" />
-      <Tween on="film" total={1} line="l29" word="seven minutes" offset={0.8} dur={0.5} />
-      <Tween on="film" mov={1} line="l29" word="four movements" dur={0.8} />
-      <Tween on="film" zh={1} line="l29" word="two languages" dur={0.8} />
-      <Tween on="film" lines={1} line="l30" word="scenes of lines" dur={0.8} />
-      <Tween on="film" dots={1} line="l30" word="on its word" dur={0.6} />
-      <Tween on="film" zoom={1} line="l30" word="on its word" dur={0.6} />
-      <Tween on="film" grow={1} line="l30" word="rewrite one sentence" dur={1.0} />
-      <Tween on="film" calm={1} line="l30" word="nothing else moves" dur={0.6} />
-      <Tween on="film" calm={0} zoom={0} line="l31" word="the music" dur={0.4} />
-      <Tween on="film" bars={1} line="l31" word="the music" dur={0.8} />
-      <Tween on="film" snap={1} line="l31" word="whole bars" dur={0.6} />
-      <Tween on="film" both={1} line="l31" word="both languages" dur={0.6} />
-      <Disappear on="film" line="l32" dur={0.5} />
-      <Appear on="outline" line="l32" offset={0.3} dur={0} />
-      <Tween on="outline" rows={1} line="l32" word="thirteen scenes" dur={1.4} easing="linear" />
-      <Tween on="outline" open={1} line="l32" word="each one under its word" dur={1.2} />
+      <Set target="chapter" to={{n: "06", name: "Long form"}} at="start" />
+      <Appear target="cover" line="l28" word="gets long" dur={0.7} />
+      <Disappear target="cover" line="l29" word="seven minutes" dur={0.5} />
+      <Appear target="film" line="l29" word="seven minutes" dur={0} />
+      <Tween target="film" to={{strip: 1}} line="l29" word="seven minutes" dur={1.4} easing="easeInOut" />
+      <Tween target="film" to={{total: 1}} line="l29" word="seven minutes" offset={0.8} dur={0.5} />
+      <Tween target="film" to={{mov: 1}} line="l29" word="four movements" dur={0.8} />
+      <Tween target="film" to={{zh: 1}} line="l29" word="two languages" dur={0.8} />
+      <Tween target="film" to={{lines: 1}} line="l30" word="scenes of lines" dur={0.8} />
+      <Tween target="film" to={{dots: 1}} line="l30" word="on its word" dur={0.6} />
+      <Tween target="film" to={{zoom: 1}} line="l30" word="on its word" dur={0.6} />
+      <Tween target="film" to={{grow: 1}} line="l30" word="rewrite one sentence" dur={1.0} />
+      <Tween target="film" to={{calm: 1}} line="l30" word="nothing else moves" dur={0.6} />
+      <Tween target="film" to={{calm: 0, zoom: 0}} line="l31" word="the music" dur={0.4} />
+      <Tween target="film" to={{bars: 1}} line="l31" word="the music" dur={0.8} />
+      <Tween target="film" to={{snap: 1}} line="l31" word="whole bars" dur={0.6} />
+      <Tween target="film" to={{both: 1}} line="l31" word="both languages" dur={0.6} />
+      <Disappear target="film" line="l32" dur={0.5} />
+      <Appear target="outline" line="l32" offset={0.3} dur={0} />
+      <Tween target="outline" to={{rows: 1}} line="l32" word="thirteen scenes" dur={1.4} easing="linear" />
+      <Tween target="outline" to={{open: 1}} line="l32" word="each one under its word" dur={1.2} />
     </Animation>
   </Scene>
 
@@ -1543,43 +1543,43 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Part id="web"><WebPlayer /></Part>
     <Part id="mp4"><Mp4 /></Part>
     <Animation>
-      <Set on="chapter" n="07" name="The whole workflow" at="start" />
-      <Appear on={["flow", "cards"]} line="l34" dur={0} />
-      <Tween on="flow" draw={1} line="l34" until={{line: "l34", word: "whole workflow", edge: "end"}} easing="easeInOut" />
-      <Set on="flow" step={1} line="l35" word="your agent" />
-      <Appear on="card-script" line="l35" word="your agent" />
-      <Set on="flow" step={2} line="l35" word="the voice" />
-      <Disappear on="card-script" line="l35" word="the voice" />
-      <Appear on="card-voice" line="l35" word="the voice" />
-      <Set on="flow" step={3} line="l35" word="it looks" />
-      <Disappear on="card-voice" line="l35" word="it looks" />
-      <Appear on="card-frames" line="l35" word="it looks" />
-      <Set on="flow" step={4} line="l35" word="flags" />
-      <Disappear on="card-frames" line="l35" word="flags" />
-      <Appear on="card-checks" line="l35" word="flags" />
-      <Tween on="cards" issues={1} line="l35" word="collides" dur={0.3} />
-      <Tween on="cards" flash={1} line="l35" word="flashes by" dur={0.3} />
-      <Set on="flow" step={5} line="l36" word="captions" />
-      <Disappear on="card-checks" line="l36" word="captions" />
-      <Appear on="card-captions" line="l36" word="captions" />
-      <Appear on="out-caption" line="l36" word="captions" offset={0.2} />
-      <Appear on="out-srt" line="l36" word="subtitles" />
-      <Appear on="out-zh" line="l36" word="other languages" />
-      <Set on="flow" step={6} line="l37" word="plays natively" />
-      <Disappear on={["cards", "flow"]} line="l37" word="on the web" />
-      <Appear on="web" line="l37" word="on the web" />
-      <Tween on="web" pt={4.4} line="l37" word="on the web" until={{line: "l37", word: "pause it"}} easing="linear" />
-      <Set on="web" pt={6.05} line="l37" word="jump to any sentence" />
-      <Tween on="web" pt={8.9} line="l37" word="jump to any sentence" offset={0.05} until={{line: "l37", edge: "end"}} easing="linear" />
-      <Tween on="web" nofile={1} line="l37" word="not a video file" dur={0.4} />
-      <Tween on="web" live={1} line="l37" word="live in the page" dur={0.4} />
-      <Tween on="web" pause={1} line="l37" word="pause it" dur={0.3} />
-      <Tween on="web" pause={0} line="l37" word="jump to any sentence" dur={0.3} />
-      <Tween on="web" jump={1} line="l37" word="jump to any sentence" dur={0.4} />
-      <Tween on="web" src={1} line="l37" word="read its source" dur={0.4} />
-      <Disappear on="web" line="l38" dur={0.3} />
-      <Appear on="mp4" line="l38" offset={0.2} dur={0.4} />
-      <Tween on="mp4" frames={1} line="l38" word="video files" dur={1} easing="linear" />
+      <Set target="chapter" to={{n: "07", name: "The whole workflow"}} at="start" />
+      <Appear target={["flow", "cards"]} line="l34" dur={0} />
+      <Tween target="flow" to={{draw: 1}} line="l34" until={{line: "l34", word: "whole workflow", edge: "end"}} easing="easeInOut" />
+      <Set target="flow" to={{step: 1}} line="l35" word="your agent" />
+      <Appear target="card-script" line="l35" word="your agent" />
+      <Set target="flow" to={{step: 2}} line="l35" word="the voice" />
+      <Disappear target="card-script" line="l35" word="the voice" />
+      <Appear target="card-voice" line="l35" word="the voice" />
+      <Set target="flow" to={{step: 3}} line="l35" word="it looks" />
+      <Disappear target="card-voice" line="l35" word="it looks" />
+      <Appear target="card-frames" line="l35" word="it looks" />
+      <Set target="flow" to={{step: 4}} line="l35" word="flags" />
+      <Disappear target="card-frames" line="l35" word="flags" />
+      <Appear target="card-checks" line="l35" word="flags" />
+      <Tween target="cards" to={{issues: 1}} line="l35" word="collides" dur={0.3} />
+      <Tween target="cards" to={{flash: 1}} line="l35" word="flashes by" dur={0.3} />
+      <Set target="flow" to={{step: 5}} line="l36" word="captions" />
+      <Disappear target="card-checks" line="l36" word="captions" />
+      <Appear target="card-captions" line="l36" word="captions" />
+      <Appear target="out-caption" line="l36" word="captions" offset={0.2} />
+      <Appear target="out-srt" line="l36" word="subtitles" />
+      <Appear target="out-zh" line="l36" word="other languages" />
+      <Set target="flow" to={{step: 6}} line="l37" word="plays natively" />
+      <Disappear target={["cards", "flow"]} line="l37" word="on the web" />
+      <Appear target="web" line="l37" word="on the web" />
+      <Tween target="web" to={{pt: 4.4}} line="l37" word="on the web" until={{line: "l37", word: "pause it"}} easing="linear" />
+      <Set target="web" to={{pt: 6.05}} line="l37" word="jump to any sentence" />
+      <Tween target="web" to={{pt: 8.9}} line="l37" word="jump to any sentence" offset={0.05} until={{line: "l37", edge: "end"}} easing="linear" />
+      <Tween target="web" to={{nofile: 1}} line="l37" word="not a video file" dur={0.4} />
+      <Tween target="web" to={{live: 1}} line="l37" word="live in the page" dur={0.4} />
+      <Tween target="web" to={{pause: 1}} line="l37" word="pause it" dur={0.3} />
+      <Tween target="web" to={{pause: 0}} line="l37" word="jump to any sentence" dur={0.3} />
+      <Tween target="web" to={{jump: 1}} line="l37" word="jump to any sentence" dur={0.4} />
+      <Tween target="web" to={{src: 1}} line="l37" word="read its source" dur={0.4} />
+      <Disappear target="web" line="l38" dur={0.3} />
+      <Appear target="mp4" line="l38" offset={0.2} dur={0.4} />
+      <Tween target="mp4" to={{frames: 1}} line="l38" word="video files" dur={1} easing="linear" />
     </Animation>
     <Sound asset="chime" line="l35" word="your agent" volume={-12} />
     <Sound asset="chime" line="l35" word="the voice" volume={-12} />
@@ -1597,17 +1597,17 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Part id="cmd"><Command /></Part>
     <Part id="end"><EndCard /></Part>
     <Animation>
-      <Set on="chapter" n="08" name="Made with VisoTalk" at="start" />
-      <Appear on="echo" line="l39" />
-      <Tween on="echo" threads={1} line="l39" word="every word" until={{line: "l39", edge: "end"}} easing="linear" />
-      <Disappear on="echo" line="l40" word="open source" />
-      <Appear on="cmd" line="l40" word="one command" />
-      <Tween on="cmd" chars={1} line="l40" word="adds the skill" dur={1.4} easing="linear" />
-      <Disappear on={["cmd", "chapter", "badge"]} line="l41" dur={0.4} />
-      <Appear on="end" line="l41" dur={0} />
-      <Tween on="end" draw={1} line="l41" dur={2.15} easing="linear" />
-      <Appear on="end-title" line="l41" word="the new timeline" dur={0.8} />
-      <Appear on="end-tag" line="l41" edge="end" offset={1.2} dur={0.8} />
+      <Set target="chapter" to={{n: "08", name: "Made with VisoTalk"}} at="start" />
+      <Appear target="echo" line="l39" />
+      <Tween target="echo" to={{threads: 1}} line="l39" word="every word" until={{line: "l39", edge: "end"}} easing="linear" />
+      <Disappear target="echo" line="l40" word="open source" />
+      <Appear target="cmd" line="l40" word="one command" />
+      <Tween target="cmd" to={{chars: 1}} line="l40" word="adds the skill" dur={1.4} easing="linear" />
+      <Disappear target={["cmd", "chapter", "badge"]} line="l41" dur={0.4} />
+      <Appear target="end" line="l41" dur={0} />
+      <Tween target="end" to={{draw: 1}} line="l41" dur={2.15} easing="linear" />
+      <Appear target="end-title" line="l41" word="the new timeline" dur={0.8} />
+      <Appear target="end-tag" line="l41" edge="end" offset={1.2} dur={0.8} />
     </Animation>
     <Sound asset="swoosh" line="l41" volume={-12} />
     <Sound asset="ding" line="l41" offset={0.52} volume={-12} />

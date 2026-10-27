@@ -5,7 +5,7 @@ description: Write, check and render a narrated explainer video as a VisoTalk do
 
 # Making an explainer with VisoTalk
 
-You write one file, `doc.tsx`: a VisoTalk document, spec 0.5, a TSX module. A scene holds the narration **lines**, the **parts** (boxes of ordinary React that draw
+You write one file, `doc.tsx`: a VisoTalk document, spec 0.6, a TSX module. A scene holds the narration **lines**, the **parts** (boxes of ordinary React that draw
 what is on screen) and an **animation** that says when each thing appears or changes, anchored to the **words** of the narration. The skeleton (lines, parts, animations) is
 *read* by the engine as literals; what is inside a part is React you write freely: CSS layout, SVG, data tables, loops. The engine owns time and rendering: you never
 write frame numbers; the picture is a function of the clock and of numbers the document tweens. Then you validate it, look at stills, and render it.

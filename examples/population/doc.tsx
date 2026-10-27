@@ -292,13 +292,13 @@ export default <Doc id="population" poster={34} title="The eight billion" lang="
     <Part id="gauge" x={100} y={150} w={720} h={720}><Gauge/></Part>
     <Part id="amount" x={900} y={290} w={940} h={400}><Amount/></Part>
     <Animation>
-      <Appear on={["gauge", "amount"]} at="start"/>
-      <Appear on="t0" line="p1" word="population"/>
-      <Tween on="ring" draw={1} line="p1" word="Count" dur={1.2}/>
-      <Appear on={["bead1", "bead2", "bead3", "bead4", "bead5", "bead6", "bead7", "bead8"]} line="p1" word="Count" stagger={0.15}/>
-      <Appear on="watch" line="p1" word="Count" offset={0.5}/>
-      <Appear on="big" line="p1" word="billions"/>
-      <Appear on="bigsub" line="p1" word="billions" offset={0.5}/>
+      <Appear target={["gauge", "amount"]} at="start"/>
+      <Appear target="t0" line="p1" word="population"/>
+      <Tween target="ring" to={{draw: 1}} line="p1" word="Count" dur={1.2}/>
+      <Appear target={["bead1", "bead2", "bead3", "bead4", "bead5", "bead6", "bead7", "bead8"]} line="p1" word="Count" stagger={0.15}/>
+      <Appear target="watch" line="p1" word="Count" offset={0.5}/>
+      <Appear target="big" line="p1" word="billions"/>
+      <Appear target="bigsub" line="p1" word="billions" offset={0.5}/>
     </Animation>
   </Scene>
 
@@ -315,49 +315,49 @@ export default <Doc id="population" poster={34} title="The eight billion" lang="
     <Part id="t1" x={100} y={40} w={1720} h={90}><Title>Years it took to add each billion</Title></Part>
     <Part id="waitchart" x={80} y={150} w={1760} h={720}><WaitChart/></Part>
     <Animation>
-      <Appear on="waitchart" at="start"/>
-      <Appear on="t1" line="p2" word="For"/>
-      <Appear on={["ord1", "bar1"]} line="p2" word="history"/>
-      <Tween on="bar1" grow={1} line="p2" word="history" dur={1.4}/>
-      <Appear on="date1" line="p2" word="eighteen"/>
+      <Appear target="waitchart" at="start"/>
+      <Appear target="t1" line="p2" word="For"/>
+      <Appear target={["ord1", "bar1"]} line="p2" word="history"/>
+      <Tween target="bar1" to={{grow: 1}} line="p2" word="history" dur={1.4}/>
+      <Appear target="date1" line="p2" word="eighteen"/>
 
-      <Appear on={["ord2", "bar2"]} line="p3" word="second"/>
-      <Tween on="bar2" grow={1} line="p3" word="second" dur={1.4}/>
-      <Appear on="gap2" line="p3" word="one"/>
-      <Appear on="date2" line="p3" word="nineteen"/>
+      <Appear target={["ord2", "bar2"]} line="p3" word="second"/>
+      <Tween target="bar2" to={{grow: 1}} line="p3" word="second" dur={1.4}/>
+      <Appear target="gap2" line="p3" word="one"/>
+      <Appear target="date2" line="p3" word="nineteen"/>
 
-      <Appear on={["ord3", "bar3"]} line="p4" word="third"/>
-      <Tween on="bar3" grow={1} line="p4" word="third" dur={1.4}/>
-      <Appear on="gap3" line="p4" word="thirty"/>
-      <Appear on="date3" line="p4" word="nineteen"/>
+      <Appear target={["ord3", "bar3"]} line="p4" word="third"/>
+      <Tween target="bar3" to={{grow: 1}} line="p4" word="third" dur={1.4}/>
+      <Appear target="gap3" line="p4" word="thirty"/>
+      <Appear target="date3" line="p4" word="nineteen"/>
 
-      <Appear on={["ord4", "bar4", "gap4", "date4"]} line="p5" word="fourteen"/>
-      <Tween on="bar4" grow={1} line="p5" word="fourteen" dur={1.4}/>
-      <Appear on={["ord5", "bar5", "gap5", "date5"]} line="p5" word="thirteen"/>
-      <Tween on="bar5" grow={1} line="p5" word="thirteen" dur={1.4}/>
+      <Appear target={["ord4", "bar4", "gap4", "date4"]} line="p5" word="fourteen"/>
+      <Tween target="bar4" to={{grow: 1}} line="p5" word="fourteen" dur={1.4}/>
+      <Appear target={["ord5", "bar5", "gap5", "date5"]} line="p5" word="thirteen"/>
+      <Tween target="bar5" to={{grow: 1}} line="p5" word="thirteen" dur={1.4}/>
 
-      <Appear on={["ord6", "bar6"]} line="p6" word="sixth"/>
-      <Tween on="bar6" grow={1} line="p6" word="sixth" dur={1.4}/>
-      <Appear on={["ord7", "bar7"]} line="p6" word="seventh"/>
-      <Tween on="bar7" grow={1} line="p6" word="seventh" dur={1.4}/>
-      <Appear on={["gap6", "date6", "gap7", "date7"]} line="p6" word="twelve"/>
+      <Appear target={["ord6", "bar6"]} line="p6" word="sixth"/>
+      <Tween target="bar6" to={{grow: 1}} line="p6" word="sixth" dur={1.4}/>
+      <Appear target={["ord7", "bar7"]} line="p6" word="seventh"/>
+      <Tween target="bar7" to={{grow: 1}} line="p6" word="seventh" dur={1.4}/>
+      <Appear target={["gap6", "date6", "gap7", "date7"]} line="p6" word="twelve"/>
 
-      <Appear on={["ord8", "bar8"]} line="p7" word="eighth"/>
-      <Tween on="bar8" grow={1} line="p7" word="eighth" dur={1.4}/>
-      <Appear on="gap8" line="p7" word="eleven"/>
-      <Appear on="date8" line="p7" word="twenty twenty two"/>
+      <Appear target={["ord8", "bar8"]} line="p7" word="eighth"/>
+      <Tween target="bar8" to={{grow: 1}} line="p7" word="eighth" dur={1.4}/>
+      <Appear target="gap8" line="p7" word="eleven"/>
+      <Appear target="date8" line="p7" word="twenty twenty two"/>
 
-      <Tween on="trend" draw={1} line="p8" word="shrunk" dur={1.5}/>
-      <Appear on="decade" line="p8" word="decade"/>
+      <Tween target="trend" to={{draw: 1}} line="p8" word="shrunk" dur={1.5}/>
+      <Appear target="decade" line="p8" word="decade"/>
 
-      <Appear on="rabbit" line="p9" word="faster"/>
-      <Appear on="again" line="p9" word="again" nth={2}/>
+      <Appear target="rabbit" line="p9" word="faster"/>
+      <Appear target="again" line="p9" word="again" nth={2}/>
 
-      <Disappear on={["trend", "decade", "rabbit", "again"]} line="p10" word="But"/>
-      <Appear on={["ord9", "bar9"]} line="p10" word="ninth"/>
-      <Tween on="bar9" grow={1} line="p10" word="ninth" dur={1.4}/>
-      <Appear on="gap9" line="p10" word="fifteen"/>
-      <Appear on="date9" line="p10" word="twenty thirty seven"/>
+      <Disappear target={["trend", "decade", "rabbit", "again"]} line="p10" word="But"/>
+      <Appear target={["ord9", "bar9"]} line="p10" word="ninth"/>
+      <Tween target="bar9" to={{grow: 1}} line="p10" word="ninth" dur={1.4}/>
+      <Appear target="gap9" line="p10" word="fifteen"/>
+      <Appear target="date9" line="p10" word="twenty thirty seven"/>
     </Animation>
   </Scene>
 
@@ -367,14 +367,14 @@ export default <Doc id="population" poster={34} title="The eight billion" lang="
     <Part id="t2" x={100} y={40} w={1720} h={90}><Title>A slower pace, a rising total</Title></Part>
     <Part id="growth" x={80} y={140} w={1760} h={740}><Growth/></Part>
     <Animation>
-      <Appear on="growth" at="start"/>
-      <Appear on="t2" line="p11" word="slower"/>
-      <Appear on="axes" line="p11" word="people" dur={0.5}/>
-      <Tween on="axes" draw={1} line="p11" word="people" dur={1.2}/>
-      <Appear on="grid" line="p11" word="total"/>
-      <Tween on="curve" a={1} line="p11" word="keeps rising" dur={2.5}/>
-      <Tween on="curve" b={1} line="p12" word="keeps slowing" dur={2.5}/>
-      <Appear on="peak" line="p12" word="peak"/>
+      <Appear target="growth" at="start"/>
+      <Appear target="t2" line="p11" word="slower"/>
+      <Appear target="axes" line="p11" word="people" dur={0.5}/>
+      <Tween target="axes" to={{draw: 1}} line="p11" word="people" dur={1.2}/>
+      <Appear target="grid" line="p11" word="total"/>
+      <Tween target="curve" to={{a: 1}} line="p11" word="keeps rising" dur={2.5}/>
+      <Tween target="curve" to={{b: 1}} line="p12" word="keeps slowing" dur={2.5}/>
+      <Appear target="peak" line="p12" word="peak"/>
     </Animation>
   </Scene>
 
@@ -386,20 +386,20 @@ export default <Doc id="population" poster={34} title="The eight billion" lang="
     <Part id="life" x={980} y={170} w={860} h={620}><Life/></Part>
     <Part id="finale" x={560} y={150} w={800} h={700}><Finale/></Part>
     <Animation>
-      <Appear on="t3" line="p13" word="Fewer"/>
-      <Appear on="fam" line="p13" word="Fewer"/>
-      <Appear on={["u0", "u1", "u2", "u3"]} line="p13" word="children" stagger={0.12}/>
-      <Appear on="famlabel" line="p13" word="per"/>
-      <Disappear on={["u2", "u3"]} line="p13" word="numbers"/>
-      <Appear on="life" line="p13" word="longer"/>
-      <Tween on="lifebar" grow={1} line="p13" word="longer" dur={1.5}/>
-      <Appear on="lifelabel" line="p13" word="lives"/>
+      <Appear target="t3" line="p13" word="Fewer"/>
+      <Appear target="fam" line="p13" word="Fewer"/>
+      <Appear target={["u0", "u1", "u2", "u3"]} line="p13" word="children" stagger={0.12}/>
+      <Appear target="famlabel" line="p13" word="per"/>
+      <Disappear target={["u2", "u3"]} line="p13" word="numbers"/>
+      <Appear target="life" line="p13" word="longer"/>
+      <Tween target="lifebar" to={{grow: 1}} line="p13" word="longer" dur={1.5}/>
+      <Appear target="lifelabel" line="p13" word="lives"/>
 
-      <Disappear on={["t3", "fam", "life"]} line="p14" word="The"/>
-      <Appear on="finale" line="p14" word="The" offset={0.4}/>
-      <Tween on="ring2" draw={1} line="p14" word="sprint" dur={1.2}/>
-      <Disappear on="rab2" line="p14" word="ending" edge="end" offset={0.6} dur={0.3}/>
-      <Appear on="tur" line="p14" word="ending" edge="end" offset={1.0} dur={0.4}/>
+      <Disappear target={["t3", "fam", "life"]} line="p14" word="The"/>
+      <Appear target="finale" line="p14" word="The" offset={0.4}/>
+      <Tween target="ring2" to={{draw: 1}} line="p14" word="sprint" dur={1.2}/>
+      <Disappear target="rab2" line="p14" word="ending" edge="end" offset={0.6} dur={0.3}/>
+      <Appear target="tur" line="p14" word="ending" edge="end" offset={1.0} dur={0.4}/>
     </Animation>
   </Scene>
 </Doc>;

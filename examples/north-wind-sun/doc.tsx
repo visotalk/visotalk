@@ -286,16 +286,16 @@ export default <Doc id="north-wind-sun" poster={40} title="The North Wind and th
       </div>
     )}</Part>
     <Animation>
-      <Appear on="world" at="start" dur={1.4} />
-      <Appear on="title" line="l1" word="fable" dur={0.9} />
-      <Disappear on="title" line="l2" dur={0.6} />
-      <Appear on="wind-g" line="l2" word="North Wind" dur={0.9} />
-      <Appear on="sun-g" line="l2" word="Sun" dur={0.9} />
-      <Tween on="world" line="l2b" word="sure" puff={0.6} sunS={1.18} dur={1.4} easing="easeInOut" />
-      <Tween on="world" line="l3" puff={0} sunS={1} dur={1.2} easing="easeInOut" />
-      <Appear on="traveller" line="l3" word="traveller" dur={0.4} />
-      <Set on="world" line="l3" word="traveller" pace={1} />
-      <Tween on="world" line="l3" word="traveller" tx={700} dur={9} easing="linear" />
+      <Appear target="world" at="start" dur={1.4} />
+      <Appear target="title" line="l1" word="fable" dur={0.9} />
+      <Disappear target="title" line="l2" dur={0.6} />
+      <Appear target="wind-g" line="l2" word="North Wind" dur={0.9} />
+      <Appear target="sun-g" line="l2" word="Sun" dur={0.9} />
+      <Tween target="world" line="l2b" word="sure" to={{puff: 0.6, sunS: 1.18}} dur={1.4} easing="easeInOut" />
+      <Tween target="world" line="l3" to={{puff: 0, sunS: 1}} dur={1.2} easing="easeInOut" />
+      <Appear target="traveller" line="l3" word="traveller" dur={0.4} />
+      <Set target="world" line="l3" word="traveller" to={{pace: 1}} />
+      <Tween target="world" line="l3" word="traveller" to={{tx: 700}} dur={9} easing="linear" />
     </Animation>
   </Scene>
 
@@ -306,19 +306,19 @@ export default <Doc id="north-wind-sun" poster={40} title="The North Wind and th
     <Line id="l7">But the harder he blew, the tighter the traveller clutched his cloak.</Line>
     <Line id="l8">At last the Wind gave up, tired and defeated.</Line>
     <Animation>
-      <Tween on="world" line="l4" word="cloak" zoom={1.15} fx={950} dur={3} easing="easeInOut" />
-      <Tween on="world" line="l5" word="gathered" puff={1} dur={1.6} easing="easeInOut" />
-      <Tween on="world" line="l5" word="gathered" cover={1} dur={5} easing="easeInOut" />
-      <Tween on="world" line="l5" word="gathered" mood={0.12} dur={6} easing="easeInOut" />
-      <Tween on="world" line="l5" word="blew" gale={0.7} dur={1.4} />
-      <Tween on="world" line="l5" word="blew" lean={-6} pace={0.6} dur={1.4} />
-      <Tween on="world" line="l6" word="trees" gale={1} dur={1.2} />
-      <Tween on="world" line="l6" word="leaves" lean={-12} pace={0.45} dur={1.2} />
-      <Tween on="world" line="l7" word="harder" lean={-16} dur={1} />
-      <Tween on="world" line="l7" word="tighter" grip={1} smile={-1} dur={1} />
-      <Tween on="world" line="l8" word="gave up" gale={0} puff={0} lean={0} pace={0} dur={2.2} />
-      <Tween on="world" line="l8" word="defeated" windX={-150} dur={2.6} easing="easeIn" />
-      <Disappear on="wind-g" line="l8" word="defeated" offset={1.3} dur={1.2} />
+      <Tween target="world" line="l4" word="cloak" to={{zoom: 1.15, fx: 950}} dur={3} easing="easeInOut" />
+      <Tween target="world" line="l5" word="gathered" to={{puff: 1}} dur={1.6} easing="easeInOut" />
+      <Tween target="world" line="l5" word="gathered" to={{cover: 1}} dur={5} easing="easeInOut" />
+      <Tween target="world" line="l5" word="gathered" to={{mood: 0.12}} dur={6} easing="easeInOut" />
+      <Tween target="world" line="l5" word="blew" to={{gale: 0.7}} dur={1.4} />
+      <Tween target="world" line="l5" word="blew" to={{lean: -6, pace: 0.6}} dur={1.4} />
+      <Tween target="world" line="l6" word="trees" to={{gale: 1}} dur={1.2} />
+      <Tween target="world" line="l6" word="leaves" to={{lean: -12, pace: 0.45}} dur={1.2} />
+      <Tween target="world" line="l7" word="harder" to={{lean: -16}} dur={1} />
+      <Tween target="world" line="l7" word="tighter" to={{grip: 1, smile: -1}} dur={1} />
+      <Tween target="world" line="l8" word="gave up" to={{gale: 0, puff: 0, lean: 0, pace: 0}} dur={2.2} />
+      <Tween target="world" line="l8" word="defeated" to={{windX: -150}} dur={2.6} easing="easeIn" />
+      <Disappear target="wind-g" line="l8" word="defeated" offset={1.3} dur={1.2} />
     </Animation>
   </Scene>
 
@@ -328,18 +328,18 @@ export default <Doc id="north-wind-sun" poster={40} title="The North Wind and th
     <Line id="l11">The traveller looked up, and loosened his cloak.</Line>
     <Line id="l12">Soon the heat was so great that he took it off, and sat down in the shade.</Line>
     <Animation>
-      <Tween on="world" line="l9" word="turn" zoom={1.08} fx={1250} dur={10} easing="easeInOut" />
-      <Tween on="world" line="l9" word="slipped out" cover={0} dur={3.5} easing="easeInOut" />
-      <Tween on="world" line="l9" word="slipped out" mood={0.8} dur={3.5} easing="easeInOut" />
-      <Tween on="world" line="l9" word="shone" smile={0.2} dur={2} />
-      <Tween on="world" line="l10" word="glow" mood={1} dur={4} easing="easeInOut" />
-      <Set on="world" line="l10" word="air" pace={0.7} />
-      <Tween on="world" line="l10" word="air" tx={1230} dur={13.5} easing="linear" />
-      <Tween on="world" line="l11" word="loosened" grip={0.1} smile={0.8} dur={1.6} />
-      <Tween on="world" line="l12" word="heat" sweat={1} smile={0} dur={1.5} />
-      <Tween on="world" line="l12" word="took it off" off={1} dur={2.2} easing="easeInOut" />
-      <Tween on="world" line="l12" word="sat down" pace={0} sit={1} dur={1.8} easing="easeInOut" />
-      <Tween on="world" line="l12" word="shade" sweat={0} smile={1} dur={2} />
+      <Tween target="world" line="l9" word="turn" to={{zoom: 1.08, fx: 1250}} dur={10} easing="easeInOut" />
+      <Tween target="world" line="l9" word="slipped out" to={{cover: 0}} dur={3.5} easing="easeInOut" />
+      <Tween target="world" line="l9" word="slipped out" to={{mood: 0.8}} dur={3.5} easing="easeInOut" />
+      <Tween target="world" line="l9" word="shone" to={{smile: 0.2}} dur={2} />
+      <Tween target="world" line="l10" word="glow" to={{mood: 1}} dur={4} easing="easeInOut" />
+      <Set target="world" line="l10" word="air" to={{pace: 0.7}} />
+      <Tween target="world" line="l10" word="air" to={{tx: 1230}} dur={13.5} easing="linear" />
+      <Tween target="world" line="l11" word="loosened" to={{grip: 0.1, smile: 0.8}} dur={1.6} />
+      <Tween target="world" line="l12" word="heat" to={{sweat: 1, smile: 0}} dur={1.5} />
+      <Tween target="world" line="l12" word="took it off" to={{off: 1}} dur={2.2} easing="easeInOut" />
+      <Tween target="world" line="l12" word="sat down" to={{pace: 0, sit: 1}} dur={1.8} easing="easeInOut" />
+      <Tween target="world" line="l12" word="shade" to={{sweat: 0, smile: 1}} dur={2} />
     </Animation>
   </Scene>
 
@@ -354,10 +354,10 @@ export default <Doc id="north-wind-sun" poster={40} title="The North Wind and th
       <div style={{fontFamily: 'var(--vt-sans)', fontWeight: 400, fontSize: 96, color: '#fffaf0', textShadow: '0 3px 30px rgba(20,40,80,0.55)'}}>beats force.</div>
     )}</Part>
     <Animation>
-      <Tween on="world" line="l13a" word="roaring" zoom={1.2} fx={1250} dur={5} easing="easeInOut" />
-      <Tween on="world" line="l13" word="proved" zoom={1} fx={960} sunS={1.22} dur={4} easing="easeInOut" />
-      <Appear on="moral-a" line="l14" word="Gentle persuasion" dur={0.9} />
-      <Appear on="moral-b" line="l14" word="force fails" dur={0.9} />
+      <Tween target="world" line="l13a" word="roaring" to={{zoom: 1.2, fx: 1250}} dur={5} easing="easeInOut" />
+      <Tween target="world" line="l13" word="proved" to={{zoom: 1, fx: 960, sunS: 1.22}} dur={4} easing="easeInOut" />
+      <Appear target="moral-a" line="l14" word="Gentle persuasion" dur={0.9} />
+      <Appear target="moral-b" line="l14" word="force fails" dur={0.9} />
     </Animation>
   </Scene>
 </Doc>;

@@ -12,7 +12,7 @@ import {writeFile} from 'node:fs/promises';
 import {availableParallelism, tmpdir, totalmem} from 'node:os';
 import {dirname, join, relative, resolve, sep} from 'node:path';
 import {spawn} from 'node:child_process';
-import {findChrome, glRenderer, launch, openDrivenPage, PINNED_CHROME, withChromeLock} from './chrome.ts';
+import {findChrome, glRenderer, launch, loadPlayer, openDrivenPage, PINNED_CHROME, withChromeLock} from './chrome.ts';
 import {extractMedia} from './extract.ts';
 import {servePlayer} from './server.ts';
 
@@ -151,8 +151,7 @@ async function openSession(o: RenderOptions): Promise<Session> {
       const version = await probeBrowser.version();
       if (!version.endsWith(`/${PINNED_CHROME}`)) console.error(`warning: ${version} is not the pinned ${PINNED_CHROME}; pixels, and the goldens, can differ from other machines`);
       const p = await probeBrowser.newPage();
-      await p.goto(url, {waitUntil: 'domcontentloaded'});
-      await p.waitForFunction('!!window.__visotalk');
+      await loadPlayer(p, url);
       const meta = (await p.evaluate(`({doc: window.__visotalk.doc, duration: window.__visotalk.duration, width: window.__visotalk.width,
         height: window.__visotalk.height, narration: window.__visotalk.narration, sounds: window.__visotalk.sounds, envelopes: []})`)) as Meta;
       const count = Math.ceil(meta.duration * ENV_HZ);

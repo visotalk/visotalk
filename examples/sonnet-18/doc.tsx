@@ -203,105 +203,105 @@ export default <Doc id="sonnet-18" poster={36} title="Sonnet 18" lang="en" voice
 
     <Animation>
       {/* Quatrain one */}
-      <Appear on="q1" at="start" dur={0} />
-      <Appear on="q1-a" line="l1" word="shall" />
-      <Appear on="q1-b" line="l1" word="summer's" dur={0.7} easing="easeOutQuart" />
-      <Tween on="q1" focus={1} line="l2" dur={0.5} />
-      <Appear on="q1-c" line="l2" word="thou" />
-      <Appear on="q1-d" line="l2" word="lovely" dur={0.5} />
-      <Appear on="q1-e" line="l2" word="and" />
-      <Appear on="q1-f" line="l2" word="temperate" dur={1.2} easing="easeInOutSine" />
-      <Tween on="q1" focus={2} line="l3" dur={0.5} />
-      <Appear on="q1-g" line="l3" word="rough" dur={0.25} />
-      <Tween on="q1" gale={1} line="l3" word="rough" dur={0.5} />
-      <Appear on="q1-h" line="l3" word="the" />
-      <Tween on="q1" gale={0} line="l4" word="and" dur={0.8} />
-      <Tween on="q1" focus={3} line="l4" dur={0.5} />
-      <Appear on="q1-i" line="l4" word="and" />
-      <Appear on="lease-bar" line="l4" word="lease" dur={0.3} />
-      <Appear on="q1-j" line="l4" word="all" dur={0.4} />
-      <Tween on="q1" lease={0.16} line="l4" word="short" dur={0.9} easing="easeInOutQuad" />
+      <Appear target="q1" at="start" dur={0} />
+      <Appear target="q1-a" line="l1" word="shall" />
+      <Appear target="q1-b" line="l1" word="summer's" dur={0.7} easing="easeOutQuart" />
+      <Tween target="q1" to={{focus: 1}} line="l2" dur={0.5} />
+      <Appear target="q1-c" line="l2" word="thou" />
+      <Appear target="q1-d" line="l2" word="lovely" dur={0.5} />
+      <Appear target="q1-e" line="l2" word="and" />
+      <Appear target="q1-f" line="l2" word="temperate" dur={1.2} easing="easeInOutSine" />
+      <Tween target="q1" to={{focus: 2}} line="l3" dur={0.5} />
+      <Appear target="q1-g" line="l3" word="rough" dur={0.25} />
+      <Tween target="q1" to={{gale: 1}} line="l3" word="rough" dur={0.5} />
+      <Appear target="q1-h" line="l3" word="the" />
+      <Tween target="q1" to={{gale: 0}} line="l4" word="and" dur={0.8} />
+      <Tween target="q1" to={{focus: 3}} line="l4" dur={0.5} />
+      <Appear target="q1-i" line="l4" word="and" />
+      <Appear target="lease-bar" line="l4" word="lease" dur={0.3} />
+      <Appear target="q1-j" line="l4" word="all" dur={0.4} />
+      <Tween target="q1" to={{lease: 0.16}} line="l4" word="short" dur={0.9} easing="easeInOutQuad" />
 
       {/* Quatrain two */}
-      <Appear on="q2" line="l5" word="sometime" dur={0.15} />
-      <Disappear on="q1" line="l5" word="sometime" offset={0.16} dur={0.05} />
-      <Tween on="q2" dusk={0.2} line="l5" dur={2} />
-      <Appear on="q2-a" line="l5" word="sometime" />
-      <Appear on="q2-b" line="l5" word="hot" dur={0.4} />
-      <Tween on="q2" heat={1} line="l5" word="hot" dur={1} />
-      <Appear on="q2-c" line="l5" word="the" />
-      <Appear on="q2-d" line="l5" word="shines" dur={0.5} />
-      <Tween on="q2" focus={1} line="l6" dur={0.5} />
-      <Tween on="q2" dusk={0.45} line="l6" dur={2} />
-      <Tween on="q2" heat={0} line="l6" dur={1.2} />
-      <Appear on="q2-e" line="l6" word="and" />
-      <Appear on="q2-f" line="l6" word="gold" dur={0.5} />
-      <Appear on="q2-g" line="l6" word="complexion" />
-      <Appear on="q2-h" line="l6" word="dimm'd" />
-      <Tween on="q2" dim={1} line="l6" word="dimm'd" dur={1.2} />
-      <Tween on="q2" focus={2} line="l7" dur={0.5} />
-      <Tween on="q2" dusk={0.75} line="l7" dur={2} />
-      <Appear on="q2-i" line="l7" word="and" />
-      <Appear on="q2-j" line="l7" word="fair" nth={1} dur={0.4} />
-      <Appear on="q2-k" line="l7" word="from" />
-      <Appear on="q2-l" line="l7" word="fair" nth={2} dur={0.4} />
-      <Appear on="q2-m" line="l7" word="sometime" />
-      <Appear on="q2-n" line="l7" word="declines" />
-      <Tween on="q2" stair={1} line="l7" word="declines" dur={1} easing="easeInQuad" />
-      <Tween on="q2-l" y={34} scale={0.62} rotate={4} line="l7" word="declines" dur={1} easing="easeInQuad" />
-      <Tween on="q2" focus={3} line="l8" dur={0.5} />
-      <Tween on="q2" dusk={1} line="l8" dur={2} />
-      <Appear on="q2-o" line="l8" word="by" />
-      <Appear on="q2-p" line="l8" word="untrimm'd" dur={0.4} />
-      <Tween on="q2" rag={1} line="l8" word="untrimm'd" dur={0.9} easing="easeOutBack(2)" />
+      <Appear target="q2" line="l5" word="sometime" dur={0.15} />
+      <Disappear target="q1" line="l5" word="sometime" offset={0.16} dur={0.05} />
+      <Tween target="q2" to={{dusk: 0.2}} line="l5" dur={2} />
+      <Appear target="q2-a" line="l5" word="sometime" />
+      <Appear target="q2-b" line="l5" word="hot" dur={0.4} />
+      <Tween target="q2" to={{heat: 1}} line="l5" word="hot" dur={1} />
+      <Appear target="q2-c" line="l5" word="the" />
+      <Appear target="q2-d" line="l5" word="shines" dur={0.5} />
+      <Tween target="q2" to={{focus: 1}} line="l6" dur={0.5} />
+      <Tween target="q2" to={{dusk: 0.45}} line="l6" dur={2} />
+      <Tween target="q2" to={{heat: 0}} line="l6" dur={1.2} />
+      <Appear target="q2-e" line="l6" word="and" />
+      <Appear target="q2-f" line="l6" word="gold" dur={0.5} />
+      <Appear target="q2-g" line="l6" word="complexion" />
+      <Appear target="q2-h" line="l6" word="dimm'd" />
+      <Tween target="q2" to={{dim: 1}} line="l6" word="dimm'd" dur={1.2} />
+      <Tween target="q2" to={{focus: 2}} line="l7" dur={0.5} />
+      <Tween target="q2" to={{dusk: 0.75}} line="l7" dur={2} />
+      <Appear target="q2-i" line="l7" word="and" />
+      <Appear target="q2-j" line="l7" word="fair" nth={1} dur={0.4} />
+      <Appear target="q2-k" line="l7" word="from" />
+      <Appear target="q2-l" line="l7" word="fair" nth={2} dur={0.4} />
+      <Appear target="q2-m" line="l7" word="sometime" />
+      <Appear target="q2-n" line="l7" word="declines" />
+      <Tween target="q2" to={{stair: 1}} line="l7" word="declines" dur={1} easing="easeInQuad" />
+      <Tween target="q2-l" to={{y: 34, scale: 0.62, rotate: 4}} line="l7" word="declines" dur={1} easing="easeInQuad" />
+      <Tween target="q2" to={{focus: 3}} line="l8" dur={0.5} />
+      <Tween target="q2" to={{dusk: 1}} line="l8" dur={2} />
+      <Appear target="q2-o" line="l8" word="by" />
+      <Appear target="q2-p" line="l8" word="untrimm'd" dur={0.4} />
+      <Tween target="q2" to={{rag: 1}} line="l8" word="untrimm'd" dur={0.9} easing="easeOutBack(2)" />
 
       {/* Quatrain three: the volta */}
-      <Appear on="q3" line="l9" word="but" dur={0.15} />
-      <Disappear on="q2" line="l9" word="but" offset={0.16} dur={0.05} />
-      <Set on="q3-a" scale={1.5} line="l9" />
-      <Appear on="q3-a" line="l9" word="but" dur={0.1} />
-      <Tween on="q3-a" scale={1} line="l9" word="but" dur={0.7} easing="easeOutQuart" />
-      <Tween on="q3" glow={0.5} line="l9" word="thy" dur={2} />
-      <Appear on="q3-b" line="l9" word="thy" />
-      <Appear on="q3-c" line="l9" word="eternal" dur={0.6} />
-      <Appear on="q3-d" line="l9" word="summer" dur={0.6} />
-      <Tween on="q3" bright={1} line="l9" word="eternal" dur={1.2} />
-      <Appear on="q3-e" line="l9" word="shall" />
-      <Tween on="q3" focus={1} line="l10" dur={0.5} />
-      <Appear on="q3-f" line="l10" word="nor" />
-      <Appear on="q3-g" line="l10" word="fair" dur={0.6} />
-      <Appear on="q3-h" line="l10" word="thou" />
-      <Tween on="q3" focus={2} line="l11" dur={0.5} />
-      <Appear on="q3-i" line="l11" word="nor" />
-      <Appear on="q3-j" line="l11" word="death" dur={0.4} />
-      <Tween on="q3-j" scale={0.4} line="l11" word="brag" dur={0.8} easing="easeInOutQuad" />
-      <Appear on="q3-k" line="l11" word="brag" />
-      <Appear on="q3-l" line="l11" word="thou" dur={0.5} />
-      <Appear on="q3-m" line="l11" word="in" />
-      <Tween on="q3" focus={3} line="l12" dur={0.5} />
-      <Appear on="q3-n" line="l12" word="when" />
-      <Appear on="q3-o" line="l12" word="lines" dur={0.5} />
-      <Tween on="q3" rule={1} line="l12" word="lines" dur={1.8} easing="easeInOutQuad" />
-      <Tween on="q3" glow={0.8} line="l12" dur={2} />
-      <Appear on="q3-p" line="l12" word="to" />
-      <Appear on="q3-q" line="l12" word="thou" dur={0.5} />
-      <Tween on="q3-q" scale={1.35} line="l12" edge="end" offset={-0.9} dur={0.8} easing="easeOutQuad" />
+      <Appear target="q3" line="l9" word="but" dur={0.15} />
+      <Disappear target="q2" line="l9" word="but" offset={0.16} dur={0.05} />
+      <Set target="q3-a" to={{scale: 1.5}} line="l9" />
+      <Appear target="q3-a" line="l9" word="but" dur={0.1} />
+      <Tween target="q3-a" to={{scale: 1}} line="l9" word="but" dur={0.7} easing="easeOutQuart" />
+      <Tween target="q3" to={{glow: 0.5}} line="l9" word="thy" dur={2} />
+      <Appear target="q3-b" line="l9" word="thy" />
+      <Appear target="q3-c" line="l9" word="eternal" dur={0.6} />
+      <Appear target="q3-d" line="l9" word="summer" dur={0.6} />
+      <Tween target="q3" to={{bright: 1}} line="l9" word="eternal" dur={1.2} />
+      <Appear target="q3-e" line="l9" word="shall" />
+      <Tween target="q3" to={{focus: 1}} line="l10" dur={0.5} />
+      <Appear target="q3-f" line="l10" word="nor" />
+      <Appear target="q3-g" line="l10" word="fair" dur={0.6} />
+      <Appear target="q3-h" line="l10" word="thou" />
+      <Tween target="q3" to={{focus: 2}} line="l11" dur={0.5} />
+      <Appear target="q3-i" line="l11" word="nor" />
+      <Appear target="q3-j" line="l11" word="death" dur={0.4} />
+      <Tween target="q3-j" to={{scale: 0.4}} line="l11" word="brag" dur={0.8} easing="easeInOutQuad" />
+      <Appear target="q3-k" line="l11" word="brag" />
+      <Appear target="q3-l" line="l11" word="thou" dur={0.5} />
+      <Appear target="q3-m" line="l11" word="in" />
+      <Tween target="q3" to={{focus: 3}} line="l12" dur={0.5} />
+      <Appear target="q3-n" line="l12" word="when" />
+      <Appear target="q3-o" line="l12" word="lines" dur={0.5} />
+      <Tween target="q3" to={{rule: 1}} line="l12" word="lines" dur={1.8} easing="easeInOutQuad" />
+      <Tween target="q3" to={{glow: 0.8}} line="l12" dur={2} />
+      <Appear target="q3-p" line="l12" word="to" />
+      <Appear target="q3-q" line="l12" word="thou" dur={0.5} />
+      <Tween target="q3-q" to={{scale: 1.35}} line="l12" edge="end" offset={-0.9} dur={0.8} easing="easeOutQuad" />
 
       {/* The couplet */}
-      <Appear on="q4" line="l13" word="so" dur={0.15} />
-      <Disappear on="q3" line="l13" word="so" offset={0.16} dur={0.05} />
-      <Appear on="q4-a" line="l13" word="so" />
-      <Appear on="q4-b" line="l13" word="men" dur={0.5} />
-      <Tween on="q4" breath={1} line="l13" word="breathe" dur={1.4} easing="easeInOutSine" />
-      <Appear on="q4-c" line="l13" word="or" />
-      <Tween on="q4" focus={1} line="l14" dur={0.5} />
-      <Appear on="q4-d" line="l14" word="so" />
-      <Appear on="q4-e" line="l14" word="this" nth={1} dur={0.6} />
-      <Appear on="q4-f" line="l14" word="and" />
-      <Appear on="q4-g" line="l14" word="this" nth={2} dur={0.4} />
-      <Appear on="q4-h" line="l14" word="gives" />
-      <Appear on="q4-i" line="l14" word="thee" dur={0.9} easing="easeOutQuart" />
-      <Tween on="q4" glow={1} line="l14" word="thee" dur={1.6} />
+      <Appear target="q4" line="l13" word="so" dur={0.15} />
+      <Disappear target="q3" line="l13" word="so" offset={0.16} dur={0.05} />
+      <Appear target="q4-a" line="l13" word="so" />
+      <Appear target="q4-b" line="l13" word="men" dur={0.5} />
+      <Tween target="q4" to={{breath: 1}} line="l13" word="breathe" dur={1.4} easing="easeInOutSine" />
+      <Appear target="q4-c" line="l13" word="or" />
+      <Tween target="q4" to={{focus: 1}} line="l14" dur={0.5} />
+      <Appear target="q4-d" line="l14" word="so" />
+      <Appear target="q4-e" line="l14" word="this" nth={1} dur={0.6} />
+      <Appear target="q4-f" line="l14" word="and" />
+      <Appear target="q4-g" line="l14" word="this" nth={2} dur={0.4} />
+      <Appear target="q4-h" line="l14" word="gives" />
+      <Appear target="q4-i" line="l14" word="thee" dur={0.9} easing="easeOutQuart" />
+      <Tween target="q4" to={{glow: 1}} line="l14" word="thee" dur={1.6} />
     </Animation>
   </Scene>
 </Doc>;

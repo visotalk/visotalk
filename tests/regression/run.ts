@@ -158,7 +158,7 @@ const Slice = () => <div style={{position: 'absolute', left: 760, top: 340, widt
 </div>;
 export default <Doc id="host-page" title="Host page" lang="en" theme="visotalk/dark" canvas="16x9">
   <Asset id="wide" kind="image" src="wide.png" license={{id: "user-owned", obligations: []}} />
-  <Scene id="s" duration={1}><Part id="slice"><Slice /></Part><Animation><Appear on="slice" at="start" dur={0.01} /></Animation></Scene>
+  <Scene id="s" duration={1}><Part id="slice"><Slice /></Part><Animation><Appear target="slice" at="start" dur={0.01} /></Animation></Scene>
 </Doc>;`);
   const dist = await buildPlayer(load(join(dir, 'doc.tsx')));
   const hosted = join(dir, 'hosted');

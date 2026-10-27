@@ -271,8 +271,8 @@ export default <Doc id="ko-hiccups" poster={30} title="왜 딸꾹질이 날까" 
     <Line id="l1">딸꾹! 이 작은 소리는 도대체 어디서 오는 걸까요?</Line>
     <Part id="hook-word" x={0} y={200} w={1920} h={620}>{() => <Hook />}</Part>
     <Animation>
-      <Appear on="hook-word" line="l1" word="딸꾹" />
-      <Disappear on="hook-word" at="end" offset={-0.6} />
+      <Appear target="hook-word" line="l1" word="딸꾹" />
+      <Disappear target="hook-word" at="end" offset={-0.6} />
     </Animation>
   </Scene>
 
@@ -295,52 +295,52 @@ export default <Doc id="ko-hiccups" poster={30} title="왜 딸꾹질이 날까" 
     )}</Part>
     <Part id="reflex" x={900} y={30} w={980} h={850}>{() => <Reflex />}</Part>
     <Animation>
-      <Set on="burst" scale={0.5} at="start" />
-      <Appear on="torso" line="l2" word="가슴과" />
-      <Appear on="lungs" line="l2" word="가슴과" offset={0.5} />
-      <Appear on="dia" line="l2" word="가로막이라는" />
-      <Appear on={["lbl-dia", "lead-dia"]} line="l2" word="가로막이라는" offset={0.3} />
-      <Appear on="body" at="start" />
+      <Set target="burst" to={{scale: 0.5}} at="start" />
+      <Appear target="torso" line="l2" word="가슴과" />
+      <Appear target="lungs" line="l2" word="가슴과" offset={0.5} />
+      <Appear target="dia" line="l2" word="가로막이라는" />
+      <Appear target={["lbl-dia", "lead-dia"]} line="l2" word="가로막이라는" offset={0.3} />
+      <Appear target="body" at="start" />
 
-      <Appear on="inflow" line="l3" word="들이쉴" />
-      <Tween on="body" dia={1} dur={1.1} easing="easeInOut" line="l3" word="내려가며" />
-      <Appear on={["lbl-lung", "lead-lung"]} line="l3" word="폐를" />
-      <Tween on="body" air={1} dur={1.0} easing="easeInOut" line="l3" word="부풀립니다" />
+      <Appear target="inflow" line="l3" word="들이쉴" />
+      <Tween target="body" to={{dia: 1}} dur={1.1} easing="easeInOut" line="l3" word="내려가며" />
+      <Appear target={["lbl-lung", "lead-lung"]} line="l3" word="폐를" />
+      <Tween target="body" to={{air: 1}} dur={1.0} easing="easeInOut" line="l3" word="부풀립니다" />
 
-      <Disappear on="inflow" line="l4" word="딸꾹질은" />
-      <Tween on="body" dia={0} air={0} dur={0.9} easing="easeInOut" line="l4" word="딸꾹질은" />
-      <Tween on="body" dia={1} air={0.45} dur={0.22} easing="easeOutQuart" line="l4" word="갑자기" />
-      <Appear on="pull" line="l4" word="수축하며" />
+      <Disappear target="inflow" line="l4" word="딸꾹질은" />
+      <Tween target="body" to={{dia: 0, air: 0}} dur={0.9} easing="easeInOut" line="l4" word="딸꾹질은" />
+      <Tween target="body" to={{dia: 1, air: 0.45}} dur={0.22} easing="easeOutQuart" line="l4" word="갑자기" />
+      <Appear target="pull" line="l4" word="수축하며" />
 
-      <Disappear on="pull" line="l5" word="공기가 확" />
-      <Appear on="gasp" line="l5" word="공기가 확" />
-      <Tween on="body" air={1} dur={0.3} easing="easeOut" line="l5" word="공기가 확" />
-      <Appear on="lens" line="l5" word="목구멍의" />
-      <Appear on="zoomlines" line="l5" word="목구멍의" />
-      <Appear on="lenscircle" line="l5" word="성문이" />
-      <Appear on="lbl-glottis" line="l5" word="성문이" />
-      <Tween on="body" glottis={1} dur={0.2} easing="easeOutQuart" line="l5" word="닫힙니다" />
-      <Tween on="lens" g={1} dur={0.2} easing="easeOutQuart" line="l5" word="닫힙니다" />
-      <Disappear on="gasp" line="l5" word="닫힙니다" offset={0.2} />
+      <Disappear target="pull" line="l5" word="공기가 확" />
+      <Appear target="gasp" line="l5" word="공기가 확" />
+      <Tween target="body" to={{air: 1}} dur={0.3} easing="easeOut" line="l5" word="공기가 확" />
+      <Appear target="lens" line="l5" word="목구멍의" />
+      <Appear target="zoomlines" line="l5" word="목구멍의" />
+      <Appear target="lenscircle" line="l5" word="성문이" />
+      <Appear target="lbl-glottis" line="l5" word="성문이" />
+      <Tween target="body" to={{glottis: 1}} dur={0.2} easing="easeOutQuart" line="l5" word="닫힙니다" />
+      <Tween target="lens" to={{g: 1}} dur={0.2} easing="easeOutQuart" line="l5" word="닫힙니다" />
+      <Disappear target="gasp" line="l5" word="닫힙니다" offset={0.2} />
 
-      <Disappear on="lens" line="l6" word="그 소리가" dur={0.4} />
-      <Appear on="burst" line="l6" word="그 소리가" />
-      <Tween on="burst" scale={1} dur={0.5} easing="easeOutBack(2.2)" line="l6" word="그 소리가" />
+      <Disappear target="lens" line="l6" word="그 소리가" dur={0.4} />
+      <Appear target="burst" line="l6" word="그 소리가" />
+      <Tween target="burst" to={{scale: 1}} dur={0.5} easing="easeOutBack(2.2)" line="l6" word="그 소리가" />
 
-      <Disappear on="burst" line="l7" word="이 모든 일은" />
-      <Appear on="rtitle" line="l7" word="반사" />
+      <Disappear target="burst" line="l7" word="이 모든 일은" />
+      <Appear target="rtitle" line="l7" word="반사" />
 
-      <Appear on={["stomach", "lbl-stomach"]} line="l8" word="위와" />
-      <Appear on="reflex" line="l8" word="위와" />
-      <Appear on="lbl-signal" line="l8" word="신호가" />
-      <Tween on="reflex" s1={1} dur={2.4} easing="easeInOut" line="l8" word="신경을 타고" />
-      <Tween on="reflex" s2={1} dur={1.8} easing="easeInOut" line="l8" word="신경을 타고" offset={0.2} />
-      <Appear on={["node", "node-lbl"]} line="l8" word="뇌줄기로" />
+      <Appear target={["stomach", "lbl-stomach"]} line="l8" word="위와" />
+      <Appear target="reflex" line="l8" word="위와" />
+      <Appear target="lbl-signal" line="l8" word="신호가" />
+      <Tween target="reflex" to={{s1: 1}} dur={2.4} easing="easeInOut" line="l8" word="신경을 타고" />
+      <Tween target="reflex" to={{s2: 1}} dur={1.8} easing="easeInOut" line="l8" word="신경을 타고" offset={0.2} />
+      <Appear target={["node", "node-lbl"]} line="l8" word="뇌줄기로" />
 
-      <Tween on="reflex" md={1} dur={1.4} easing="easeInOut" line="l9" word="가로막과" />
-      <Appear on="lbl-order" line="l9" word="명령을" />
-      <Tween on="reflex" mg={1} dur={1.2} easing="easeInOut" line="l9" word="성문에" />
-      <Tween on="body" dia={0} air={0} glottis={0} dur={1.2} easing="easeInOut" line="l9" word="돌려보냅니다" />
+      <Tween target="reflex" to={{md: 1}} dur={1.4} easing="easeInOut" line="l9" word="가로막과" />
+      <Appear target="lbl-order" line="l9" word="명령을" />
+      <Tween target="reflex" to={{mg: 1}} dur={1.2} easing="easeInOut" line="l9" word="성문에" />
+      <Tween target="body" to={{dia: 0, air: 0, glottis: 0}} dur={1.2} easing="easeInOut" line="l9" word="돌려보냅니다" />
     </Animation>
   </Scene>
 
@@ -355,36 +355,36 @@ export default <Doc id="ko-hiccups" poster={30} title="왜 딸꾹질이 날까" 
       <div style={{width: 800, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SANS, fontSize: 150, fontWeight: 700, color: WARM}}>딸꾹!</div>
     )}</Part>
     <Animation>
-      <Set on="f1" y={-250} at="start" />
-      <Set on="f2" y={-350} at="start" />
-      <Set on="f3" y={-350} at="start" />
-      <Set on="f4" y={-300} at="start" />
-      <Set on="f5" y={-300} at="start" />
-      <Set on="burst2" scale={0.5} at="start" />
-      <Appear on="stomach-big" line="l10" word="원인은" />
-      <Appear on="stom" line="l10" word="원인은" />
-      <Appear on="f1" line="l10" word="음식을" />
-      <Tween on="f1" y={0} dur={0.7} easing="easeIn" line="l10" word="음식을" />
-      <Appear on="f2" line="l10" word="음식을" offset={0.25} />
-      <Tween on="f2" y={0} dur={0.7} easing="easeIn" line="l10" word="음식을" offset={0.25} />
-      <Appear on="f3" line="l10" word="너무 빨리" />
-      <Tween on="f3" y={0} dur={0.6} easing="easeIn" line="l10" word="너무 빨리" />
-      <Appear on="f4" line="l10" word="너무 빨리" offset={0.2} />
-      <Tween on="f4" y={0} dur={0.6} easing="easeIn" line="l10" word="너무 빨리" offset={0.2} />
-      <Appear on="f5" line="l10" word="너무 빨리" offset={0.4} />
-      <Tween on="f5" y={0} dur={0.6} easing="easeIn" line="l10" word="너무 빨리" offset={0.4} />
+      <Set target="f1" to={{y: -250}} at="start" />
+      <Set target="f2" to={{y: -350}} at="start" />
+      <Set target="f3" to={{y: -350}} at="start" />
+      <Set target="f4" to={{y: -300}} at="start" />
+      <Set target="f5" to={{y: -300}} at="start" />
+      <Set target="burst2" to={{scale: 0.5}} at="start" />
+      <Appear target="stomach-big" line="l10" word="원인은" />
+      <Appear target="stom" line="l10" word="원인은" />
+      <Appear target="f1" line="l10" word="음식을" />
+      <Tween target="f1" to={{y: 0}} dur={0.7} easing="easeIn" line="l10" word="음식을" />
+      <Appear target="f2" line="l10" word="음식을" offset={0.25} />
+      <Tween target="f2" to={{y: 0}} dur={0.7} easing="easeIn" line="l10" word="음식을" offset={0.25} />
+      <Appear target="f3" line="l10" word="너무 빨리" />
+      <Tween target="f3" to={{y: 0}} dur={0.6} easing="easeIn" line="l10" word="너무 빨리" />
+      <Appear target="f4" line="l10" word="너무 빨리" offset={0.2} />
+      <Tween target="f4" to={{y: 0}} dur={0.6} easing="easeIn" line="l10" word="너무 빨리" offset={0.2} />
+      <Appear target="f5" line="l10" word="너무 빨리" offset={0.4} />
+      <Tween target="f5" to={{y: 0}} dur={0.6} easing="easeIn" line="l10" word="너무 빨리" offset={0.4} />
 
-      <Disappear on={["f1", "f2", "f3", "f4", "f5"]} line="l11" word="탄산음료로" stagger={0.05} />
-      <Appear on="glass" line="l11" word="탄산음료로" offset={0.3} />
-      <Appear on={["b1", "b2", "b3", "b4", "b5", "b6"]} line="l11" word="위가" stagger={0.2} />
-      <Tween on="stomach-big" bloat={1} dur={1.6} easing="easeInOut" line="l11" word="위가" />
+      <Disappear target={["f1", "f2", "f3", "f4", "f5"]} line="l11" word="탄산음료로" stagger={0.05} />
+      <Appear target="glass" line="l11" word="탄산음료로" offset={0.3} />
+      <Appear target={["b1", "b2", "b3", "b4", "b5", "b6"]} line="l11" word="위가" stagger={0.2} />
+      <Tween target="stomach-big" to={{bloat: 1}} dur={1.6} easing="easeInOut" line="l11" word="위가" />
 
-      <Disappear on={["stomach-big", "glass"]} line="l12" word="갑자기" />
-      <Appear on="faces" line="l12" word="갑자기" offset={0.4} />
-      <Appear on="face-laugh" line="l12" word="웃거나" />
-      <Appear on="face-shock" line="l12" word="놀랄" />
-      <Appear on="burst2" line="l12" word="건드려집니다" />
-      <Tween on="burst2" scale={1} dur={0.5} easing="easeOutBack(2.2)" line="l12" word="건드려집니다" />
+      <Disappear target={["stomach-big", "glass"]} line="l12" word="갑자기" />
+      <Appear target="faces" line="l12" word="갑자기" offset={0.4} />
+      <Appear target="face-laugh" line="l12" word="웃거나" />
+      <Appear target="face-shock" line="l12" word="놀랄" />
+      <Appear target="burst2" line="l12" word="건드려집니다" />
+      <Tween target="burst2" to={{scale: 1}} dur={0.5} easing="easeOutBack(2.2)" line="l12" word="건드려집니다" />
     </Animation>
   </Scene>
 
@@ -392,12 +392,12 @@ export default <Doc id="ko-hiccups" poster={30} title="왜 딸꾹질이 날까" 
     <Line id="l13" hold={2}>대부분은 저절로 멎습니다. 오래 이어진다면 병원에 가 보세요.</Line>
     <Part id="traces" x={100} y={150} w={1720} h={640}>{() => <Traces />}</Part>
     <Animation>
-      <Appear on="traces" line="l13" word="대부분은" />
-      <Appear on="t-most" line="l13" word="대부분은" />
-      <Tween on="traces" a={1} dur={3.2} easing="linear" line="l13" word="대부분은" />
-      <Appear on="t-long" line="l13" word="오래 이어진다면" />
-      <Tween on="traces" b={1} dur={3.2} easing="linear" line="l13" word="오래 이어진다면" />
-      <Appear on={["cross", "t-doctor"]} line="l13" word="병원에" />
+      <Appear target="traces" line="l13" word="대부분은" />
+      <Appear target="t-most" line="l13" word="대부분은" />
+      <Tween target="traces" to={{a: 1}} dur={3.2} easing="linear" line="l13" word="대부분은" />
+      <Appear target="t-long" line="l13" word="오래 이어진다면" />
+      <Tween target="traces" to={{b: 1}} dur={3.2} easing="linear" line="l13" word="오래 이어진다면" />
+      <Appear target={["cross", "t-doctor"]} line="l13" word="병원에" />
     </Animation>
   </Scene>
 </Doc>;

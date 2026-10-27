@@ -10,8 +10,8 @@ export default <Doc id="sky" title="Sky" lang="en" voice="af_heart" canvas="16x9
     <Line id="l2" hold={1}>Blue scatters more than red, and blue fills the sky.</Line>
     <Part id="p"><div/></Part>
     <Animation>
-      <Appear on="p" line="l1" word="Light"/>
-      <Tween on="p" x={1} line="l2" word="blue" nth={2}/>
+      <Appear target="p" line="l1" word="Light"/>
+      <Tween target="p" to={{x: 1}} line="l2" word="blue" nth={2}/>
     </Animation>
     <Sound asset="bed" line="l2" word="scatters"/>
   </Scene>

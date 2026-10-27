@@ -175,19 +175,19 @@ export default (
       <Part id="stat" x={1240} y={290} w={620} h={460}>{() => <Stat />}</Part>
 
       <Animation>
-        <Appear on="tank" line="l1" word="Ice floats" />
-        <Appear on="water" line="l1" word="Ice floats" dur={0.8} />
-        <Appear on="cube" line="l1" word="water" dur={0.7} />
+        <Appear target="tank" line="l1" word="Ice floats" />
+        <Appear target="water" line="l1" word="Ice floats" dur={0.8} />
+        <Appear target="cube" line="l1" word="water" dur={0.7} />
 
-        <Tween on="tank" freeze={1} dur={2.4} easing="easeInOut" line="l2" word="lock into" />
-        <Appear on="tag" line="l2" word="open hexagonal" />
-        <Appear on="tag-a" line="l2" word="open hexagonal" />
-        <Appear on="tag-b" line="l2" word="gaps" />
+        <Tween target="tank" to={{freeze: 1}} dur={2.4} easing="easeInOut" line="l2" word="lock into" />
+        <Appear target="tag" line="l2" word="open hexagonal" />
+        <Appear target="tag-a" line="l2" word="open hexagonal" />
+        <Appear target="tag-b" line="l2" word="gaps" />
 
-        <Disappear on="tag" line="l3" word="ice about" />
-        <Appear on="stat" line="l3" word="nine percent" />
-        <Tween on="stat" pct={9} dur={1.2} easing="easeOut" line="l3" word="nine percent" />
-        <Tween on="tank" rise={1} dur={1.8} easing="easeInOut" line="l3" word="rides" offset={-0.6} />
+        <Disappear target="tag" line="l3" word="ice about" />
+        <Appear target="stat" line="l3" word="nine percent" />
+        <Tween target="stat" to={{pct: 9}} dur={1.2} easing="easeOut" line="l3" word="nine percent" />
+        <Tween target="tank" to={{rise: 1}} dur={1.8} easing="easeInOut" line="l3" word="rides" offset={-0.6} />
       </Animation>
     </Scene>
   </Doc>

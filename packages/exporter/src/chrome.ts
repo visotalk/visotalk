@@ -2,7 +2,7 @@
 import {existsSync, linkSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import puppeteer, {type Browser, type CDPSession, type Page} from 'puppeteer-core';
+import puppeteer, {type Browser, type CDPSession, type HTTPRequest, type HTTPResponse, type Page} from 'puppeteer-core';
 
 /** The chrome-headless-shell build (Chrome for Testing) the goldens were recorded with: another build can paint other pixels */
 export const PINNED_CHROME = '157.0.8080.0';
@@ -67,6 +67,40 @@ export interface DrivenPage {
   frame(screenshot?: {format: 'png' | 'jpeg'; quality?: number}): Promise<Buffer | null>;
 }
 
+/** Load the player and wait for its bridge, retaining bounded evidence only when either step fails. */
+export async function loadPlayer(page: Page, url: string): Promise<void> {
+  const location = (raw: string) => {
+    try {
+      const u = new URL(raw);
+      return /^https?:$/.test(u.protocol) ? `${u.origin}${u.pathname}` : u.protocol;
+    } catch { return '[invalid URL]'; }
+  };
+  const clean = (text: string) => text.replace(/https?:\/\/[^\s"'<>]+/g, location).slice(0, 240);
+  const events: string[] = [];
+  const keep = (text: string) => { events.push(clean(text)); if (events.length > 6) events.shift(); };
+  const response = (r: HTTPResponse) => {
+    if (r.request().isNavigationRequest() || r.status() >= 400) keep(`HTTP ${r.status()} ${r.headers()['content-type'] ?? 'no content type'} ${location(r.url())}`);
+  };
+  const failed = (r: HTTPRequest) => keep(`request failed: ${r.failure()?.errorText ?? 'unknown'} ${location(r.url())}`);
+  const pageError = (error: Error) => keep(`page error: ${error.message}`);
+  const crash = (error: Error) => keep(`browser error: ${error.message}`);
+  page.on('response', response);
+  page.on('requestfailed', failed);
+  page.on('pageerror', pageError);
+  page.on('error', crash);
+  try {
+    await page.goto(url, {waitUntil: 'domcontentloaded'});
+    await page.waitForFunction('!!window.__visotalk', {polling: 50});
+  } catch (error) {
+    throw new Error(`player load failed: ${clean(error instanceof Error ? error.message : String(error))} | ${events.join(' | ') || 'no browser events'}`);
+  } finally {
+    page.off('response', response);
+    page.off('requestfailed', failed);
+    page.off('pageerror', pageError);
+    page.off('error', crash);
+  }
+}
+
 /** A page whose compositor only produces frames on HeadlessExperimental.beginFrame */
 export async function openDrivenPage(browser: Browser, url: string, width: number, height: number, fps: number, scale = 1): Promise<DrivenPage> {
   const bcdp = await browser.target().createCDPSession();
@@ -77,8 +111,7 @@ export async function openDrivenPage(browser: Browser, url: string, width: numbe
   await cdp.send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: scale, mobile: false});
   page.on('pageerror', (e) => console.error(`[page error] ${e}`));
   page.on('response', (r) => r.status() >= 400 && console.error(`[http ${r.status()}] ${r.url()}`));
-  await page.goto(url, {waitUntil: 'domcontentloaded'});
-  await page.waitForFunction('!!window.__visotalk', {polling: 50});
+  await loadPlayer(page, url);
   // Frame times live in the browser's TimeTicks base (CLOCK_MONOTONIC); times in its past are not honoured.
   let ticks = Number(process.hrtime.bigint() / 1000000n);
   const interval = 1000 / fps;

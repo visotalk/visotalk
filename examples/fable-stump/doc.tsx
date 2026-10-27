@@ -437,7 +437,7 @@ export default (
         </div>
       )}</Part>
       <Animation>
-        <Appear on={["stage0", "book"]} at="start" dur={0} />
+        <Appear target={["stage0", "book"]} at="start" dur={0} />
       </Animation>
     </Scene>
 
@@ -448,17 +448,17 @@ export default (
       <Line id="l4">农夫没费一点力气，就捡到了一只肥兔子。</Line>
       <Part id="stage"><Stage s={1} /></Part>
       <Animation>
-        <Appear on="stage" at="start" dur={0} />
-        <Appear on="farmer" line="l1" word="农夫" dur={0.7} />
-        <Appear on="crops" line="l1" word="田里" dur={0.8} />
-        <Appear on="stump" line="l2" word="树桩" dur={0.7} />
-        <Appear on="hare" line="l3" word="一只兔子" dur={0.5} />
-        <Tween on="stage" hx={1178} line="l3" word="飞快地跑" dur={1.5} easing="linear" />
-        <Tween on="stage" fall={1} line="l3" word="一头撞" dur={0.8} easing="easeOut" />
-        <Tween on="stage" hx={1146} line="l3" word="一头撞" dur={0.8} easing="easeOut" />
-        <Tween on="stage" work={0} line="l4" word="农夫" dur={0.4} />
-        <Tween on="stage" fx={1040} line="l4" word="没费一点" dur={1.4} easing="easeInOut" />
-        <Tween on="stage" carry={1} line="l4" word="捡到" dur={0.9} easing="easeInOut" />
+        <Appear target="stage" at="start" dur={0} />
+        <Appear target="farmer" line="l1" word="农夫" dur={0.7} />
+        <Appear target="crops" line="l1" word="田里" dur={0.8} />
+        <Appear target="stump" line="l2" word="树桩" dur={0.7} />
+        <Appear target="hare" line="l3" word="一只兔子" dur={0.5} />
+        <Tween target="stage" to={{hx: 1178}} line="l3" word="飞快地跑" dur={1.5} easing="linear" />
+        <Tween target="stage" to={{fall: 1}} line="l3" word="一头撞" dur={0.8} easing="easeOut" />
+        <Tween target="stage" to={{hx: 1146}} line="l3" word="一头撞" dur={0.8} easing="easeOut" />
+        <Tween target="stage" to={{work: 0}} line="l4" word="农夫" dur={0.4} />
+        <Tween target="stage" to={{fx: 1040}} line="l4" word="没费一点" dur={1.4} easing="easeInOut" />
+        <Tween target="stage" to={{carry: 1}} line="l4" word="捡到" dur={0.9} easing="easeInOut" />
       </Animation>
     </Scene>
 
@@ -470,22 +470,22 @@ export default (
       <Part id="stage2"><Stage s={2} /></Part>
       <Part id="tablet" x={110} y={80} w={520} h={120}><Tablet /></Part>
       <Animation>
-        <Appear on="stage2" at="start" dur={0} />
-        <Appear on="cloud" line="l5" word="要是" dur={0.6} />
-        <Appear on="dream1" line="l5" word="天天" dur={0.5} />
-        <Appear on="dream2" line="l5" word="都有" dur={0.5} />
-        <Appear on="dream3" line="l5" word="可捡" dur={0.5} />
-        <Disappear on={["cloud", "dream1", "dream2", "dream3"]} line="l6" word="于是" dur={0.4} />
-        <Tween on="stage2" toss={1} line="l6" word="扔下" dur={0.9} easing="easeOut" />
-        <Tween on="stage2" fx={1140} line="l6" word="守在" dur={1.1} easing="easeInOut" />
-        <Tween on="stage2" sit={1} line="l6" word="树桩旁边" dur={0.6} />
-        <Appear on="tablet" line="l7" word="一天过去了" dur={0.5} />
-        <Tween on="stage2" sunT={1.85} line="l7" word="一天过去了" dur={1.8} easing="easeInOut" />
-        <Tween on="stage2" sunT={4.85} line="l7" word="一个月过去了" dur={2.2} easing="linear" />
-        <Tween on="tablet" days={30} line="l7" word="一个月过去了" dur={2.2} easing="linear" />
-        <Disappear on="tablet" line="l8" word="庄稼" dur={0.4} />
-        <Tween on="stage2" weeds={1} line="l8" word="野草" dur={2.4} easing="easeInOut" />
-        <Tween on="stage2" decay={1} line="l8" word="庄稼" dur={2.2} easing="easeInOut" />
+        <Appear target="stage2" at="start" dur={0} />
+        <Appear target="cloud" line="l5" word="要是" dur={0.6} />
+        <Appear target="dream1" line="l5" word="天天" dur={0.5} />
+        <Appear target="dream2" line="l5" word="都有" dur={0.5} />
+        <Appear target="dream3" line="l5" word="可捡" dur={0.5} />
+        <Disappear target={["cloud", "dream1", "dream2", "dream3"]} line="l6" word="于是" dur={0.4} />
+        <Tween target="stage2" to={{toss: 1}} line="l6" word="扔下" dur={0.9} easing="easeOut" />
+        <Tween target="stage2" to={{fx: 1140}} line="l6" word="守在" dur={1.1} easing="easeInOut" />
+        <Tween target="stage2" to={{sit: 1}} line="l6" word="树桩旁边" dur={0.6} />
+        <Appear target="tablet" line="l7" word="一天过去了" dur={0.5} />
+        <Tween target="stage2" to={{sunT: 1.85}} line="l7" word="一天过去了" dur={1.8} easing="easeInOut" />
+        <Tween target="stage2" to={{sunT: 4.85}} line="l7" word="一个月过去了" dur={2.2} easing="linear" />
+        <Tween target="tablet" to={{days: 30}} line="l7" word="一个月过去了" dur={2.2} easing="linear" />
+        <Disappear target="tablet" line="l8" word="庄稼" dur={0.4} />
+        <Tween target="stage2" to={{weeds: 1}} line="l8" word="野草" dur={2.4} easing="easeInOut" />
+        <Tween target="stage2" to={{decay: 1}} line="l8" word="庄稼" dur={2.2} easing="easeInOut" />
       </Animation>
     </Scene>
 
@@ -493,9 +493,9 @@ export default (
       <Line id="l9" hold={1.4}>全国的人都笑话这个农夫。</Line>
       <Part id="stage3"><Stage s={3} /></Part>
       <Animation>
-        <Appear on="stage3" at="start" dur={0} />
-        <Appear on={["v1", "v2", "v3"]} line="l9" word="全国的人" stagger={0.45} dur={0.5} />
-        <Appear on="laugh" line="l9" word="笑话" dur={0.5} />
+        <Appear target="stage3" at="start" dur={0} />
+        <Appear target={["v1", "v2", "v3"]} line="l9" word="全国的人" stagger={0.45} dur={0.5} />
+        <Appear target="laugh" line="l9" word="笑话" dur={0.5} />
       </Animation>
     </Scene>
 
@@ -516,20 +516,20 @@ export default (
       <Part id="pinyin" x={160} y={690} w={1600} h={100}>{() => <div style={{textAlign: 'center', fontFamily: SANS, fontSize: 64, letterSpacing: '0.18em', color: '#6b5f52', whiteSpace: 'pre'}}>{PINYIN}</div>}</Part>
       <Part id="seal" x={1530} y={650} w={130} h={130}>{() => <div style={{width: 120, height: 120, background: RED, borderRadius: 8, color: PAPER, fontFamily: SERIF, fontWeight: 900, fontSize: 88, lineHeight: '120px', textAlign: 'center'}}>寓</div>}</Part>
       <Animation>
-        <Appear on="dots" line="l10" word="偶然得来" dur={0.7} />
-        <Tween on="dots" n={30} line="l10" word="好运" dur={1.8} easing="linear" />
-        <Disappear on="dots" line="l11" dur={0.4} />
-        <Appear on="plant" line="l11" word="想要收获" offset={0.5} dur={0.6} />
-        <Tween on="plant" grow={1} line="l11" word="靠自己的劳动" dur={2.4} easing="easeInOut" />
-        <Appear on="lab1" line="l11" word="劳动" dur={0.5} />
-        <Appear on="wish" line="l11" word="不能抱着侥幸" dur={0.6} />
-        <Appear on="lab2" line="l11" word="侥幸" dur={0.5} />
-        <Tween on="slash" draw={1} line="l11" word="坐等奇迹" dur={0.7} easing="easeOut" />
-        <Disappear on={["plant", "wish", "lab1", "lab2"]} line="l11" edge="end" dur={0.4} />
-        <Appear on="idiom" line="l12" word="守株待兔" dur={0.01} />
-        <Appear on={["c1", "c2", "c3", "c4"]} line="l12" word="守株待兔" stagger={0.22} dur={0.5} />
-        <Appear on="pinyin" line="l12" word="说的就是" dur={0.6} />
-        <Appear on="seal" line="l12" word="道理" dur={0.5} />
+        <Appear target="dots" line="l10" word="偶然得来" dur={0.7} />
+        <Tween target="dots" to={{n: 30}} line="l10" word="好运" dur={1.8} easing="linear" />
+        <Disappear target="dots" line="l11" dur={0.4} />
+        <Appear target="plant" line="l11" word="想要收获" offset={0.5} dur={0.6} />
+        <Tween target="plant" to={{grow: 1}} line="l11" word="靠自己的劳动" dur={2.4} easing="easeInOut" />
+        <Appear target="lab1" line="l11" word="劳动" dur={0.5} />
+        <Appear target="wish" line="l11" word="不能抱着侥幸" dur={0.6} />
+        <Appear target="lab2" line="l11" word="侥幸" dur={0.5} />
+        <Tween target="slash" to={{draw: 1}} line="l11" word="坐等奇迹" dur={0.7} easing="easeOut" />
+        <Disappear target={["plant", "wish", "lab1", "lab2"]} line="l11" edge="end" dur={0.4} />
+        <Appear target="idiom" line="l12" word="守株待兔" dur={0.01} />
+        <Appear target={["c1", "c2", "c3", "c4"]} line="l12" word="守株待兔" stagger={0.22} dur={0.5} />
+        <Appear target="pinyin" line="l12" word="说的就是" dur={0.6} />
+        <Appear target="seal" line="l12" word="道理" dur={0.5} />
       </Animation>
     </Scene>
   </Doc>

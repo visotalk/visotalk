@@ -1,5 +1,5 @@
 /**
- * VisoTalk IR — spec 0.5.0 (DRAFT)
+ * VisoTalk IR — spec 0.6.0 (DRAFT)
  *
  * A document is lines, parts and animations: the narration with its captions, what is on screen, and the actions that
  * connect them in time. What a part draws is ordinary React and is not described here; the engine knows a part's id, its box and the
@@ -8,7 +8,7 @@
  * Source of truth for the document shape. Everything in 0.x may change; every change bumps MINOR (migrations start with the first saved document).
  */
 
-export const SPEC_VERSION = '0.5.0' as const;
+export const SPEC_VERSION = '0.6.0' as const;
 
 /** MAJOR.MINOR.PATCH */
 export type SpecVersion = `${number}.${number}.${number}`;
@@ -223,7 +223,7 @@ export interface Action {
   id?: Id;
   motion: MotionKind;
   /** A part of the scene or a global part, or an element a part registers (`useTarget`): ids are unique within a scene */
-  on: Id | Id[];
+  target: Id | Id[];
   at: ActionAnchor;
   dur?: Seconds;
   /** Where it ends, instead of `dur`: the action runs from its start to this anchor (a word, a scene time or a scene edge of its scene), however long the
@@ -236,8 +236,8 @@ export interface Action {
   repeat?: number;
   /** `tween` with `repeat`: every other play runs backwards, so the prop comes back to where it began (after an even number of plays in all) */
   yoyo?: boolean;
-  /** `tween`: props that reach these values over `dur`, from the value they have then (numbers, colours such as "#426894" or "hsl(212 46% 68%)", and lengths such as "12px" or "40%", a length from one of the same unit); `set`: props that take these values at once */
-  props?: Record<string, number | string | boolean>;
+  /** `tween`: values reached over `dur` (numbers, colours and lengths); `set`: values taken at once */
+  to?: Record<string, number | string | boolean>;
 }
 
 // ---------------------------------------------------------------------------------------------- sound

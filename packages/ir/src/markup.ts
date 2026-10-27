@@ -10,8 +10,8 @@
  *       <Line id="l1">One billion people, counted.</Line>
  *       <Part id="bar"><div {...useTarget("fill")}/></Part>
  *       <Animation>
- *         <Appear on="bar" line="l1" word="billion"/>
- *         <Tween on="fill" w={1100} line="l1" word="counted" dur={1.4}/>
+  *         <Appear target="bar" line="l1" word="billion"/>
+  *         <Tween target="fill" to={{w: 1100}} line="l1" word="counted" dur={1.4}/>
  *       </Animation>
  *     </Scene>
  *   </Doc>;
@@ -303,7 +303,7 @@ const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
 const LINE_ATTRS = ['id', 'text', 'hold'];
 /** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
 const SOUND_ATTRS = ['id', 'asset', 'dur', 'until', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
-const ACTION_ATTRS = ['on', 'id', 'dur', 'until', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
+const ACTION_ATTRS = ['target', 'to', 'id', 'dur', 'until', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 
 type Obj = {[k: string]: unknown};
 
@@ -552,26 +552,23 @@ class Compiler {
   action(el: El): Action {
     const motion = own(MOTIONS, el.tag)!;
     const takesProps = motion === 'set' || motion === 'tween';
-    const a: Obj = {};
-    const props: Record<string, number | string | boolean> = {};
-    for (const at of el.attrs) {
-      if (ACTION_ATTRS.includes(at.name)) a[at.name] = at.value;
-      else if (takesProps) {
-        const v = at.value;
-        if (!(motion === 'tween' ? tweenable(v) : typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean')) this.fail(`${at.name} of <${el.tag}> is ${motion === 'tween' ? 'a number, a colour or a length such as "12px"' : 'a number, a string or true/false'}`, at.loc);
-        props[at.name] = v as number | string | boolean;
-      } else this.fail(`<${el.tag}> has no attribute "${at.name}"; it takes: ${ACTION_ATTRS.join(', ')}`, at.loc);
+    const a = this.attrs(el, ACTION_ATTRS);
+    if (a.to !== undefined && !takesProps) this.fail(`<${el.tag}> does not take to; use <Tween> or <Set> to change values`, el.loc);
+    if (takesProps && (a.to === null || typeof a.to !== 'object' || Array.isArray(a.to))) this.fail(`<${el.tag}> needs to={{name: value}}`, el.loc);
+    const to = a.to as Record<string, unknown> | undefined;
+    if (to) for (const [name, value] of Object.entries(to)) {
+      if (!(motion === 'tween' ? tweenable(value) && (typeof value !== 'number' || Number.isFinite(value)) : typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value)))) this.fail(`${name} of <${el.tag}>.to is ${motion === 'tween' ? 'a number, a colour or a length such as "12px"' : 'a number, a string or true/false'}`, el.loc);
     }
     this.elements(el);
     this.numbers(el, a, ['dur', 'stagger', 'offset', 'nth', 'repeat', ...(typeof a.at === 'string' ? [] : ['at'])]);
-    if (a.on === undefined || !(typeof a.on === 'string' || (Array.isArray(a.on) && a.on.every((x) => typeof x === 'string')))) this.fail(`<${el.tag}> needs on="id" (a part, or an element a part registers), or on={["id", "id"]}`, el.loc);
+    if (a.target === undefined || !(typeof a.target === 'string' || (Array.isArray(a.target) && a.target.every((x) => typeof x === 'string')))) this.fail(`<${el.tag}> needs target="id" (a part, or an element a part registers), or target={["id", "id"]}`, el.loc);
     const at = this.anchor(el, a, true);
     const until = this.until(el, a.until);
     return {
-      ...(a.id !== undefined && {id: a.id as string}), motion, on: a.on as string | string[], at,
+      ...(a.id !== undefined && {id: a.id as string}), motion, target: a.target as string | string[], at,
       ...(a.dur !== undefined && {dur: a.dur as number}), ...(until && {until}), ...(a.stagger !== undefined && {stagger: a.stagger as number}), ...(a.easing !== undefined && {easing: a.easing as Action['easing']}),
       ...(a.repeat !== undefined && {repeat: a.repeat as number}), ...(a.yoyo !== undefined && {yoyo: a.yoyo as boolean}),
-      ...(takesProps && Object.keys(props).length && {props}),
+      ...(takesProps && to && {to: to as Action['to']}),
     };
   }
 }

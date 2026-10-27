@@ -312,11 +312,11 @@ export default <Doc id="near-light" title="Near light speed" lang="zh-CN" theme=
   {/* bars 1-2: cruising at rest; the instruments come on, the lamps blink */}
   <Scene id="cruise" duration={4.8}>
     <Animation>
-      <Appear on={["field", "flash"]} at="start" dur={0}/>
-      <Tween on="field" ship={24} at={0} dur={24} easing="linear"/>
-      <Tween on="field" travel={6.72} outside={4.8} at={0} dur={4.8} easing="linear"/>
-      <Tween on="field" guides={1} at={3.3} dur={1}/>
-      <Tween on="field" clocks={1} at={3.3} dur={0.8}/>
+      <Appear target={["field", "flash"]} at="start" dur={0}/>
+      <Tween target="field" to={{ship: 24}} at={0} dur={24} easing="linear"/>
+      <Tween target="field" to={{travel: 6.72, outside: 4.8}} at={0} dur={4.8} easing="linear"/>
+      <Tween target="field" to={{guides: 1}} at={3.3} dur={1}/>
+      <Tween target="field" to={{clocks: 1}} at={3.3} dur={0.8}/>
     </Animation>
     <Sound asset="sub" at={0} loop dur={21.6} volume={-15}/>
     <Sound asset="pad-dm9-dark" at={0} volume={-11}/>
@@ -337,22 +337,22 @@ export default <Doc id="near-light" title="Near light speed" lang="zh-CN" theme=
   {/* bars 3-5: one step of speed on each downbeat, with a flash and a kick; the pad opens up with the speed */}
   <Scene id="accelerate" duration={7.2}>
     <Animation>
-      <Tween on="field" beta={0.30} at={0} dur={0.9} easing="easeOut"/>
-      <Tween on="field" beta={0.60} at={2.4} dur={0.9} easing="easeOut"/>
-      <Tween on="field" beta={0.90} at={4.8} dur={0.9} easing="easeOut"/>
-      <Tween on="field" travel={27.36} outside={7.32} at={0} dur={2.4} easing="linear"/>
-      <Tween on="field" travel={65.28} outside={10.32} at={2.4} dur={2.4} easing="linear"/>
-      <Tween on="field" travel={120.48} outside={15.82} at={4.8} dur={2.4} easing="linear"/>
-      <Appear on="speed" at={0} dur={0}/>
-      <Set on="speed" value={0.30} bold={0} pop={0} at={0}/>
-      <Tween on="speed" pop={1} at={0} dur={0.18} easing="easeOut"/>
-      <Set on="speed" value={0.60} pop={0} at={2.4}/>
-      <Tween on="speed" pop={1} at={2.4} dur={0.18} easing="easeOut"/>
-      <Set on="speed" value={0.90} bold={1} pop={0} at={4.8}/>
-      <Tween on="speed" pop={1} at={4.8} dur={0.18} easing="easeOut"/>
-      <Set on="cap" zh="β：你的速度，以光速为 1。" en="BETA: YOUR SPEED, IN UNITS OF THE SPEED OF LIGHT." at={0.6}/>
-      <Appear on="cap" at={0.6} dur={0.35}/>
-      <Disappear on="cap" at={3.9} dur={0.35}/>
+      <Tween target="field" to={{beta: 0.30}} at={0} dur={0.9} easing="easeOut"/>
+      <Tween target="field" to={{beta: 0.60}} at={2.4} dur={0.9} easing="easeOut"/>
+      <Tween target="field" to={{beta: 0.90}} at={4.8} dur={0.9} easing="easeOut"/>
+      <Tween target="field" to={{travel: 27.36, outside: 7.32}} at={0} dur={2.4} easing="linear"/>
+      <Tween target="field" to={{travel: 65.28, outside: 10.32}} at={2.4} dur={2.4} easing="linear"/>
+      <Tween target="field" to={{travel: 120.48, outside: 15.82}} at={4.8} dur={2.4} easing="linear"/>
+      <Appear target="speed" at={0} dur={0}/>
+      <Set target="speed" to={{value: 0.30, bold: 0, pop: 0}} at={0}/>
+      <Tween target="speed" to={{pop: 1}} at={0} dur={0.18} easing="easeOut"/>
+      <Set target="speed" to={{value: 0.60, pop: 0}} at={2.4}/>
+      <Tween target="speed" to={{pop: 1}} at={2.4} dur={0.18} easing="easeOut"/>
+      <Set target="speed" to={{value: 0.90, bold: 1, pop: 0}} at={4.8}/>
+      <Tween target="speed" to={{pop: 1}} at={4.8} dur={0.18} easing="easeOut"/>
+      <Set target="cap" to={{zh: "β：你的速度，以光速为 1。", en: "BETA: YOUR SPEED, IN UNITS OF THE SPEED OF LIGHT."}} at={0.6}/>
+      <Appear target="cap" at={0.6} dur={0.35}/>
+      <Disappear target="cap" at={3.9} dur={0.35}/>
     </Animation>
     <Sound asset="kick" at={0} volume={-9}/>
     <Sound asset="impact" at={0} volume={-13}/>
@@ -374,18 +374,18 @@ export default <Doc id="near-light" title="Near light speed" lang="zh-CN" theme=
   {/* bars 6-9: 0.99, the sky crowds in ahead; the chord turns major, the outside clock ticks seven times faster */}
   <Scene id="lightspeed" duration={9.6}>
     <Animation>
-      <Tween on="field" beta={0.99} at={0} dur={0.9} easing="easeOut"/>
-      <Tween on="field" travel={362} outside={83.88} at={0} dur={9.6} easing="linear"/>
-      <Tween on="field" mark90={1} at={0.6} dur={0.8}/>
-      <Set on="speed" value={0.99} pop={0} at={0}/>
-      <Tween on="speed" pop={1} at={0} dur={0.18} easing="easeOut"/>
-      <Disappear on="speed" at={1.4} dur={0.6}/>
-      <Set on="cap" zh="接近光速时，整个宇宙挤到你眼前：前方更蓝、更亮，身后更红、更暗。" en="NEAR LIGHT SPEED THE UNIVERSE CROWDS IN AHEAD OF YOU: BLUER AND BRIGHTER IN FRONT, REDDER AND DARKER BEHIND." at={2.1}/>
-      <Appear on="cap" at={2.1} dur={0.35}/>
-      <Disappear on="cap" at={5.05} dur={0.35}/>
-      <Set on="cap" zh="β = 0.99：你的 1 秒，是外面的 7 秒。" en="AT 99% OF LIGHT SPEED, ONE SECOND FOR YOU IS SEVEN OUTSIDE." at={6.0}/>
-      <Appear on="cap" at={6.0} dur={0.35}/>
-      <Disappear on="cap" at={9.25} dur={0.35}/>
+      <Tween target="field" to={{beta: 0.99}} at={0} dur={0.9} easing="easeOut"/>
+      <Tween target="field" to={{travel: 362, outside: 83.88}} at={0} dur={9.6} easing="linear"/>
+      <Tween target="field" to={{mark90: 1}} at={0.6} dur={0.8}/>
+      <Set target="speed" to={{value: 0.99, pop: 0}} at={0}/>
+      <Tween target="speed" to={{pop: 1}} at={0} dur={0.18} easing="easeOut"/>
+      <Disappear target="speed" at={1.4} dur={0.6}/>
+      <Set target="cap" to={{zh: "接近光速时，整个宇宙挤到你眼前：前方更蓝、更亮，身后更红、更暗。", en: "NEAR LIGHT SPEED THE UNIVERSE CROWDS IN AHEAD OF YOU: BLUER AND BRIGHTER IN FRONT, REDDER AND DARKER BEHIND."}} at={2.1}/>
+      <Appear target="cap" at={2.1} dur={0.35}/>
+      <Disappear target="cap" at={5.05} dur={0.35}/>
+      <Set target="cap" to={{zh: "β = 0.99：你的 1 秒，是外面的 7 秒。", en: "AT 99% OF LIGHT SPEED, ONE SECOND FOR YOU IS SEVEN OUTSIDE."}} at={6.0}/>
+      <Appear target="cap" at={6.0} dur={0.35}/>
+      <Disappear target="cap" at={9.25} dur={0.35}/>
     </Animation>
     <Sound asset="kick-long" at={0} volume={-7}/>
     <Sound asset="impact" at={0} volume={-11}/>
@@ -401,14 +401,14 @@ export default <Doc id="near-light" title="Near light speed" lang="zh-CN" theme=
   {/* bars 10-11: the ship brakes in one bar (everything slides down), then a bar of near silence */}
   <Scene id="brake" duration={4.8}>
     <Animation>
-      <Tween on="field" beta={0} at={0} dur={2.4} easing="easeInOut"/>
-      <Tween on="field" travel={393} outside={90} at={0} dur={2.4} easing="easeOut"/>
-      <Tween on="field" travel={396.4} at={2.4} dur={2.4} easing="linear"/>
-      <Tween on="field" mark90={0} at={0} dur={0.5}/>
-      <Tween on="field" guides={0} at={2.4} dur={0.6}/>
-      <Set on="cap" zh="你的钟走了 24 秒，外面过了 90 秒。" en="YOUR CLOCK: 24 SECONDS. OUTSIDE: 90." at={2.1}/>
-      <Appear on="cap" at={2.1} dur={0.35}/>
-      <Disappear on="cap" at={4.3} dur={0.3}/>
+      <Tween target="field" to={{beta: 0}} at={0} dur={2.4} easing="easeInOut"/>
+      <Tween target="field" to={{travel: 393, outside: 90}} at={0} dur={2.4} easing="easeOut"/>
+      <Tween target="field" to={{travel: 396.4}} at={2.4} dur={2.4} easing="linear"/>
+      <Tween target="field" to={{mark90: 0}} at={0} dur={0.5}/>
+      <Tween target="field" to={{guides: 0}} at={2.4} dur={0.6}/>
+      <Set target="cap" to={{zh: "你的钟走了 24 秒，外面过了 90 秒。", en: "YOUR CLOCK: 24 SECONDS. OUTSIDE: 90."}} at={2.1}/>
+      <Appear target="cap" at={2.1} dur={0.35}/>
+      <Disappear target="cap" at={4.3} dur={0.3}/>
     </Animation>
     <Sound asset="brake" at={0} volume={-9}/>
     <Sound asset="kick" at={0} volume={-13}/>
@@ -426,23 +426,23 @@ export default <Doc id="near-light" title="Near light speed" lang="zh-CN" theme=
     <Part id="formula" z={10}><Formula /></Part>
     <Part id="digits" z={11}><Digits /></Part>
     <Animation>
-      <Disappear on={["field", "speed"]} at="start" dur={0}/>
-      <Appear on="formula" at="start" dur={0}/>
-      <Appear on="f-e" at={0} dur={0.12}/>
-      <Appear on="f-eq" at={0.6} dur={0.12}/>
-      <Appear on="f-m" at={1.2} dur={0.12}/>
-      <Appear on="f-c2" at={1.8} dur={0.12}/>
-      <Set on="formula" warm={1} at={1.8}/>
-      <Tween on="formula" warm={0.25} at={1.8} dur={1} easing="easeOut"/>
-      <Tween on="formula" out={1} at={2.4} dur={0.3} easing="easeIn"/>
-      <Disappear on="formula" at={2.4} dur={0.3}/>
-      <Appear on="digits" at={2.7} dur={0.2}/>
-      <Tween on="digits" settled={17} at={2.7} dur={1.19} easing="linear"/>
-      <Tween on="digits" unit={1} at={4.1} dur={0.3}/>
-      <Set on="cap" zh="1905 年，爱因斯坦补了三页纸：质量就是能量。" en="IN 1905 EINSTEIN ADDED THREE PAGES: MASS IS ENERGY." at={0.8}/>
-      <Appear on="cap" at={0.8} dur={0.35}/>
-      <Disappear on="cap" at={4.3} dur={0.3}/>
-      <Disappear on="digits" at={4.85} dur={0.55}/>
+      <Disappear target={["field", "speed"]} at="start" dur={0}/>
+      <Appear target="formula" at="start" dur={0}/>
+      <Appear target="f-e" at={0} dur={0.12}/>
+      <Appear target="f-eq" at={0.6} dur={0.12}/>
+      <Appear target="f-m" at={1.2} dur={0.12}/>
+      <Appear target="f-c2" at={1.8} dur={0.12}/>
+      <Set target="formula" to={{warm: 1}} at={1.8}/>
+      <Tween target="formula" to={{warm: 0.25}} at={1.8} dur={1} easing="easeOut"/>
+      <Tween target="formula" to={{out: 1}} at={2.4} dur={0.3} easing="easeIn"/>
+      <Disappear target="formula" at={2.4} dur={0.3}/>
+      <Appear target="digits" at={2.7} dur={0.2}/>
+      <Tween target="digits" to={{settled: 17}} at={2.7} dur={1.19} easing="linear"/>
+      <Tween target="digits" to={{unit: 1}} at={4.1} dur={0.3}/>
+      <Set target="cap" to={{zh: "1905 年，爱因斯坦补了三页纸：质量就是能量。", en: "IN 1905 EINSTEIN ADDED THREE PAGES: MASS IS ENERGY."}} at={0.8}/>
+      <Appear target="cap" at={0.8} dur={0.35}/>
+      <Disappear target="cap" at={4.3} dur={0.3}/>
+      <Disappear target="digits" at={4.85} dur={0.55}/>
     </Animation>
     <Sound asset="pad-dm9-hit" at={0} volume={-11}/>
     <Sound asset="sub" at={0} loop dur={6} fadeOut={1} volume={-15}/>

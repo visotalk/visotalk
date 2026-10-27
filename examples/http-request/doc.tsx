@@ -174,14 +174,14 @@ export default <Doc id="http-request" poster={33} title={"From URL to Page"} lan
       <div style={{boxSizing: 'border-box', width: '100%', height: '100%', borderRadius: 22, background: 'var(--vt-panel2)', border: '4px solid var(--vt-grad)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, fontFamily: MONO, fontSize: 44, color: 'var(--vt-grad)', fontWeight: 700}}>Enter <span>↵</span></div>
     )}</Part>
     <Animation>
-      <Appear on="win" at="start" dur={0} />
-      <Tween on="win" line="l1" word="type" chars={27} dur={1.4} easing="linear" />
-      <Appear on="enter" line="l1" word="press" />
-      <Tween on="enter" id="press" line="l1" word="enter" scale={0.9} dur={0.15} />
-      <Tween on="enter" after="press" scale={1} dur={0.2} />
-      <Appear on="page" line="l2" word="page" />
-      <Disappear on="page" line="l3" word="everything" />
-      <Disappear on="enter" line="l3" word="everything" />
+      <Appear target="win" at="start" dur={0} />
+      <Tween target="win" line="l1" word="type" to={{chars: 27}} dur={1.4} easing="linear" />
+      <Appear target="enter" line="l1" word="press" />
+      <Tween target="enter" id="press" line="l1" word="enter" to={{scale: 0.9}} dur={0.15} />
+      <Tween target="enter" after="press" to={{scale: 1}} dur={0.2} />
+      <Appear target="page" line="l2" word="page" />
+      <Disappear target="page" line="l3" word="everything" />
+      <Disappear target="enter" line="l3" word="everything" />
     </Animation>
   </Scene>
 
@@ -217,15 +217,15 @@ export default <Doc id="http-request" poster={33} title={"From URL to Page"} lan
       </div>
     )}</Part>
     <Animation>
-      <Appear on="browser" line="l4" word="browser" />
-      <Appear on="slot" line="l4" word="number" />
-      <Appear on="name" line="l4" word="by name" />
-      <Appear on="book" line="l5" word="D N S" />
-      <Appear on="ask" line="l5" word="phone book" />
-      <Tween on="book" line="l5" word="address back" hl={1} dur={0.2} />
-      <Appear on="answer" line="l5" word="address back" />
-      <Set on="browser" line="l5" word="address back" offset={0.5} got={1} />
-      <Appear on="cached" line="l5b" word="remembered" />
+      <Appear target="browser" line="l4" word="browser" />
+      <Appear target="slot" line="l4" word="number" />
+      <Appear target="name" line="l4" word="by name" />
+      <Appear target="book" line="l5" word="D N S" />
+      <Appear target="ask" line="l5" word="phone book" />
+      <Tween target="book" line="l5" word="address back" to={{hl: 1}} dur={0.2} />
+      <Appear target="answer" line="l5" word="address back" />
+      <Set target="browser" line="l5" word="address back" offset={0.5} to={{got: 1}} />
+      <Appear target="cached" line="l5b" word="remembered" />
     </Animation>
   </Scene>
 
@@ -270,14 +270,14 @@ export default <Doc id="http-request" poster={33} title={"From URL to Page"} lan
       return <Padlock open={open} size={140} />;
     }}</Part>
     <Animation>
-      <Appear on="ends" at="start" dur={0} />
-      <Appear on="m1" line="l6" word="hello" nth={1} />
-      <Appear on="m2" line="l6" word="hello back" />
-      <Appear on="m3" line="l6" word="agreed" />
-      <Appear on={["keyl", "keyr"]} stagger={0.3} line="l7" word="secret key" />
-      <Appear on="pipe" line="l7" word="encrypted" />
-      <Appear on="lock" line="l7" word="padlock" />
-      <Tween on="lock" line="l7" word="closes" open={0} dur={0.5} easing="easeOutBack(2)" />
+      <Appear target="ends" at="start" dur={0} />
+      <Appear target="m1" line="l6" word="hello" nth={1} />
+      <Appear target="m2" line="l6" word="hello back" />
+      <Appear target="m3" line="l6" word="agreed" />
+      <Appear target={["keyl", "keyr"]} stagger={0.3} line="l7" word="secret key" />
+      <Appear target="pipe" line="l7" word="encrypted" />
+      <Appear target="lock" line="l7" word="padlock" />
+      <Tween target="lock" line="l7" word="closes" to={{open: 0}} dur={0.5} easing="easeOutBack(2)" />
     </Animation>
   </Scene>
 
@@ -305,13 +305,13 @@ export default <Doc id="http-request" poster={33} title={"From URL to Page"} lan
     )}</Part>
     <Part id="resarrow" x={560} y={620} w={220} h={50}>{() => <Arrow w={200} dir="left" color="#FF8A4C" />}</Part>
     <Animation>
-      <Appear on="reqlabel" line="l8" word="request" />
-      <Appear on="req" line="l8" word="request" />
-      <Tween on="req" line="l8" word="request" chars={39} dur={1.8} easing="linear" />
-      <Appear on={["reqarrow", "srv"]} line="l8" word="get me" />
-      <Appear on={["reslabel", "res", "resarrow", "brw"]} line="l9" word="server" />
-      <Appear on="status" line="l9" word="status code" />
-      <Appear on="body" line="l9" word="H T M L" />
+      <Appear target="reqlabel" line="l8" word="request" />
+      <Appear target="req" line="l8" word="request" />
+      <Tween target="req" line="l8" word="request" to={{chars: 39}} dur={1.8} easing="linear" />
+      <Appear target={["reqarrow", "srv"]} line="l8" word="get me" />
+      <Appear target={["reslabel", "res", "resarrow", "brw"]} line="l9" word="server" />
+      <Appear target="status" line="l9" word="status code" />
+      <Appear target="body" line="l9" word="H T M L" />
     </Animation>
   </Scene>
 
@@ -346,25 +346,25 @@ export default <Doc id="http-request" poster={33} title={"From URL to Page"} lan
     <Part id="pagewire" x={1300} y={160} w={560} h={364}>{() => <PageWire />}</Part>
     <Part id="pagelabel" x={1300} y={540} w={560} h={60}>{() => <Label size={34}>layout, then paint</Label>}</Part>
     <Animation>
-      <Appear on="files" at="start" dur={0} />
-      <Appear on="code" line="l10" word="reads" />
-      <Appear on="scan" line="l10" word="top to bottom" />
-      <Tween on="scan" line="l10" word="top to bottom" y={378} dur={2.4} easing="linear" />
-      <Appear on="file-css" line="l10" word="styles" />
-      <Appear on="file-js" line="l10" word="scripts" />
-      <Appear on="file-img" line="l10" word="images" />
-      <Disappear on="scan" line="l11" offset={0.2} />
-      <Appear on={["ok-css", "ok-js", "ok-img"]} stagger={0.2} line="l11" word="fetches them" />
-      <Appear on="tree" line="l11" word="structure" />
-      <Appear on="treelabel" line="l11" word="structure" />
-      <Appear on="pagewire" line="l11" word="layout" />
-      <Appear on="pagelabel" line="l11" word="layout" />
-      <Tween on="pagewire" line="l11" word="paints" paint={1} dur={1.2} />
-      <Disappear on={["code", "files", "tree", "treelabel", "pagelabel"]} line="l12" word="page" />
-      <Tween on="pagewire" line="l12" word="page" x={-620} y={100} scale={1.7} dur={1.0} easing="easeInOutQuad" />
-      <Set on="cursor" at="start" x={-300} y={170} />
-      <Appear on="cursor" line="l13" word="scripts" />
-      <Tween on="cursor" line="l13" word="ready" x={0} y={0} dur={1.0} easing="easeInOutQuad" />
+      <Appear target="files" at="start" dur={0} />
+      <Appear target="code" line="l10" word="reads" />
+      <Appear target="scan" line="l10" word="top to bottom" />
+      <Tween target="scan" line="l10" word="top to bottom" to={{y: 378}} dur={2.4} easing="linear" />
+      <Appear target="file-css" line="l10" word="styles" />
+      <Appear target="file-js" line="l10" word="scripts" />
+      <Appear target="file-img" line="l10" word="images" />
+      <Disappear target="scan" line="l11" offset={0.2} />
+      <Appear target={["ok-css", "ok-js", "ok-img"]} stagger={0.2} line="l11" word="fetches them" />
+      <Appear target="tree" line="l11" word="structure" />
+      <Appear target="treelabel" line="l11" word="structure" />
+      <Appear target="pagewire" line="l11" word="layout" />
+      <Appear target="pagelabel" line="l11" word="layout" />
+      <Tween target="pagewire" line="l11" word="paints" to={{paint: 1}} dur={1.2} />
+      <Disappear target={["code", "files", "tree", "treelabel", "pagelabel"]} line="l12" word="page" />
+      <Tween target="pagewire" line="l12" word="page" to={{x: -620, y: 100, scale: 1.7}} dur={1.0} easing="easeInOutQuad" />
+      <Set target="cursor" at="start" to={{x: -300, y: 170}} />
+      <Appear target="cursor" line="l13" word="scripts" />
+      <Tween target="cursor" line="l13" word="ready" to={{x: 0, y: 0}} dur={1.0} easing="easeInOutQuad" />
     </Animation>
   </Scene>
 </Doc>;

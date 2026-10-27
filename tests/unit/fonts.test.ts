@@ -58,7 +58,7 @@ test('fonts: an artifact carries its CJK face as a file beside the page, with th
   if (spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1', wav]).status !== 0) return t.skip('no ffmpeg');
   writeFileSync(root + '/doc.tsx', `import {Doc, Scene, Line, Part, Animation, Appear} from '@visotalk/jsx';
 export default <Doc id="zh" title="t" lang="zh-CN" voice="minimax:v" theme="visotalk/dark" canvas="16x9">
-  <Scene id="s"><Line id="l1">\u5929\u7a7a</Line><Part id="p">{() => <div>\u5929</div>}</Part><Animation><Appear on="p" at="start"/></Animation></Scene>
+  <Scene id="s"><Line id="l1">\u5929\u7a7a</Line><Part id="p">{() => <div>\u5929</div>}</Part><Animation><Appear target="p" at="start"/></Animation></Scene>
 </Doc>;`);
   mkdirSync(root + '/.visotalk/zh/audio', {recursive: true});
   spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', wav, '-c:a', 'aac', root + '/.visotalk/zh/audio/l1.m4a']);

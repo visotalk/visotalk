@@ -532,21 +532,21 @@ export default <Doc
   <Asset
     id="f4"
     kind="image"
-    src="media/f4_launch.jpg"
+    src="media/f4-launch.jpg"
     license={{id: "CC0-1.0", attribution: "SpaceX", obligations: []}}
     source="https://commons.wikimedia.org/wiki/File:Falcon_1_Flight_4_launch.jpg"
   />
   <Asset
     id="prelaunch"
     kind="image"
-    src="media/prelaunch_2005.jpg"
+    src="media/prelaunch-2005.jpg"
     license={{id: "CC-BY-2.0", attribution: "Steve Jurvetson", url: "https://creativecommons.org/licenses/by/2.0/", obligations: ["attribution"]}}
     source="https://commons.wikimedia.org/wiki/File:Falcon_1_Prelaunch_(67235805).jpg"
   />
   <Asset
     id="darpa"
     kind="image"
-    src="media/darpa_falcon.jpg"
+    src="media/darpa-falcon.jpg"
     license={{id: "PD-USGov", attribution: "DARPA", obligations: []}}
     source="https://commons.wikimedia.org/wiki/File:Falcon_Small_Launch_Vehicle_(SpaceX's_Falcon_I)_to_be_launched_from_Kwajalein_Atoll,_Marshall_Islands.tiff"
   />
@@ -560,14 +560,14 @@ export default <Doc
   <Asset
     id="adastra"
     kind="image"
-    src="media/ad_astra_2008.jpg"
+    src="media/ad-astra-2008.jpg"
     license={{id: "CC-BY-2.0", attribution: "Steve Jurvetson", url: "https://creativecommons.org/licenses/by/2.0/", obligations: ["attribution"]}}
     source="https://commons.wikimedia.org/wiki/File:SpaceX_–_Ad_Astra!_(2725865469).jpg"
   />
   <Asset
     id="iss"
     kind="image"
-    src="media/iss_dragon.jpg"
+    src="media/iss-dragon.jpg"
     license={{id: "PD-USGov", attribution: "NASA (ISS033-E-011151)", obligations: []}}
     source="https://images.nasa.gov/details/iss033e011151"
   />
@@ -586,26 +586,26 @@ export default <Doc
     <Part id="first" z={2} x={110} y={90} w={1700} h={300}><FirstPrivate /></Part>
     <Part id="title" z={2} x={0} y={100} w={1920} h={720}><Title /></Part>
     <Animation>
-      <Appear on="stars" at="start" dur={0} />
-      <Appear on="clip" at="start" dur={0} />
-      <Tween on="clip" dim={0.1} at="start" dur={0.1} />
-      <Appear on="lt" line="h1" word="May" />
-      <Appear on="lt-small" line="h1" word="May" />
-      <Appear on="lt-big" line="h1" word="May" dur={0.7} />
-      <Tween on="lt-rule" w={420} line="h1" word="May" offset={0.4} dur={1.6} easing="easeOut" />
-      <Appear on="lt-rule" line="h1" word="May" offset={0.4} dur={0.2} />
-      <Appear on="first" line="h2" />
-      <Appear on="first-a" line="h2" word="private" />
-      <Appear on="first-b" line="h2" word="launched" />
-      <Disappear on={["lt", "first"]} line="h3" dur={0.5} />
-      <Tween on="clip" dim={0.55} line="h3" dur={1.2} />
-      <Appear on="title" line="h3" />
-      <Set on="byline" y={30} at="start" />
-      <Appear on="eyebrow" line="h3" word="book" />
-      <Appear on="name-a" line="h3" word="Liftoff" dur={0.6} />
-      <Appear on="name-b" line="h3" word="Liftoff" offset={0.5} dur={0.6} />
-      <Appear on="byline" line="h3" word="Berger's" />
-      <Tween on="byline" y={0} line="h3" word="Berger's" dur={0.8} easing="easeOut" />
+      <Appear target="stars" at="start" dur={0} />
+      <Appear target="clip" at="start" dur={0} />
+      <Tween target="clip" to={{dim: 0.1}} at="start" dur={0.1} />
+      <Appear target="lt" line="h1" word="May" />
+      <Appear target="lt-small" line="h1" word="May" />
+      <Appear target="lt-big" line="h1" word="May" dur={0.7} />
+      <Tween target="lt-rule" to={{w: 420}} line="h1" word="May" offset={0.4} dur={1.6} easing="easeOut" />
+      <Appear target="lt-rule" line="h1" word="May" offset={0.4} dur={0.2} />
+      <Appear target="first" line="h2" />
+      <Appear target="first-a" line="h2" word="private" />
+      <Appear target="first-b" line="h2" word="launched" />
+      <Disappear target={["lt", "first"]} line="h3" dur={0.5} />
+      <Tween target="clip" to={{dim: 0.55}} line="h3" dur={1.2} />
+      <Appear target="title" line="h3" />
+      <Set target="byline" to={{y: 30}} at="start" />
+      <Appear target="eyebrow" line="h3" word="book" />
+      <Appear target="name-a" line="h3" word="Liftoff" dur={0.6} />
+      <Appear target="name-b" line="h3" word="Liftoff" offset={0.5} dur={0.6} />
+      <Appear target="byline" line="h3" word="Berger's" />
+      <Tween target="byline" to={{y: 0}} line="h3" word="Berger's" dur={0.8} easing="easeOut" />
     </Animation>
   </Scene>
 
@@ -615,17 +615,17 @@ export default <Doc
     <Part id="axis" x={0} y={30} w={1920} h={520}><Axis /></Part>
     <Part id="people" x={0} y={525} w={1920} h={380}><People /></Part>
     <Animation>
-      <Appear on="axis" at="start" />
-      <Tween on="axis-line" draw={1} line="b1" word="Published" dur={1.4} />
-      <Appear on={["dot-2021", "n-2021", "lab-2021"]} line="b1" word="twenty twenty one" />
-      <Appear on={["dot-2002", "n-2002", "lab-2002"]} line="b1" word="founding" />
-      <Appear on="span" line="b1" word="first four launches" dur={0.1} />
-      <Tween on="span" grow={1} line="b1" word="first four launches" dur={1.4} easing="easeOut" />
-      <Appear on="lab-span" line="b1" word="Falcon One" />
-      <Appear on="people" line="b2" />
-      <Appear on="eng" line="b2" word="engineers" />
-      <Appear on="tech" line="b2" word="technicians" />
-      <Appear on="exec" line="b2" word="executives" />
+      <Appear target="axis" at="start" />
+      <Tween target="axis-line" to={{draw: 1}} line="b1" word="Published" dur={1.4} />
+      <Appear target={["dot-2021", "n-2021", "lab-2021"]} line="b1" word="twenty twenty one" />
+      <Appear target={["dot-2002", "n-2002", "lab-2002"]} line="b1" word="founding" />
+      <Appear target="span" line="b1" word="first four launches" dur={0.1} />
+      <Tween target="span" to={{grow: 1}} line="b1" word="first four launches" dur={1.4} easing="easeOut" />
+      <Appear target="lab-span" line="b1" word="Falcon One" />
+      <Appear target="people" line="b2" />
+      <Appear target="eng" line="b2" word="engineers" />
+      <Appear target="tech" line="b2" word="technicians" />
+      <Appear target="exec" line="b2" word="executives" />
     </Animation>
   </Scene>
 
@@ -638,19 +638,19 @@ export default <Doc
     <Part id="odds-labels" x={90} y={686} w={1200} h={210}><OddsLabels /></Part>
     <Part id="lens" x={1320} y={120} w={520} h={700}><Lens /></Part>
     <Animation>
-      <Appear on="field" at="start" dur={0} />
-      <Appear on="t-odds" line="o1" word="odds" />
-      <Appear on="odds-labels" line="o2" word="Boeing" />
-      <Appear on="lab-name" line="o2" word="Boeing" />
-      <Tween on="dots" show={1} line="o2" word="tens of thousands" dur={2.2} easing="easeOut" />
-      <Appear on="lab-people" line="o2" word="tens of thousands" offset={0.6} />
-      <Disappear on="lab-people" line="o2" word="tens of billions" dur={0.3} />
-      <Tween on="dots" money={1} line="o2" word="tens of billions" dur={1.4} />
-      <Appear on="lab-money" line="o2" word="tens of billions" offset={0.7} />
-      <Appear on="lens" line="o3" word="fewer than two hundred" />
-      <Appear on="lens-a" line="o3" word="fewer than two hundred" />
-      <Disappear on="lens-a" line="o3" word="money" dur={0.3} />
-      <Appear on="lens-b" line="o3" word="money" offset={0.35} />
+      <Appear target="field" at="start" dur={0} />
+      <Appear target="t-odds" line="o1" word="odds" />
+      <Appear target="odds-labels" line="o2" word="Boeing" />
+      <Appear target="lab-name" line="o2" word="Boeing" />
+      <Tween target="dots" to={{show: 1}} line="o2" word="tens of thousands" dur={2.2} easing="easeOut" />
+      <Appear target="lab-people" line="o2" word="tens of thousands" offset={0.6} />
+      <Disappear target="lab-people" line="o2" word="tens of billions" dur={0.3} />
+      <Tween target="dots" to={{money: 1}} line="o2" word="tens of billions" dur={1.4} />
+      <Appear target="lab-money" line="o2" word="tens of billions" offset={0.7} />
+      <Appear target="lens" line="o3" word="fewer than two hundred" />
+      <Appear target="lens-a" line="o3" word="fewer than two hundred" />
+      <Disappear target="lens-a" line="o3" word="money" dur={0.3} />
+      <Appear target="lens-b" line="o3" word="money" offset={0.35} />
     </Animation>
   </Scene>
 
@@ -662,26 +662,26 @@ export default <Doc
     <Part id="pad" z={1} x={0} y={0} w={1920} h={1080}><Photo asset="prelaunch" side="left" /></Part>
     <Part id="life" z={3} x={120} y={170} w={1100} h={700}><Life /></Part>
     <Animation>
-      <Appear on="rings" at="start" />
-      <Appear on="omelek" line="i1" word="Omelek" />
-      <Set on="omelek" px={47} py={56} at="start" />
-      <Tween on="omelek" zoom={1.15} line="i1" word="Omelek" dur={9} easing="linear" />
-      <Appear on="dot-om" line="i1" word="tiny" />
-      <Appear on={["ring-atoll", "lab-atoll"]} line="i1" word="island" offset={0.6} />
-      <Tween on="ring-atoll" draw={1} line="i1" word="island" offset={0.6} dur={0.9} />
-      <Appear on={["ring-marshall", "lab-marshall"]} line="i1" word="Marshall" />
-      <Tween on="ring-marshall" draw={1} line="i1" word="Marshall" dur={0.9} />
-      <Appear on={["ring-pacific", "lab-pacific"]} line="i1" word="Pacific" />
-      <Tween on="ring-pacific" draw={1} line="i1" word="Pacific" dur={1.1} />
-      <Disappear on={["omelek", "rings"]} line="i2" dur={0.4} />
-      <Appear on="pad" line="i2" offset={0.3} />
-      <Set on="pad" py={90} line="i2" />
-      <Tween on="pad" zoom={1.12} py={25} line="i2" offset={0.3} dur={9} easing="linear" />
-      <Appear on="life" line="i2" />
-      <Appear on="life-deadlines" line="i2" word="deadlines" />
-      <Appear on="life-heat" line="i2" word="heat" />
-      <Appear on="life-salt" line="i2" word="salt" />
-      <Appear on="life-cut" line="i2" word="cut off" />
+      <Appear target="rings" at="start" />
+      <Appear target="omelek" line="i1" word="Omelek" />
+      <Set target="omelek" to={{px: 47, py: 56}} at="start" />
+      <Tween target="omelek" to={{zoom: 1.15}} line="i1" word="Omelek" dur={9} easing="linear" />
+      <Appear target="dot-om" line="i1" word="tiny" />
+      <Appear target={["ring-atoll", "lab-atoll"]} line="i1" word="island" offset={0.6} />
+      <Tween target="ring-atoll" to={{draw: 1}} line="i1" word="island" offset={0.6} dur={0.9} />
+      <Appear target={["ring-marshall", "lab-marshall"]} line="i1" word="Marshall" />
+      <Tween target="ring-marshall" to={{draw: 1}} line="i1" word="Marshall" dur={0.9} />
+      <Appear target={["ring-pacific", "lab-pacific"]} line="i1" word="Pacific" />
+      <Tween target="ring-pacific" to={{draw: 1}} line="i1" word="Pacific" dur={1.1} />
+      <Disappear target={["omelek", "rings"]} line="i2" dur={0.4} />
+      <Appear target="pad" line="i2" offset={0.3} />
+      <Set target="pad" to={{py: 90}} line="i2" />
+      <Tween target="pad" to={{zoom: 1.12, py: 25}} line="i2" offset={0.3} dur={9} easing="linear" />
+      <Appear target="life" line="i2" />
+      <Appear target="life-deadlines" line="i2" word="deadlines" />
+      <Appear target="life-heat" line="i2" word="heat" />
+      <Appear target="life-salt" line="i2" word="salt" />
+      <Appear target="life-cut" line="i2" word="cut off" />
     </Animation>
   </Scene>
 
@@ -696,47 +696,47 @@ export default <Doc
     <Part id="ftitle" z={2} x={100} y={470} w={900} h={430}><FlightTitle /></Part>
     <Part id="chart" z={2} x={1000} y={140} w={840} h={720}><Chart /></Part>
     <Animation>
-      <Appear on="chart" at="start" />
-      <Appear on="orbit" at="start" />
-      <Tween on="orbit" draw={1} at="start" dur={0.1} />
-      <Appear on="orbit-lab" line="f1" word="March" />
+      <Appear target="chart" at="start" />
+      <Appear target="orbit" at="start" />
+      <Tween target="orbit" to={{draw: 1}} at="start" dur={0.1} />
+      <Appear target="orbit-lab" line="f1" word="March" />
 
-      <Set on="photo-1" py={72} at="start" />
-      <Appear on="photo-1" line="f1" word="first" />
-      <Tween on="photo-1" zoom={1.14} py={30} line="f1" word="first" dur={9} easing="linear" />
-      <Appear on="ftitle" line="f1" word="first" />
-      <Appear on="ft-1" line="f1" word="March" />
-      <Appear on="path-1" line="f1" word="fuel" dur={0.2} />
-      <Tween on="path-1" draw={1} line="f1" word="fuel" dur={1.2} easing="easeIn" />
-      <Appear on="x-1" line="f1" word="fire" dur={0.2} />
+      <Set target="photo-1" to={{py: 72}} at="start" />
+      <Appear target="photo-1" line="f1" word="first" />
+      <Tween target="photo-1" to={{zoom: 1.14, py: 30}} line="f1" word="first" dur={9} easing="linear" />
+      <Appear target="ftitle" line="f1" word="first" />
+      <Appear target="ft-1" line="f1" word="March" />
+      <Appear target="path-1" line="f1" word="fuel" dur={0.2} />
+      <Tween target="path-1" to={{draw: 1}} line="f1" word="fuel" dur={1.2} easing="easeIn" />
+      <Appear target="x-1" line="f1" word="fire" dur={0.2} />
 
-      <Disappear on={["photo-1", "ft-1"]} line="f2" dur={0.3} />
-      <Tween on="path-1" dim={1} line="f2" dur={0.6} />
-      <Set on="photo-2" py={30} at="start" />
-      <Appear on="photo-2" line="f2" word="second flight" />
-      <Tween on="photo-2" zoom={1.14} py={62} line="f2" word="second flight" dur={9} easing="linear" />
-      <Appear on="ft-2" line="f2" word="March" />
-      <Appear on="path-2" line="f2" word="reached" dur={0.2} />
-      <Tween on="path-2" draw={1} line="f2" word="reached" dur={3.4} easing="easeInOut" />
-      <Appear on="km" line="f2" word="kilometers" />
-      <Appear on="x-2" line="f2" word="short" dur={0.2} />
+      <Disappear target={["photo-1", "ft-1"]} line="f2" dur={0.3} />
+      <Tween target="path-1" to={{dim: 1}} line="f2" dur={0.6} />
+      <Set target="photo-2" to={{py: 30}} at="start" />
+      <Appear target="photo-2" line="f2" word="second flight" />
+      <Tween target="photo-2" to={{zoom: 1.14, py: 62}} line="f2" word="second flight" dur={9} easing="linear" />
+      <Appear target="ft-2" line="f2" word="March" />
+      <Appear target="path-2" line="f2" word="reached" dur={0.2} />
+      <Tween target="path-2" to={{draw: 1}} line="f2" word="reached" dur={3.4} easing="easeInOut" />
+      <Appear target="km" line="f2" word="kilometers" />
+      <Appear target="x-2" line="f2" word="short" dur={0.2} />
 
-      <Disappear on={["photo-2", "ft-2", "km"]} line="f3" dur={0.3} />
-      <Tween on="path-2" dim={1} line="f3" dur={0.6} />
-      <Set on="photo-3" py={90} at="start" />
-      <Appear on="photo-3" line="f3" word="third" />
-      <Tween on="photo-3" zoom={1.14} py={72} line="f3" word="third" dur={9} easing="linear" />
-      <Appear on="ft-3" line="f3" word="August" />
-      <Appear on="path-3" line="f3" word="first stage" dur={0.2} />
-      <Tween on="path-3" draw={1} line="f3" word="first stage" dur={2.4} easing="easeInOut" />
-      <Appear on="bump" line="f3" word="bumped" />
-      <Appear on="x-3" line="f3" word="after separation" dur={0.2} />
+      <Disappear target={["photo-2", "ft-2", "km"]} line="f3" dur={0.3} />
+      <Tween target="path-2" to={{dim: 1}} line="f3" dur={0.6} />
+      <Set target="photo-3" to={{py: 90}} at="start" />
+      <Appear target="photo-3" line="f3" word="third" />
+      <Tween target="photo-3" to={{zoom: 1.14, py: 72}} line="f3" word="third" dur={9} easing="linear" />
+      <Appear target="ft-3" line="f3" word="August" />
+      <Appear target="path-3" line="f3" word="first stage" dur={0.2} />
+      <Tween target="path-3" to={{draw: 1}} line="f3" word="first stage" dur={2.4} easing="easeInOut" />
+      <Appear target="bump" line="f3" word="bumped" />
+      <Appear target="x-3" line="f3" word="after separation" dur={0.2} />
 
-      <Disappear on={["photo-3", "ft-3", "chart", "bump"]} line="f0" dur={0.4} />
-      <Appear on="tally" line="f0" offset={0.4} />
-      <Appear on="cross-1" line="f0" word="Three launches" />
-      <Appear on="cross-2" line="f0" word="launches" />
-      <Appear on="cross-3" line="f0" word="three failures" />
+      <Disappear target={["photo-3", "ft-3", "chart", "bump"]} line="f0" dur={0.4} />
+      <Appear target="tally" line="f0" offset={0.4} />
+      <Appear target="cross-1" line="f0" word="Three launches" />
+      <Appear target="cross-2" line="f0" word="launches" />
+      <Appear target="cross-3" line="f0" word="three failures" />
     </Animation>
   </Scene>
 
@@ -749,19 +749,19 @@ export default <Doc
     <Part id="orbit" z={2} x={360} y={590} w={1200} h={240}><Stamp /></Part>
     <Part id="first-rocket" z={2} x={160} y={300} w={1600} h={380}><Words id="first-text" size={112}>First privately developed, liquid-fueled rocket in orbit</Words></Part>
     <Animation>
-      <Set on="launch" dim={0.3} at="start" />
-      <Set on="orbit" rotate={-5} scale={1.5} at="start" />
-      <Appear on="launch" line="g1" word="fourth" />
-      <Tween on="launch" zoom={1.25} py={35} at="start" dur={20} easing="linear" />
-      <Tween on="tally" k={1} line="g1" word="fourth" dur={0.9} />
-      <Appear on="slot" line="g1" word="last" />
-      <Appear on="date" line="g2" word="September" />
-      <Disappear on="slot" line="g2" word="orbit" dur={0.5} />
-      <Appear on="ok" line="g2" word="orbit" dur={0.5} />
-      <Appear on="orbit" line="g2" word="orbit" dur={0.3} />
-      <Tween on="orbit" scale={1} line="g2" word="orbit" dur={0.4} />
-      <Disappear on={["date", "orbit"]} line="g3" dur={0.4} />
-      <Appear on="first-rocket" line="g3" word="first" />
+      <Set target="launch" to={{dim: 0.3}} at="start" />
+      <Set target="orbit" to={{rotate: -5, scale: 1.5}} at="start" />
+      <Appear target="launch" line="g1" word="fourth" />
+      <Tween target="launch" to={{zoom: 1.25, py: 35}} at="start" dur={20} easing="linear" />
+      <Tween target="tally" to={{k: 1}} line="g1" word="fourth" dur={0.9} />
+      <Appear target="slot" line="g1" word="last" />
+      <Appear target="date" line="g2" word="September" />
+      <Disappear target="slot" line="g2" word="orbit" dur={0.5} />
+      <Appear target="ok" line="g2" word="orbit" dur={0.5} />
+      <Appear target="orbit" line="g2" word="orbit" dur={0.3} />
+      <Tween target="orbit" to={{scale: 1}} line="g2" word="orbit" dur={0.4} />
+      <Disappear target={["date", "orbit"]} line="g3" dur={0.4} />
+      <Appear target="first-rocket" line="g3" word="first" />
     </Animation>
   </Scene>
 
@@ -773,24 +773,24 @@ export default <Doc
     <Part id="flights" z={2} x={120} y={500} w={1500} h={400}><Figure id="flights" digits={0} to={12} unit="cargo flights" color="var(--vt-data)" /></Part>
     <Part id="route" z={2} x={0} y={250} w={1920} h={520}><Route /></Part>
     <Animation>
-      <Disappear on="tally" at="start" dur={0.4} />
-      <Set on="iss" dim={0.15} at="start" />
-      <Appear on="iss" at="start" />
-      <Tween on="iss" zoom={1.14} px={42} at="start" dur={20} easing="linear" />
-      <Appear on="money" line="a1" word="one point six" />
-      <Tween on="money" v={1} line="a1" word="one point six" dur={1.6} />
-      <Appear on="flights" line="a1" word="twelve" />
-      <Tween on="flights" v={1} line="a1" word="twelve" dur={1.4} />
-      <Disappear on={["money", "flights"]} line="a2" dur={0.4} />
-      <Tween on="iss" dim={0.72} line="a2" dur={1} />
-      <Appear on="route" line="a2" offset={0.2} />
-      <Appear on="node-f1" line="a2" word="Falcon One" />
-      <Tween on="seg-1" draw={1} line="a2" word="Falcon One" offset={0.6} dur={0.7} />
-      <Appear on="node-f9" line="a2" word="Falcon Nine" />
-      <Tween on="seg-2" draw={1} line="a2" word="Falcon Nine" offset={0.6} dur={0.7} />
-      <Appear on="node-dr" line="a2" word="Dragon" />
-      <Tween on="seg-3" draw={1} line="a2" word="Dragon" offset={0.6} dur={0.7} />
-      <Appear on="node-st" line="a2" word="twenty twelve" />
+      <Disappear target="tally" at="start" dur={0.4} />
+      <Set target="iss" to={{dim: 0.15}} at="start" />
+      <Appear target="iss" at="start" />
+      <Tween target="iss" to={{zoom: 1.14, px: 42}} at="start" dur={20} easing="linear" />
+      <Appear target="money" line="a1" word="one point six" />
+      <Tween target="money" to={{v: 1}} line="a1" word="one point six" dur={1.6} />
+      <Appear target="flights" line="a1" word="twelve" />
+      <Tween target="flights" to={{v: 1}} line="a1" word="twelve" dur={1.4} />
+      <Disappear target={["money", "flights"]} line="a2" dur={0.4} />
+      <Tween target="iss" to={{dim: 0.72}} line="a2" dur={1} />
+      <Appear target="route" line="a2" offset={0.2} />
+      <Appear target="node-f1" line="a2" word="Falcon One" />
+      <Tween target="seg-1" to={{draw: 1}} line="a2" word="Falcon One" offset={0.6} dur={0.7} />
+      <Appear target="node-f9" line="a2" word="Falcon Nine" />
+      <Tween target="seg-2" to={{draw: 1}} line="a2" word="Falcon Nine" offset={0.6} dur={0.7} />
+      <Appear target="node-dr" line="a2" word="Dragon" />
+      <Tween target="seg-3" to={{draw: 1}} line="a2" word="Dragon" offset={0.6} dur={0.7} />
+      <Appear target="node-st" line="a2" word="twenty twelve" />
     </Animation>
   </Scene>
 
@@ -800,16 +800,16 @@ export default <Doc
     <Part id="contrast" x={0} y={200} w={1920} h={560}><Contrast /></Part>
     <Part id="today" x={0} y={200} w={1920} h={560}><Today /></Part>
     <Animation>
-      <Appear on="contrast" at="start" />
-      <Appear on="bio" line="w1" word="Musk" />
-      <Tween on="rule" len={1230} line="w1" word="than" dur={0.5} />
-      <Disappear on="bio" line="w1" word="portrait" dur={0.3} />
-      <Tween on="rule" l={240} t={400} len={1440} c={1} line="w1" word="portrait" dur={0.7} />
-      <Appear on="team" line="w1" word="small" />
-      <Disappear on="contrast" line="w2" dur={0.4} />
-      <Appear on="today" line="w2" />
-      <Appear on="today-a" line="w2" word="SpaceX" />
-      <Appear on="today-b" line="w2" word="started" />
+      <Appear target="contrast" at="start" />
+      <Appear target="bio" line="w1" word="Musk" />
+      <Tween target="rule" to={{len: 1230}} line="w1" word="than" dur={0.5} />
+      <Disappear target="bio" line="w1" word="portrait" dur={0.3} />
+      <Tween target="rule" to={{l: 240, t: 400, len: 1440, c: 1}} line="w1" word="portrait" dur={0.7} />
+      <Appear target="team" line="w1" word="small" />
+      <Disappear target="contrast" line="w2" dur={0.4} />
+      <Appear target="today" line="w2" />
+      <Appear target="today-a" line="w2" word="SpaceX" />
+      <Appear target="today-b" line="w2" word="started" />
     </Animation>
   </Scene>
 
@@ -817,11 +817,11 @@ export default <Doc
     <Line id="c1" hold={4} text="Liftoff, by Eric Berger, published in 2021.">Liftoff, by Eric Berger, published in twenty twenty one.</Line>
     <Part id="closing" x={0} y={180} w={1920} h={660}><Closing /></Part>
     <Animation>
-      <Appear on="closing" at="start" />
-      <Appear on="c-title" line="c1" word="Liftoff" />
-      <Appear on="c-author" line="c1" word="Eric Berger" />
-      <Appear on="c-year" line="c1" word="twenty twenty one" />
-      <Appear on="c-note" line="c1" word="twenty twenty one" offset={1} />
+      <Appear target="closing" at="start" />
+      <Appear target="c-title" line="c1" word="Liftoff" />
+      <Appear target="c-author" line="c1" word="Eric Berger" />
+      <Appear target="c-year" line="c1" word="twenty twenty one" />
+      <Appear target="c-note" line="c1" word="twenty twenty one" offset={1} />
     </Animation>
   </Scene>
 </Doc>;

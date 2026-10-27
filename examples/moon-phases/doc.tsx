@@ -3,7 +3,7 @@ import {useProp} from '@visotalk/runtime';
 import {PhaseDiscs, usePalette} from './components/moon.tsx';
 import {Days, Earth, Ghosts, Moon, Orbit, PhaseName, Rays, Rim, Shadow, Sightline, Sun, View, Yesterday} from './components/orrery.tsx';
 
-/** The small text parts: a scene's kicker and a note under it. A note's words can be changed by `<Set text>`. */
+/** The small text parts: a scene's kicker and a note under it. A note's words can be changed by `<Set target="note" to={{text: "…"}}/>`. */
 const Kicker = ({children}: {children: string}) => (
   <div style={{fontFamily: 'var(--vt-sans)', fontSize: 56, lineHeight: '56px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: usePalette().data}}>{children}</div>
 );
@@ -30,12 +30,12 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="phases"><PhaseDiscs /></Part>
     <Part id="n-same" x={360} y={140} w={1200} h={72}><Note color="data">Same Moon, different light</Note></Part>
     <Animation>
-      <Appear on={["t-change", "phases"]} at="start" />
-      <Appear on="sliver" line="m1" word="sliver" />
-      <Appear on="half" line="m1" word="half" />
-      <Appear on="full-disc" line="m1" word="full disc" />
-      <Tween on="phases" whole={1} line="m2" word="does not change shape" dur={1.4} />
-      <Appear on="n-same" line="m2" word="only looks" />
+      <Appear target={["t-change", "phases"]} at="start" />
+      <Appear target="sliver" line="m1" word="sliver" />
+      <Appear target="half" line="m1" word="half" />
+      <Appear target="full-disc" line="m1" word="full disc" />
+      <Tween target="phases" to={{whole: 1}} line="m2" word="does not change shape" dur={1.4} />
+      <Appear target="n-same" line="m2" word="only looks" />
     </Animation>
   </Scene>
 
@@ -50,14 +50,14 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="rim"><Rim /></Part>
     <Part id="n-lit" x={360} y={140} w={1200} h={72}><Note color="warn">Always half lit</Note></Part>
     <Animation>
-      <Appear on="t-lit" at="start" />
-      <Set on="moon" focus={1} at="start" />
-      <Appear on="moon" line="m3" word="ball" dur={0.8} />
-      <Appear on={["sun", "rays"]} line="m3" word="lamp" dur={1.2} />
-      <Appear on="rim" line="m3" word="one half" dur={0.8} />
-      <Appear on="moon-tag" line="m4" word="Moon" dur={0.5} />
-      <Appear on="n-lit" line="m4" word="always lit" />
-      <Appear on="sun-tag" line="m4" word="Sun" dur={0.5} />
+      <Appear target="t-lit" at="start" />
+      <Set target="moon" to={{focus: 1}} at="start" />
+      <Appear target="moon" line="m3" word="ball" dur={0.8} />
+      <Appear target={["sun", "rays"]} line="m3" word="lamp" dur={1.2} />
+      <Appear target="rim" line="m3" word="one half" dur={0.8} />
+      <Appear target="moon-tag" line="m4" word="Moon" dur={0.5} />
+      <Appear target="n-lit" line="m4" word="always lit" />
+      <Appear target="sun-tag" line="m4" word="Sun" dur={0.5} />
     </Animation>
   </Scene>
 
@@ -79,39 +79,39 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="view"><View /></Part>
     <Part id="phase-name"><PhaseName /></Part>
     <Animation>
-      <Appear on={["t-orbit", "sun", "moon", "ghosts"]} at="start" />
-      <Set on="orbit" draw={0} at="start" />
-      <Appear on="orbit" line="m5" word="circles" dur={0.3} />
-      <Tween on="orbit" draw={1} line="m5" word="circles" dur={1.2} />
-      <Appear on="earth" line="m5" word="Earth" />
-      <Appear on={["view", "sightline"]} line="m5" word="lit half" dur={0.8} />
-      <Tween id="lap1" on="moon" angle={360} line="m5" word="lit half" dur={3.5} />
-      <Set on="moon" angle={0} after="lap1" />
+      <Appear target={["t-orbit", "sun", "moon", "ghosts"]} at="start" />
+      <Set target="orbit" to={{draw: 0}} at="start" />
+      <Appear target="orbit" line="m5" word="circles" dur={0.3} />
+      <Tween target="orbit" to={{draw: 1}} line="m5" word="circles" dur={1.2} />
+      <Appear target="earth" line="m5" word="Earth" />
+      <Appear target={["view", "sightline"]} line="m5" word="lit half" dur={0.8} />
+      <Tween id="lap1" target="moon" to={{angle: 360}} line="m5" word="lit half" dur={3.5} />
+      <Set target="moon" to={{angle: 0}} after="lap1" />
 
-      <Appear on="phase-name" line="m6" word="new moon" />
-      <Tween on="sightline" emphasis={1} line="m6" word="between the Earth and the Sun" dur={1.2} />
-      <Tween on="moon" glow={1} line="m6" word="faces away" dur={0.8} />
+      <Appear target="phase-name" line="m6" word="new moon" />
+      <Tween target="sightline" to={{emphasis: 1}} line="m6" word="between the Earth and the Sun" dur={1.2} />
+      <Tween target="moon" to={{glow: 1}} line="m6" word="faces away" dur={0.8} />
 
-      <Tween on="sightline" emphasis={0} line="m7" word="week" dur={0.4} />
-      <Tween on="moon" angle={90} line="m7" word="week later" dur={2} />
-      <Set on="phase-name" text="First quarter" line="m7" word="first quarter" />
-      <Tween on="sightline" emphasis={1} line="m7" word="exactly half" dur={0.6} />
+      <Tween target="sightline" to={{emphasis: 0}} line="m7" word="week" dur={0.4} />
+      <Tween target="moon" to={{angle: 90}} line="m7" word="week later" dur={2} />
+      <Set target="phase-name" to={{text: "First quarter"}} line="m7" word="first quarter" />
+      <Tween target="sightline" to={{emphasis: 1}} line="m7" word="exactly half" dur={0.6} />
 
-      <Set on="phase-name" text="Full moon" line="m8" word="full moon" />
-      <Tween on="sightline" emphasis={0} line="m8" word="full moon" dur={0.4} />
-      <Tween on="moon" angle={180} line="m8" word="between" dur={2.2} />
-      <Tween on="sightline" emphasis={1} line="m8" word="see the whole" dur={1} />
+      <Set target="phase-name" to={{text: "Full moon"}} line="m8" word="full moon" />
+      <Tween target="sightline" to={{emphasis: 0}} line="m8" word="full moon" dur={0.4} />
+      <Tween target="moon" to={{angle: 180}} line="m8" word="between" dur={2.2} />
+      <Tween target="sightline" to={{emphasis: 1}} line="m8" word="see the whole" dur={1} />
 
-      <Set on="sightline" emphasis={0} line="m9" />
-      <Set on="phase-name" text="Same light" line="m9" />
-      <Appear on={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m9" word="every phase" stagger={0.12} dur={0.5} />
-      <Tween on="sightline" emphasis={1} line="m9" word="viewpoint" dur={0.8} />
+      <Set target="sightline" to={{emphasis: 0}} line="m9" />
+      <Set target="phase-name" to={{text: "Same light"}} line="m9" />
+      <Appear target={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m9" word="every phase" stagger={0.12} dur={0.5} />
+      <Tween target="sightline" to={{emphasis: 1}} line="m9" word="viewpoint" dur={0.8} />
 
-      <Disappear on={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m10" word="Then" dur={0.6} />
-      <Tween on="moon" angle={270} line="m10" word="light shrinks" dur={1.8} />
-      <Set on="phase-name" text="Last quarter" line="m10" word="last quarter" />
-      <Tween on="moon" angle={360} line="m10" word="back to" dur={1.2} />
-      <Set on="phase-name" text="New moon" line="m10" word="new" />
+      <Disappear target={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m10" word="Then" dur={0.6} />
+      <Tween target="moon" to={{angle: 270}} line="m10" word="light shrinks" dur={1.8} />
+      <Set target="phase-name" to={{text: "Last quarter"}} line="m10" word="last quarter" />
+      <Tween target="moon" to={{angle: 360}} line="m10" word="back to" dur={1.2} />
+      <Set target="phase-name" to={{text: "New moon"}} line="m10" word="new" />
     </Animation>
   </Scene>
 
@@ -130,16 +130,16 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="days"><Days /></Part>
     <Part id="n-late" x={360} y={140} w={1200} h={72}><Note color="warn">Rises later each night</Note></Part>
     <Animation>
-      <Appear on={["t-cycle", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
-      <Tween id="lap2" on="moon" angle={360} line="m11" word="One full cycle" dur={4} />
-      <Set on="moon" angle={0} after="lap2" />
-      <Appear on="days" line="m11" word="twenty nine" dur={0.3} />
-      <Tween on="days" value={29.5} line="m11" word="twenty nine" dur={2.2} />
+      <Appear target={["t-cycle", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
+      <Tween id="lap2" target="moon" to={{angle: 360}} line="m11" word="One full cycle" dur={4} />
+      <Set target="moon" to={{angle: 0}} after="lap2" />
+      <Appear target="days" line="m11" word="twenty nine" dur={0.3} />
+      <Tween target="days" to={{value: 29.5}} line="m11" word="twenty nine" dur={2.2} />
 
       {/* one night is 360 / 29.5 = 12.2 degrees of the orbit */}
-      <Appear on="yesterday" line="m12" word="moves a little" />
-      <Tween on="moon" angle={12.2} line="m12" word="moves a little" dur={1.4} />
-      <Appear on="n-late" line="m12" word="rises later" />
+      <Appear target="yesterday" line="m12" word="moves a little" />
+      <Tween target="moon" to={{angle: 12.2}} line="m12" word="moves a little" dur={1.4} />
+      <Appear target="n-late" line="m12" word="rises later" />
     </Animation>
   </Scene>
 
@@ -158,17 +158,17 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="n-side" x={360} y={140} w={1200} h={72}><Note color="warn">Same face, every night</Note></Part>
     <Part id="n-ecl" x={360} y={140} w={1200} h={72}><Note color="bad">Lunar eclipse</Note></Part>
     <Animation>
-      <Appear on={["t-side", "orbit", "shadow", "sun", "earth", "sightline", "moon", "view"]} at="start" />
-      <Tween id="lap3" on="moon" angle={360} line="m13" word="always see" dur={4} />
-      <Set on="moon" angle={0} after="lap3" />
-      <Tween on="moon" face={1} line="m13" word="same side" dur={0.6} />
-      <Appear on="n-side" line="m13" word="whatever the phase" />
+      <Appear target={["t-side", "orbit", "shadow", "sun", "earth", "sightline", "moon", "view"]} at="start" />
+      <Tween id="lap3" target="moon" to={{angle: 360}} line="m13" word="always see" dur={4} />
+      <Set target="moon" to={{angle: 0}} after="lap3" />
+      <Tween target="moon" to={{face: 1}} line="m13" word="same side" dur={0.6} />
+      <Appear target="n-side" line="m13" word="whatever the phase" />
 
-      <Disappear id="side-off" on="n-side" line="m14" word="happens" dur={0.4} />
-      <Tween on="shadow" reach={1} line="m14" word="shadow" dur={1.4} />
-      <Appear on="n-ecl" after="side-off" />
-      <Tween on="moon" angle={180} line="m14" word="lunar eclipse" dur={2.4} />
-      <Set on="n-ecl" text="Lunar eclipse: rare" line="m14" word="much rarer" />
+      <Disappear id="side-off" target="n-side" line="m14" word="happens" dur={0.4} />
+      <Tween target="shadow" to={{reach: 1}} line="m14" word="shadow" dur={1.4} />
+      <Appear target="n-ecl" after="side-off" />
+      <Tween target="moon" to={{angle: 180}} line="m14" word="lunar eclipse" dur={2.4} />
+      <Set target="n-ecl" to={{text: "Lunar eclipse: rare"}} line="m14" word="much rarer" />
     </Animation>
   </Scene>
 
@@ -183,12 +183,12 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="moon"><Moon /></Part>
     <Part id="view"><View /></Part>
     <Animation>
-      <Appear on={["t-geo", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
-      <Set on="moon" angle={180} at="start" />
-      <Tween on="moon" angle={225} line="m15" word="where the Moon is" dur={1.4} />
-      <Set on="moon" text="Position" line="m15" word="where the Moon is" />
-      <Tween on="sightline" emphasis={1} line="m15" word="where we are looking from" dur={1} />
-      <Set on="earth" text="Viewpoint" line="m15" word="where we are looking from" />
+      <Appear target={["t-geo", "orbit", "sun", "earth", "sightline", "moon", "view"]} at="start" />
+      <Set target="moon" to={{angle: 180}} at="start" />
+      <Tween target="moon" to={{angle: 225}} line="m15" word="where the Moon is" dur={1.4} />
+      <Set target="moon" to={{text: "Position"}} line="m15" word="where the Moon is" />
+      <Tween target="sightline" to={{emphasis: 1}} line="m15" word="where we are looking from" dur={1} />
+      <Set target="earth" to={{text: "Viewpoint"}} line="m15" word="where we are looking from" />
     </Animation>
   </Scene>
 </Doc>;

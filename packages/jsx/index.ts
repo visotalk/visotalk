@@ -9,7 +9,7 @@
  *     <Scene id="intro">
  *       <Line id="l1">The server sends a tag.</Line>
  *       <Part id="tag">{() => <div {...useTarget("tag-box")}>ETag</div>}</Part>
- *       <Animation><Appear on="tag-box" line="l1" word="tag"/></Animation>
+  *       <Animation><Appear target="tag-box" line="l1" word="tag"/></Animation>
  *     </Scene>
  *   </Doc>;
  *
@@ -61,7 +61,7 @@ type Until = 'start' | 'end' | number | {line: string; word?: string; nth?: numb
 /** A motion needs exactly one place to start: a word of a line (`line` + `word`, `nth` for the nth occurrence), `after` another action, or `at` seconds into the scene (or "start", "end") */
 interface MotionProps {
   /** a part, or an element a part registers with `useTarget` or `<Obj>`: ids are unique within a scene */
-  on: string | string[];
+  target: string | string[];
   id?: string; dur?: number; stagger?: number; easing?: Easing;
   /** where it ends, instead of `dur` (not on `<Set>`, nor with `repeat`) */
   until?: Until;
@@ -74,7 +74,7 @@ interface MotionProps {
 }
 export const Appear: Tag<MotionProps> = tag('Appear');
 export const Disappear: Tag<MotionProps> = tag('Disappear');
-/** The props it changes are its other attributes: numbers, colours ("#426894") and lengths ("12px"): `<Tween on="bar" w={1100} line="l1" word="counted" dur={1.4}/>`; read with `useProp("bar", "w", 0)`. `x`, `y`, `scale` and `rotate` move the target itself */
-export const Tween: Tag<MotionProps & {[prop: string]: unknown}> = tag('Tween');
+/** `to` holds numbers, colours and lengths: `<Tween target="bar" to={{w: 1100}} line="l1" word="counted" dur={1.4}/>`; read with `useProp("bar", "w", 0)`. `x`, `y`, `scale` and `rotate` move the target itself */
+export const Tween: Tag<MotionProps & {to: Record<string, number | string>}> = tag('Tween');
 /** Like `<Tween>`, at once, and a value may be a string or true/false */
-export const Set: Tag<MotionProps & {[prop: string]: unknown}> = tag('Set');
+export const Set: Tag<MotionProps & {to: Record<string, number | string | boolean>}> = tag('Set');

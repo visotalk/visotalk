@@ -13,7 +13,7 @@ export default <Doc id="d" title="t" lang="en">
   <Scene id="bars-scene">
     <Line id="l1">Bars that grow, like a red apple and pears.</Line>
     <Part id="bars">{() => <div>bars</div>}</Part>
-    <Animation><Appear on="bars" line="l1" word="red apple"/><Appear on="bars" line="l1" word="pears"/><Appear on="bars" line="l1" word="red apple" edge="end"/></Animation>
+    <Animation><Appear target="bars" line="l1" word="red apple"/><Appear target="bars" line="l1" word="pears"/><Appear target="bars" line="l1" word="red apple" edge="end"/></Animation>
   </Scene>
   <Scene id="chain-scene">
     <Line id="l2">Cards that change.</Line>
@@ -70,7 +70,7 @@ test('targets: an action target no part registers is a typo, one registered twic
   const {solve} = await import('../../packages/ir/src/index.ts');
   const src = `import {Doc, Scene, Line, Part, Animation, Appear, Tween} from '@visotalk/jsx';
 export default <Doc id="d" title="t" lang="en"><Scene id="s"><Line id="l">One two three.</Line><Part id="p">{() => null}</Part>
-  <Animation><Appear on="p" line="l" word="two"/><Tween on="bar" w={4} line="l" word="three"/><Appear on="barr" at="end"/></Animation></Scene></Doc>;`;
+  <Animation><Appear target="p" line="l" word="two"/><Tween target="bar" to={{w: 4}} line="l" word="three"/><Appear target="barr" at="end"/></Animation></Scene></Doc>;`;
   const p = project(mkdtempSync('/tmp/vt-targets-'), src);
   const c = solve(p.doc, {l: {duration: 3, audio: 'l.wav'}}, 30);
   assert.deepEqual(lineWindows(c).map((w) => [w.at, w.from, w.end]), [['s/l', 0.4, 3.4]]);
@@ -179,7 +179,7 @@ test('video: an asset of kind video is probed into media.json, and the exporter 
 import {Video} from '@visotalk/runtime';
 export default <Doc id="v" title="V" lang="en" theme="visotalk/dark" canvas="16x9">
   <Asset id="clip" kind="video" src="media/clip.mp4" license={{id: 'CC0-1.0', attribution: 'test', obligations: []}} source="https://example.com/"/>
-  <Scene id="s"><Line id="l1">One two three.</Line><Part id="p">{() => <Video asset="clip"/>}</Part><Animation><Appear on="p" line="l1" word="two"/></Animation></Scene>
+  <Scene id="s"><Line id="l1">One two three.</Line><Part id="p">{() => <Video asset="clip"/>}</Part><Animation><Appear target="p" line="l1" word="two"/></Animation></Scene>
 </Doc>;`);
   mkdirSync(dir + '/.visotalk/v', {recursive: true});
   writeFileSync(dir + '/.visotalk/v/voice.json', JSON.stringify({l1: {duration: 2}}));
@@ -213,7 +213,7 @@ test('audio: a built sound asset carries its length, and the solver ends a singl
   writeFileSync(dir + '/doc.tsx', `import {Doc, Scene, Line, Part, Animation, Appear, Asset, Sound} from '@visotalk/jsx';
 export default <Doc id="s" title="S" lang="en" theme="visotalk/dark" canvas="16x9">
   <Asset id="tick" kind="audio" src="media/tick.wav" license={{id: 'CC0-1.0', attribution: 'test', obligations: []}} source="https://example.com/"/>
-  <Scene id="s"><Line id="l1">One two three.</Line><Sound asset="tick" at="start"/><Part id="p">{() => <div>x</div>}</Part><Animation><Appear on="p" line="l1" word="two"/></Animation></Scene>
+  <Scene id="s"><Line id="l1">One two three.</Line><Sound asset="tick" at="start"/><Part id="p">{() => <div>x</div>}</Part><Animation><Appear target="p" line="l1" word="two"/></Animation></Scene>
 </Doc>;`);
   mkdirSync(dir + '/.visotalk/s', {recursive: true});
   writeFileSync(dir + '/.visotalk/s/voice.json', JSON.stringify({l1: {duration: 2}}));
@@ -236,7 +236,7 @@ test('build: every file but the page is named by its content, and the runtime is
 import {useAsset} from '@visotalk/runtime';
 export default <Doc id="${id}" title="${id}" lang="en" theme="visotalk/dark" canvas="16x9">
   <Asset id="tick" kind="audio" src="media/tick.wav" license={{id: 'CC0-1.0', attribution: 'test', obligations: []}} source="https://example.com/"/>
-  <Scene id="s"><Line id="l1">${say}</Line><Sound asset="tick" at="start"/><Part id="p">{() => <div data-src={useAsset("tick")}>x</div>}</Part><Animation><Appear on="p" line="l1"/></Animation></Scene>
+  <Scene id="s"><Line id="l1">${say}</Line><Sound asset="tick" at="start"/><Part id="p">{() => <div data-src={useAsset("tick")}>x</div>}</Part><Animation><Appear target="p" line="l1"/></Animation></Scene>
 </Doc>;`;
   const build = async (id: string, say: string) => {
     writeFileSync(`${dir}/${id}.tsx`, doc(id, say));
@@ -291,7 +291,7 @@ test('artifact: the player is built with the soundtrack mixed into one MP3, a pa
   if (spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1', wav]).status !== 0) return t.skip('no ffmpeg');
   writeFileSync(dir + '/doc.tsx', `import {Doc, Scene, Line, Part, Animation, Appear} from '@visotalk/jsx';
 export default <Doc id="a" title="A <b>" lang="en" theme="visotalk/dark" canvas="16x9">
-  <Scene id="s"><Line id="l1">One two three.</Line><Part id="p">{() => <div>x</div>}</Part><Animation><Appear on="p" line="l1" word="two"/></Animation></Scene>
+  <Scene id="s"><Line id="l1">One two three.</Line><Part id="p">{() => <div>x</div>}</Part><Animation><Appear target="p" line="l1" word="two"/></Animation></Scene>
 </Doc>;`);
   mkdirSync(dir + '/.visotalk/a/audio', {recursive: true});
   spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', wav, '-c:a', 'aac', dir + '/.visotalk/a/audio/l1.m4a']);
@@ -318,7 +318,7 @@ export default <Doc id="a" title="A <b>" lang="en" theme="visotalk/dark" canvas=
   // a film with nothing to hear has no soundtrack
   writeFileSync(dir + '/silent.tsx', `import {Doc, Scene, Part, Animation, Appear} from '@visotalk/jsx';
 export default <Doc id="q" title="Q" lang="en" theme="visotalk/dark" canvas="16x9">
-  <Scene id="s" duration={1}><Part id="p">{() => <div>x</div>}</Part><Animation><Appear on="p" at="start"/></Animation></Scene>
+  <Scene id="s" duration={1}><Part id="p">{() => <div>x</div>}</Part><Animation><Appear target="p" at="start"/></Animation></Scene>
 </Doc>;`);
   const quiet = await buildPlayer(load(dir + '/silent.tsx'), {artifact: true, out: dir + '/quiet'});
   assert.deepEqual(JSON.parse(readFileSync(quiet + '/artifact.json', 'utf8')).files.map((f: string) => f.replace(/[0-9a-f]{12}/, '#')), ['app.#.js', 'runtime.#.js']);

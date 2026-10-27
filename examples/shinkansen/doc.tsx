@@ -415,20 +415,20 @@ export default (
         </div>
       )}</Part>
       <Animation>
-        <Appear on="route" line="f1" word="東京から" />
-        <Appear on="route-line" line="f1" word="東京から" dur={0.9} />
-        <Appear on="train-main" line="f1" word="新幹線は" />
-        <Tween on="route-line" draw={1} dur={0.9} line="f1" word="東京から" />
-        <Tween on="train-main" x={1000} dur={3.6} easing="easeInOutSine" line="f1" word="一日に" />
-        <Appear on="train-more" line="f1" word="何百本" />
-        <Disappear on="route" line="f2" word="それでも" />
-        <Appear on="dial" line="f2" word="遅れは" />
-        <Appear on="dial-face" line="f2" word="遅れは" />
-        <Appear on="delay" line="f2" word="遅れは" />
-        <Appear on="delay-kicker" line="f2" word="遅れは" />
-        <Tween on="dial" sweep={6} dur={1.2} easing="easeOut" line="f2" word="平均で" />
-        <Appear on="delay-big" line="f2" word="約一分" />
-        <Appear on="delay-note" line="f2" word="約一分" offset={0.5} />
+        <Appear target="route" line="f1" word="東京から" />
+        <Appear target="route-line" line="f1" word="東京から" dur={0.9} />
+        <Appear target="train-main" line="f1" word="新幹線は" />
+        <Tween target="route-line" to={{draw: 1}} dur={0.9} line="f1" word="東京から" />
+        <Tween target="train-main" to={{x: 1000}} dur={3.6} easing="easeInOutSine" line="f1" word="一日に" />
+        <Appear target="train-more" line="f1" word="何百本" />
+        <Disappear target="route" line="f2" word="それでも" />
+        <Appear target="dial" line="f2" word="遅れは" />
+        <Appear target="dial-face" line="f2" word="遅れは" />
+        <Appear target="delay" line="f2" word="遅れは" />
+        <Appear target="delay-kicker" line="f2" word="遅れは" />
+        <Tween target="dial" to={{sweep: 6}} dur={1.2} easing="easeOut" line="f2" word="平均で" />
+        <Appear target="delay-big" line="f2" word="約一分" />
+        <Appear target="delay-note" line="f2" word="約一分" offset={0.5} />
       </Animation>
     </Scene>
 
@@ -438,16 +438,16 @@ export default (
       <Part id="own" x={0} y={520} w={1920} h={340}>{() => <Own />}</Part>
       <Part id="others" x={0} y={90} w={1920} h={440}>{() => <Others />}</Part>
       <Animation>
-        <Appear on="own" line="o1" word="新幹線には" />
-        <Appear on="own-rails" line="o1" word="新幹線には" />
-        <Appear on="own-train" line="o1" word="新幹線には" />
-        <Tween on="own-mark" draw={1} dur={1.2} line="o1" word="専用の線路" />
-        <Tween on="own-train" x={720} dur={7} easing="linear" line="o2" word="貨物列車" />
-        <Appear on="others" line="o2" word="貨物列車" />
-        <Appear on="icon-freight" line="o2" word="貨物列車" />
-        <Appear on="icon-local" line="o2" word="普通列車" />
-        <Appear on="icon-gate" line="o2" word="踏切も" />
-        <Tween on={["slash-freight", "slash-local", "slash-gate"]} draw={1} dur={0.7} stagger={0.35} line="o2" word="ありません" />
+        <Appear target="own" line="o1" word="新幹線には" />
+        <Appear target="own-rails" line="o1" word="新幹線には" />
+        <Appear target="own-train" line="o1" word="新幹線には" />
+        <Tween target="own-mark" to={{draw: 1}} dur={1.2} line="o1" word="専用の線路" />
+        <Tween target="own-train" to={{x: 720}} dur={7} easing="linear" line="o2" word="貨物列車" />
+        <Appear target="others" line="o2" word="貨物列車" />
+        <Appear target="icon-freight" line="o2" word="貨物列車" />
+        <Appear target="icon-local" line="o2" word="普通列車" />
+        <Appear target="icon-gate" line="o2" word="踏切も" />
+        <Tween target={["slash-freight", "slash-local", "slash-gate"]} to={{draw: 1}} dur={0.7} stagger={0.35} line="o2" word="ありません" />
       </Animation>
     </Scene>
 
@@ -456,14 +456,14 @@ export default (
       <Line id="g2" hold={1.2}>近づきすぎれば、自動でブレーキがかかります。</Line>
       <Part id="atc" x={0} y={160} w={1920} h={700}>{() => <Atc />}</Part>
       <Animation>
-        <Appear on="atc" line="g1" word="前の列車" />
-        <Appear on="gap" line="g1" word="間隔" />
-        <Appear on="atc-box" line="g1" word="コンピューター" />
-        <Appear on="atc-links" line="g1" word="見張って" />
-        <Tween on="atc" pos={250} dur={1.6} easing="linear" line="g2" word="近づきすぎれば" />
-        <Appear on="speed" line="g2" word="自動で" />
-        <Appear on="brake-lamp" line="g2" word="ブレーキ" />
-        <Tween on="atc" pos={330} brake={1} dur={1.4} easing="easeOutQuad" line="g2" word="ブレーキ" />
+        <Appear target="atc" line="g1" word="前の列車" />
+        <Appear target="gap" line="g1" word="間隔" />
+        <Appear target="atc-box" line="g1" word="コンピューター" />
+        <Appear target="atc-links" line="g1" word="見張って" />
+        <Tween target="atc" to={{pos: 250}} dur={1.6} easing="linear" line="g2" word="近づきすぎれば" />
+        <Appear target="speed" line="g2" word="自動で" />
+        <Appear target="brake-lamp" line="g2" word="ブレーキ" />
+        <Tween target="atc" to={{pos: 330, brake: 1}} dur={1.4} easing="easeOutQuad" line="g2" word="ブレーキ" />
       </Animation>
     </Scene>
 
@@ -472,19 +472,19 @@ export default (
       <Line id="q2" hold={1.2}>大きな揺れが来る前に、電気を止めて減速させます。</Line>
       <Part id="quake" x={0} y={140} w={1920} h={700}>{() => <Quake />}</Part>
       <Animation>
-        <Appear on="quake" line="q1" word="地震が" />
-        <Appear on="rail-line" line="q1" word="地震が" />
-        <Appear on="epicenter" line="q1" word="地震が" />
-        <Appear on="quake-train" line="q1" word="地震が" />
-        <Appear on="key-p" line="q1" word="最初の小さな" />
-        <Appear on="p-ring" line="q1" word="最初の小さな" />
-        <Tween on="quake" t={1.6} dur={9.6} easing="linear" line="q1" word="最初の小さな" />
-        <Appear on="sensor" line="q1" word="感知" />
-        <Appear on="key-s" line="q2" word="大きな揺れが" />
-        <Appear on="s-ring" line="q2" word="大きな揺れが" />
-        <Appear on="power-off" line="q2" word="電気を止めて" />
-        <Appear on="train-gauge" line="q2" word="電気を止めて" />
-        <Tween on="train-gauge" v={0} dur={1.4} easing="easeOutQuad" line="q2" word="減速" />
+        <Appear target="quake" line="q1" word="地震が" />
+        <Appear target="rail-line" line="q1" word="地震が" />
+        <Appear target="epicenter" line="q1" word="地震が" />
+        <Appear target="quake-train" line="q1" word="地震が" />
+        <Appear target="key-p" line="q1" word="最初の小さな" />
+        <Appear target="p-ring" line="q1" word="最初の小さな" />
+        <Tween target="quake" to={{t: 1.6}} dur={9.6} easing="linear" line="q1" word="最初の小さな" />
+        <Appear target="sensor" line="q1" word="感知" />
+        <Appear target="key-s" line="q2" word="大きな揺れが" />
+        <Appear target="s-ring" line="q2" word="大きな揺れが" />
+        <Appear target="power-off" line="q2" word="電気を止めて" />
+        <Appear target="train-gauge" line="q2" word="電気を止めて" />
+        <Tween target="train-gauge" to={{v: 0}} dur={1.4} easing="easeOutQuad" line="q2" word="減速" />
       </Animation>
     </Scene>
 
@@ -494,15 +494,15 @@ export default (
       <Part id="night" x={0} y={170} w={1920} h={340}>{() => <Night />}</Part>
       <Part id="yard" x={0} y={560} w={1920} h={320}>{() => <Yard />}</Part>
       <Animation>
-        <Appear on="night" line="n1" word="夜は" />
-        <Appear on="axis" line="n1" word="夜は" />
-        <Appear on="night-block" line="n1" word="夜は" />
-        <Appear on="day-block" line="n1" word="列車が" />
-        <Tween on="brace" draw={1} dur={0.9} line="n2" word="約六時間" />
-        <Tween on="yard-rail" draw={1} dur={1.0} line="n2" word="線路と" />
-        <Appear on="yard" line="n2" word="線路と" />
-        <Appear on="yard-wire" line="n2" word="設備を" />
-        <Appear on="yard-workers" line="n2" word="点検" />
+        <Appear target="night" line="n1" word="夜は" />
+        <Appear target="axis" line="n1" word="夜は" />
+        <Appear target="night-block" line="n1" word="夜は" />
+        <Appear target="day-block" line="n1" word="列車が" />
+        <Tween target="brace" to={{draw: 1}} dur={0.9} line="n2" word="約六時間" />
+        <Tween target="yard-rail" to={{draw: 1}} dur={1.0} line="n2" word="線路と" />
+        <Appear target="yard" line="n2" word="線路と" />
+        <Appear target="yard-wire" line="n2" word="設備を" />
+        <Appear target="yard-workers" line="n2" word="点検" />
       </Animation>
     </Scene>
 
@@ -510,12 +510,12 @@ export default (
       <Line id="t1" text="駅でも、折り返しの掃除は約7分で終わります。" hold={1.6}>駅でも、折り返しの掃除は約七分で終わります。</Line>
       <Part id="turn" x={0} y={200} w={1920} h={640}>{() => <Turn />}</Part>
       <Animation>
-        <Appear on="turn" line="t1" word="駅でも" />
-        <Appear on="turn-train" line="t1" word="駅でも" />
-        <Appear on="turn-label" line="t1" word="折り返し" />
-        <Appear on="turn-blocks" line="t1" word="掃除は" />
-        <Appear on="turn-count" line="t1" word="約七分" />
-        <Tween on="turn" minutes={7} dur={3.2} easing="linear" line="t1" word="約七分" />
+        <Appear target="turn" line="t1" word="駅でも" />
+        <Appear target="turn-train" line="t1" word="駅でも" />
+        <Appear target="turn-label" line="t1" word="折り返し" />
+        <Appear target="turn-blocks" line="t1" word="掃除は" />
+        <Appear target="turn-count" line="t1" word="約七分" />
+        <Tween target="turn" to={{minutes: 7}} dur={3.2} easing="linear" line="t1" word="約七分" />
       </Animation>
     </Scene>
 
@@ -524,10 +524,10 @@ export default (
       <Line id="s2" hold={1.6}>いくつもの仕組みが、毎日の定刻を支えています。</Line>
       <Part id="sum" x={0} y={0} w={1920} h={1080}>{() => <Sum />}</Part>
       <Animation>
-        <Appear on="sum" line="s1" word="時間通り" />
-        <Appear on="sum-clock" line="s1" word="時間通り" />
-        <Tween on="sum" deg={0} dur={1.4} easing="easeInOutSine" line="s1" word="時間通り" />
-        <Appear on={["r-track", "r-atc", "r-quake", "r-night", "r-turn"]} stagger={0.45} line="s2" word="仕組み" />
+        <Appear target="sum" line="s1" word="時間通り" />
+        <Appear target="sum-clock" line="s1" word="時間通り" />
+        <Tween target="sum" to={{deg: 0}} dur={1.4} easing="easeInOutSine" line="s1" word="時間通り" />
+        <Appear target={["r-track", "r-atc", "r-quake", "r-night", "r-turn"]} stagger={0.45} line="s2" word="仕組み" />
       </Animation>
     </Scene>
   </Doc>

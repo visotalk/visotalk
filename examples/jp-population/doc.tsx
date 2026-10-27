@@ -289,8 +289,8 @@ export default <Doc id="jp-population" poster={30} title="日本の人口はな�
     <Line id="i1">日本の人口は、なぜ減っているのか。</Line>
     <Part id="poster" x={140} y={140} w={1640} h={800}>{() => <Poster />}</Part>
     <Animation>
-      <Appear on="poster" at="start" dur={0} />
-      <Tween on="poster" hl={1} line="i1" word="減っている" dur={1.2} />
+      <Appear target="poster" at="start" dur={0} />
+      <Tween target="poster" to={{hl: 1}} line="i1" word="減っている" dur={1.2} />
     </Animation>
   </Scene>
 
@@ -299,11 +299,11 @@ export default <Doc id="jp-population" poster={30} title="日本の人口はな�
     <Line id="l2">以降は減り始め、二〇二四年は一億二千三百八十万人。四百二十八万人の減少です。</Line>
     <Part id="popa" x={140} y={170} w={1640} h={700}>{() => <PopChart x1={2024} projection={false} />}</Part>
     <Animation>
-      <Appear on="popa" line="l1" word="戦後" />
-      <Tween on="popa" yr={2008} line="l1" word="戦後" offset={0.2} dur={5.6} easing="easeInOutSine" />
-      <Appear on="peak" line="l1" word="ピーク" />
-      <Tween on="popa" yr={2024} line="l2" word="減り始め" dur={3.4} easing="easeInOutSine" />
-      <Appear on="drop" line="l2" word="四百二十八万人" />
+      <Appear target="popa" line="l1" word="戦後" />
+      <Tween target="popa" to={{yr: 2008}} line="l1" word="戦後" offset={0.2} dur={5.6} easing="easeInOutSine" />
+      <Appear target="peak" line="l1" word="ピーク" />
+      <Tween target="popa" to={{yr: 2024}} line="l2" word="減り始め" dur={3.4} easing="easeInOutSine" />
+      <Appear target="drop" line="l2" word="四百二十八万人" />
     </Animation>
   </Scene>
 
@@ -313,12 +313,12 @@ export default <Doc id="jp-population" poster={30} title="日本の人口はな�
     <Line id="l5">二〇〇七年から死亡が出生を上回り、差は八十九万人です。</Line>
     <Part id="vital" x={140} y={170} w={1640} h={700}>{() => <VitalChart />}</Part>
     <Animation>
-      <Appear on="vital" line="l3" word="出生数" />
-      <Tween on="vital" by={2024} line="l3" word="一九四九年" dur={5.2} easing="easeInOutSine" />
-      <Tween on="vital" dy={2024} line="l4" word="死亡数" dur={3.6} easing="easeInOutSine" />
-      <Appear on="cross" line="l5" word="二〇〇七年" />
-      <Tween on="vital" gy={2024} line="l5" word="上回り" dur={2.6} easing="easeInOutSine" />
-      <Appear on="net" line="l5" word="八十九万人" />
+      <Appear target="vital" line="l3" word="出生数" />
+      <Tween target="vital" to={{by: 2024}} line="l3" word="一九四九年" dur={5.2} easing="easeInOutSine" />
+      <Tween target="vital" to={{dy: 2024}} line="l4" word="死亡数" dur={3.6} easing="easeInOutSine" />
+      <Appear target="cross" line="l5" word="二〇〇七年" />
+      <Tween target="vital" to={{gy: 2024}} line="l5" word="上回り" dur={2.6} easing="easeInOutSine" />
+      <Appear target="net" line="l5" word="八十九万人" />
     </Animation>
   </Scene>
 
@@ -326,14 +326,14 @@ export default <Doc id="jp-population" poster={30} title="日本の人口はな�
     <Line id="l6">年齢別では、六十五歳以上が三千六百二十三万人、十五歳未満は千三百二十六万人。</Line>
     <Part id="agebar" x={140} y={170} w={1640} h={700}>{() => <AgeChart />}</Part>
     <Animation>
-      <Appear on="agebar" line="l6" word="年齢別" />
-      <Tween on="agebar" work={1} line="l6" word="年齢別" dur={1.2} easing="easeOutQuart" />
-      <Appear on="lab-work" line="l6" word="年齢別" offset={0.5} />
-      <Appear on="lab-total" line="l6" word="年齢別" offset={1.0} />
-      <Tween on="agebar" old={1} line="l6" word="六十五歳以上" dur={1.2} easing="easeOutQuart" />
-      <Appear on="lab-old" line="l6" word="六十五歳以上" offset={0.2} />
-      <Tween on="agebar" young={1} line="l6" word="十五歳未満" dur={1.2} easing="easeOutQuart" />
-      <Appear on="lab-young" line="l6" word="十五歳未満" offset={0.2} />
+      <Appear target="agebar" line="l6" word="年齢別" />
+      <Tween target="agebar" to={{work: 1}} line="l6" word="年齢別" dur={1.2} easing="easeOutQuart" />
+      <Appear target="lab-work" line="l6" word="年齢別" offset={0.5} />
+      <Appear target="lab-total" line="l6" word="年齢別" offset={1.0} />
+      <Tween target="agebar" to={{old: 1}} line="l6" word="六十五歳以上" dur={1.2} easing="easeOutQuart" />
+      <Appear target="lab-old" line="l6" word="六十五歳以上" offset={0.2} />
+      <Tween target="agebar" to={{young: 1}} line="l6" word="十五歳未満" dur={1.2} easing="easeOutQuart" />
+      <Appear target="lab-young" line="l6" word="十五歳未満" offset={0.2} />
     </Animation>
   </Scene>
 
@@ -341,13 +341,13 @@ export default <Doc id="jp-population" poster={30} title="日本の人口はな�
     <Line id="l7">日本人は八十五万五千人減り、外国人は三十二万五千人増え、総人口は五十三万人減。</Line>
     <Part id="walk" x={140} y={170} w={1640} h={700}>{() => <WalkChart />}</Part>
     <Animation>
-      <Appear on="walk" line="l7" word="日本人は" />
-      <Tween on="walk" a={1} line="l7" word="日本人は" dur={1.4} easing="easeOutQuart" />
-      <Appear on="lab-jp" line="l7" word="日本人は" offset={0.3} />
-      <Tween on="walk" b={1} line="l7" word="外国人は" dur={1.2} easing="easeOutQuart" />
-      <Appear on="lab-fo" line="l7" word="外国人は" offset={0.2} />
-      <Tween on="walk" c={1} line="l7" word="総人口は" dur={1.2} easing="easeOutQuart" />
-      <Appear on="lab-tot" line="l7" word="総人口は" offset={0.2} />
+      <Appear target="walk" line="l7" word="日本人は" />
+      <Tween target="walk" to={{a: 1}} line="l7" word="日本人は" dur={1.4} easing="easeOutQuart" />
+      <Appear target="lab-jp" line="l7" word="日本人は" offset={0.3} />
+      <Tween target="walk" to={{b: 1}} line="l7" word="外国人は" dur={1.2} easing="easeOutQuart" />
+      <Appear target="lab-fo" line="l7" word="外国人は" offset={0.2} />
+      <Tween target="walk" to={{c: 1}} line="l7" word="総人口は" dur={1.2} easing="easeOutQuart" />
+      <Appear target="lab-tot" line="l7" word="総人口は" offset={0.2} />
     </Animation>
   </Scene>
 
@@ -356,12 +356,12 @@ export default <Doc id="jp-population" poster={30} title="日本の人口はな�
     <Line id="l9">これは推計であり、確定した未来ではありません。</Line>
     <Part id="popb" x={140} y={170} w={1640} h={700}>{() => <PopChart x1={2070} projection={true} />}</Part>
     <Animation>
-      <Appear on="popb" at="start" />
-      <Appear on="ipss" line="l8" word="社人研" />
-      <Tween on="popb" pr={2050} line="l8" word="社人研" dur={3.2} easing="easeInOutSine" />
-      <Appear on="p2050" line="l8" word="二〇五〇年" offset={0.6} />
-      <Tween on="popb" pr={2070} line="l8" word="二〇七〇年" dur={1.8} easing="easeInOutSine" />
-      <Appear on="p2070" line="l8" word="二〇七〇年" offset={1.6} />
+      <Appear target="popb" at="start" />
+      <Appear target="ipss" line="l8" word="社人研" />
+      <Tween target="popb" to={{pr: 2050}} line="l8" word="社人研" dur={3.2} easing="easeInOutSine" />
+      <Appear target="p2050" line="l8" word="二〇五〇年" offset={0.6} />
+      <Tween target="popb" to={{pr: 2070}} line="l8" word="二〇七〇年" dur={1.8} easing="easeInOutSine" />
+      <Appear target="p2070" line="l8" word="二〇七〇年" offset={1.6} />
     </Animation>
   </Scene>
 </Doc>;

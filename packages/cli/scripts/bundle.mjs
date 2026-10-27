@@ -34,6 +34,6 @@ for (const pkg of ['ir', 'runtime']) cpSync(join(CLI, '..', pkg, 'src'), join(OU
 mkdirSync(join(OUT, 'jsx'), {recursive: true});
 copyFileSync(join(CLI, '..', 'jsx', 'index.ts'), join(OUT, 'jsx', 'index.ts'));
 // packages/ir/src/spec.ts re-exports the spec's types from the repository root
-mkdirSync(join(OUT, '..', 'spec', 'ir', '0.5'), {recursive: true});
-copyFileSync(join(CLI, '..', '..', 'spec', 'ir', '0.5', 'ir.ts'), join(OUT, '..', 'spec', 'ir', '0.5', 'ir.ts'));
+mkdirSync(join(OUT, '..', 'spec', 'ir', '0.6'), {recursive: true});
+copyFileSync(join(CLI, '..', '..', 'spec', 'ir', '0.6', 'ir.ts'), join(OUT, '..', 'spec', 'ir', '0.6', 'ir.ts'));
 console.log(`built ${main}`);

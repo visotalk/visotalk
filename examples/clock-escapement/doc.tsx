@@ -255,13 +255,13 @@ export default <Doc id="clock-escapement" poster={45} title="How a clock keeps t
     <Line id="l1">Every mechanical clock begins with stored energy.</Line>
     <Line id="l2">A mainspring, wound tight, wants to unwind. A weight, lifted high, wants to fall.</Line>
     <Animation>
-      <Appear on="clock" at="start" dur={0.01}/>
-      <Appear on="barrel" line="l1" word="begins"/>
-      <Appear on="spring" line="l1" word="stored energy"/>
-      <Appear on="lb-spring" line="l2" word="mainspring"/>
-      <Tween on="clock" wind={1} dur={1.6} easing="easeInOut" line="l2" word="wound tight"/>
-      <Appear on={["weight", "lb-weight"]} line="l2" word="weight"/>
-      <Tween on="clock" wy={690} dur={1.4} easing="easeInQuad" line="l2" word="fall"/>
+      <Appear target="clock" at="start" dur={0.01}/>
+      <Appear target="barrel" line="l1" word="begins"/>
+      <Appear target="spring" line="l1" word="stored energy"/>
+      <Appear target="lb-spring" line="l2" word="mainspring"/>
+      <Tween target="clock" to={{wind: 1}} dur={1.6} easing="easeInOut" line="l2" word="wound tight"/>
+      <Appear target={["weight", "lb-weight"]} line="l2" word="weight"/>
+      <Tween target="clock" to={{wy: 690}} dur={1.4} easing="easeInQuad" line="l2" word="fall"/>
     </Animation>
   </Scene>
 
@@ -269,13 +269,13 @@ export default <Doc id="clock-escapement" poster={45} title="How a clock keeps t
     <Line id="l3">That pull turns a train of gears, each one slower than the last.</Line>
     <Line id="l4">At the end of the train sits the escape wheel.</Line>
     <Animation>
-      <Disappear on={["weight", "lb-weight", "lb-spring"]} at="start"/>
-      <Tween on="clock" cx={520} cy={530} zoom={1.4} dur={1.6} easing="easeInOut" at="start"/>
-      <Appear on={["p1", "g2"]} line="l3" word="train"/>
-      <Appear on="lb-train" line="l3" word="train" offset={0.3}/>
-      <Appear on={["p3", "g4"]} line="l3" word="gears"/>
-      <Tween on="clock" free={500} dur={12} easing="linear" line="l3" word="each one"/>
-      <Appear on={["wheel", "p5", "lb-wheel"]} line="l4" word="escape wheel"/>
+      <Disappear target={["weight", "lb-weight", "lb-spring"]} at="start"/>
+      <Tween target="clock" to={{cx: 520, cy: 530, zoom: 1.4}} dur={1.6} easing="easeInOut" at="start"/>
+      <Appear target={["p1", "g2"]} line="l3" word="train"/>
+      <Appear target="lb-train" line="l3" word="train" offset={0.3}/>
+      <Appear target={["p3", "g4"]} line="l3" word="gears"/>
+      <Tween target="clock" to={{free: 500}} dur={12} easing="linear" line="l3" word="each one"/>
+      <Appear target={["wheel", "p5", "lb-wheel"]} line="l4" word="escape wheel"/>
     </Animation>
   </Scene>
 
@@ -283,12 +283,12 @@ export default <Doc id="clock-escapement" poster={45} title="How a clock keeps t
     <Line id="l5">Left alone, the wheel would spin freely, and the spring would be spent in a rush.</Line>
     <Line id="l6">A clock must let that energy out in small, equal steps.</Line>
     <Animation>
-      <Disappear on="lb-train" at="start"/>
-      <Tween on="clock" free={2518} dur={10} easing="cubic-bezier(0.4, 0.1, 0.9, 0.6)" line="l5" word="left alone"/>
-      <Tween on="clock" wind={0.1} dur={7} easing="easeIn" line="l5" word="spent"/>
-      <Disappear on="lb-wheel" line="l6"/>
-      <Disappear on={["barrel", "spring", "p1", "g2", "p3", "g4"]} line="l6"/>
-      <Tween on="clock" cx={830} cy={460} zoom={1.6} dur={1.8} easing="easeInOut" line="l6"/>
+      <Disappear target="lb-train" at="start"/>
+      <Tween target="clock" to={{free: 2518}} dur={10} easing="cubic-bezier(0.4, 0.1, 0.9, 0.6)" line="l5" word="left alone"/>
+      <Tween target="clock" to={{wind: 0.1}} dur={7} easing="easeIn" line="l5" word="spent"/>
+      <Disappear target="lb-wheel" line="l6"/>
+      <Disappear target={["barrel", "spring", "p1", "g2", "p3", "g4"]} line="l6"/>
+      <Tween target="clock" to={{cx: 830, cy: 460, zoom: 1.6}} dur={1.8} easing="easeInOut" line="l6"/>
     </Animation>
   </Scene>
 
@@ -297,12 +297,12 @@ export default <Doc id="clock-escapement" poster={45} title="How a clock keeps t
     <Line id="l8">One pallet locks a tooth, and the whole train stops.</Line>
     <Line id="l9">When the anchor swings, that pallet lets go. One tooth slips past, and the other pallet catches the next.</Line>
     <Animation>
-      <Tween on="clock" free={3003} dur={1.2} easing="easeOutQuad" line="l7"/>
-      <Appear on={["anchor", "lb-pallets"]} line="l7" word="pallets"/>
-      <Appear on="lockring" line="l8" word="locks a tooth"/>
-      <Disappear on="lb-pallets" line="l9"/>
-      <Tween on="clock" beat={1.5} dur={2.4} easing="linear" line="l9" word="swings"/>
-      <Disappear on="lockring" line="l9" word="lets go"/>
+      <Tween target="clock" to={{free: 3003}} dur={1.2} easing="easeOutQuad" line="l7"/>
+      <Appear target={["anchor", "lb-pallets"]} line="l7" word="pallets"/>
+      <Appear target="lockring" line="l8" word="locks a tooth"/>
+      <Disappear target="lb-pallets" line="l9"/>
+      <Tween target="clock" to={{beat: 1.5}} dur={2.4} easing="linear" line="l9" word="swings"/>
+      <Disappear target="lockring" line="l9" word="lets go"/>
     </Animation>
   </Scene>
 
@@ -312,13 +312,13 @@ export default <Doc id="clock-escapement" poster={45} title="How a clock keeps t
     <Line id="l12">Every swing lets the wheel advance one small step. That step is the tick.</Line>
     <Line id="l13">Count the ticks, and the hands on the dial follow.</Line>
     <Animation>
-      <Appear on={["barrel", "spring", "p1", "g2", "p3", "g4"]} line="l10" offset={1.8}/>
-      <Appear on={["pendulum", "lb-pendulum"]} line="l10" word="pendulum"/>
-      <Tween on="clock" beat={41.5} dur={30} easing="linear" line="l10" word="pendulum"/>
-      <Tween on="clock" cx={794} cy={547} zoom={1.25} dur={2} easing="easeInOut" at="start"/>
-      <Disappear on="lb-pendulum" line="l12"/>
-      <Appear on="ticktock" line="l12" word="tick"/>
-      <Appear on="dial" line="l13" word="dial"/>
+      <Appear target={["barrel", "spring", "p1", "g2", "p3", "g4"]} line="l10" offset={1.8}/>
+      <Appear target={["pendulum", "lb-pendulum"]} line="l10" word="pendulum"/>
+      <Tween target="clock" to={{beat: 41.5}} dur={30} easing="linear" line="l10" word="pendulum"/>
+      <Tween target="clock" to={{cx: 794, cy: 547, zoom: 1.25}} dur={2} easing="easeInOut" at="start"/>
+      <Disappear target="lb-pendulum" line="l12"/>
+      <Appear target="ticktock" line="l12" word="tick"/>
+      <Appear target="dial" line="l13" word="dial"/>
     </Animation>
   </Scene>
 </Doc>;

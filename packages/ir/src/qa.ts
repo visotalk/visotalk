@@ -47,19 +47,19 @@ export function staticQa(doc: VisoDoc, c: Compiled): QaIssue[] {
   for (const a of c.actions) {
     const sc = c.scenes.find((s) => s.id === a.scene);
     if (sc && a.start >= sc.end) {
-      issues.push({code: 'action.outside-scene', at: a.scene, objects: [a.on], message: `${a.motion} of "${a.on}" starts at ${(a.start - sc.from).toFixed(1)} s into scene "${a.scene}", which is over at ${(sc.end - sc.from).toFixed(1)} s`,
+      issues.push({code: 'action.outside-scene', at: a.scene, objects: [a.target], message: `${a.motion} of "${a.target}" starts at ${(a.start - sc.from).toFixed(1)} s into scene "${a.scene}", which is over at ${(sc.end - sc.from).toFixed(1)} s`,
         fix: 'anchor it on a word of the scene, or at="end" with a negative offset; to hold the scene longer give its last line a hold'});
     }
   }
   const global = new Set((doc.parts ?? []).map((x) => x.id));
   // a target that several scenes act on can only be inside a global part: it is one thing across them
   const scenesOf = new Map<string, Set<string>>();
-  for (const a of c.actions) (scenesOf.get(a.on) ?? scenesOf.set(a.on, new Set()).get(a.on)!).add(a.scene);
+  for (const a of c.actions) (scenesOf.get(a.target) ?? scenesOf.set(a.target, new Set()).get(a.target)!).add(a.scene);
   doc.scenes.forEach((scene, i) => {
     const parts = new Set(scene.parts.map((x) => x.id));
     const sc = c.scenes[i];
     if (!sc) return;
-    const ids = [...new Set(c.actions.filter((a) => a.scene === scene.id && a.motion === 'appear').map((a) => a.on))];
+    const ids = [...new Set(c.actions.filter((a) => a.scene === scene.id && a.motion === 'appear').map((a) => a.target))];
     for (const id of ids) {
       let seen = false;
       const scope = global.has(id) || (scenesOf.get(id)?.size ?? 0) > 1 ? undefined : scene.id;
@@ -134,7 +134,7 @@ export function alignmentIssues(doc: VisoDoc, c: Compiled): QaIssue[] {
       const w = line.words[i], p = w?.p;
       if (typeof p === 'number' ? p >= WEAK_ALIGNMENT : !line.words.some((x) => typeof x.p === 'number')) continue;
       issues.push({
-        code: 'align.weak', at: `${scene.id}/${line.id}`, objects: [a.on].flat(),
+        code: 'align.weak', at: `${scene.id}/${line.id}`, objects: [a.target].flat(),
         message: typeof p === 'number'
           ? `an anchor on "${w.w}" in line "${line.id}" rests on a weak alignment (p = ${p.toFixed(2)}): the reveal can be off by several tenths of a second`
           : `an anchor on "${w?.w}" in line "${line.id}" rests on a word that has no time of its own (no letters)`,

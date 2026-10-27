@@ -726,48 +726,48 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="s7">Electronic grade silicon is among the purest materials people have ever made.</Line>
     <Part id="sandart">{() => <SandArt />}</Part>
     <Animation>
-      <Appear on="rail" at="start" dur={0} />
-      <Appear on="poster" at="start" dur={0} />
-      <Appear on="sandart" at="start" dur={0} />
-      <Disappear on="poster" line="s1" word="worthless" />
-      <Appear on="pile" line="s1" word="sand" dur={0.8} />
-      <Tween on="sandart" quartz={1} line="s1b" word="very pure quartz" dur={1.4} />
-      <Appear on="quartz-tag" line="s1b" word="quartz" />
+      <Appear target="rail" at="start" dur={0} />
+      <Appear target="poster" at="start" dur={0} />
+      <Appear target="sandart" at="start" dur={0} />
+      <Disappear target="poster" line="s1" word="worthless" />
+      <Appear target="pile" line="s1" word="sand" dur={0.8} />
+      <Tween target="sandart" to={{quartz: 1}} line="s1b" word="very pure quartz" dur={1.4} />
+      <Appear target="quartz-tag" line="s1b" word="quartz" />
 
-      <Tween on="pile" x={-520} line="s2" word="ordinary sand" dur={0.9} easing="easeInOut" />
-      <Disappear on="quartz-tag" line="s2" word="ordinary sand" />
-      <Appear on="lens" line="s2" word="mostly" />
-      <Appear on={["m-si", "m-name"]} line="s2" word="silicon dioxide" />
-      <Appear on={["m-ol", "m-or"]} line="s2" word="oxygen" />
-      <Appear on="m-bonds" line="s2" word="oxygen" offset={0.2} />
+      <Tween target="pile" to={{x: -520}} line="s2" word="ordinary sand" dur={0.9} easing="easeInOut" />
+      <Disappear target="quartz-tag" line="s2" word="ordinary sand" />
+      <Appear target="lens" line="s2" word="mostly" />
+      <Appear target={["m-si", "m-name"]} line="s2" word="silicon dioxide" />
+      <Appear target={["m-ol", "m-or"]} line="s2" word="oxygen" />
+      <Appear target="m-bonds" line="s2" word="oxygen" offset={0.2} />
 
-      <Disappear on={["lens", "m-si", "m-ol", "m-or", "m-bonds", "m-name"]} line="s3" word="silicon" dur={0.4} />
-      <Appear on="rank-si" line="s3" word="second most abundant" />
-      <Appear on="crust-head" line="s3" word="crust" />
-      <Appear on="rank-o" line="s3" word="after oxygen" />
+      <Disappear target={["lens", "m-si", "m-ol", "m-or", "m-bonds", "m-name"]} line="s3" word="silicon" dur={0.4} />
+      <Appear target="rank-si" line="s3" word="second most abundant" />
+      <Appear target="crust-head" line="s3" word="crust" />
+      <Appear target="rank-o" line="s3" word="after oxygen" />
 
-      <Disappear on={["rank-si", "rank-o", "crust-head"]} line="s4" word="free it" dur={0.4} />
-      <Appear on="heat-arrow" line="s4" word="heated" />
-      <Appear on={["furn", "furn-name", "f-si", "f-ol", "f-or", "f-bonds"]} line="s4" word="furnace" />
-      <Appear on={["fc-l", "fc-r"]} line="s4" word="carbon" />
-      <Tween on={["fc-l", "fc-r"]} y={170} line="s4" word="pulls" dur={1.0} easing="easeInOut" />
-      <Disappear on="f-bonds" line="s4" word="oxygen away" />
+      <Disappear target={["rank-si", "rank-o", "crust-head"]} line="s4" word="free it" dur={0.4} />
+      <Appear target="heat-arrow" line="s4" word="heated" />
+      <Appear target={["furn", "furn-name", "f-si", "f-ol", "f-or", "f-bonds"]} line="s4" word="furnace" />
+      <Appear target={["fc-l", "fc-r"]} line="s4" word="carbon" />
+      <Tween target={["fc-l", "fc-r"]} to={{y: 170}} line="s4" word="pulls" dur={1.0} easing="easeInOut" />
+      <Disappear target="f-bonds" line="s4" word="oxygen away" />
 
-      <Tween on={["fc-l", "f-ol"]} y={-120} line="s4b" word="leaves as a gas" dur={1.8} easing="easeIn" />
-      <Tween on={["fc-r", "f-or"]} y={-120} line="s4b" word="leaves as a gas" dur={1.8} easing="easeIn" />
-      <Disappear on={["fc-l", "f-ol", "fc-r", "f-or"]} line="s4b" word="leaves as a gas" offset={1.2} dur={0.6} />
-      <Appear on="furn-pool" line="s4b" word="molten silicon" />
-      <Tween on="f-si" y={300} line="s4b" word="collects" dur={1.4} easing="easeInOut" />
+      <Tween target={["fc-l", "f-ol"]} to={{y: -120}} line="s4b" word="leaves as a gas" dur={1.8} easing="easeIn" />
+      <Tween target={["fc-r", "f-or"]} to={{y: -120}} line="s4b" word="leaves as a gas" dur={1.8} easing="easeIn" />
+      <Disappear target={["fc-l", "f-ol", "fc-r", "f-or"]} line="s4b" word="leaves as a gas" offset={1.2} dur={0.6} />
+      <Appear target="furn-pool" line="s4b" word="molten silicon" />
+      <Tween target="f-si" to={{y: 300}} line="s4b" word="collects" dur={1.4} easing="easeInOut" />
 
-      <Disappear on={["pile", "heat-arrow", "furn", "furn-name", "furn-pool", "f-si"]} line="s5" word="remains" dur={0.5} />
-      <Appear on="lattice" line="s5" word="silicon" offset={0.2} dur={0.8} />
-      <Appear on={["imp-0", "imp-1", "imp-2", "imp-3", "imp-4", "imp-5"]} stagger={0.2} line="s5" word="dirty" />
-      <Appear on="imp-tag" line="s5" word="electronics" />
+      <Disappear target={["pile", "heat-arrow", "furn", "furn-name", "furn-pool", "f-si"]} line="s5" word="remains" dur={0.5} />
+      <Appear target="lattice" line="s5" word="silicon" offset={0.2} dur={0.8} />
+      <Appear target={["imp-0", "imp-1", "imp-2", "imp-3", "imp-4", "imp-5"]} stagger={0.2} line="s5" word="dirty" />
+      <Appear target="imp-tag" line="s5" word="electronics" />
 
-      <Disappear on="imp-tag" line="s6" word="purified" />
-      <Disappear on={["imp-0", "imp-1", "imp-2", "imp-3", "imp-4", "imp-5"]} stagger={0.55} line="s6" word="again and again" />
+      <Disappear target="imp-tag" line="s6" word="purified" />
+      <Disappear target={["imp-0", "imp-1", "imp-2", "imp-3", "imp-4", "imp-5"]} stagger={0.55} line="s6" word="again and again" />
 
-      <Appear on="grade-tag" line="s7" word="electronic grade silicon" />
+      <Appear target="grade-tag" line="s7" word="electronic grade silicon" />
     </Animation>
   </Scene>
   <Scene id="wafer">
@@ -781,42 +781,42 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="w6">This is a wafer, and it is the canvas for everything that follows.</Line>
     <Part id="waferart">{() => <WaferArt />}</Part>
     <Animation>
-      <Appear on="waferart" at="start" dur={0} />
-      <Appear on="bowl" line="w1" word="pure silicon" />
-      <Tween on="waferart" melt={1} line="w1" word="melted" dur={1.6} />
-      <Appear on="bowl-tag" line="w1" word="crucible" />
+      <Appear target="waferart" at="start" dur={0} />
+      <Appear target="bowl" line="w1" word="pure silicon" />
+      <Tween target="waferart" to={{melt: 1}} line="w1" word="melted" dur={1.6} />
+      <Appear target="bowl-tag" line="w1" word="crucible" />
 
-      <Appear on="seedrig" line="w2" word="seed crystal" />
-      <Tween on="waferart" dip={1} line="w2" word="dipped" dur={1.2} easing="easeInOut" />
-      <Tween on="waferart" pull={360} line="w2" word="lifted out" dur={9} easing="linear" />
-      <Appear on="turn" line="w2" word="turns" />
+      <Appear target="seedrig" line="w2" word="seed crystal" />
+      <Tween target="waferart" to={{dip: 1}} line="w2" word="dipped" dur={1.2} easing="easeInOut" />
+      <Tween target="waferart" to={{pull: 360}} line="w2" word="lifted out" dur={9} easing="linear" />
+      <Appear target="turn" line="w2" word="turns" />
 
-      <Appear on={["inset", "lat"]} line="w3" word="atoms line up" />
-      <Appear on="path-ok" line="w3" word="single perfect crystal" />
-      <Appear on="ingot-tag" line="w3" word="ingot" />
+      <Appear target={["inset", "lat"]} line="w3" word="atoms line up" />
+      <Appear target="path-ok" line="w3" word="single perfect crystal" />
+      <Appear target="ingot-tag" line="w3" word="ingot" />
 
-      <Disappear on="ingot-tag" line="w3b" word="one crystal" />
-      <Disappear on={["path-ok", "vac-atom"]} line="w3b" word="every flaw" />
-      <Appear on="path-bad" line="w3b" word="scatter" />
-      <Appear on="lat-tag" line="w3b" word="scatter" offset={0.6} />
+      <Disappear target="ingot-tag" line="w3b" word="one crystal" />
+      <Disappear target={["path-ok", "vac-atom"]} line="w3b" word="every flaw" />
+      <Appear target="path-bad" line="w3b" word="scatter" />
+      <Appear target="lat-tag" line="w3b" word="scatter" offset={0.6} />
 
-      <Disappear on={["bowl", "bowl-tag", "seedrig", "ingot", "turn", "inset", "lat", "path-bad", "lat-tag"]} line="w4" word="wire saw" dur={0.5} offset={-0.3} />
-      <Appear on="slices" line="w4" word="wire saw" offset={0.3} />
-      <Appear on="saw" line="w4" word="wire saw" offset={0.2} />
-      <Tween on="waferart" gap={40} line="w4" word="slices" dur={1.8} easing="easeInOut" />
-      <Disappear on="saw" line="w4" word="thin discs" offset={0.9} />
+      <Disappear target={["bowl", "bowl-tag", "seedrig", "ingot", "turn", "inset", "lat", "path-bad", "lat-tag"]} line="w4" word="wire saw" dur={0.5} offset={-0.3} />
+      <Appear target="slices" line="w4" word="wire saw" offset={0.3} />
+      <Appear target="saw" line="w4" word="wire saw" offset={0.2} />
+      <Tween target="waferart" to={{gap: 40}} line="w4" word="slices" dur={1.8} easing="easeInOut" />
+      <Disappear target="saw" line="w4" word="thin discs" offset={0.9} />
 
-      <Appear on="disc" line="w5" word="disc" dur={0} />
-      <Disappear on="slices" line="w5" word="each disc" offset={0.4} dur={0.5} />
-      <Tween on="waferart" face={1} line="w5" word="ground and polished" dur={1.6} easing="easeInOut" />
-      <Tween on="waferart" shine={1} line="w5" word="smooth" dur={1.6} />
+      <Appear target="disc" line="w5" word="disc" dur={0} />
+      <Disappear target="slices" line="w5" word="each disc" offset={0.4} dur={0.5} />
+      <Tween target="waferart" to={{face: 1}} line="w5" word="ground and polished" dur={1.6} easing="easeInOut" />
+      <Tween target="waferart" to={{shine: 1}} line="w5" word="smooth" dur={1.6} />
 
-      <Appear on="rings" line="w5b" word="wafers wider" dur={0.2} />
-      <Tween on="waferart" rad={330} line="w5b" word="wafers wider" dur={2.6} easing="easeInOut" />
+      <Appear target="rings" line="w5b" word="wafers wider" dur={0.2} />
+      <Tween target="waferart" to={{rad: 330}} line="w5b" word="wafers wider" dur={2.6} easing="easeInOut" />
 
-      <Tween on="waferart" cxp={1300} line="w6" word="this is" dur={1.1} easing="easeInOut" />
-      <Appear on="wlabel" line="w6" word="wafer" />
-      <Appear on="wsub" line="w6" word="canvas" />
+      <Tween target="waferart" to={{cxp: 1300}} line="w6" word="this is" dur={1.1} easing="easeInOut" />
+      <Appear target="wlabel" line="w6" word="wafer" />
+      <Appear target="wsub" line="w6" word="canvas" />
     </Animation>
   </Scene>
   <Scene id="litho">
@@ -830,34 +830,34 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="l7">Machines repeat this across the whole wafer, stepping it under the lens one small field after another.</Line>
     <Part id="lithoart">{() => <LithoArt />}</Part>
     <Animation>
-      <Appear on="lithoart" at="start" dur={0} />
-      <Appear on="ltitle" line="l1" word="photolithography" />
-      <Disappear on="ltitle" line="l1b" word="think" />
-      <Appear on="base" line="l1b" word="layer" />
+      <Appear target="lithoart" at="start" dur={0} />
+      <Appear target="ltitle" line="l1" word="photolithography" />
+      <Disappear target="ltitle" line="l1b" word="think" />
+      <Appear target="base" line="l1b" word="layer" />
 
-      <Appear on="resist" line="l2" word="coated" dur={0.2} />
-      <Tween on="lithoart" coat={1} line="l2" word="coated" dur={1.2} />
-      <Appear on="tag-resist" line="l2" word="photoresist" />
+      <Appear target="resist" line="l2" word="coated" dur={0.2} />
+      <Tween target="lithoart" to={{coat: 1}} line="l2" word="coated" dur={1.2} />
+      <Appear target="tag-resist" line="l2" word="photoresist" />
 
-      <Appear on="lamp" line="l3" word="light" />
-      <Appear on="beam-top" line="l3" word="shines" />
-      <Appear on="mask" line="l3" word="mask" />
-      <Appear on="tag-mask" line="l3" word="mask" />
-      <Appear on="beams" line="l3" word="stencil" />
+      <Appear target="lamp" line="l3" word="light" />
+      <Appear target="beam-top" line="l3" word="shines" />
+      <Appear target="mask" line="l3" word="mask" />
+      <Appear target="tag-mask" line="l3" word="mask" />
+      <Appear target="beams" line="l3" word="stencil" />
 
-      <Appear on={["lens", "tag-lens"]} line="l4" word="lens" />
-      <Tween on="lithoart" shrink={1} line="l4" word="shrinks" dur={1.6} easing="easeInOut" />
-      <Appear on="tag-uv" line="l4" word="ultraviolet" />
+      <Appear target={["lens", "tag-lens"]} line="l4" word="lens" />
+      <Tween target="lithoart" to={{shrink: 1}} line="l4" word="shrinks" dur={1.6} easing="easeInOut" />
+      <Appear target="tag-uv" line="l4" word="ultraviolet" />
 
-      <Tween on="lithoart" expo={1} line="l5" word="light lands" dur={1.4} />
-      <Disappear on={["lamp", "tag-uv", "beam-top", "mask", "tag-mask", "beams", "lens", "tag-lens"]} line="l6" word="wafer" dur={0.5} />
-      <Tween on={["base", "resist", "tag-resist"]} y={-190} line="l6" word="washed" dur={1.2} easing="easeInOut" />
-      <Tween on="lithoart" dev={1} line="l6" word="rinses" dur={1.4} easing="easeInOut" />
+      <Tween target="lithoart" to={{expo: 1}} line="l5" word="light lands" dur={1.4} />
+      <Disappear target={["lamp", "tag-uv", "beam-top", "mask", "tag-mask", "beams", "lens", "tag-lens"]} line="l6" word="wafer" dur={0.5} />
+      <Tween target={["base", "resist", "tag-resist"]} to={{y: -190}} line="l6" word="washed" dur={1.2} easing="easeInOut" />
+      <Tween target="lithoart" to={{dev: 1}} line="l6" word="rinses" dur={1.4} easing="easeInOut" />
 
-      <Disappear on={["base", "resist", "tag-resist"]} line="l7" word="machines" dur={0.5} />
-      <Appear on="topwafer" line="l7" word="across the whole wafer" />
-      <Appear on="fields" line="l7" word="stepping" dur={0.2} />
-      <Tween on="lithoart" step={47} line="l7" word="stepping" dur={5.5} easing="linear" />
+      <Disappear target={["base", "resist", "tag-resist"]} line="l7" word="machines" dur={0.5} />
+      <Appear target="topwafer" line="l7" word="across the whole wafer" />
+      <Appear target="fields" line="l7" word="stepping" dur={0.2} />
+      <Tween target="lithoart" to={{step: 47}} line="l7" word="stepping" dur={5.5} easing="linear" />
     </Animation>
   </Scene>
   <Scene id="etch">
@@ -869,30 +869,30 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="e5">Add, pattern, remove. Chipmakers repeat that cycle again and again.</Line>
     <Part id="etchart">{() => <EtchArt />}</Part>
     <Animation>
-      <Appear on="etchart" at="start" dur={0} />
-      <Appear on={["stack2", "resist2", "tag-base"]} line="e1" word="stencil" />
-      <Appear on="ions" line="e2" word="plasma" />
-      <Appear on="tag-etch" line="e2" word="plasma" />
-      <Tween on="etchart" etch={1} line="e2" word="eats away" dur={2.2} easing="easeInOut" />
-      <Disappear on={["ions", "tag-etch"]} line="e2" word="carving" offset={1.5} />
+      <Appear target="etchart" at="start" dur={0} />
+      <Appear target={["stack2", "resist2", "tag-base"]} line="e1" word="stencil" />
+      <Appear target="ions" line="e2" word="plasma" />
+      <Appear target="tag-etch" line="e2" word="plasma" />
+      <Tween target="etchart" to={{etch: 1}} line="e2" word="eats away" dur={2.2} easing="easeInOut" />
+      <Disappear target={["ions", "tag-etch"]} line="e2" word="carving" offset={1.5} />
 
-      <Tween on="resist2" y={-60} line="e3" word="stripped off" dur={0.8} />
-      <Disappear on="resist2" line="e3" word="stripped off" dur={0.8} />
+      <Tween target="resist2" to={{y: -60}} line="e3" word="stripped off" dur={0.8} />
+      <Disappear target="resist2" line="e3" word="stripped off" dur={0.8} />
 
-      <Appear on="pad" line="e3b" word="polished" />
-      <Disappear on="pad" line="e3b" word="next layer" offset={0.6} />
+      <Appear target="pad" line="e3b" word="polished" />
+      <Disappear target="pad" line="e3b" word="next layer" offset={0.6} />
 
-      <Appear on={["films", "tag-films"]} line="e4" word="deposition" dur={0.2} />
-      <Tween on="etchart" film1={1} line="e4" word="insulator" dur={1.4} />
-      <Tween on="etchart" film2={1} line="e4" word="metal" dur={1.4} />
+      <Appear target={["films", "tag-films"]} line="e4" word="deposition" dur={0.2} />
+      <Tween target="etchart" to={{film1: 1}} line="e4" word="insulator" dur={1.4} />
+      <Tween target="etchart" to={{film2: 1}} line="e4" word="metal" dur={1.4} />
 
-      <Disappear on={["tag-films", "tag-base"]} line="e5" word="add" dur={0.3} />
-      <Tween on={["stack2", "films"]} x={-340} line="e5" word="add" dur={1.0} easing="easeInOut" />
-      <Appear on="cyc-ring" line="e5" word="add" offset={0.4} />
-      <Appear on="cyc-add" line="e5" word="add" offset={0.4} />
-      <Appear on="cyc-pattern" line="e5" word="pattern" />
-      <Appear on="cyc-remove" line="e5" word="remove" />
-      <Appear on="cyc-dot" line="e5" word="repeat" />
+      <Disappear target={["tag-films", "tag-base"]} line="e5" word="add" dur={0.3} />
+      <Tween target={["stack2", "films"]} to={{x: -340}} line="e5" word="add" dur={1.0} easing="easeInOut" />
+      <Appear target="cyc-ring" line="e5" word="add" offset={0.4} />
+      <Appear target="cyc-add" line="e5" word="add" offset={0.4} />
+      <Appear target="cyc-pattern" line="e5" word="pattern" />
+      <Appear target="cyc-remove" line="e5" word="remove" />
+      <Appear target="cyc-dot" line="e5" word="repeat" />
     </Animation>
   </Scene>
   <Scene id="dope">
@@ -905,36 +905,36 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="d6">A switch with no moving parts: off is a zero, on is a one.</Line>
     <Part id="dopeart">{() => <DopeArt />}</Part>
     <Animation>
-      <Appear on="dopeart" at="start" dur={0} />
-      <Appear on="sub" line="d1" word="pure silicon" />
-      <Appear on="meter" line="d1" word="conducts" />
+      <Appear target="dopeart" at="start" dur={0} />
+      <Appear target="sub" line="d1" word="pure silicon" />
+      <Appear target="meter" line="d1" word="conducts" />
 
-      <Tween on="dopeart" ptint={1} line="d2" word="boron" dur={1.2} />
-      <Appear on="tag-b" line="d2" word="boron" />
-      <Appear on={["ions", "tag-p"]} line="d2" word="phosphorus" />
-      <Appear on="wells" line="d2" word="fired" dur={0.2} />
-      <Tween on="dopeart" well={1} line="d2" word="fired" dur={2.0} easing="easeOut" />
-      <Disappear on={["ions", "tag-p", "tag-b"]} line="d2" word="doping" />
+      <Tween target="dopeart" to={{ptint: 1}} line="d2" word="boron" dur={1.2} />
+      <Appear target="tag-b" line="d2" word="boron" />
+      <Appear target={["ions", "tag-p"]} line="d2" word="phosphorus" />
+      <Appear target="wells" line="d2" word="fired" dur={0.2} />
+      <Tween target="dopeart" to={{well: 1}} line="d2" word="fired" dur={2.0} easing="easeOut" />
+      <Disappear target={["ions", "tag-p", "tag-b"]} line="d2" word="doping" />
 
-      <Appear on="elec" line="d3" word="extra electrons" />
-      <Appear on="holes" line="d3" word="short of them" />
+      <Appear target="elec" line="d3" word="extra electrons" />
+      <Appear target="holes" line="d3" word="short of them" />
 
-      <Disappear on={["elec", "holes"]} line="d4" word="side by side" dur={0.4} />
-      <Appear on="tag-source" line="d4" word="source" />
-      <Appear on="tag-drain" line="d4" word="drain" />
-      <Appear on={["gate", "tag-gate"]} line="d4" word="gate" />
+      <Disappear target={["elec", "holes"]} line="d4" word="side by side" dur={0.4} />
+      <Appear target="tag-source" line="d4" word="source" />
+      <Appear target="tag-drain" line="d4" word="drain" />
+      <Appear target={["gate", "tag-gate"]} line="d4" word="gate" />
 
-      <Appear on="gate-ox" line="d4b" word="thin insulator" />
-      <Appear on="field" line="d4b" word="electric field" />
+      <Appear target="gate-ox" line="d4b" word="thin insulator" />
+      <Appear target="field" line="d4b" word="electric field" />
 
-      <Disappear on="field" line="d5" word="with no voltage" dur={0.3} />
-      <Appear on="vsrc" line="d5" word="no voltage" />
-      <Tween on="dopeart" v={1} line="d5" word="apply a voltage" dur={1.2} />
-      <Appear on={["channel", "flow"]} line="d5" word="a channel" dur={0.2} />
+      <Disappear target="field" line="d5" word="with no voltage" dur={0.3} />
+      <Appear target="vsrc" line="d5" word="no voltage" />
+      <Tween target="dopeart" to={{v: 1}} line="d5" word="apply a voltage" dur={1.2} />
+      <Appear target={["channel", "flow"]} line="d5" word="a channel" dur={0.2} />
 
-      <Tween on="dopeart" v={0} line="d6" word="off" dur={0.6} />
-      <Appear on="bit" line="d6" word="zero" />
-      <Tween on="dopeart" v={1} line="d6" word="on is a one" dur={0.6} />
+      <Tween target="dopeart" to={{v: 0}} line="d6" word="off" dur={0.6} />
+      <Appear target="bit" line="d6" word="zero" />
+      <Tween target="dopeart" to={{v: 1}} line="d6" word="on is a one" dur={0.6} />
     </Animation>
   </Scene>
   <Scene id="wire">
@@ -946,22 +946,22 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="r5">It is a city of roads, stacked many floors high.</Line>
     <Part id="wireart">{() => <WireArt />}</Part>
     <Animation>
-      <Appear on="wireart" at="start" dur={0} />
-      <Appear on="ly-0" line="r1" word="billions" dur={1.2} />
-      <Appear on="vias-0" line="r2" word="wired" />
-      <Appear on="ly-1" line="r2" word="wired" offset={0.3} />
+      <Appear target="wireart" at="start" dur={0} />
+      <Appear target="ly-0" line="r1" word="billions" dur={1.2} />
+      <Appear target="vias-0" line="r2" word="wired" />
+      <Appear target="ly-1" line="r2" word="wired" offset={0.3} />
 
-      <Appear on={["ly-2", "ly-3", "ly-4", "ly-5"]} stagger={0.9} line="r3" word="layer after layer" />
-      <Appear on={["vias-1", "vias-2", "vias-3", "vias-4"]} stagger={0.9} line="r3" word="layer after layer" offset={0.3} />
+      <Appear target={["ly-2", "ly-3", "ly-4", "ly-5"]} stagger={0.9} line="r3" word="layer after layer" />
+      <Appear target={["vias-1", "vias-2", "vias-3", "vias-4"]} stagger={0.9} line="r3" word="layer after layer" offset={0.3} />
 
-      <Appear on="xs" line="r3b" word="thin barrier" />
-      <Disappear on="xs" line="r4" word="fine wires" dur={0.3} />
+      <Appear target="xs" line="r3b" word="thin barrier" />
+      <Disappear target="xs" line="r4" word="fine wires" dur={0.3} />
 
-      <Appear on="tag-fine" line="r4" word="fine wires" />
-      <Appear on="tag-wide" line="r4" word="wider wires" />
+      <Appear target="tag-fine" line="r4" word="fine wires" />
+      <Appear target="tag-wide" line="r4" word="wider wires" />
 
-      <Disappear on={["tag-fine", "tag-wide"]} line="r5" word="city" dur={0.4} />
-      <Tween on="wireart" gz={58} line="r5" word="stacked many floors high" dur={2.4} easing="easeInOut" />
+      <Disappear target={["tag-fine", "tag-wide"]} line="r5" word="city" dur={0.4} />
+      <Tween target="wireart" to={{gz: 58}} line="r5" word="stacked many floors high" dur={2.4} easing="easeInOut" />
     </Animation>
   </Scene>
   <Scene id="test">
@@ -972,26 +972,26 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="t4">A saw then cuts the wafer apart, and only the good dies move on.</Line>
     <Part id="testart">{() => <TestArt />}</Part>
     <Animation>
-      <Appear on="testart" at="start" dur={0} />
-      <Appear on="tw" line="t1" word="wafer" />
-      <Appear on="dies" line="t1" word="grid of identical chips" dur={0.8} />
-      <Appear on="t-tag" line="t1" word="dies" />
+      <Appear target="testart" at="start" dur={0} />
+      <Appear target="tw" line="t1" word="wafer" />
+      <Appear target="dies" line="t1" word="grid of identical chips" dur={0.8} />
+      <Appear target="t-tag" line="t1" word="dies" />
 
-      <Disappear on="t-tag" line="t2" word="tiny probes" dur={0.3} />
-      <Appear on="probe" line="t2" word="probes" dur={0.2} />
-      <Tween on="testart" scan={85} line="t2" word="touch each die" dur={8} easing="linear" />
+      <Disappear target="t-tag" line="t2" word="tiny probes" dur={0.3} />
+      <Appear target="probe" line="t2" word="probes" dur={0.2} />
+      <Tween target="testart" to={{scan: 85}} line="t2" word="touch each die" dur={8} easing="linear" />
 
-      <Appear on="dust" line="t2b" word="speck of dust" />
-      <Tween on="testart" dust={1} line="t2b" word="speck of dust" dur={1.2} easing="easeIn" />
-      <Disappear on="probe" line="t2b" word="fabs" dur={0.3} />
-      <Disappear on="dust" line="t2b" word="cleanrooms" dur={0.4} />
+      <Appear target="dust" line="t2b" word="speck of dust" />
+      <Tween target="testart" to={{dust: 1}} line="t2b" word="speck of dust" dur={1.2} easing="easeIn" />
+      <Disappear target="probe" line="t2b" word="fabs" dur={0.3} />
+      <Disappear target="dust" line="t2b" word="cleanrooms" dur={0.4} />
 
-      <Appear on="marks" line="t3" word="fail" stagger={0} />
+      <Appear target="marks" line="t3" word="fail" stagger={0} />
 
-      <Appear on="cutlines" line="t4" word="saw" dur={0.2} />
-      <Tween on="testart" cut={1} line="t4" word="saw" dur={1.8} easing="linear" />
-      <Tween on="testart" sep={1} line="t4" word="cuts the wafer apart" dur={1.6} easing="easeInOut" />
-      <Tween on="testart" solo={1} line="t4" word="good dies" dur={1.6} easing="easeInOut" />
+      <Appear target="cutlines" line="t4" word="saw" dur={0.2} />
+      <Tween target="testart" to={{cut: 1}} line="t4" word="saw" dur={1.8} easing="linear" />
+      <Tween target="testart" to={{sep: 1}} line="t4" word="cuts the wafer apart" dur={1.6} easing="easeInOut" />
+      <Tween target="testart" to={{solo: 1}} line="t4" word="good dies" dur={1.6} easing="easeInOut" />
     </Animation>
   </Scene>
   <Scene id="pack">
@@ -1003,35 +1003,35 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="p5">From a handful of sand to the brain of a computer, in a long chain of precise steps.</Line>
     <Part id="packart">{() => <PackArt />}</Part>
     <Animation>
-      <Appear on="packart" at="start" dur={0} />
-      <Set on="lid" y={-240} at="start" />
-      <Appear on="pk-die" line="p1" word="bare die" dur={0.8} />
+      <Appear target="packart" at="start" dur={0} />
+      <Set target="lid" to={{y: -240}} at="start" />
+      <Appear target="pk-die" line="p1" word="bare die" dur={0.8} />
 
-      <Appear on="pkg" line="p2" word="package" />
-      <Tween on="packart" ds={0.66} line="p2" word="mounted" dur={1.0} easing="easeInOut" />
-      <Appear on="wires" line="p2" word="fine wires" dur={0.1} />
-      <Tween on="packart" bw={1} line="p2" word="fine wires" dur={2.0} easing="easeInOut" />
+      <Appear target="pkg" line="p2" word="package" />
+      <Tween target="packart" to={{ds: 0.66}} line="p2" word="mounted" dur={1.0} easing="easeInOut" />
+      <Appear target="wires" line="p2" word="fine wires" dur={0.1} />
+      <Tween target="packart" to={{bw: 1}} line="p2" word="fine wires" dur={2.0} easing="easeInOut" />
 
-      <Appear on="lid" line="p3" word="cover" dur={0.3} />
-      <Tween on="lid" y={0} line="p3" word="cover" dur={1.0} easing="easeOutQuart" />
-      <Appear on="lid-tag" line="p3" word="heat spreader" />
-      <Appear on="heat" line="p3" word="warmth" />
-      <Disappear on={["heat", "lid-tag"]} line="p3b" word="underneath" dur={0.3} />
-      <Tween on="packart" flip={1} line="p3b" word="underneath" dur={1.4} easing="easeInOut" />
-      <Appear on="bottom" line="p3b" word="underneath" />
+      <Appear target="lid" line="p3" word="cover" dur={0.3} />
+      <Tween target="lid" to={{y: 0}} line="p3" word="cover" dur={1.0} easing="easeOutQuart" />
+      <Appear target="lid-tag" line="p3" word="heat spreader" />
+      <Appear target="heat" line="p3" word="warmth" />
+      <Disappear target={["heat", "lid-tag"]} line="p3b" word="underneath" dur={0.3} />
+      <Tween target="packart" to={{flip: 1}} line="p3b" word="underneath" dur={1.4} easing="easeInOut" />
+      <Appear target="bottom" line="p3b" word="underneath" />
 
-      <Tween on="packart" flip={0} line="p4" word="finished" dur={1.4} easing="easeInOut" />
-      <Appear on="dial" line="p4" word="speed" />
-      <Tween on="packart" spd={1} line="p4" word="speed" dur={1.6} />
-      <Appear on="thermo" line="p4" word="temperature" />
-      <Tween on="packart" tmp={1} line="p4" word="temperature" dur={1.6} />
-      <Appear on="check" line="p4" word="temperature" offset={1.6} dur={0.1} />
-      <Tween on="packart" chk={1} line="p4" word="temperature" offset={1.7} dur={0.8} />
+      <Tween target="packart" to={{flip: 0}} line="p4" word="finished" dur={1.4} easing="easeInOut" />
+      <Appear target="dial" line="p4" word="speed" />
+      <Tween target="packart" to={{spd: 1}} line="p4" word="speed" dur={1.6} />
+      <Appear target="thermo" line="p4" word="temperature" />
+      <Tween target="packart" to={{tmp: 1}} line="p4" word="temperature" dur={1.6} />
+      <Appear target="check" line="p4" word="temperature" offset={1.6} dur={0.1} />
+      <Tween target="packart" to={{chk: 1}} line="p4" word="temperature" offset={1.7} dur={0.8} />
 
-      <Disappear on={["dial", "thermo"]} line="p5" word="handful" dur={0.4} />
-      <Tween on="packart" shift={300} line="p5" word="handful" dur={1.0} easing="easeInOut" />
-      <Appear on="sand-end" line="p5" word="sand" />
-      <Appear on="end-arrow" line="p5" word="brain" />
+      <Disappear target={["dial", "thermo"]} line="p5" word="handful" dur={0.4} />
+      <Tween target="packart" to={{shift: 300}} line="p5" word="handful" dur={1.0} easing="easeInOut" />
+      <Appear target="sand-end" line="p5" word="sand" />
+      <Appear target="end-arrow" line="p5" word="brain" />
     </Animation>
   </Scene>
 </Doc>;

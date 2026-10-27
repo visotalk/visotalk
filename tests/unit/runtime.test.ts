@@ -64,6 +64,41 @@ test('a player on its own page installs no bridge', () => {
   installParentBridge(new Clock(10, 'live'), win as never);
 });
 
+test('the parent can solo a part, and nobody else can', () => {
+  const f = framed();
+  const soloed: Array<string | null> = [];
+  installParentBridge(new Clock(10, 'live'), f.win, () => 0, undefined, undefined, (part) => soloed.push(part));
+  f.send({vt: 'solo', part: 'sky'});
+  f.send({vt: 'solo', part: 'sky'}, {postMessage() {}});
+  f.send({vt: 'solo'});
+  f.send({vt: 'solo', part: 3});
+  assert.deepEqual(soloed, ['sky', null, null], 'a part id solos it, and anything else lifts it');
+});
+
+test('normal playback clears preview solo, including playback started inside the player', () => {
+  const f = framed();
+  const clock = new Clock(10, 'live');
+  const soloed: Array<string | null> = [];
+  installParentBridge(clock, f.win, () => 0, undefined, undefined, (part) => soloed.push(part));
+  const g = globalThis as unknown as Record<string, unknown>;
+  const saved = { raf: g.requestAnimationFrame, caf: g.cancelAnimationFrame };
+  g.requestAnimationFrame = () => 1;
+  g.cancelAnimationFrame = () => {};
+  try {
+    f.send({ vt: 'solo', part: 'pic' });
+    f.send({ vt: 'play' });
+    assert.equal(soloed.at(-1), null);
+    clock.pause();
+    f.send({ vt: 'solo', part: 'other' });
+    clock.play();
+    assert.equal(soloed.at(-1), null);
+  } finally {
+    clock.pause();
+    g.requestAnimationFrame = saved.raf;
+    g.cancelAnimationFrame = saved.caf;
+  }
+});
+
 test('qa: a clipped element is named with its size and the size its content needs, so which box to fix is not a guess', async () => {
   const {frameIssues} = await import('../../packages/exporter/src/qa.ts');
   const object = {id: 'cfile', parent: null, box: {x: 0, y: 0, w: 1600, h: 580}, ink: {x: 0, y: 0, w: 1600, h: 580}, opacity: 1, clipped: [{what: 'div.file: "greeting.txt"', overflowX: 4, overflowY: 16, box: {w: 1596, h: 580}, content: {w: 1600, h: 596}}]};

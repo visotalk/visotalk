@@ -96,7 +96,7 @@ Run one: `npx visotalk@latest render examples/moon-phases/doc.tsx`.
 | [packages/cli](packages/cli) | `visotalk`: validate, design, still, review, qa, render, play, doctor |
 | [packages/ir](packages/ir) · [jsx](packages/jsx) | The document format: parser, validator, time solver, and the tags |
 | [packages/runtime](packages/runtime) · [exporter](packages/exporter) | The DOM renderer and player, and the deterministic capture and audio mix |
-| [spec/ir/0.5/ir.ts](spec/ir/0.5/ir.ts) | The format's types: the source of truth for what a document may contain |
+| [spec/ir/0.6/ir.ts](spec/ir/0.6/ir.ts) | The format's types: the source of truth for what a document may contain |
 | [tests](tests) | Unit tests and the regression suite: determinism, golden frames, layout checks |
 | [docs/brand](docs/brand) | The mark, the lockup and the colour tokens |
 

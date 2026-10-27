@@ -35,7 +35,7 @@ const X = (year: number) => 200 + ((year - 1700) / 400) * 1500;
 const progress = useProp('moon', 'progress', 0);   // 0 to 1, tweened by the document on the words
 ```
 
-`x`, `y`, `scale`, `rotate` on a target move the element itself without any code. For anything else read the prop and compute: a bar's width, an angle, how many characters of a command are typed, which of three states is lit. One `angle` can drive every tick of a dial and the hand. Use absolute values (`angle={90}` is a quarter turn) rather than accumulated ones, so the number means something to a reader.
+`x`, `y`, `scale`, `rotate` in a target's `to` move the element itself without any code. For anything else read the prop and compute: a bar's width, an angle, how many characters of a command are typed, which of three states is lit. One `angle` can drive every tick of a dial and the hand. Use absolute values (`to={{angle: 90}}` is a quarter turn) rather than accumulated ones, so the number means something to a reader.
 
 For motion of its own that needs no word (a slow drift, a pulse), draw by `useTime()` (seconds since the scene on screen started: in a global part of `<Doc>`, which stays on across scenes, it starts again at 0 in every scene, so a motion that must run on without a jump, such as a flow or a clock, draws by `useDocTime()` from `@visotalk/runtime`, the time since the film began). A picture that answers a sound (a flash on a hit) reads the document's sounds with `useSounds()` and draws from `useDocTime()` minus the sound's `start`. Never use a timer, `Date`, `Math.random` (use `random("key")`), a CSS transition or animation, or `fetch`: `validate` refuses them, because a frame must be the same every time it is drawn.
 
@@ -47,7 +47,7 @@ For motion of its own that needs no word (a slow drift, a pulse), draw by `useTi
 - **Colours and fonts** are theme tokens as CSS variables: `var(--vt-bg|panel|panel2|border|text|muted|faint|data|grad|op|good|bad|warn)`, `var(--vt-sans)`, `var(--vt-mono)`; or `useTheme()` for the values. Give each thing its own colour so no two look alike; never rely on one accent.
 - **Real material**: an `<Asset>` (see `assets.md`) is read with `useAsset(id)` and used as `<img src>`.
 - **Several scenes, one picture**: a scene's parts end with it. Write the picture as a component in the module code and declare `<Part id="orrery"><Orrery/></Part>` in each scene that shows it; it starts from its base props, so set what should carry over with `<Set>` at the start of the scene. Only a part in `<Doc>` stays: use it for what never leaves (a title, an axis).
-- **One id per part**: read the part's own props with `useProp("name", base)` (`<Set on="note" text="…"/>` for `<Part id="note">`), so the id is written once; `useProp("id", "name", base)` reads a target inside it.
+- **One id per part**: read the part's own props with `useProp("name", base)` (`<Set target="note" to={{text: '…'}}/>` for `<Part id="note">`), so the id is written once; `useProp("id", "name", base)` reads a target inside it.
 
 ## Keep it checkable
 

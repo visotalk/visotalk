@@ -109,11 +109,11 @@ export default <Doc id="fourier" poster={30} title="How a Fourier series builds 
     <Line id="l1">A square wave looks nothing like a sine wave: it jumps, and then it sits perfectly flat.</Line>
     <Line id="l2">Yet add enough sine waves together, and you can build it exactly.</Line>
     <Animation>
-      <Appear on={["scope", "axis"]} at="start" />
-      <Appear on="ghost" line="l1" word="square wave" />
-      <Tween on="scope" draw={1} line="l1" word="square wave" dur={2.2} easing="easeInOut" />
-      <Appear on="sum" line="l1" word="sine wave" />
-      <Tween on="scope" n={25} line="l2" word="enough sine waves" dur={2.2} easing="easeInOut" />
+      <Appear target={["scope", "axis"]} at="start" />
+      <Appear target="ghost" line="l1" word="square wave" />
+      <Tween target="scope" to={{draw: 1}} line="l1" word="square wave" dur={2.2} easing="easeInOut" />
+      <Appear target="sum" line="l1" word="sine wave" />
+      <Tween target="scope" to={{n: 25}} line="l2" word="enough sine waves" dur={2.2} easing="easeInOut" />
     </Animation>
   </Scene>
 
@@ -122,18 +122,18 @@ export default <Doc id="fourier" poster={30} title="How a Fourier series builds 
     <Line id="l4">Now add a second one, three times as fast and a third as tall. The corners start to square off.</Line>
     <Line id="l5" hold={1.2}>Add one five times as fast and a fifth as tall, then seven times, and nine.</Line>
     <Animation>
-      <Disappear on="sum" at="start" />
-      <Set on="scope" n={1} at="start" offset={0.35} />
-      <Appear on="sum" line="l3" word="one sine wave" />
-      <Appear on="row-1" line="l3" word="one sine wave" />
-      <Appear on="row-3" line="l4" word="three times as fast" />
-      <Tween on="scope" n={2} line="l4" word="a third as tall" dur={1.4} easing="easeInOut" />
-      <Appear on="row-5" line="l5" word="five times as fast" />
-      <Tween on="scope" n={3} line="l5" word="five times as fast" dur={1.2} easing="easeInOut" />
-      <Appear on="row-7" line="l5" word="seven times" />
-      <Tween on="scope" n={4} line="l5" word="seven times" dur={1.0} easing="easeInOut" />
-      <Appear on="row-9" line="l5" word="and nine" />
-      <Tween on="scope" n={5} line="l5" word="and nine" dur={1.0} easing="easeInOut" />
+      <Disappear target="sum" at="start" />
+      <Set target="scope" to={{n: 1}} at="start" offset={0.35} />
+      <Appear target="sum" line="l3" word="one sine wave" />
+      <Appear target="row-1" line="l3" word="one sine wave" />
+      <Appear target="row-3" line="l4" word="three times as fast" />
+      <Tween target="scope" to={{n: 2}} line="l4" word="a third as tall" dur={1.4} easing="easeInOut" />
+      <Appear target="row-5" line="l5" word="five times as fast" />
+      <Tween target="scope" to={{n: 3}} line="l5" word="five times as fast" dur={1.2} easing="easeInOut" />
+      <Appear target="row-7" line="l5" word="seven times" />
+      <Tween target="scope" to={{n: 4}} line="l5" word="seven times" dur={1.0} easing="easeInOut" />
+      <Appear target="row-9" line="l5" word="and nine" />
+      <Tween target="scope" to={{n: 5}} line="l5" word="and nine" dur={1.0} easing="easeInOut" />
     </Animation>
   </Scene>
 
@@ -142,12 +142,12 @@ export default <Doc id="fourier" poster={30} title="How a Fourier series builds 
     <Line id="l7">With every wave added, the flat tops get flatter and the corners get sharper.</Line>
     <Line id="l7b">The slow waves set the overall shape. The fast, tiny ones sharpen the edges.</Line>
     <Animation>
-      <Appear on="oddtag" line="l6" word="only odd frequencies" />
-      <Appear on={["ht-1", "ht-3", "ht-5", "ht-7", "ht-9"]} stagger={0.4} line="l6" word="one over its number" />
-      <Appear on="more" line="l7" word="every wave added" />
-      <Tween on="scope" n={9} line="l7" word="every wave added" dur={3} easing="easeInOut" />
-      <Set on="scope" hi={1} line="l7b" word="slow waves" />
-      <Set on="scope" hi={2} line="l7b" word="fast, tiny ones" />
+      <Appear target="oddtag" line="l6" word="only odd frequencies" />
+      <Appear target={["ht-1", "ht-3", "ht-5", "ht-7", "ht-9"]} stagger={0.4} line="l6" word="one over its number" />
+      <Appear target="more" line="l7" word="every wave added" />
+      <Tween target="scope" to={{n: 9}} line="l7" word="every wave added" dur={3} easing="easeInOut" />
+      <Set target="scope" to={{hi: 1}} line="l7b" word="slow waves" />
+      <Set target="scope" to={{hi: 2}} line="l7b" word="fast, tiny ones" />
     </Animation>
   </Scene>
 
@@ -156,11 +156,11 @@ export default <Doc id="fourier" poster={30} title="How a Fourier series builds 
     <Line id="l9">More waves squeeze the overshoot narrower, but never shorter.</Line>
     <Line id="l9b">This ripple is called the Gibbs phenomenon.</Line>
     <Animation>
-      <Set on="scope" hi={0} at="start" />
-      <Disappear on="oddtag" at="start" />
-      <Appear on="ring" line="l8" word="overshoots" />
-      <Tween on="scope" n={25} line="l9" word="more waves" dur={2.6} easing="easeInOut" />
-      <Appear on="gname" line="l9b" word="Gibbs phenomenon" />
+      <Set target="scope" to={{hi: 0}} at="start" />
+      <Disappear target="oddtag" at="start" />
+      <Appear target="ring" line="l8" word="overshoots" />
+      <Tween target="scope" to={{n: 25}} line="l9" word="more waves" dur={2.6} easing="easeInOut" />
+      <Appear target="gname" line="l9b" word="Gibbs phenomenon" />
     </Animation>
   </Scene>
 
@@ -170,14 +170,14 @@ export default <Doc id="fourier" poster={30} title="How a Fourier series builds 
     <Line id="l12" hold={1.5}>Almost any repeating wave has one, from a musical note to a heartbeat.</Line>
     <Part id="formula" x={170} y={590} w={1600} h={290}><Formula /></Part>
     <Animation>
-      <Disappear on={["ring", "gname", "more", "oddtag", "row-1", "row-3", "row-5", "row-7", "row-9", "ht-1", "ht-3", "ht-5", "ht-7", "ht-9"]} at="start" />
-      <Appear on="formula" at="start" offset={0.3} />
-      <Appear on="f-lhs" line="l10" word="square wave" />
-      <Appear on="f-1" line="l10" word="stack of sine waves" />
-      <Appear on="f-3" line="l10" word="recipe" />
-      <Appear on="f-5" line="l10" word="of frequencies" />
-      <Appear on="f-7" line="l11" word="That recipe" />
-      <Appear on="f-tag" line="l11" word="Fourier series" />
+      <Disappear target={["ring", "gname", "more", "oddtag", "row-1", "row-3", "row-5", "row-7", "row-9", "ht-1", "ht-3", "ht-5", "ht-7", "ht-9"]} at="start" />
+      <Appear target="formula" at="start" offset={0.3} />
+      <Appear target="f-lhs" line="l10" word="square wave" />
+      <Appear target="f-1" line="l10" word="stack of sine waves" />
+      <Appear target="f-3" line="l10" word="recipe" />
+      <Appear target="f-5" line="l10" word="of frequencies" />
+      <Appear target="f-7" line="l11" word="That recipe" />
+      <Appear target="f-tag" line="l11" word="Fourier series" />
     </Animation>
   </Scene>
 </Doc>;

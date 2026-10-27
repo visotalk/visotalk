@@ -153,7 +153,7 @@ async function main() {
     if (flag('anchors')) for (const sc of p.doc.scenes) for (const a of sc.animations) {
       if (!('line' in a.at) || a.at.word === undefined) continue;
       const line = sc.lines.find((l) => l.id === (a.at as {line: string}).line)!;
-      console.log(`${sc.id}/${line.id}  ${a.motion} ${[a.on].flat().join(',')}  ${markPhrase(sayOf(p.doc, line), a.at.word, a.at.nth) ?? '(not found)'}`);
+      console.log(`${sc.id}/${line.id}  ${a.motion} ${[a.target].flat().join(',')}  ${markPhrase(sayOf(p.doc, line), a.at.word, a.at.nth) ?? '(not found)'}`);
     }
     return;
   }

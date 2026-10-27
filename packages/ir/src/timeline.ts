@@ -42,14 +42,14 @@ const PRESENCE = new Set<MotionKind>(['appear', 'disappear']);
 export interface TAction {
   scene: Id;
   /** one target of the document's action (an action on several targets compiles to one per target) */
-  on: Id;
+  target: Id;
   motion: MotionKind;
   start: number;
   dur: number;
   easing?: Easing;
   repeat?: number;
   yoyo?: boolean;
-  props: Record<string, number | string | boolean>;
+  to: Record<string, number | string | boolean>;
 }
 
 /** A sound with its start and end in absolute seconds (`end` is the film's end for a looped sound without `dur`; a single play ends with its file, `analysis.duration` of its asset, which a build writes: absent only for a document solved before one) */
@@ -248,7 +248,7 @@ export function resolveStarts(doc: VisoDoc, scenes: TScene[], fps: number): Map<
     return t;
   };
   const endOf = (e: Entry): number => {
-    const last = snap(fps, startOf(e) + ([e.a.on].flat().length - 1) * (e.a.stagger ?? 0));
+    const last = snap(fps, startOf(e) + ([e.a.target].flat().length - 1) * (e.a.stagger ?? 0));
     return e.a.motion === 'set' ? last : e.a.until ? Math.max(last, snap(fps, anchorStart(e.sc, e.a.until))) : last + playTime(e.a);
   };
   entries.forEach(startOf);
@@ -260,9 +260,9 @@ function compileScene(scene: VisoDoc['scenes'][number], sc: TScene, fps: number,
     const start = starts.get(a)!;
     // `until`: each target runs from its own start to the one end, so a staggered target is the shorter by its delay
     const until = a.until && snap(fps, anchorStart(sc, a.until));
-    [a.on].flat().forEach((on, k) => {
+    [a.target].flat().forEach((target, k) => {
       const at = snap(fps, start + k * (a.stagger ?? 0));
-      actions.push({scene: sc.id, on, motion: a.motion, start: at, dur: until !== undefined ? Math.max(0, until - at) : a.dur ?? MOTION_DUR[a.motion], easing: a.easing, ...(a.repeat !== undefined && {repeat: a.repeat}), ...(a.yoyo !== undefined && {yoyo: a.yoyo}), props: a.props ?? {}});
+      actions.push({scene: sc.id, target, motion: a.motion, start: at, dur: until !== undefined ? Math.max(0, until - at) : a.dur ?? MOTION_DUR[a.motion], easing: a.easing, ...(a.repeat !== undefined && {repeat: a.repeat}), ...(a.yoyo !== undefined && {yoyo: a.yoyo}), to: a.to ?? {}});
     });
   }
 }
@@ -286,14 +286,14 @@ export const playTime = (a: Pick<Action, 'motion' | 'dur' | 'repeat'>): number =
  * dies with the scene (`scene` names it): only that scene's actions reach it. A target in a global part is one thing across scenes (`scene` absent).
  */
 const byTarget = new WeakMap<Compiled, Map<string, TAction[]>>();
-function actionsOf(c: Compiled, on: Id, scene?: Id): TAction[] {
+function actionsOf(c: Compiled, target: Id, scene?: Id): TAction[] {
   let index = byTarget.get(c);
   if (!index) {
     index = new Map();
-    for (const a of c.actions) for (const k of [`${a.on}`, `${a.scene}:${a.on}`]) (index.get(k) ?? index.set(k, []).get(k)!).push(a);
+    for (const a of c.actions) for (const k of [`${a.target}`, `${a.scene}:${a.target}`]) (index.get(k) ?? index.set(k, []).get(k)!).push(a);
     byTarget.set(c, index);
   }
-  return index.get(scene === undefined ? on : `${scene}:${on}`) ?? [];
+  return index.get(scene === undefined ? target : `${scene}:${target}`) ?? [];
 }
 const POWER = {Quad: 2, Quart: 4, Quint: 5} as const;
 const BACK = 1.70158;
@@ -340,8 +340,8 @@ export const easeAt = (e: Easing | undefined, p: number): number => (easingFn(e)
  * what is already there changes nothing, and an action that interrupts a ramp turns it round from where it is. A target no action names is always 1.
  * `scene` is the scene whose part holds the target (see `actionsOf`); absent for a target of a global part.
  */
-export function presenceAt(c: Compiled, on: Id, t: number, scene?: Id, hidden = false): number {
-  const acts = actionsOf(c, on, scene).filter((a) => PRESENCE.has(a.motion));
+export function presenceAt(c: Compiled, target: Id, t: number, scene?: Id, hidden = false): number {
+  const acts = actionsOf(c, target, scene).filter((a) => PRESENCE.has(a.motion));
   let ramp = {from: hidden || acts[0]?.motion === 'appear' ? 0 : 1, to: 0, start: -Infinity, dur: 0, easing: undefined as Easing | undefined};
   ramp.to = ramp.from;
   const at = (time: number) => (ramp.dur > 0 ? ramp.from + (ramp.to - ramp.from) * easeAt(ramp.easing, clamp01((time - ramp.start) / ramp.dur)) : time >= ramp.start ? ramp.to : ramp.from);
@@ -404,7 +404,7 @@ function mixValue(from: Val, to: Val, k: number): Val | undefined {
  * The value of a prop of a target at t: `set` and `tween` actions in time order over `base`; a tween runs from the value the earlier ones reached, and of a prop with no
  * value of its own kind before it (a number to a colour) jumps. A tween takes numbers, colours and lengths; `repeat` plays it again, `yoyo` back and forth.
  */
-export function propAt(c: Compiled, on: Id, name: string, t: number, base: Val = 0, scene?: Id): Val {
+export function propAt(c: Compiled, target: Id, name: string, t: number, base: Val = 0, scene?: Id): Val {
   let value: Val = base;
   let tween: {from: Val; to: Val; start: number; dur: number; easing?: Easing; repeat?: number; yoyo?: boolean} | undefined;
   const valueAt = (time: number): Val => {
@@ -420,9 +420,9 @@ export function propAt(c: Compiled, on: Id, name: string, t: number, base: Val =
     }
     return q >= 1 ? tween.to : q <= 0 ? tween.from : mixValue(tween.from, tween.to, easeAt(tween.easing, q))!;
   };
-  const events = actionsOf(c, on, scene).filter((a) => (a.motion === 'set' || a.motion === 'tween') && a.props[name] !== undefined && a.start <= t);
+  const events = actionsOf(c, target, scene).filter((a) => (a.motion === 'set' || a.motion === 'tween') && a.to[name] !== undefined && a.start <= t);
   for (const a of events) {
-    const to = a.props[name];
+    const to = a.to[name];
     const from = valueAt(a.start);
     if (a.motion === 'tween' && mixValue(from, to, 0.5) !== undefined) {
       value = to;

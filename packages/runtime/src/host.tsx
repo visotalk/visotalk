@@ -17,7 +17,7 @@ import {Readiness} from './readiness';
 import {MediaScheduler} from './media';
 import {RuntimeProvider, type Runtime} from './react';
 import {partBodies} from './bodies';
-import {Stage, StageProvider} from './stage';
+import {Stage, Solo, StageProvider} from './stage';
 import {Player} from './player';
 import {installParentBridge} from './bridge';
 import {textAt, textFit} from './text-at';
@@ -74,6 +74,7 @@ export function mount(opts: MountOptions) {
   const fpsOf = (d: VisoDoc) => Number(params.get('fps')) || d.exports?.fps || DEFAULT_FPS;
   const presetOf = (d: VisoDoc) => d.canvas.presets.find((p) => p.id === presetId) ?? d.canvas.presets[0];
   const bodies = partBodies(opts.module.default);
+  const solo = new Solo();
 
   /** Everything the page draws that comes from the document, so a new document can be drawn the same way. */
   const draw = (doc: VisoDoc, voice: VoiceManifest) => {
@@ -85,7 +86,7 @@ export function mount(opts: MountOptions) {
     const narration = compiled.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
     const sounds = compiled.sounds.map((s) => ({...s, src: assets[s.asset]?.src ?? s.asset}));
     const stage = (
-      <StageProvider doc={doc} c={compiled} bodies={bodies} theme={theme} preset={preset} live={mode === 'live'} assetUrl={(id) => assetBase + (assets[id]?.src ?? id)}>
+      <StageProvider doc={doc} c={compiled} bodies={bodies} theme={theme} preset={preset} live={mode === 'live'} solo={solo} assetUrl={(id) => assetBase + (assets[id]?.src ?? id)}>
         <div style={{position: 'relative', width: preset.width, height: preset.height, overflow: 'hidden', background: C.bg}}>
           <Stage />
         </div>
@@ -151,7 +152,7 @@ export function mount(opts: MountOptions) {
         // a document that does not solve is not drawn; the player keeps the one it has
       }
     };
-    installParentBridge(runtime.clock, undefined, undefined, take, {at: textAt, fit: textFit});
+    installParentBridge(runtime.clock, undefined, undefined, take, {at: textAt, fit: textFit}, (part) => solo.set(part !== null && partIds(shown.doc).has(part) ? part : null));
     render();
     return {compiled, runtime};
   }

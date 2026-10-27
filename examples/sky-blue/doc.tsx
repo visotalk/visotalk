@@ -282,11 +282,11 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="white" x={1230} y={470} w={440} h={90}>{() => <div style={{fontFamily: SANS, fontSize: 56, fontWeight: 700, textAlign: 'center', color: '#fff'}}><T id="white">白色的光</T></div>}</Part>
     <Part id="mark" x={1140} y={560} w={420} h={300}>{() => <div style={{fontFamily: SANS, fontSize: 300, fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: 1}}>？</div>}</Part>
     <Animation>
-      <Appear on="sky" line="l1" word="天空是蓝" dur={1.2} />
-      <Appear on="title" line="l1" word="天空是蓝" dur={0.9} />
-      <Appear on="sun" line="l1" word="太阳光" dur={0.9} />
-      <Appear on="white" line="l1" word="白色的" />
-      <Appear on="mark" line="l2" word="哪里来" dur={0.6} />
+      <Appear target="sky" line="l1" word="天空是蓝" dur={1.2} />
+      <Appear target="title" line="l1" word="天空是蓝" dur={0.9} />
+      <Appear target="sun" line="l1" word="太阳光" dur={0.9} />
+      <Appear target="white" line="l1" word="白色的" />
+      <Appear target="mark" line="l2" word="哪里来" dur={0.6} />
     </Animation>
   </Scene>
 
@@ -295,16 +295,16 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="t-prism" x={96} y={44} w={1000} h={56}><Kicker id="k-prism">白光里有七种颜色</Kicker></Part>
     <Part id="prism" x={0} y={140} w={1920} h={720}><Prism /></Part>
     <Animation>
-      <Appear on={["t-prism", "prism"]} at="start" />
-      <Appear on="glass" line="l3" word="白光" dur={0.6} />
-      <Tween on="beam" draw={1} line="l3" word="白光" dur={0.9} />
-      <Tween on="ray-red" draw={1} line="l3" word="红" dur={0.7} />
-      <Tween on="ray-orange" draw={1} line="l3" word="橙" dur={0.7} />
-      <Tween on="ray-yellow" draw={1} line="l3" word="黄" dur={0.7} />
-      <Tween on="ray-green" draw={1} line="l3" word="绿" dur={0.7} />
-      <Tween on="ray-cyan" draw={1} line="l3" word="青" dur={0.7} />
-      <Tween on="ray-blue" draw={1} line="l3" word="蓝" dur={0.7} />
-      <Tween on="ray-violet" draw={1} line="l3" word="紫" dur={0.7} />
+      <Appear target={["t-prism", "prism"]} at="start" />
+      <Appear target="glass" line="l3" word="白光" dur={0.6} />
+      <Tween target="beam" to={{draw: 1}} line="l3" word="白光" dur={0.9} />
+      <Tween target="ray-red" to={{draw: 1}} line="l3" word="红" dur={0.7} />
+      <Tween target="ray-orange" to={{draw: 1}} line="l3" word="橙" dur={0.7} />
+      <Tween target="ray-yellow" to={{draw: 1}} line="l3" word="黄" dur={0.7} />
+      <Tween target="ray-green" to={{draw: 1}} line="l3" word="绿" dur={0.7} />
+      <Tween target="ray-cyan" to={{draw: 1}} line="l3" word="青" dur={0.7} />
+      <Tween target="ray-blue" to={{draw: 1}} line="l3" word="蓝" dur={0.7} />
+      <Tween target="ray-violet" to={{draw: 1}} line="l3" word="紫" dur={0.7} />
     </Animation>
   </Scene>
 
@@ -315,17 +315,17 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="waves" x={0} y={150} w={1920} h={720}><Waves /></Part>
     <Part id="bars" x={0} y={150} w={1920} h={720}><Bars /></Part>
     <Animation>
-      <Appear on="t-waves" at="start" />
-      <Appear on="waves" line="l4" word="红光的波长长" dur={0.3} />
-      <Tween on="wave-r" draw={1} line="l4" word="红光的波长长" dur={1.6} easing="linear" />
-      <Tween on="wave-b" draw={1} line="l4" word="蓝光的波长短" dur={1.6} easing="linear" />
-      <Disappear id="waves-off" on="waves" line="l5" word="波长越短" dur={0.4} />
-      <Appear on="bars" after="waves-off" />
-      <Appear on="bars-title" line="l5" word="空气分子散射" />
-      <Appear on="bar-r" line="l5" word="红光" />
-      <Tween on="bar-r" w={200} line="l5" word="红光" dur={0.7} />
-      <Appear on="bar-b" line="l5" word="六倍" />
-      <Tween on="bar-b" w={1170} line="l5" word="六倍" dur={1.4} easing="easeOutQuart" />
+      <Appear target="t-waves" at="start" />
+      <Appear target="waves" line="l4" word="红光的波长长" dur={0.3} />
+      <Tween target="wave-r" to={{draw: 1}} line="l4" word="红光的波长长" dur={1.6} easing="linear" />
+      <Tween target="wave-b" to={{draw: 1}} line="l4" word="蓝光的波长短" dur={1.6} easing="linear" />
+      <Disappear id="waves-off" target="waves" line="l5" word="波长越短" dur={0.4} />
+      <Appear target="bars" after="waves-off" />
+      <Appear target="bars-title" line="l5" word="空气分子散射" />
+      <Appear target="bar-r" line="l5" word="红光" />
+      <Tween target="bar-r" to={{w: 200}} line="l5" word="红光" dur={0.7} />
+      <Appear target="bar-b" line="l5" word="六倍" />
+      <Tween target="bar-b" to={{w: 1170}} line="l5" word="六倍" dur={1.4} easing="easeOutQuart" />
     </Animation>
   </Scene>
 
@@ -335,15 +335,15 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="t-air" x={96} y={44} w={1000} h={56}><Kicker id="k-air">光穿过大气层</Kicker></Part>
     <Part id="air" x={0} y={150} w={1920} h={740}><Air /></Part>
     <Animation>
-      <Appear on={["t-air", "air"]} at="start" />
-      <Tween on="beam" draw={1} line="l6" word="阳光穿过" dur={1.8} easing="linear" />
-      <Appear on="band" line="l6" word="大气层" />
-      <Appear on="molecules" line="l6" word="气体分子" dur={0.8} />
-      <Appear on="mol-tag" line="l6" word="气体分子" dur={0.5} />
-      <Tween on="scatter" grow={1} line="l7" word="打散" dur={1.2} easing="easeOutQuart" />
-      <Appear on="through" line="l7" word="径直穿过" dur={0.1} />
-      <Tween on="through" draw={1} line="l7" word="径直穿过" dur={1.2} easing="linear" />
-      <Tween on="band" glow={1} line="l7" word="到处都是蓝色" dur={1.6} />
+      <Appear target={["t-air", "air"]} at="start" />
+      <Tween target="beam" to={{draw: 1}} line="l6" word="阳光穿过" dur={1.8} easing="linear" />
+      <Appear target="band" line="l6" word="大气层" />
+      <Appear target="molecules" line="l6" word="气体分子" dur={0.8} />
+      <Appear target="mol-tag" line="l6" word="气体分子" dur={0.5} />
+      <Tween target="scatter" to={{grow: 1}} line="l7" word="打散" dur={1.2} easing="easeOutQuart" />
+      <Appear target="through" line="l7" word="径直穿过" dur={0.1} />
+      <Tween target="through" to={{draw: 1}} line="l7" word="径直穿过" dur={1.2} easing="linear" />
+      <Tween target="band" to={{glow: 1}} line="l7" word="到处都是蓝色" dur={1.6} />
     </Animation>
   </Scene>
 
@@ -353,16 +353,16 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="t-violet" x={96} y={44} w={1000} h={56}><Kicker id="k-violet">为什么不是紫色</Kicker></Part>
     <Part id="spec" x={0} y={240} w={1920} h={640}><Spectrum /></Part>
     <Animation>
-      <Appear on="t-violet" at="start" />
-      <Appear on="spec" line="l8" word="紫光" dur={0.5} />
-      <Appear on="strip" line="l8" word="紫光" dur={0.9} />
-      <Appear on="q" line="l8" word="不是紫色" dur={0.6} />
-      <Disappear id="q-off" on="q" line="l9" word="太阳光" dur={0.4} />
-      <Appear on="few" line="l9" word="本来就少" />
-      <Tween on="spec" v={1} line="l9" word="本来就少" dur={1} />
-      <Appear on="absorbed" line="l9" word="被大气吸收" />
-      <Appear on="ring" line="l9" word="更敏感" dur={0.6} />
-      <Appear on="eye" line="l9" word="我们的眼睛" dur={0.6} />
+      <Appear target="t-violet" at="start" />
+      <Appear target="spec" line="l8" word="紫光" dur={0.5} />
+      <Appear target="strip" line="l8" word="紫光" dur={0.9} />
+      <Appear target="q" line="l8" word="不是紫色" dur={0.6} />
+      <Disappear id="q-off" target="q" line="l9" word="太阳光" dur={0.4} />
+      <Appear target="few" line="l9" word="本来就少" />
+      <Tween target="spec" to={{v: 1}} line="l9" word="本来就少" dur={1} />
+      <Appear target="absorbed" line="l9" word="被大气吸收" />
+      <Appear target="ring" line="l9" word="更敏感" dur={0.6} />
+      <Appear target="eye" line="l9" word="我们的眼睛" dur={0.6} />
     </Animation>
   </Scene>
 
@@ -373,16 +373,16 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
     <Part id="sky"><Sky /></Part>
     <Part id="earth" x={0} y={0} w={1920} h={880}><Dusk /></Part>
     <Animation>
-      <Appear on={["sky", "earth"]} at="start" />
-      <Appear on="sun-low" line="l10" word="太阳落到" dur={0.8} />
-      <Appear on="path" line="l10" word="阳光要穿过" dur={0.1} />
-      <Tween on="path" draw={1} line="l10" word="阳光要穿过" dur={2.4} easing="linear" />
-      <Appear on="viewer" line="l10" word="傍晚" dur={0.5} />
-      <Appear on="thick" line="l10" word="厚得多" dur={0.6} />
-      <Appear on="noon" line="l10" word="厚得多" offset={0.8} dur={0.8} />
-      <Tween on="leak" grow={1} line="l11" word="蓝光" dur={1.2} easing="easeOutQuart" />
-      <Tween on="path" tint={1} line="l11" word="红色和橙色" dur={1.6} />
-      <Tween on="sky" dusk={1} line="l12" word="晚霞" dur={2.2} />
+      <Appear target={["sky", "earth"]} at="start" />
+      <Appear target="sun-low" line="l10" word="太阳落到" dur={0.8} />
+      <Appear target="path" line="l10" word="阳光要穿过" dur={0.1} />
+      <Tween target="path" to={{draw: 1}} line="l10" word="阳光要穿过" dur={2.4} easing="linear" />
+      <Appear target="viewer" line="l10" word="傍晚" dur={0.5} />
+      <Appear target="thick" line="l10" word="厚得多" dur={0.6} />
+      <Appear target="noon" line="l10" word="厚得多" offset={0.8} dur={0.8} />
+      <Tween target="leak" to={{grow: 1}} line="l11" word="蓝光" dur={1.2} easing="easeOutQuart" />
+      <Tween target="path" to={{tint: 1}} line="l11" word="红色和橙色" dur={1.6} />
+      <Tween target="sky" to={{dusk: 1}} line="l12" word="晚霞" dur={2.2} />
     </Animation>
   </Scene>
 </Doc>;

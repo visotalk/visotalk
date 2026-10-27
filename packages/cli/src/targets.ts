@@ -72,7 +72,7 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
       // a render of part of the film looks only at the actions that start in it (`range`, in frames)
       const start = starts?.get(a);
       if (range && start !== undefined && (Math.round(start * fps) < range[0] || Math.round(start * fps) >= range[1])) return;
-      for (const id of [a.on].flat()) {
+      for (const id of [a.target].flat()) {
         if (seen.has(id) || broken) continue;
         issues.push({code: 'target.unregistered', at: `/scenes/${scene.id}/animations/${a.id ?? k}`,
           message: `"${id}" is not on the page in scene "${scene.id}": no part has that id, and no element has registered it (registered at the sampled frames: ${[...seen].join(', ') || 'none'})`,
@@ -81,12 +81,12 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
     });
   });
   // inside a global part an element is invisible until an appear shows it: one that nothing appears never shows
-  const appeared = new Set(c.actions.filter((a) => a.motion === 'appear').map((a) => a.on));
+  const appeared = new Set(c.actions.filter((a) => a.motion === 'appear').map((a) => a.target));
   const never = new Set<string>();
   for (const ins of Object.values(inspections)) for (const id of (ins as FrameInspection).registeredGlobal ?? []) if (!appeared.has(id)) never.add(id);
   for (const id of never) {
     issues.push({code: 'target.never-appears', at: '/parts', message: `"${id}" is inside a part of the document and nothing appears it: it stays invisible`,
-      fix: `<Appear on="${id}" …/> in the scene where it first shows (inside a part of the document everything is invisible until an appear)`});
+      fix: `<Appear target="${id}" …/> in the scene where it first shows (inside a part of the document everything is invisible until an appear)`});
   }
   return issues;
 }
