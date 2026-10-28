@@ -1,12 +1,16 @@
 /**
  * Where to look: the window of every line, the frames at which every target an action names should be on the page, and what a run found there.
  */
-import {captionBlocks, resolveStarts, type Compiled, type VisoDoc} from '@visotalk/ir';
+import {captionBlocks, resolveStarts, wordAt, type Compiled, type VisoDoc} from '@visotalk/ir';
 import type {FrameInspection} from '@visotalk/exporter';
 import type {Project} from './project.ts';
 
 /** The window of a line is the time it is spoken: `--at` of a still is a fraction of it, so it never lands in the pause or hold after the words */
 export const lineWindows = (c: Compiled) => c.scenes.flatMap((sc) => sc.lines.map((l) => ({at: `${sc.id}/${l.id}`, scene: sc.id, line: l.id, from: l.from, end: l.from + l.duration})));
+
+/** The frame at time t, kept inside its scene and the film */
+const frameIn = (c: Compiled, fps: number, sc: {from: number; end: number}, t: number) =>
+  Math.max(0, Math.min(Math.round(c.duration * fps) - 1, Math.floor(Math.min(Math.max(t, sc.from), sc.end - 1 / fps) * fps)));
 
 /**
  * Frames at which every target an action names should be on the page: just before and just after each action starts, and in the middle of each scene.
@@ -14,8 +18,7 @@ export const lineWindows = (c: Compiled) => c.scenes.flatMap((sc) => sc.lines.ma
  */
 export function targetFrames(c: Compiled, fps: number): number[] {
   const out = new Set<number>();
-  const last = Math.round(c.duration * fps) - 1;
-  const inScene = (sc: {from: number; end: number}, t: number) => Math.max(0, Math.min(last, Math.floor(Math.min(Math.max(t, sc.from), sc.end - 1 / fps) * fps)));
+  const inScene = (sc: {from: number; end: number}, t: number) => frameIn(c, fps, sc, t);
   for (const sc of c.scenes) out.add(inScene(sc, (sc.from + sc.end) / 2));
   for (const a of c.actions) {
     const sc = c.scenes.find((x) => x.id === a.scene)!;
@@ -87,6 +90,68 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
   for (const id of never) {
     issues.push({code: 'target.never-appears', at: '/parts', message: `"${id}" is inside a part of the document and nothing appears it: it stays invisible`,
       fix: `<Appear target="${id}" …/> in the scene where it first shows (inside a part of the document everything is invisible until an appear)`});
+  }
+  return issues;
+}
+
+/**
+ * A part that appears with nothing drawn: on the frame just after its appear (one `targetFrames` samples) it paints nothing, and elements it holds are still
+ * hidden, waiting for appears of their own. Its own appear belongs where the first of them shows; until then it is an empty box on a timeline. That an
+ * element is inside the part is read from the frame after that element's own appear, where it is on the page with the elements around it. The part must
+ * still draw nothing on the frame just before that first appear: what it draws without an appear (a tweened stroke or word) would be hidden by a later one. A wait under
+ * `EMPTY_MIN` seconds is left alone: an empty part is invisible, and so short a stretch does not show on a timeline either.
+ */
+export const EMPTY_MIN = 1;
+
+export function emptyAppearIssues(p: Project, c: Compiled, fps: number, inspections: Record<number, unknown>): Array<{code: string; at: string; message: string; fix: string}> {
+  const issues: Array<{code: string; at: string; message: string; fix: string}> = [];
+  const page = (sc: {from: number; end: number}, t: number) => inspections[frameIn(c, fps, sc, t)] as FrameInspection | undefined;
+  const globals = new Set((p.doc.parts ?? []).map((x) => x.id));
+  const inside = (ins: FrameInspection, id: string, part: string) => {
+    for (let at: string | null = id, n = 0; at && n < 32; n++) {
+      const o = ins.objects.find((x) => x.id === at);
+      if (!o) return false;
+      if (o.parent === part) return true;
+      at = o.parent;
+    }
+    return false;
+  };
+  const reported = new Set<string>();
+  for (const a of c.actions) {
+    const scene = p.doc.scenes.find((x) => x.id === a.scene);
+    const sc = c.scenes.find((x) => x.id === a.scene);
+    if (a.motion !== 'appear' || !scene || !sc || !(globals.has(a.target) || scene.parts.some((x) => x.id === a.target))) continue;
+    const ins = page(sc, a.start + 0.15);
+    const box = ins?.objects.find((o) => o.id === a.target && o.parent === null);
+    // too faint yet to tell what it draws, or it draws something
+    if (!ins || !box || box.opacity < 0.05 || box.ink) continue;
+    const visible = new Set(ins.objects.filter((o) => o.opacity >= 0.05).map((o) => o.id));
+    const later = c.actions
+      .filter((b) => b.motion === 'appear' && b.scene === a.scene && b.start > a.start && b.target !== a.target && ins.registered.includes(b.target) && !visible.has(b.target))
+      .sort((x, y) => x.start - y.start);
+    const held = later.filter((b) => {
+      const there = page(sc, b.start + 0.15);
+      return there !== undefined && inside(there, b.target, a.target);
+    });
+    const first = held[0];
+    const key = `${a.scene}:${a.target}:${a.start}`;
+    if (!first || first.start - a.start < EMPTY_MIN || reported.has(key)) continue;
+    // something it draws with no appear of its own (a stroke, a typed word, a number tweened into view) can show in the wait: still nothing on the frame
+    // just before its first held element shows, or it is not empty, and moving its appear would hide that
+    const before = page(sc, first.start - 0.05)?.objects.find((o) => o.id === a.target && o.parent === null);
+    if (!before || before.opacity < 0.05 || before.ink) continue;
+    reported.add(key);
+    const k = scene.animations.findIndex((x) => x.motion === 'appear' && [x.target].flat().includes(a.target));
+    // where the first content is anchored, as the document says it (a word the narration names), else the word spoken then
+    const own = scene.animations.find((x) => x.motion === 'appear' && [x.target].flat().includes(first.target))?.at;
+    const anchor = own && 'line' in own ? `line="${own.line}"${own.word ? ` word="${own.word}"` : ''}` : (() => {
+      const w = wordAt(c, first.start + 0.02);
+      return w ? `line="${w.line}" word="${w.word}"` : undefined;
+    })();
+    const names = [...new Set(held.map((b) => b.target))];
+    issues.push({code: 'part.appears-empty', at: k >= 0 ? `/scenes/${scene.id}/animations/${scene.animations[k].id ?? k}` : `/scenes/${scene.id}/parts/${a.target}`,
+      message: `part "${a.target}" appears at ${a.start.toFixed(2)} s with nothing drawn: what it holds ("${names.slice(0, 3).join('", "')}"${names.length > 3 ? ` and ${names.length - 3} more` : ''}) first shows at ${first.start.toFixed(2)} s${anchor ? ` (${anchor})` : ''}`,
+      fix: `anchor the part's own <Appear> where its content first shows${anchor ? ` (${anchor})` : ''}, with dur={0} (its content brings its own entrance), not before: until then it is an empty box on the timeline`});
   }
   return issues;
 }

@@ -1391,7 +1391,8 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
       <Appear target="gag-clock" line="l9" word="pinned to a second" />
       <Disappear target="gag-clock" line="l12" word="now" dur={0.4} />
       <Appear target="gag-word" line="l12" word="hang the light on the word" />
-      <Disappear target="gag-word" line="l16" dur={0.4} />
+      <Disappear id="gag-word-out" target="gag-word" line="l16" dur={0.4} />
+      <Disappear target="gagcode" after="gag-word-out" dur={0} />
       <Tween target="clock" to={{clk: 4.4}} line="l10" dur={4.4} easing="linear" />
       <Appear target="sunlight" line="l10" offset={1.2} dur={0.25} />
       <Appear target="early" line="l10" offset={1.45} dur={0.3} />
@@ -1404,7 +1405,8 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
       <Appear target="nope" line="l16" word="a second" dur={0} />
       <Appear target="nope-s" line="l16" word="a second" />
       <Appear target="nope-f" line="l16" word="a frame" />
-      <Disappear target={["nope-s", "nope-f"]} line="l16" word="for a word" />
+      <Disappear id="nope-out" target={["nope-s", "nope-f"]} line="l16" word="for a word" />
+      <Disappear target="nope" after="nope-out" dur={0} />
       <Appear target="code" line="l16" word="every animation" />
       <Tween target="rail" to={{hl: 1}} line="l16" word="for a word" dur={0.4} />
       <Disappear target="code" line="l17" word="speaks the script" />
@@ -1484,7 +1486,7 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
       <Set target="doc" to={{hl: "appear,tween,set,disappear"}} line="l26" word="each one" />
       <Tween target="doc" to={{anchors: 1}} line="l26" word="a line and a word" dur={0.6} />
       <Disappear target="doc" line="l27" dur={0.5} />
-      <Appear target="kinds" line="l27" offset={0.4} dur={0} />
+      <Appear target="kinds" line="l27" word="a react element" dur={0} />
       <Appear target="kind-react" line="l27" word="a react element" />
       <Appear target="kind-video" line="l27" word="a video clip" />
       <Appear target="kind-music" line="l27" word="the music" />
@@ -1544,7 +1546,8 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Part id="mp4"><Mp4 /></Part>
     <Animation>
       <Set target="chapter" to={{n: "07", name: "The whole workflow"}} at="start" />
-      <Appear target={["flow", "cards"]} line="l34" dur={0} />
+      <Appear target="flow" line="l34" dur={0} />
+      <Appear target="cards" line="l35" word="your agent" dur={0} />
       <Tween target="flow" to={{draw: 1}} line="l34" until={{line: "l34", word: "whole workflow", edge: "end"}} easing="easeInOut" />
       <Set target="flow" to={{step: 1}} line="l35" word="your agent" />
       <Appear target="card-script" line="l35" word="your agent" />

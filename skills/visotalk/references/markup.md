@@ -74,7 +74,7 @@ Motions: `<Appear>`, `<Disappear>` (`dur` default 0.45 and 0.3 s), `<Tween>` (nu
 
 ## `qa`, in short
 
-`qa` renders sampled frames and checks the layout and the animation against the page: ink past the canvas or under the captions, clipped text, two pieces of text drawn over each other (`text-overlap`, wherever they are), text cut through by a shape (`text-crossed`: the edge of a card or a bar, a line across it), an object on screen for under two seconds (`visible.brief`), a target no part registers (`target.unregistered`) or registers twice (`target.duplicate`), anchors resting on an estimated or weak alignment (`align.*`). It cannot see whether a picture matches its sentence or looks good: reading `sheet` and `still` is your job.
+`qa` renders sampled frames and checks the layout and the animation against the page: ink past the canvas or under the captions, clipped text, an object on screen for under two seconds (`visible.brief`), a part that appears with nothing drawn while what it holds waits for appears of its own (`part.appears-empty`, for a second or more: anchor the part's appear where its content first shows, with `dur={0}`), a target no part registers (`target.unregistered`) or registers twice (`target.duplicate`), anchors resting on an estimated or weak alignment (`align.*`). Overlap is not checked: text over text and shapes across text are a normal way to show and move things, and whether one reads well is decided on the still. By default it prints one line per problem with how many frames show it; `qa.json` holds every issue and `--full` prints them. It cannot see whether a picture matches its sentence or looks good: reading `sheet` and `still` is your job.
 
 `validate` also refuses what makes a frame depend on anything but the engine's clock, in your module and in the project files it imports: `Math.random`, `Date`, timers, `fetch`, and CSS animations or transitions (`code.nondeterministic`, with the replacement: `useTime()`, `random(key)`, a `<Tween>`).
 
@@ -83,7 +83,7 @@ Motions: `<Appear>`, `<Disappear>` (`dur` default 0.45 and 0.3 s), `<Tween>` (nu
 - A global part (one of `<Doc>`) is invisible until a scene appears it, like any part: give some scene `<Appear target="id" at="start"/>` (or an anchor on a word). `part.appear` and `visible.brief` on a global part both mean that no scene appears it, or that the scene that does takes it away again too soon; the fix for the second is a `hold` on the scene's last line, or keeping it on in the next scene.
 - Word timing needs English and `torchaudio`; otherwise `prepare` warns and word anchors fall back to the phrase's character position, which can be half a second off (`qa` reports `align.estimated`; an anchor on a word the aligner was unsure of, usually a letter spoken by its name, `align.weak`).
 - `render` is minutes long (and may outlast a tool's timeout: run it in the background); `validate`, `sheet` and `qa` are not. Spend renders only on a clean sheet.
-- `sheet` and `qa` write `sheet.png` to the same path every time, and a viewer can show the previous image from its cache. Pass `--out sheet-2.png` (a new name each time; it is written in the document's work folder, `.visotalk/<id>/`) when you look at a sheet again after a fix.
+- `sheet` and `qa` write `sheet.jpg` to the same path every time, and a viewer can show the previous image from its cache. Pass `--out sheet-2.jpg` (a new name each time; it is written in the document's work folder, `.visotalk/<id>/`) when you look at a sheet again after a fix.
 - `still --at` on a line can land in trailing silence, where no sentence is spoken: pass `--time` for an exact second.
 - Large lowercase letters in the sans font can read as capitals (a short lowercase name): use the mono font for such a name.
 - Words you draw inside a part are not narration: they are not anchors, not captions and not translated. Keep them short (a label, a figure).
@@ -91,7 +91,7 @@ Motions: `<Appear>`, `<Disappear>` (`dur` default 0.45 and 0.3 s), `<Tween>` (nu
 ## Languages
 
 One film in several languages is one document and an overlay per language: `doc.en.json` beside `doc.tsx` (the document's own language is its `lang`).
-The overlay holds only what the language changes; scenes, parts and animation stay the document's. Example: `examples/sky-blue/doc.en.json`.
+The overlay holds only what the language changes; scenes, parts and animation stay the document's. Example: `examples/sky-blue/doc.en.json` in github.com/visotalk/visotalk (not on this machine).
 
 ```json
 {

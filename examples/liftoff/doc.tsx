@@ -594,7 +594,7 @@ export default <Doc
       <Appear target="lt-big" line="h1" word="May" dur={0.7} />
       <Tween target="lt-rule" to={{w: 420}} line="h1" word="May" offset={0.4} dur={1.6} easing="easeOut" />
       <Appear target="lt-rule" line="h1" word="May" offset={0.4} dur={0.2} />
-      <Appear target="first" line="h2" />
+      <Appear target="first" line="h2" word="private" dur={0} />
       <Appear target="first-a" line="h2" word="private" />
       <Appear target="first-b" line="h2" word="launched" />
       <Disappear target={["lt", "first"]} line="h3" dur={0.5} />
@@ -622,7 +622,7 @@ export default <Doc
       <Appear target="span" line="b1" word="first four launches" dur={0.1} />
       <Tween target="span" to={{grow: 1}} line="b1" word="first four launches" dur={1.4} easing="easeOut" />
       <Appear target="lab-span" line="b1" word="Falcon One" />
-      <Appear target="people" line="b2" />
+      <Appear target="people" line="b2" word="engineers" dur={0} />
       <Appear target="eng" line="b2" word="engineers" />
       <Appear target="tech" line="b2" word="technicians" />
       <Appear target="exec" line="b2" word="executives" />
@@ -662,7 +662,7 @@ export default <Doc
     <Part id="pad" z={1} x={0} y={0} w={1920} h={1080}><Photo asset="prelaunch" side="left" /></Part>
     <Part id="life" z={3} x={120} y={170} w={1100} h={700}><Life /></Part>
     <Animation>
-      <Appear target="rings" at="start" />
+      <Appear target="rings" line="i1" word="tiny" dur={0} />
       <Appear target="omelek" line="i1" word="Omelek" />
       <Set target="omelek" to={{px: 47, py: 56}} at="start" />
       <Tween target="omelek" to={{zoom: 1.15}} line="i1" word="Omelek" dur={9} easing="linear" />
@@ -677,7 +677,7 @@ export default <Doc
       <Appear target="pad" line="i2" offset={0.3} />
       <Set target="pad" to={{py: 90}} line="i2" />
       <Tween target="pad" to={{zoom: 1.12, py: 25}} line="i2" offset={0.3} dur={9} easing="linear" />
-      <Appear target="life" line="i2" />
+      <Appear target="life" line="i2" word="deadlines" dur={0} />
       <Appear target="life-deadlines" line="i2" word="deadlines" />
       <Appear target="life-heat" line="i2" word="heat" />
       <Appear target="life-salt" line="i2" word="salt" />
@@ -732,7 +732,8 @@ export default <Doc
       <Appear target="bump" line="f3" word="bumped" />
       <Appear target="x-3" line="f3" word="after separation" dur={0.2} />
 
-      <Disappear target={["photo-3", "ft-3", "chart", "bump"]} line="f0" dur={0.4} />
+      <Disappear id="f3-out" target={["photo-3", "ft-3", "chart", "bump"]} line="f0" dur={0.4} />
+      <Disappear target="ftitle" after="f3-out" dur={0} />
       <Appear target="tally" line="f0" offset={0.4} />
       <Appear target="cross-1" line="f0" word="Three launches" />
       <Appear target="cross-2" line="f0" word="launches" />

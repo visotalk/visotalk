@@ -291,7 +291,8 @@ export function inspectFrame(root: HTMLElement, canvas: {width: number; height: 
     ? rel(toRect(cap.getBoundingClientRect())) : null;
   const registered = [...root.querySelectorAll<HTMLElement>('[data-vt]')].map((e) => e.dataset.vt!);
   const ownerOf = (el: Element) => el.closest<HTMLElement>('[data-vt]')?.dataset.vt ?? null;
-  const crossings = crossingsOf([...root.querySelectorAll('*')], root, canvas, texts.flatMap((t, i) => (t.rect.w > 1 && t.rect.h > 1 ? [{text: t.text, rect: t.rect, el: textEls[i]}] : [])), ownerOf);
+  // overlap is not checked (packages/exporter/src/qa.ts): crossings are no longer measured
+  const crossings: FrameInspection['crossings'] = [];
   const registeredGlobal = [...root.querySelectorAll<HTMLElement>('[data-global] [data-vt]')].map((e) => e.dataset.vt!);
   const partErrors = (window as unknown as {__visotalkPartErrors?: NonNullable<FrameInspection['partErrors']>}).__visotalkPartErrors ?? [];
   return {width: canvas.width, height: canvas.height, objects, texts, crossings, registered, registeredGlobal, caption, ...(caption && cap!.dataset.caption === 'words' && {captionWords: true}), ...(partErrors.length && {partErrors})};

@@ -293,7 +293,8 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
     <Line id="h3l" hold={2.5}>uv, from Astral, the team behind Ruff, replaces all of them with a single binary, written in Rust.</Line>
     <Part id="toolbox" x={0} y={230} w={1920} h={650}>{() => <Toolbox />}</Part>
     <Animation>
-      <Appear target={["title", "toolbox"]} at="start"/>
+      <Appear target="title" line="h1l" word="Python project" dur={0}/>
+      <Appear target="toolbox" line="h2l" word="pip" dur={0}/>
       <Set target="head" to={{text: "Python project setup"}} at="start"/>
       <Set target="kick" to={{text: "Astral"}} at="start"/>
       <Appear target="head" line="h1l" word="Python project"/>
@@ -334,7 +335,7 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
     <Part id="bench" x={0} y={230} w={1920} h={650}>{() => <Bench />}</Part>
     <Part id="bars" x={0} y={230} w={1920} h={650}>{() => <Bars />}</Part>
     <Animation>
-      <Appear target="ruler" at="start"/>
+      <Appear target="ruler" line="s1l" word="speed" dur={0}/>
       <Set target="head" to={{text: "10x to 100x faster than pip?"}} at="start"/>
       <Set target="kick" to={{text: "The README claim"}} at="start"/>
       <Appear target="r-line" line="s1l" word="speed"/>
@@ -347,7 +348,7 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
       <Disappear target="ruler" line="s2l"/>
       <Set target="head" to={{text: "The benchmark"}} line="s2l"/>
       <Set target="kick" to={{text: ""}} line="s2l"/>
-      <Appear target="bench" line="s2l"/>
+      <Appear target="bench" line="s2l" word="same machine" dur={0}/>
       <Appear target="k-machine" line="s2l" word="same machine"/>
       <Appear target="k-python" line="s2l" word="same Python"/>
       <Appear target="k-cache" line="s2l" word="warm cache"/>
@@ -387,7 +388,8 @@ export default <Doc id="uv" poster={79} title="uv, the one tool for Python proje
     <Animation>
       <Set target="head" to={{text: "A full project manager"}} at="start"/>
       <Set target="kick" to={{text: ""}} at="start"/>
-      <Appear target={["files", "outcome"]} line="p1l" word="project manager"/>
+      <Appear target="files" line="p2l" word="creates a project" dur={0}/>
+      <Appear target="outcome" line="p3l" word="no activate step" dur={0}/>
       <Appear target="poetry" line="p1l" word="Poetry"/>
 
       <Disappear target="poetry" line="p1l" edge="end" offset={1.6}/>

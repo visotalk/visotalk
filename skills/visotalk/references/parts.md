@@ -51,11 +51,11 @@ For motion of its own that needs no word (a slow drift, a pulse), draw by `useTi
 
 ## Keep it checkable
 
-- Register every element an animation names (`<Obj id>` or `{...useTarget("id")}`); `qa` reports one nothing registers, and one registered twice. A part whose targets all have an `<Appear>` still needs one of its own.
+- Register every element an animation names (`<Obj id>` or `{...useTarget("id")}`); `qa` reports one nothing registers, and one registered twice. A part whose targets all have an `<Appear>` still needs one of its own: put it on the word where the first of them shows, with `dur={0}` (they bring their own entrance), not at the scene's start, or the part is an empty box until then (`qa` reports `part.appears-empty` when that lasts a second or more).
 - `validate` reads a part's code as text; a JSX typo in it shows only when `qa` or `still` compiles it. A scale of exactly 0 is fine (`qa` skips a shape with no area), but keep a flip or a growth off 0 if the shape must be seen.
 - `qa` ignores `clipPath` and measures the geometry, so a circle clipped to a strip is reported past it: draw the arc inside the strip instead. For a painted ground that reaches under the captions, use a `div` that fades out by y 900, and art in SVG above it.
-- A translucent ring or band laid over text is reported as crossing it: show the state by styling the element itself (a `boxShadow` from a tweened number). A box with a border and `width: 100%` needs `boxSizing: 'border-box'`, or `qa` reports 8 px past its box.
+- A box with a border and `width: 100%` needs `boxSizing: 'border-box'`, or `qa` reports 8 px past its box.
 - A long `<Tween>` anchored on the last phrase of a line can lose to the next line's changes: anchor it early and let it run for the whole line.
-- Keep text clear: `qa` reports two texts drawn over each other and text that a shape cuts through (an edge of a card or a bar over part of it, a line across it). A label fully on a card is fine; shapes layering over shapes is not checked, so look at the still.
+- Keep text readable: `qa` does not check overlap (layering is a normal way to show things), so make sure a label you mean to be read is not hidden under something.
 - Draw so the same frame is the same twice: whole-pixel positions for crisp edges; arrows as one filled shape; font weights 400 and 700.
 - Look at full-size stills (`still`), not only the sheet: small text, empty areas and collisions only show there.

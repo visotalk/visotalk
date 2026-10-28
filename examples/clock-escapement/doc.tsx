@@ -255,7 +255,7 @@ export default <Doc id="clock-escapement" poster={45} title="How a clock keeps t
     <Line id="l1">Every mechanical clock begins with stored energy.</Line>
     <Line id="l2">A mainspring, wound tight, wants to unwind. A weight, lifted high, wants to fall.</Line>
     <Animation>
-      <Appear target="clock" at="start" dur={0.01}/>
+      <Appear target="clock" line="l1" word="begins" dur={0}/>
       <Appear target="barrel" line="l1" word="begins"/>
       <Appear target="spring" line="l1" word="stored energy"/>
       <Appear target="lb-spring" line="l2" word="mainspring"/>

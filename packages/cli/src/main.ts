@@ -10,9 +10,10 @@
  *   visotalk render   <doc.tsx> [--out DIR] [--fps 30] [--png] [--concurrency N] [--from F --to T] [--frames] [--preset ID] [--theme ID] [--scale 2] [--gpu] [--chrome PATH]
  *   visotalk play     <doc.tsx | FILE.visotalk> [--port 4800]   a document, or a player bundle (`export --player`), served as a page
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
- *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--limit 30]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.png
- *   visotalk sheet    <doc.tsx> [--at 0.85] [--theme ID] [--out FILE.png]   contact sheet: one frame per line at that fraction
- *   visotalk still    <doc.tsx> --line SCENE/LINE [--at 0.85] | --time SECONDS  [--theme ID] [--out FILE.png]   one full-size frame (1920x1080), what was measured on it, and what the sentence names
+ *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--full] [--limit 12]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.jpg
+ *   visotalk sheet    <doc.tsx> [--at 0.85] [--theme ID] [--out FILE.jpg]   contact sheet (JPEG, about 1280 wide): one frame per line at that fraction
+ *   visotalk still    <doc.tsx> --line SCENE/LINE[,SCENE/LINE…] [--at 0.85] | --time SECONDS[,SECONDS…]  [--theme ID] [--png] [--out FILE.jpg]   frames as 1280x720 JPEG (--png: full-size 1920x1080 PNG), one Chrome run for all of them: each with what was measured on it and what the sentence names
+ *   visotalk asset    search "<words>" [--limit 8] | get <N> --id NAME   openly licensed pictures (Wikimedia Commons, Openverse): candidates as text, then one saved to media/ with its <Asset> declaration
  *   visotalk export   <doc.tsx> [--out FILE.visotalk] [--cover FILE] [--player]   the talk as one file: its source, its voice if it is prepared, captions and credits; --player: the built talk instead, which plays and has no document to open
  *   visotalk import   <FILE.visotalk> [DIR] [--remix] [--allow-voice-module]   unpack a source bundle into a new directory, checked as any document is; --remix starts a talk of its own
  *   visotalk schema   [tags | hooks | motions] [--json]   what a document is made of and the hooks a part calls
@@ -23,17 +24,19 @@ import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync, mkdtempSyn
 import {tmpdir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
 import {alignmentIssues, captionsSrt, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
-import {contactSheet, frameFacts, frameIssues, frameMeasured, renderBuilt, renderSegmented, servePlayer, type FrameInspection, type RenderOptions} from '@visotalk/exporter';
-import {blockFrames, lineWindows, targetFrames, targetIssues} from './targets.ts';
+import {contactSheet, lookImage, frameFacts, frameIssues, frameMeasured, renderBuilt, renderSegmented, servePlayer, type FrameInspection, type RenderOptions} from '@visotalk/exporter';
+import {blockFrames, emptyAppearIssues, lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
 import {skeleton, type Script} from './init.ts';
 import {BundleError, openBundle} from '@visotalk/ir/bundle';
 import {exportBundle, importBundle} from './bundle.ts';
 import {SCHEMA} from './schema.ts';
+import {assetCmd} from './asset.ts';
+import {Looks} from './looks.ts';
 import {narrationHint, narrationSource, anchoredWords, buildPlayer, check, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, speaks, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
-const COMMANDS = ['doctor', 'init', 'schema', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
+const COMMANDS = ['doctor', 'init', 'schema', 'asset', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
 const opt = (n: string, d?: string) => (rest.includes(`--${n}`) ? rest[rest.indexOf(`--${n}`) + 1] : d);
 const flag = (n: string) => rest.includes(`--${n}`);
 
@@ -50,6 +53,28 @@ function report(issues: Array<{code: string; at: string; message: string; fix?: 
     if (i.fix) log(`${' '.repeat(18)} fix: ${i.fix}`);
   }
   if (issues.length > shown.length) log(`… ${issues.length - shown.length} more not shown (--limit N)`);
+}
+
+/**
+ * `qa` for a person, by default: the same problem on the same objects is one group, with how many sampled frames show it and where it is first
+ * seen, so a fix is chosen once instead of read once per frame. At most --limit groups (12). Every issue stays in qa.json; --full prints them all.
+ */
+function summarize(issues: Array<{code: string; at: string; message: string; fix?: string; objects?: string[]; frame?: number}>, log: (s: string) => void, file: string) {
+  const groups = new Map<string, {code: string; objects: string; first: string; message: string; fix?: string; n: number}>();
+  for (const i of issues) {
+    const objects = (i.objects ?? []).join(' + ');
+    const key = `${i.code}|${objects}|${i.frame === -1 || !objects ? i.message : ''}`;
+    const g = groups.get(key);
+    if (g) g.n++;
+    else groups.set(key, {code: i.code, objects, first: i.at, message: i.message, fix: i.fix, n: 1});
+  }
+  const all = [...groups.values()].sort((a, b) => b.n - a.n);
+  const shown = all.slice(0, Number(opt('limit', '12')));
+  for (const g of shown) {
+    log(`${g.code.padEnd(18)} ${g.objects ? `"${g.objects}" ` : ''}${g.n > 1 ? `on ${g.n} frames, first ${g.first}` : g.first}  ${g.message}`);
+    if (g.fix) log(`${' '.repeat(18)} fix: ${g.fix}`);
+  }
+  if (all.length > shown.length) log(`… ${all.length - shown.length} more group(s); every issue is in ${file} (--full prints them)`);
 }
 
 /** `visotalk schema`: what a document is made of and the hooks a part calls */
@@ -134,6 +159,7 @@ async function main() {
   applyDefaults();
   if (cmd === 'doctor') return doctor(process.argv.slice(3));
   if (cmd === 'schema') return schema(file);
+  if (cmd === 'asset') return assetCmd(file, rest);
   if (cmd === 'init') return init();
   if (cmd === 'import') return importCmd();
   if (cmd === 'play' && file?.endsWith('.visotalk')) return playBundle();
@@ -172,8 +198,8 @@ async function main() {
     const v = prepareMarked(p, opt('tts-models'));
     return void console.log(`narration: ${Object.keys(v).length} line(s), ${Object.values(v).reduce((s, x) => s + x.duration, 0).toFixed(1)} s`);
   }
-  if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && opt('out') && !opt('out')!.endsWith('.png')) {
-    console.error(`--out for ${cmd} is the image file and must end in .png (got ${opt('out')})`);
+  if ((cmd === 'qa' || cmd === 'sheet' || cmd === 'still') && opt('out') && !/\.(png|jpg)$/.test(opt('out')!)) {
+    console.error(`--out for ${cmd} is the image file and must end in .jpg or .png (got ${opt('out')})`);
     process.exit(1);
   }
   // A look never waits for narration: until it exists the lengths are estimated from the words, and it is started in the background if nobody has.
@@ -250,41 +276,89 @@ async function main() {
     const fps = Number(opt('fps', '30'));
     const c = solve(p.doc, voice, fps);
     const windows = lineWindows(c);
-    let frame: number;
-    if (opt('time') !== undefined) frame = Math.round(Number(opt('time')) * fps);
-    else {
-      const at = Number(opt('at', '0.85'));
-      if (!(at >= 0 && at <= 1)) throw new Error(`--at is how far through the line, 0 to 1 (got ${opt('at')}); a moment after the words (the pause or hold) is --time SECONDS`);
-      const w = windows.find((x) => x.at === opt('line') || x.at.endsWith(`/${opt('line')}`));
-      if (!w) throw new Error(`still needs --line SCENE/LINE or --time SECONDS; the lines are: ${windows.map((x) => x.at).join(', ')}`);
-      frame = Math.min(Math.floor((w.from + at * (w.end - w.from)) * fps), Math.ceil(w.end * fps) - 1);
-    }
-    if (!Number.isFinite(frame) || frame < 0) throw new Error(`--time is seconds from the start (got ${opt('time')})`);
     // the last frame is the final state of the last scene, held after its narration: a time at or just past the end asks for it
     const lastFrame = Math.round(c.duration * fps) - 1;
-    if (frame > lastFrame + fps) throw new Error(`--time is seconds from the start, and the video ends at ${c.duration.toFixed(2)} s (got ${opt('time')})`);
-    if (frame > lastFrame) {
-      console.error(`the video ends at ${c.duration.toFixed(2)} s: taking its last frame (${(lastFrame / fps).toFixed(2)} s)`);
-      frame = lastFrame;
+    // several moments in one call (`--time 5,20,40` or `--line a/l1,b/l2`): one Chrome run renders all of them
+    const frames: number[] = [];
+    if (opt('time') !== undefined) {
+      for (const v of opt('time')!.split(',')) {
+        let frame = Math.round(Number(v) * fps);
+        if (!Number.isFinite(frame) || frame < 0) throw new Error(`--time is seconds from the start, or several separated by commas (got ${opt('time')})`);
+        if (frame > lastFrame + fps) throw new Error(`--time is seconds from the start, and the video ends at ${c.duration.toFixed(2)} s (got ${v})`);
+        if (frame > lastFrame) {
+          console.error(`the video ends at ${c.duration.toFixed(2)} s: taking its last frame (${(lastFrame / fps).toFixed(2)} s)`);
+          frame = lastFrame;
+        }
+        frames.push(frame);
+      }
+    } else {
+      const at = Number(opt('at', '0.85'));
+      if (!(at >= 0 && at <= 1)) throw new Error(`--at is how far through the line, 0 to 1 (got ${opt('at')}); a moment after the words (the pause or hold) is --time SECONDS`);
+      for (const name of (opt('line') ?? '').split(',').filter(Boolean)) {
+        const w = windows.find((x) => x.at === name || x.at.endsWith(`/${name}`));
+        if (!w) throw new Error(`still needs --line SCENE/LINE[,SCENE/LINE…] or --time SECONDS[,SECONDS…]; "${name}" is not a line; the lines are: ${windows.map((x) => x.at).join(', ')}`);
+        frames.push(Math.min(Math.floor((w.from + at * (w.end - w.from)) * fps), Math.ceil(w.end * fps) - 1));
+      }
+      if (!frames.length) throw new Error(`still needs --line SCENE/LINE or --time SECONDS; the lines are: ${windows.map((x) => x.at).join(', ')}`);
     }
+    const unique = [...new Set(frames)];
     const img = new Map<number, Buffer>();
-    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: [frame], encode: false, inspect: true, theme: opt('theme'), chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
-    const png = resolve(p.work, opt('out', join(p.work, 'still', 'still.png'))!);
-    mkdirSync(dirname(png), {recursive: true});
-    writeFileSync(png, img.get(frame)!);
-    const t = frame / fps;
-    const sceneOf = c.scenes.find((sc) => t >= sc.from && t < sc.end) ?? c.scenes[c.scenes.length - 1];
-    const active = sceneOf.lines.find((l) => t >= l.from && t < l.from + l.duration);
-    const names = active ? anchoredWords(p.doc.scenes.find((sc) => sc.id === sceneOf.id)!, active.id) : [];
-    const inspection = taken.inspections![frame] as FrameInspection;
-    const measured = frameMeasured(inspection);
-    const facts = frameFacts(inspection);
-    console.log(`still: ${png}  (${t.toFixed(2)} s, scene ${sceneOf.id})`);
-    console.log([
-      ...(active?.say ? [`Spoken now: "${active.say}"${names.length ? `  (anchored on: ${names.map((n) => `"${n}"`).join(', ')})` : ''}`] : [`No sentence is spoken at this moment.`]),
-      ...(facts ? [`Measured on this frame: ${facts}.`] : []),
-      ...Object.entries(measured).flatMap(([k, found]) => (found as string[]).map((m) => `Measured (${k}): ${m}`)),
-    ].join('\n'));
+    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: unique, encode: false, inspect: true, theme: opt('theme'), chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
+    // What a model looks at. Every picture stays in its conversation, so: a frame unchanged since it was shown is answered in words; the new
+    // ones go into one picture (1280 wide, two per row, up to six), not one file each; past the document's look budget no picture is made
+    // unless --image asks. `--png` writes each frame full size, lossless, for the smallest print.
+    // `--out FILE` is a caller asking for that file (a cover, a script): it is always written, and a .png name gets the full-size frame
+    const big = flag('png') || /\.png$/.test(opt('out') ?? '');
+    const force = flag('image') || opt('out') !== undefined;
+    const L = new Looks(p.work);
+    const hashOf = new Map(unique.map((f) => [f, Looks.hash(img.get(f)!)]));
+    const fresh = unique.filter((f) => force || !L.was(hashOf.get(f)!));
+    const over = !force && L.left() <= 0;
+    const where = new Map<number, string>();
+    let made = 0;
+    if (fresh.length && !over) {
+      const dir = join(p.work, 'still');
+      mkdirSync(dir, {recursive: true});
+      const named = (ext: string) => resolve(p.work, opt('out') && made === 0 ? opt('out')!.replace(/\.(png|jpg)$/, `.${ext}`) : join(dir, `look-${L.images + 1}.${ext}`));
+      if (big) {
+        for (const f of fresh) {
+          const file = named('png');
+          writeFileSync(file, img.get(f)!);
+          L.spend(file, [{h: hashOf.get(f)!, t: f / fps}]);
+          where.set(f, file);
+          made++;
+        }
+      } else {
+        for (let i = 0; i < fresh.length; i += 6) {
+          const group = fresh.slice(i, i + 6);
+          const file = named('jpg');
+          if (group.length === 1) lookImage(img.get(group[0])!, file);
+          else contactSheet(group.map((f) => img.get(f)!), file, {cols: 2, cellW: 640});
+          L.spend(file, group.map((f) => ({h: hashOf.get(f)!, t: f / fps})));
+          group.forEach((f, k) => where.set(f, group.length === 1 ? file : `${file}, picture ${k + 1} (row ${Math.floor(k / 2) + 1}, ${k % 2 ? 'right' : 'left'})`));
+          made++;
+        }
+      }
+    }
+    for (const frame of unique) {
+      const t = frame / fps;
+      const sceneOf = c.scenes.find((sc) => t >= sc.from && t < sc.end) ?? c.scenes[c.scenes.length - 1];
+      const active = sceneOf.lines.find((l) => t >= l.from && t < l.from + l.duration);
+      const names = active ? anchoredWords(p.doc.scenes.find((sc) => sc.id === sceneOf.id)!, active.id) : [];
+      const inspection = taken.inspections![frame] as FrameInspection;
+      const measured = frameMeasured(inspection);
+      const facts = frameFacts(inspection);
+      const before = L.was(hashOf.get(frame)!);
+      const shown = where.get(frame)
+        ?? (before && !fresh.includes(frame) ? `unchanged since you looked at it ${Looks.ago(before)}${before.t !== undefined && Math.abs(before.t - t) > 0.05 ? ` (as ${before.t.toFixed(1)} s)` : ''} in ${before.file}: no new picture` : 'no picture (look budget used)');
+      console.log(`still ${t.toFixed(2)} s, scene ${sceneOf.id}: ${shown}`);
+      console.log([
+        ...(active?.say ? [`Spoken now: "${active.say}"${names.length ? `  (anchored on: ${names.map((n) => `"${n}"`).join(', ')})` : ''}`] : [`No sentence is spoken at this moment.`]),
+        ...(facts ? [`Measured on this frame: ${facts}.`] : []),
+        ...Object.entries(measured).flatMap(([k, found]) => (found as string[]).map((m) => `Measured (${k}): ${m}`)),
+      ].join('\n'));
+    }
+    console.log(L.tally(made));
     return;
   }
 
@@ -305,12 +379,27 @@ async function main() {
     const nameOf = (v: {preset?: string; theme?: string}) => [v.preset, v.theme?.replace(/^visotalk\//, '')].filter(Boolean).join(' ') || 'default';
     const frames = [...samples, ...extra].map((x) => x.frame);
     const looks = [];
+    const ledger = new Looks(p.work);
+    let made = 0;
     for (const v of variants) {
       const images = new Map<number, Buffer>();
       const r = await renderBuilt({dist, out, fps, frames, inspect: cmd === 'qa', concurrency: Number(opt('concurrency', '2')), saveFrames: flag('frames'),
         encode: false, preset: v.preset, theme: v.theme, chrome: opt('chrome'), onFrame: (i, img) => void images.set(i, img)});
-      const sheet = resolve(p.work, opt('out', join(out, looks.length ? `sheet-${nameOf(v).replace(/\W+/g, '-')}.png` : 'sheet.png'))!);
-      contactSheet(samples.map((x) => images.get(x.frame)!), sheet, {cols: cmd === 'qa' ? 4 : 3, cellW: cmd === 'qa' ? 480 : 640});
+      // about 1280 wide in all, as JPEG: an overview to find the frames worth a closer look, not to read small print on. The same sheet as one
+      // already shown is not made again, and past the look budget none is made unless --image asks
+      const cells = samples.map((x) => images.get(x.frame)!);
+      const h = Looks.hash(cells.map((b) => Looks.hash(b)).join(cmd));
+      const force = flag('image') || opt('out') !== undefined;
+      const before = force ? undefined : ledger.was(h);
+      let sheet: string;
+      if (before) sheet = `unchanged since you looked at it ${Looks.ago(before)} (${before.file}): no new picture`;
+      else if (!force && ledger.left() <= 0) sheet = 'no picture (look budget used)';
+      else {
+        sheet = resolve(p.work, opt('out', join(out, `${cmd}-${ledger.images + 1}${looks.length ? `-${nameOf(v).replace(/\W+/g, '-')}` : ''}.jpg`))!);
+        contactSheet(cells, sheet, {cols: cmd === 'qa' ? 4 : 3, cellW: cmd === 'qa' ? 320 : 424});
+        ledger.spend(sheet, [{h}]);
+        made++;
+      }
       looks.push({name: nameOf(v), r, sheet});
     }
     const {r, sheet} = looks[0];
@@ -319,14 +408,16 @@ async function main() {
         const t = x.frame / fps, w = wordAt(c, t);
         console.log(`${String(k + 1).padStart(3)}  ${x.at.padEnd(24)} ${t.toFixed(2).padStart(7)} s${w ? `  ${w.line}: "${w.word}"` : ''}`);
       });
-      return void console.log(`sheet: ${sheet}`);
+      console.log(`sheet: ${sheet}`);
+      return void console.log(ledger.tally(made));
     }
     const issues = [
-      ...[...staticQa(doc, c), ...alignmentIssues(doc, c), ...targetIssues(p, c, fps, r.inspections!)].map((i) => ({...i, frame: -1})),
+      ...[...staticQa(doc, c), ...alignmentIssues(doc, c), ...targetIssues(p, c, fps, r.inspections!), ...emptyAppearIssues(p, c, fps, r.inspections!)].map((i) => ({...i, frame: -1})),
       ...looks.flatMap((l) => [...samples, ...extra].flatMap((x) => frameIssues(l.r.inspections![x.frame] as FrameInspection, x.frame, looks.length > 1 ? `${l.name} ${x.at}` : x.at))),
     ];
     writeFileSync(join(out, 'qa.json'), JSON.stringify({samples: samples.length, variants: looks.map((l) => l.name), issues}, null, 1));
-    report(issues, console.log);
+    if (flag('json') || flag('full')) report(issues, console.log);
+    else summarize(issues, console.log, join(out, 'qa.json'));
     if (!flag('json')) console.log(`${issues.length} issue(s) in ${(samples.length + extra.length) * looks.length} sampled frames${looks.length > 1 ? ` (${looks.map((l) => l.name).join(', ')})` : ''} · sheet: ${looks.map((l) => l.sheet).join(', ')}`);
     if (issues.length) process.exit(1);
     return;

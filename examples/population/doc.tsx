@@ -292,7 +292,8 @@ export default <Doc id="population" poster={34} title="The eight billion" lang="
     <Part id="gauge" x={100} y={150} w={720} h={720}><Gauge/></Part>
     <Part id="amount" x={900} y={290} w={940} h={400}><Amount/></Part>
     <Animation>
-      <Appear target={["gauge", "amount"]} at="start"/>
+      <Appear target="gauge" at="start"/>
+      <Appear target="amount" line="p1" word="billions" dur={0}/>
       <Appear target="t0" line="p1" word="population"/>
       <Tween target="ring" to={{draw: 1}} line="p1" word="Count" dur={1.2}/>
       <Appear target={["bead1", "bead2", "bead3", "bead4", "bead5", "bead6", "bead7", "bead8"]} line="p1" word="Count" stagger={0.15}/>

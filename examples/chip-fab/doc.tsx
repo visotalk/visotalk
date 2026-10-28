@@ -728,7 +728,7 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Animation>
       <Appear target="rail" at="start" dur={0} />
       <Appear target="poster" at="start" dur={0} />
-      <Appear target="sandart" at="start" dur={0} />
+      <Appear target="sandart" line="s1" word="sand" dur={0} />
       <Disappear target="poster" line="s1" word="worthless" />
       <Appear target="pile" line="s1" word="sand" dur={0.8} />
       <Tween target="sandart" to={{quartz: 1}} line="s1b" word="very pure quartz" dur={1.4} />
@@ -830,7 +830,7 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="l7">Machines repeat this across the whole wafer, stepping it under the lens one small field after another.</Line>
     <Part id="lithoart">{() => <LithoArt />}</Part>
     <Animation>
-      <Appear target="lithoart" at="start" dur={0} />
+      <Appear target="lithoart" line="l1" word="photolithography" dur={0} />
       <Appear target="ltitle" line="l1" word="photolithography" />
       <Disappear target="ltitle" line="l1b" word="think" />
       <Appear target="base" line="l1b" word="layer" />
@@ -946,7 +946,7 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="r5">It is a city of roads, stacked many floors high.</Line>
     <Part id="wireart">{() => <WireArt />}</Part>
     <Animation>
-      <Appear target="wireart" at="start" dur={0} />
+      <Appear target="wireart" line="r1" word="billions" dur={0} />
       <Appear target="ly-0" line="r1" word="billions" dur={1.2} />
       <Appear target="vias-0" line="r2" word="wired" />
       <Appear target="ly-1" line="r2" word="wired" offset={0.3} />
@@ -972,7 +972,7 @@ export default <Doc id="chip-fab" poster={150} title="How a Chip Is Made" lang="
     <Line id="t4">A saw then cuts the wafer apart, and only the good dies move on.</Line>
     <Part id="testart">{() => <TestArt />}</Part>
     <Animation>
-      <Appear target="testart" at="start" dur={0} />
+      <Appear target="testart" line="t1" word="wafer" dur={0} />
       <Appear target="tw" line="t1" word="wafer" />
       <Appear target="dies" line="t1" word="grid of identical chips" dur={0.8} />
       <Appear target="t-tag" line="t1" word="dies" />

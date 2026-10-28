@@ -346,7 +346,7 @@ export default <Doc id="http-request" poster={33} title={"From URL to Page"} lan
     <Part id="pagewire" x={1300} y={160} w={560} h={364}>{() => <PageWire />}</Part>
     <Part id="pagelabel" x={1300} y={540} w={560} h={60}>{() => <Label size={34}>layout, then paint</Label>}</Part>
     <Animation>
-      <Appear target="files" at="start" dur={0} />
+      <Appear target="files" line="l10" word="styles" dur={0} />
       <Appear target="code" line="l10" word="reads" />
       <Appear target="scan" line="l10" word="top to bottom" />
       <Tween target="scan" line="l10" word="top to bottom" to={{y: 378}} dur={2.4} easing="linear" />

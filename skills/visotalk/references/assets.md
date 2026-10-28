@@ -2,6 +2,8 @@
 
 When a real picture, logo, clip or sound would explain better than a drawing, fetch it. Decide it when you plan a scene (the thing itself) and fetch before you draw it.
 
+A film about a real place, event or person is shown with real pictures of it: plan at least the opening and the place itself as photographs, and draw what has no photograph (a route, a profile, a count). `visotalk asset search "<words>"` lists candidates you may keep, with what each shows, its size, licence and author; `visotalk asset get N --id NAME` saves one to `media/` and prints its `<Asset>`. Use them rather than fetching pages by hand.
+
 ## What you may keep
 
 Only what you may use:
@@ -9,6 +11,7 @@ Only what you may use:
 - public domain, such as a government agency's own work;
 - CC0;
 - CC BY, with the attribution it asks for;
+- CC BY-SA, with its attribution and `share-alike` in its obligations (most photographs of places and events on Wikimedia Commons are under it);
 - a project's published brand kit whose terms allow this use.
 
 Never "free to look at", never a file of unknown origin, never a hotlink (the file must be local).

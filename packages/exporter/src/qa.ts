@@ -4,10 +4,8 @@
  *   clipped    text or content cut off inside an object (overflow hidden)
  *   offscreen  drawn outside the canvas
  *   caption    drawn under the visible caption
- *   text-overlap  two pieces of text draw over each other, wherever they are
- *   text-crossed  a shape cuts through text: the edge of the card it rests on, a shape drawn over it, a line across it
- * Shapes layering over shapes is not checked: a grid under a curve, a ring round a planet and a glow behind a card are the picture, and a clash between
- * them shows on the still. Text is what has to stay legible.
+ * Overlap is not checked: text over text, a shape across text, shapes over shapes. Layering and crossing are normal ways to move and show things,
+ * so whether an overlap reads well is a design call made on the still, not a defect qa reports.
  */
 interface Rect {
   x: number;
@@ -41,7 +39,7 @@ export interface FrameInspection {
   partErrors?: Array<{part: string; scene?: string; message: string}>;
 }
 export interface FrameIssue {
-  code: 'overflow' | 'clipped' | 'offscreen' | 'caption' | 'caption-safe' | 'text-overlap' | 'text-crossed';
+  code: 'overflow' | 'clipped' | 'offscreen' | 'caption' | 'caption-safe';
   at: string;
   frame: number;
   objects: string[];
@@ -55,8 +53,6 @@ const FIX: Record<FrameIssue['code'], string> = {
   offscreen: 'move it into the canvas, or shorten the content',
   caption: 'keep it above the two-line caption band (y 900 and below is the caption)',
   'caption-safe': 'shorten the line (about twelve words, or about twenty characters of Chinese, Japanese or Korean, at most) so the block stays within about six lines',
-  'text-overlap': 'move one of the two texts apart, make them smaller, or show them one after the other',
-  'text-crossed': 'move the text clear of the shape, or put it fully on the shape (a label on a card sits inside the card), or draw the line behind a gap in the text',
 };
 
 const TOL = 6;
@@ -86,21 +82,6 @@ export function frameIssues(f: FrameInspection, frame: number, at: string): Fram
       const hit = intersect(ink, f.caption);
       if (hit && hit.h > 2) add('caption', [o.id], `"${o.id}" is under the caption (${Math.round(hit.h)}px)`);
     }
-  }
-  const texts = (f.texts ?? []).filter((t) => t.rect.w > 1 && t.rect.h > 1);
-  for (let i = 0; i < texts.length; i++) {
-    for (let j = i + 1; j < texts.length; j++) {
-      const a = texts[i], b = texts[j];
-      const hit = intersect(a.rect, b.rect);
-      if (hit && area(hit) > 60 && area(hit) > 0.1 * Math.min(area(a.rect), area(b.rect))) {
-        add('text-overlap', [...new Set([a.of, b.of].filter((x): x is string => !!x))], `"${a.text.slice(0, 30)}" and "${b.text.slice(0, 30)}" draw over each other (${Math.round(hit.w)}×${Math.round(hit.h)}px)`);
-      }
-    }
-  }
-  for (const c of f.crossings ?? []) {
-    const of = `${c.by}${c.byOf ? ` ("${c.byOf}")` : ''}`;
-    const what = c.kind === 'edge' ? `the edge of a ${of} cuts through it (${Math.round(c.covered * 100)}% of the text is on it)` : c.kind === 'covered' ? `a ${of} is drawn over ${Math.round(c.covered * 100)}% of it` : `a ${of} is drawn across it`;
-    add('text-crossed', [...new Set([c.of, c.byOf].filter((x): x is string => !!x))], `"${c.text.slice(0, 30)}": ${what}`);
   }
   return out;
 }
@@ -143,18 +124,17 @@ export function frameFacts(f: FrameInspection): string | null {
 /** What the engine itself finds wrong on a frame, under the names of the audit's questions: the author cannot answer `ok` to these */
 export interface FrameMeasured {
   empty: string[];
-  crossing: string[];
   edges: string[];
 }
 
 /**
  * `empty`: more than a third of the width or height is bare on one side while the opposite side has less than a sixth (content pushed to one
- * edge; a centred title is bare on both and passes). `crossing`: text drawn over text, or cut by a shape. `edges`: past the canvas, under the captions,
+ * edge; a centred title is bare on both and passes). `edges`: past the canvas, under the captions,
  * past their own box or cut off.
  */
 export function frameMeasured(f: FrameInspection): FrameMeasured {
   const issues = frameIssues(f, 0, '');
-  const out: FrameMeasured = {empty: [], crossing: issues.filter((i) => i.code === 'text-overlap' || i.code === 'text-crossed').map((i) => i.message), edges: issues.filter((i) => i.code !== 'text-overlap' && i.code !== 'text-crossed').map((i) => i.message)};
+  const out: FrameMeasured = {empty: [], edges: issues.map((i) => i.message)};
   const e = inkExtent(f);
   if (e) {
     const sides = [{w: 'left', a: e.x0, b: f.width - e.x1, of: f.width}, {w: 'top', a: e.y0, b: e.top - e.y1, of: e.top}];

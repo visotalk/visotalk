@@ -200,7 +200,8 @@ export class MediaScheduler {
         el.preload = 'auto';
         el.muted = this.muted;
         // a phone fetches nothing for an element before it is played: the file is asked for now, and the element then finds it in the cache (it is named by its content)
-        void this.env.fetch(this.base + draw.mix, {priority: 'high'} as RequestInit).then((res) => res.arrayBuffer()).catch(() => undefined);
+        // (not from a page opened as a file: fetch() refuses file://, and the element reads the file itself)
+        if (typeof location === 'undefined' || location.protocol !== 'file:') void this.env.fetch(this.base + draw.mix, {priority: 'high'} as RequestInit).then((res) => res.arrayBuffer()).catch(() => undefined);
         this.mix = {el, held: false, starting: false, unlocking: false, unlocked: false};
       }
     } else {

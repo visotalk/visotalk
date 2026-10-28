@@ -30,7 +30,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="phases"><PhaseDiscs /></Part>
     <Part id="n-same" x={360} y={140} w={1200} h={72}><Note color="data">Same Moon, different light</Note></Part>
     <Animation>
-      <Appear target={["t-change", "phases"]} at="start" />
+      <Appear target="t-change" at="start" />
+      <Appear target="phases" line="m1" word="sliver" dur={0} />
       <Appear target="sliver" line="m1" word="sliver" />
       <Appear target="half" line="m1" word="half" />
       <Appear target="full-disc" line="m1" word="full disc" />
@@ -79,7 +80,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
     <Part id="view"><View /></Part>
     <Part id="phase-name"><PhaseName /></Part>
     <Animation>
-      <Appear target={["t-orbit", "sun", "moon", "ghosts"]} at="start" />
+      <Appear target={["t-orbit", "sun", "moon"]} at="start" />
+      <Appear target="ghosts" line="m9" word="every phase" dur={0} />
       <Set target="orbit" to={{draw: 0}} at="start" />
       <Appear target="orbit" line="m5" word="circles" dur={0.3} />
       <Tween target="orbit" to={{draw: 1}} line="m5" word="circles" dur={1.2} />
@@ -107,7 +109,8 @@ export default <Doc id="moon-phases" poster={36} title="Why the Moon has phases"
       <Appear target={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m9" word="every phase" stagger={0.12} dur={0.5} />
       <Tween target="sightline" to={{emphasis: 1}} line="m9" word="viewpoint" dur={0.8} />
 
-      <Disappear target={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m10" word="Then" dur={0.6} />
+      <Disappear id="ghosts-out" target={["ghost0", "ghost1", "ghost2", "ghost3", "ghost4", "ghost5", "ghost6", "ghost7"]} line="m10" word="Then" dur={0.6} />
+      <Disappear target="ghosts" after="ghosts-out" dur={0} />
       <Tween target="moon" to={{angle: 270}} line="m10" word="light shrinks" dur={1.8} />
       <Set target="phase-name" to={{text: "Last quarter"}} line="m10" word="last quarter" />
       <Tween target="moon" to={{angle: 360}} line="m10" word="back to" dur={1.2} />

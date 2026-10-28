@@ -489,7 +489,9 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   // the document is also a module: its parts' React runs in the player
   writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './voice.json';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any${mix ? `, mix: '${mix}'` : ''}});\n`);
   const shims = await runtimeShims(p.work);
-  const common = {bundle: true, outdir: dist, format: 'esm', target: 'es2022', minify: opts.minify ?? true, jsx: 'automatic', loader: {'.woff2': 'file', '.woff': 'file', '.ttf': 'file'}, assetNames: 'fonts/[name]-[hash]', define: {'process.env.NODE_ENV': '"production"'}, logLevel: 'warning'} as const;
+  // classic scripts, not modules: a module script is refused from file://, so the page would not play when opened from a folder. The runtime file sets
+  // `globalThis.__visotalkRuntime` and the document's file reads it, so they run in that order as two plain scripts.
+  const common = {bundle: true, outdir: dist, format: 'iife', target: 'es2022', minify: opts.minify ?? true, jsx: 'automatic', loader: {'.woff2': 'file', '.woff': 'file', '.ttf': 'file'}, assetNames: 'fonts/[name]-[hash]', define: {'process.env.NODE_ENV': '"production"'}, logLevel: 'warning'} as const;
   // the runtime with React and the IR is a file of its own that does not depend on the document, so it is the same bytes in every build of one engine; it puts what the document imports in `globalThis.__visotalkRuntime`
   await esbuild({...common, entryPoints: {runtime: shims.entry}, alias: shims.alias});
   // the document's bundle takes those imports from there (a shim per package, listing the names it exports) and holds only the document
@@ -525,11 +527,11 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
       faceFiles.push(face);
     }
     for (const sheet of [runtimeCss, appCss]) if (sheet) rmSync(join(dist, sheet));
-    writeFileSync(join(dist, 'player.html'), `<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script type="module" src="${runtimeJs}"></script>\n<script type="module" src="${appJs}"></script>\n`);
+    writeFileSync(join(dist, 'player.html'), `<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script src="${runtimeJs}"></script>\n<script src="${appJs}"></script>\n`);
     const files = [appJs, runtimeJs, ...faceFiles, ...(mix ? [mix] : []), ...(existsSync(join(dist, 'assets')) ? readdirSync(join(dist, 'assets')).map((f) => `assets/${f}`) : [])];
     writeFileSync(join(dist, 'artifact.json'), JSON.stringify({page: 'player.html', title: p.doc.meta.title, files}, null, 1));
     return dist;
   }
-  writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="${runtimeCss}" />\n${appCss ? `<link rel="stylesheet" href="${appCss}" />\n` : ''}<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div><script type="module" src="${runtimeJs}"></script><script type="module" src="${appJs}"></script></body>\n</html>\n`);
+  writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="${runtimeCss}" />\n${appCss ? `<link rel="stylesheet" href="${appCss}" />\n` : ''}<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div><script src="${runtimeJs}"></script><script src="${appJs}"></script></body>\n</html>\n`);
   return dist;
 }

@@ -96,6 +96,41 @@ export default <Doc id="d" title="t" lang="en"><Scene id="s"><Line id="l">One tw
   assert.deepEqual(targetIssues(p, c, 30, part).map((i) => i.code), ['target.unregistered'], 'the same frames, judged as the whole film, still miss it');
 });
 
+test('targets: a part that appears with nothing drawn, while what it holds waits for its own appears, is reported with where its content first shows', async () => {
+  const {emptyAppearIssues, targetFrames} = await import('../../packages/cli/src/targets.ts');
+  const {solve} = await import('../../packages/ir/src/index.ts');
+  const src = `import {Doc, Scene, Line, Part, Animation, Appear} from '@visotalk/jsx';
+export default <Doc id="d" title="t" lang="en"><Scene id="s"><Line id="l">One two three four.</Line><Part id="p">{() => null}</Part>
+  <Animation><Appear target="p" at="start"/><Appear target={["a", "b"]} line="l" word="three" stagger={0.1}/></Animation></Scene></Doc>;`;
+  const p = project(mkdtempSync('/tmp/vt-empty-'), src);
+  const c = solve(p.doc, {l: {duration: 3, audio: 'l.wav'}}, 30);
+  const shows = c.actions.find((a) => a.target === 'a')!.start;
+  const rect = {x: 10, y: 10, w: 50, h: 50};
+  const obj = (id: string, parent: string | null, ink: typeof rect | null) => ({id, parent, box: rect, ink, opacity: 1, clipped: []});
+  // before "three" the part is on the page with nothing drawn and its elements hidden (so not measured); after it, they are drawn inside it
+  const pages = (partInk: typeof rect | null, parent: string | null) => Object.fromEntries(targetFrames(c, 30).map((f) => [f, {width: 1920, height: 1080, texts: [], caption: null, registered: ['p', 'a', 'b'],
+    objects: f / 30 < shows ? [obj('p', null, partInk)] : [obj('p', null, rect), obj('a', parent, rect), obj('b', parent, rect)]}]));
+  const found = emptyAppearIssues(p, c, 30, pages(null, 'p'));
+  assert.deepEqual(found.map((i) => [i.code, i.at]), [['part.appears-empty', '/scenes/s/animations/0']]);
+  assert.match(found[0].message, /part "p" appears at 0\.00 s with nothing drawn: what it holds \("a", "b"\) first shows/);
+  assert.match(found[0].fix, /line="l" word="three"/);
+  // a part that draws something of its own when it appears (an axis, a frame) is fine, whatever it holds
+  assert.deepEqual(emptyAppearIssues(p, c, 30, pages(rect, 'p')), []);
+  // an element that is not inside the part says nothing about it
+  assert.deepEqual(emptyAppearIssues(p, c, 30, pages(null, null)), []);
+  // what the part draws with no appear of its own (a word typed by a tween) shows in the wait: it is not empty, and a later appear would hide that
+  const typed = Object.fromEntries(Object.entries(pages(null, 'p')).map(([f, page]) => [f, Number(f) / 30 >= 1 && Number(f) / 30 < shows ? {...page, objects: [obj('p', null, rect)]} : page]));
+  assert.deepEqual(emptyAppearIssues(p, c, 30, typed), []);
+  // a wait of under a second does not show, on screen or on a timeline
+  const soon = project(mkdtempSync('/tmp/vt-empty-'), src.replace('word="three"', 'word="One"'));
+  const cs = solve(soon.doc, {l: {duration: 3, audio: 'l.wav'}}, 30);
+  assert.ok(cs.actions.find((a) => a.target === 'a')!.start < 1);
+  const at = cs.actions.find((a) => a.target === 'a')!.start;
+  const early = Object.fromEntries(targetFrames(cs, 30).map((f) => [f, {width: 1920, height: 1080, texts: [], caption: null, registered: ['p', 'a', 'b'],
+    objects: f / 30 < at ? [obj('p', null, null)] : [obj('p', null, rect), obj('a', 'p', rect), obj('b', 'p', rect)]}]));
+  assert.deepEqual(emptyAppearIssues(soon, cs, 30, early), []);
+});
+
 test('check: the engine\'s clock is the only one a part may draw by, in the document and in the files it imports', async () => {
   const {codeIssues} = await import('../../packages/cli/src/project.ts');
   const dir = mkdtempSync('/tmp/vt-code-');

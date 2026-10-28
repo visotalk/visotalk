@@ -320,7 +320,7 @@ export default <Doc id="sky-blue" poster={4} title="天空为什么是蓝色的"
       <Tween target="wave-r" to={{draw: 1}} line="l4" word="红光的波长长" dur={1.6} easing="linear" />
       <Tween target="wave-b" to={{draw: 1}} line="l4" word="蓝光的波长短" dur={1.6} easing="linear" />
       <Disappear id="waves-off" target="waves" line="l5" word="波长越短" dur={0.4} />
-      <Appear target="bars" after="waves-off" />
+      <Appear target="bars" line="l5" word="空气分子散射" dur={0} />
       <Appear target="bars-title" line="l5" word="空气分子散射" />
       <Appear target="bar-r" line="l5" word="红光" />
       <Tween target="bar-r" to={{w: 200}} line="l5" word="红光" dur={0.7} />
