@@ -6,6 +6,9 @@
  * `{vt: 'sound', on}` is the sound button of a player that is bare (`?bare`): the parent has the controls and tells the player whether the narration is heard.
  * `{vt: 'textAt', req, fx, fy}` asks which words are drawn at a point (fractions of the page); the answer is `{vt: 'text', req, hit}`, `hit` being the words and
  * what they draw, or null where there are none. `{vt: 'textFit', req, words}` asks whether those words, as drawn now, fit; the answer is `{vt: 'fit', req, problem}`.
+ * `{vt: 'fill', on}` both ways, for a player whose browser has no full screen for an element (iPhone Safari): the player announces itself with
+ * `on: false`, a page that can fill the screen with the frame answers (which gives the player its button), the button asks with `on`, and the
+ * page says `on: false` when it leaves on its own. Handled in `player.tsx`, not here.
  * `{vt: 'solo', part}` hides all other parts without changing animations (null: restore all); playback clears it. It is answered with the picture, not a message.
  * Out, to the parent: `{vt: 'state', t, playing, duration}`, on every change but at most every 50 ms while playing.
  *

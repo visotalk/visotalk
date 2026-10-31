@@ -49,13 +49,41 @@ const ID = ID_PATTERN;
 /** Seconds, 0 or more; a numeric string passes `>= 0` and then concatenates in the solver, so the type is checked too */
 const seconds = (v: unknown) => typeof v === 'number' && v >= 0;
 
+/** What is wrong with a caption skin, one sentence each: unknown fields, and values of the wrong kind */
+export function captionSkinProblems(skin: unknown): string[] {
+  if (skin === undefined) return [];
+  if (!skin || typeof skin !== 'object' || Array.isArray(skin)) return ['caption is an object of caption fields'];
+  const positive = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+  const text = (v: unknown) => typeof v === 'string' && v.trim().length > 0 && v.length <= 200;
+  const rules: Record<string, [(v: unknown) => boolean, string]> = {
+    font: [(v) => v === 'sans' || v === 'display' || v === 'mono', 'sans, display or mono'],
+    size: [(v) => positive(v) && (v as number) <= 200, 'px, more than 0 and at most 200'],
+    weight: [(v) => typeof v === 'number' && v >= 100 && v <= 900, 'a font weight, 100 to 900'],
+    color: [text, 'a CSS colour'],
+    background: [text, "a CSS colour, or 'none'"],
+    radius: [(v) => typeof v === 'number' && v >= 0, 'px, 0 or more'],
+    padding: [(v) => Array.isArray(v) && v.length === 2 && v.every((x) => typeof x === 'number' && x >= 0), '[vertical, horizontal] px'],
+    bottom: [(v) => typeof v === 'number' && v >= 0, 'px, 0 or more'],
+    maxWidth: [positive, 'px, more than 0'],
+    shadow: [text, 'a CSS text-shadow'],
+    rule: [text, 'a CSS colour'],
+    ruleSide: [(v) => v === 'top' || v === 'left', 'top or left'],
+  };
+  return Object.entries(skin).map(([k, v]) => {
+    const rule = rules[k];
+    if (!rule) return `caption has no field "${k}" (fields: ${Object.keys(rules).join(', ')})`;
+    return rule[0](v) ? '' : `caption.${k} is ${rule[1]}`;
+  }).filter(Boolean);
+}
+
 export function validate(doc: VisoDoc): Issue[] {
   const issues: Issue[] = [];
   const add = (code: string, at: string, message: string, fix: string | undefined = FIXES[code]) => issues.push({code, at, message, ...(fix ? {fix} : {})});
 
   const minor = SPEC_VERSION.split('.').slice(0, 2).join('.');
-  if (!doc.spec.startsWith(`${minor}.`)) add('spec.version', '/spec', `spec ${doc.spec} is not ${minor}.x`);
+  if (!doc.spec.startsWith(`${minor}.`) && !doc.spec.startsWith('0.6.')) add('spec.version', '/spec', `spec ${doc.spec} is not ${minor}.x`);
   if (doc.theme && !Object.hasOwn(THEMES, doc.theme.id)) add('theme.unknown', '/theme/id', `unknown theme "${doc.theme.id}" (built-in: ${Object.keys(THEMES).join(', ')})`);
+  for (const problem of captionSkinProblems(doc.theme?.tokens?.caption)) add('theme.caption', '/theme/tokens/caption', problem);
   if (!doc.canvas.presets.length) add('canvas.presets', '/canvas/presets', 'a canvas needs at least one preset (the first is the default)');
   (doc.exports?.variants ?? []).forEach((v, i) => {
     if (!doc.canvas.presets.some((p) => p.id === v.preset)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the canvas "${v.preset}", which the document does not have (${doc.canvas.presets.map((p) => p.id).join(', ')})`, 'name a canvas of the document, or add it: canvas="16x9,9x16"');
@@ -81,6 +109,36 @@ export function validate(doc: VisoDoc): Issue[] {
     else seen.set(k, at);
   };
 
+  const recorded=doc.voice?.voice.startsWith('recording:');
+  if(recorded){
+    if(doc.spec.startsWith('0.6.'))add('spec.version','/spec','Recorded narration requires spec 0.7 or later.');
+    const id=doc.voice!.voice.slice('recording:'.length),asset=doc.assets?.find((a)=>a.id===id);
+    if(!asset||!['audio','video'].includes(asset.kind)||!Number.isFinite(asset.analysis?.duration)||!(asset.analysis!.duration!>0))add('recording.asset','/voice','Recorded narration needs an audio/video asset with its measured duration.');
+    let end=0;
+    for(const scene of doc.scenes)for(const line of scene.lines){
+      const at=`/scenes/${scene.id}/lines/${line.id}`;
+      if(!line.span||!Number.isFinite(line.span.start)||!Number.isFinite(line.span.end)||line.span.start<end||line.span.end<=line.span.start||line.span.end>(asset?.analysis?.duration??0))add('recording.span',at,'Recording spans must be ordered, non-overlapping and within the original recording.');
+      if(!line.say||!Array.isArray(line.words)||!line.words.length)add('recording.words',at,'Keep the original speech and measured word times; do not estimate recorded narration.');
+      if(line.span&&Array.isArray(line.words))for(const word of line.words)if(!word||!Number.isFinite(word.t0)||!Number.isFinite(word.t1)||word.t0<0||word.t1<word.t0||word.t1>line.span.end-line.span.start+0.001)add('recording.words',at,'A word lies outside its recorded line span.');
+      end=line.span?.end??end;
+    }
+  }
+  // presenter regions: pixel boxes inside every canvas, each on screen from `from` to `to` seconds of the film when it says so (a presenter seen in some shots only)
+  const regionProblem = (r: unknown): string | null => {
+    if (!Array.isArray(r)) return 'keepClear is a list of regions, [{x, y, w, h, from?, to?}] in canvas pixels and film seconds';
+    for (const b of r as Array<Record<string, number>>) {
+      if (!b || !['x', 'y', 'w', 'h'].every((k) => Number.isFinite(b[k])) || b.x < 0 || b.y < 0 || b.w <= 0 || b.h <= 0) return 'a keepClear region needs finite x, y and positive w, h in canvas pixels';
+      if (doc.canvas.presets.some((p) => b.x + b.w > p.width || b.y + b.h > p.height)) return 'a keepClear region must lie inside the canvas';
+      if ((b.from !== undefined && !(b.from >= 0)) || (b.to !== undefined && !(b.to > (b.from ?? 0)))) return 'a keepClear region is on screen from `from` to `to`, seconds of the film, from before to';
+    }
+    return null;
+  };
+  const docRegions = doc.canvas.keepClear === undefined ? null : regionProblem(doc.canvas.keepClear);
+  if (docRegions) add('canvas.keep-clear', '/canvas/keepClear', docRegions);
+  for (const scene of doc.scenes) {
+    const problem = scene.keepClear === undefined ? null : regionProblem(scene.keepClear);
+    if (problem) add('canvas.keep-clear', `/scenes/${scene.id}/keepClear`, `${problem}; [] when the presenter is not on screen as recorded`);
+  }
   const assets = new Set<string>();
   for (const a of doc.assets ?? []) {
     uniq('asset', a.id, `/assets/${a.id}`);
@@ -101,7 +159,8 @@ export function validate(doc: VisoDoc): Issue[] {
   for (const scene of doc.scenes) {
     const sat = `/scenes/${scene.id}`;
     uniq('scene', scene.id, sat);
-    if (!scene.lines.length && scene.duration === undefined) add('scene.duration', sat, 'a scene without lines needs a duration');
+    if (recorded && scene.duration !== undefined) add('recording.duration', `${sat}/duration`, 'with recorded narration a scene lasts from where it starts in the recording to where the next one does: remove duration');
+    else if (!recorded && !scene.lines.length && scene.duration === undefined) add('scene.duration', sat, 'a scene without lines needs a duration');
     if (scene.duration !== undefined && !seconds(scene.duration)) add('motion.time', `${sat}/duration`, 'duration is seconds, 0 or more');
     for (const l of scene.lines) {
       uniq('line', l.id, `${sat}/lines/${l.id}`);

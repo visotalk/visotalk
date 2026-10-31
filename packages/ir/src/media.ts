@@ -98,6 +98,7 @@ export function mediaPlan(doc: VisoDoc, c: Compiled, opts: {mix?: string} = {}):
   const items: MediaItem[] = [];
   if (opts.mix) items.push({src: opts.mix, kind: 'soundtrack', windows: [[0, c.duration]], critical: true});
   else {
+    if(c.recording)items.push({src:c.recording.audio,kind:'narration',windows:[[0,c.duration]],critical:true});
     for (const sc of c.scenes) for (const l of sc.lines) if (l.audio) items.push({src: l.audio, kind: 'narration', windows: [[l.from, l.from + l.duration]], critical: true});
     for (const s of c.sounds) {
       const a = assets.get(s.asset);

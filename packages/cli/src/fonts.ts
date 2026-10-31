@@ -1,6 +1,6 @@
 /**
- * The fonts a document can name, and how a build embeds them: the CJK faces, and Newsreader, a display serif for a Latin-script film that
- * wants the weight a system sans lacks. A document picks a face by naming its family in the theme's font stacks
+ * The fonts a document can name, and how a build embeds them: the CJK faces, Newsreader (a display serif for a Latin-script film that
+ * wants the weight a system sans lacks), and the faces the built-in styles use. A document picks a face by naming its family in the theme's font stacks
  * (`tokens={{fonts: {sans: '"Noto Serif SC", sans-serif', mono: …}}}`); a Chinese, Japanese or Korean document that names none gets the sans
  * face of its language, so the page never depends on which fonts the machine has. `visotalk doctor --fix` downloads the files (pinned by size
  * and SHA-256, all under the SIL Open Font License) into ~/.visotalk/fonts, and `build` cuts each one down to the characters the document
@@ -37,7 +37,35 @@ export const FONTS: Font[] = [
   {family: 'LXGW WenKai', file: 'LXGWWenKai-Regular.ttf', url: 'https://github.com/lxgw/LxgwWenKai/releases/download/v1.530/LXGWWenKai-Regular.ttf', bytes: 25928940, sha256: '2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b', weight: '400'},
   {family: 'Newsreader', file: 'Newsreader-VF.ttf', url: `${GOOGLE_FONTS}/newsreader/Newsreader%5Bopsz,wght%5D.ttf`, bytes: 451664, sha256: '8a08d13f8a6c0d51be379a60af84f945f65369a67e509ee3c3bdcc421254d7c1', weight: '200 800'},
   {family: 'Newsreader', style: 'italic', file: 'Newsreader-Italic-VF.ttf', url: `${GOOGLE_FONTS}/newsreader/Newsreader-Italic%5Bopsz,wght%5D.ttf`, bytes: 495684, sha256: '796668611f80b64d5adf182fde3b6f29ed83b4e7cbec7b96937e84ac01364792', weight: '200 800'},
+  // the built-in styles' faces (skills/visotalk/styles): red-pencil's hand, lab-notebook's hand and text, stage-light's figures and text, on-air's text
+  {family: 'Caveat', file: 'Caveat-VF.ttf', url: `${GOOGLE_FONTS}/caveat/Caveat%5Bwght%5D.ttf`, bytes: 403648, sha256: '0bdb6b660482d31531b3945849fba5916b3ef8695da7024a9e6b9ee3c4157988', weight: '400 700'},
+  {family: 'Shantell Sans', file: 'ShantellSans-VF.ttf', url: `${GOOGLE_FONTS}/shantellsans/ShantellSans%5BBNCE,INFM,SPAC,wght%5D.ttf`, bytes: 1284736, sha256: 'd98a7913853f78d71aa0b86daf66b5eddb5a3266c07bfd51ef70632b88c41084', weight: '300 800'},
+  {family: 'Atkinson Hyperlegible Next', file: 'AtkinsonHyperlegibleNext-VF.ttf', url: `${GOOGLE_FONTS}/atkinsonhyperlegiblenext/AtkinsonHyperlegibleNext%5Bwght%5D.ttf`, bytes: 114552, sha256: '5a455d1cfa099b601ab70751bb9673e8fe1854dc4500c80e1a220d0d75e31745', weight: '200 800'},
+  {family: 'Big Shoulders Display', file: 'BigShouldersDisplay-VF.ttf', url: `${GOOGLE_FONTS}/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf`, bytes: 219532, sha256: '60e208dc276a1c35fc5b62e94f9fb959c40c11783a9eb7548175c14b1fbeb720', weight: '100 900'},
+  {family: 'Hanken Grotesk', file: 'HankenGrotesk-VF.ttf', url: `${GOOGLE_FONTS}/hankengrotesk/HankenGrotesk%5Bwght%5D.ttf`, bytes: 132892, sha256: '813b3f8fa0965405669a89b38e51bbefd95eef6b8e20d1cb2d8c10cce062662f', weight: '100 900'},
 ];
+
+/** Faces every player carries (`@visotalk/runtime` bundles them), so a document may name them without the catalogue */
+const BUNDLED = ['Inter', 'JetBrains Mono'];
+/** Faces that draw Han characters: a Chinese or Japanese document that names none of them gets its language's sans beside the faces it names */
+const HAN = new Set(['Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Serif SC', 'LXGW WenKai']);
+const GENERIC = /^(serif|sans-serif|monospace|cursive|fantasy|system-ui|math|emoji|fangsong|ui-[a-z-]+)$/i;
+
+/** The family names of a font stack, in order: `"Big Shoulders Display", sans-serif` → ['Big Shoulders Display', 'sans-serif'] */
+const families = (stack: string) => stack.split(',').map((f) => f.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+
+/**
+ * The faces a document names that no player can be sure to have: neither in the catalogue nor bundled, nor a generic family. Such a face is drawn with
+ * whatever the viewer's machine has, so the preview, the video and a viewer's screen can differ; the CLI says so instead of letting it pass silently.
+ */
+export function unavailableFonts(doc: Pick<VisoDoc, 'theme'>): string[] {
+  const {sans, mono, display} = themeTokens(doc.theme).fonts;
+  const known = new Set([...BUNDLED, ...FONTS.map((f) => f.family)]);
+  return [...new Set([sans, mono, display ?? ''].flatMap(families).filter((f) => !GENERIC.test(f) && !known.has(f)))];
+}
+export const fontWarning = (names: string[]) => names.length
+  ? `font.unavailable: ${names.map((n) => `"${n}"`).join(', ')} ${names.length > 1 ? 'are' : 'is'} not a face a player carries, so each viewer sees their own machine's stand-in. Faces the engine embeds: ${[...BUNDLED, ...new Set(FONTS.map((f) => f.family))].join(', ')}.`
+  : '';
 
 export const fontFile = (dir: string, f: Font) => join(dir, f.file);
 export const isInstalled = (dir: string, f: Font) => existsSync(fontFile(dir, f)) && statSync(fontFile(dir, f)).size === f.bytes;
@@ -50,14 +78,17 @@ const withFamily = (stack: string, family: string) => stack.replace(/^(.*?)(?:,?
 
 const languageOf = (lang: string): 'zh' | 'ja' | 'ko' | undefined => (/^(zh|zho|chi|cmn)([-_]|$)/i.test(lang) ? 'zh' : /^(ja|jpn)([-_]|$)/i.test(lang) ? 'ja' : /^(ko|kor)([-_]|$)/i.test(lang) ? 'ko' : undefined);
 
-/** The fonts a document uses, and the sans stack to draw with: the families it names, else the default sans of its language, else nothing (the stack is left as it is) */
-export function fontPlan(doc: Pick<VisoDoc, 'theme' | 'meta'>): {fonts: Font[]; sans: string} {
-  const {sans, mono} = themeTokens(doc.theme).fonts;
-  const named = FONTS.filter((f) => mentions(sans, f.family) || mentions(mono, f.family));
-  if (named.length) return {fonts: named, sans};
+/**
+ * The fonts a document uses, and the sans and display stacks to draw with: the families it names in any of its three stacks, and, for a Chinese,
+ * Japanese or Korean document that names no face for its script, its language's sans added to the sans and display stacks
+ */
+export function fontPlan(doc: Pick<VisoDoc, 'theme' | 'meta'>): {fonts: Font[]; sans: string; display?: string} {
+  const {sans, mono, display} = themeTokens(doc.theme).fonts;
+  const named = FONTS.filter((f) => [sans, mono, display ?? ''].some((stack) => mentions(stack, f.family)));
   const language = languageOf(doc.meta.lang);
-  const fallback = language && FONTS.find((f) => f.defaultFor === language);
-  return fallback ? {fonts: [fallback], sans: withFamily(sans, fallback.family)} : {fonts: [], sans};
+  const fallback = language && !named.some((f) => HAN.has(f.family)) ? FONTS.find((f) => f.defaultFor === language) : undefined;
+  if (!fallback) return {fonts: named, sans, ...(display && {display})};
+  return {fonts: [...named, fallback], sans: withFamily(sans, fallback.family), ...(display && {display: withFamily(display, fallback.family)})};
 }
 
 /**

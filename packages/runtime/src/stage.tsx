@@ -8,6 +8,7 @@ import {captionBlocks, presenceAt, propAt, type BlockWord, type Compiled, type T
 import {SceneCtx, useDocTime, useTime} from './react';
 import {clamp01} from './motion';
 import {C, F, alpha} from './theme';
+import {Video} from './video';
 
 /** What a part's children are: React nodes, or a function that returns them (so a hook can be called in it) */
 export type PartBody = React.ReactNode | (() => React.ReactNode);
@@ -182,17 +183,32 @@ const groupUnits = (words: BlockWord[]): BlockWord[][] => {
 };
 
 /** `captions: 'words'`: the block of spoken words that fills the lower half of a tall frame, one word appearing as it is said, the line being said in full ink */
+/** The caption skin's values with the defaults filled in; `tall` scales the sizes for a portrait frame, which is read small */
+function captionLook(theme: ThemeTokens, tall: boolean, words: boolean) {
+  const k = theme.caption ?? {};
+  const scale = tall ? (words ? 88 / 38 : 50 / 34) : 1;
+  const size = (k.size ?? 34) * (words ? 38 / 34 : 1) * scale;
+  return {
+    fontFamily: F[k.font ?? 'sans'], fontSize: Math.round(size), fontWeight: k.weight ?? (words ? 700 : 400), color: k.color ?? C.text,
+    ...(k.shadow && {textShadow: k.shadow}),
+    background: k.background === 'none' ? 'transparent' : (k.background ?? alpha(C.bg, 0.82)),
+    radius: k.radius ?? 10, padding: k.padding ?? [10, 26], bottom: k.bottom ?? 54, maxWidth: k.maxWidth ?? 1500,
+    rule: k.rule, ruleSide: k.ruleSide ?? 'top',
+  };
+}
+
 const WordCaptions: React.FC = () => {
-  const {c, preset} = useStage();
+  const {c, preset, theme} = useStage();
   const t = useDocTime();
   const blocks = React.useMemo(() => captionBlocks(c), [c]);
   const block = blocks.find((b) => t >= b.from && t < b.to);
   if (!block) return null;
   const tall = preset.height > preset.width;
   const now = [...block.words].reverse().find((w) => w.t0 <= t)?.line;
+  const k = captionLook(theme, tall, true);
   return (
-    <div data-caption="words" style={{position: 'absolute', ...(tall ? {left: preset.width * 0.067, right: preset.width * 0.067, top: preset.height * 0.527} : {left: 160, right: 160, bottom: 54, textAlign: 'center'}),
-      fontFamily: F.sans, fontSize: tall ? 88 : 38, fontWeight: 700, lineHeight: tall ? 1.35 : 1.5, color: C.text}}>
+    <div data-caption="words" style={{position: 'absolute', ...(tall ? {left: preset.width * 0.067, right: preset.width * 0.067, top: preset.height * 0.527} : {left: 160, right: 160, bottom: k.bottom, textAlign: 'center'}),
+      fontFamily: k.fontFamily, fontSize: k.fontSize, fontWeight: k.fontWeight, lineHeight: tall ? 1.35 : 1.5, color: k.color, textShadow: k.textShadow}}>
       {groupUnits(block.words).map((group, g) => {
         const spans = group.map((w, i) => {
           const p = clamp01((t - w.t0) / 0.16);
@@ -206,7 +222,7 @@ const WordCaptions: React.FC = () => {
 };
 
 const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
-  const {c, doc, preset} = useStage();
+  const {c, doc, preset, theme} = useStage();
   const tall = preset.height > preset.width;
   const t = useDocTime();
   const mode = doc.exports?.captions ?? 'burned';
@@ -216,11 +232,19 @@ const Captions: React.FC<{sceneId: string}> = ({sceneId}) => {
   const line = sc.lines.find((l) => t >= l.from && t < l.from + l.duration + 0.2);
   if (!line) return null;
   const o = clamp01((t - line.from) / 0.2) * (1 - clamp01((t - line.from - line.duration) / 0.2));
+  const k = captionLook(theme, tall, false);
+  // a phone frame is read small: the caption is larger, and keeps clear of the edges
+  const [py, px] = tall ? (theme.caption?.padding ?? [14, 30]) : k.padding;
+  // the rule: a bar down the caption's left side, inside its padding, or a short one centred above its text
+  const bar = tall ? 6 : 4;
+  const rule = !k.rule ? null : k.ruleSide === 'left'
+    ? <div style={{position: 'absolute', left: 0, top: py * 0.6, bottom: py * 0.6, width: bar, borderRadius: bar / 2, background: k.rule}} />
+    : <div style={{width: tall ? 80 : 56, height: bar - 1, background: k.rule, margin: `0 auto ${tall ? 12 : 8}px`}} />;
   return (
-    <div style={{position: 'absolute', left: 0, right: 0, bottom: tall ? 110 : 54, display: 'flex', justifyContent: 'center', opacity: o}}>
-      {/* a phone frame is read small: the caption is larger, and keeps clear of the edges */}
-      <div data-caption={line.id} style={{maxWidth: tall ? preset.width * 0.88 : 1500, textAlign: 'center', fontFamily: F.sans, fontSize: tall ? 50 : 34, lineHeight: 1.35, color: C.text,
-        background: alpha(C.bg, 0.82), padding: tall ? '14px 30px' : '10px 26px', borderRadius: 10}}>
+    <div style={{position: 'absolute', left: 0, right: 0, bottom: tall ? Math.max(110, k.bottom) : k.bottom, display: 'flex', justifyContent: 'center', opacity: o}}>
+      <div data-caption={line.id} style={{maxWidth: tall ? preset.width * 0.88 : k.maxWidth, textAlign: 'center', fontFamily: k.fontFamily, fontSize: k.fontSize, fontWeight: k.fontWeight, lineHeight: 1.35, color: k.color,
+        background: k.background, padding: `${py}px ${px}px`, borderRadius: k.radius, textShadow: k.textShadow, ...(rule && {position: 'relative' as const})}}>
+        {rule}
         {line.text}
       </div>
     </div>
@@ -248,10 +272,16 @@ export const Stage: React.FC = () => {
     ...(doc.parts ?? []).map((part) => ({part, body: bodies.get(`:${part.id}`), scene: undefined as string | undefined})),
     ...scene.parts.map((part) => ({part, body: bodies.get(`${scene.id}:${part.id}`), scene: scene.id})),
   ].map((e, i) => ({...e, i})).sort((a, b) => (a.part.z ?? 0) - (b.part.z ?? 0) || a.i - b.i);
+  const transparent = typeof location !== 'undefined' && new URLSearchParams(location.search).get('alpha') === '1';
+  // a video recording is the narration and the picture under everything: the film's clock plays it whole; a layer (alpha) leaves it out, for the editor that has it
+  const recording = doc.voice?.voice.startsWith('recording:') ? doc.assets?.find((a) => a.id === doc.voice!.voice.slice('recording:'.length)) : undefined;
   return (
     <SceneCtx.Provider value={{from: sc.from, duration: sc.duration}}>
-      <div className="vt-stage" style={{position: 'absolute', inset: 0, background: C.bg, overflow: 'hidden'}}>
+      <div className="vt-stage" style={{position: 'absolute', inset: 0, background: transparent ? 'transparent' : C.bg, overflow: 'hidden'}}>
         <style>{STAGE_CSS}</style>
+        {recording?.kind === 'video' && !transparent && (
+          <div data-vt-recording="" style={{position: 'absolute', inset: 0}}><Video asset={recording.id} fit="fill" /></div>
+        )}
         {parts.map(({part, body, scene: s}) => <PartHost key={`${s ?? ''}:${part.id}`} part={part} body={body} scene={s} />)}
         <Captions sceneId={sc.id} />
       </div>

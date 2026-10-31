@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {basename, dirname, extname, join, relative, resolve, sep} from 'node:path';
-import {build as esbuild} from 'esbuild';
+import {build as esbuild, type PluginBuild} from 'esbuild';
 import {localImports} from '@visotalk/ir/bundle';
 import {clipKey, kokoroKey} from './clip_key.ts';
 import {fontPlan, writeFontFaces} from './fonts.ts';
@@ -30,6 +30,8 @@ export interface Project {
   locs: Map<string, Loc>;
   /** the module's own code before `export default`: what the parts' React may use */
   prelude: string;
+  /** each tag of the skeleton and where it is first written */
+  tags: Map<string, Loc>;
   /** the language overlay the document was localized with (`--lang`): its file, its text and what is wrong with it */
   overlay?: {lang: string; file: string; text: string; issues: Issue[]};
 }
@@ -55,7 +57,7 @@ export function load(file: string, lang?: string): Project {
   }
   const work = join(dirname(path), '.visotalk', doc.meta.id);
   mkdirSync(work, {recursive: true});
-  return {file: path, dir: dirname(path), work, doc, locs: markup.locs, prelude: markup.prelude, ...(overlay && {overlay})};
+  return {file: path, dir: dirname(path), work, doc, locs: markup.locs, prelude: markup.prelude, tags: markup.tags, ...(overlay && {overlay})};
 }
 
 /** The source files a document's code imports from its own project (relative paths), followed through their own imports */
@@ -107,6 +109,40 @@ export function codeIssues(p: Project): Issue[] {
       for (const f of FORBIDDEN) if (f.re.test(code)) issues.push({code: 'code.nondeterministic', at: `${basename(file)}:${first + i}`, message: `${f.what} in ${code.slice(0, 60)}: a frame must be a function of its time`, fix: f.use});
     });
   }
+  return [...issues, ...unboundTags(p, parts.map(({x, at}) => ({first: p.locs.get(at)?.line ?? 1, text: x.body ?? ''})))];
+}
+
+/** The names the module's own code binds: what it imports, and what it declares at the start of a statement */
+function boundNames(prelude: string): Set<string> {
+  const names = new Set<string>();
+  for (const m of prelude.matchAll(/\bimport\s+([^;'"]*?)\s+from\s+['"]/g))
+    for (const item of m[1].replace(/[{}]/g, ',').split(',')) {
+      const name = /(?:^|\bas\s+)([A-Za-z_$][\w$]*)\s*$/.exec(item.trim())?.[1];
+      if (name) names.add(name);
+    }
+  for (const m of prelude.matchAll(/\b(?:function\*?|class|const|let|var)\s+([A-Za-z_$][\w$]*)/g)) names.add(m[1]);
+  return names;
+}
+
+/**
+ * The engine reads the skeleton without running it, so it knows a `<Asset>` by its name; the player runs the module, where a tag nothing imports or
+ * defines stops the page ("Asset is not defined") before anything is drawn. Every capitalised tag, of the skeleton and of a part's React, must be bound.
+ */
+function unboundTags(p: Project, bodies: Array<{first: number; text: string}>): Issue[] {
+  const bound = boundNames(p.prelude);
+  const issues: Issue[] = [];
+  const seen = new Set<string>();
+  const report = (name: string, line: number, fix: string) => {
+    if (bound.has(name) || seen.has(name)) return;
+    seen.add(name);
+    issues.push({code: 'code.unbound', at: `${basename(p.file)}:${line}`, message: `<${name}> is used, but nothing before \`export default\` imports or defines ${name}: the player stops with "${name} is not defined"`, fix});
+  };
+  for (const [name, loc] of p.tags) if (/^[A-Z]/.test(name)) report(name, loc.line, `add ${name} to the import from '@visotalk/jsx'`);
+  // a tag in a part's React: `<Name` where an expression may start, not a type argument (`useRef<Name>`)
+  for (const {first, text} of bodies)
+    text.split('\n').forEach((line, i) => {
+      for (const m of line.matchAll(/(?<![\w$.)\]])<([A-Z][\w$]*)(?=[\s/>.])/g)) report(m[1], first + i, `import ${m[1]} or define it before \`export default\``);
+    });
   return issues;
 }
 
@@ -168,6 +204,7 @@ const estimatedLines = (p: Project): Set<string> | 'all' | undefined => {
 };
 
 export function estimateVoice(p: Project): VoiceManifest {
+  if(p.doc.voice?.voice?.startsWith('recording:'))return prepare(p);
   const path = join(p.work, 'voice.json');
   const marked = estimatedLines(p);
   const kept = existsSync(path) && marked instanceof Set ? (JSON.parse(readFileSync(path, 'utf8')) as Record<string, {duration: number}>) : {};
@@ -262,7 +299,22 @@ export const speaks = (p: Project) => p.doc.scenes.some((s) => s.lines.length > 
 /** What can speak this document: a Kokoro model directory (English only), or the voice provider the document names; undefined when neither, and `'none'` for a document with no lines */
 export const narrationSource = (p: Project, models?: string) => (!speaks(p) ? 'none' : (isCjk(p.doc.meta.lang) ? undefined : models || process.env.KOKORO_DIR) || voiceProvider(p.doc.voice?.voice)?.provider);
 
+/** Check the spoken words before any cache is reused: a language tag cannot make CJK speech English. */
+export function checkNarrationVoice(p: Project): void {
+  if (voiceProvider(p.doc.voice?.voice)) return;
+  const line = p.doc.scenes.flatMap((s) => s.lines).find((l) => isCjk(p.doc.meta.lang) || /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(sayOf(p.doc, l)));
+  if (line) throw new Error(`line "${line.id}" with voice "${p.doc.voice?.voice ?? KOKORO_VOICE}": Kokoro is English only; CJK narration needs a voice provider that speaks its language. Set the correct lang and a real provider voice ID (voice="minimax:<voice>"), then run prepare again; do not set lang="en" or switch to Kokoro to bypass a provider error. A local provider needs its credentials configured.`);
+}
+
 export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManifest {
+  checkNarrationVoice(p);
+  if(p.doc.voice?.voice?.startsWith('recording:')){
+    const issues=validate(p.doc);if(issues.length)throw new Error(issues.map((i)=>i.message).join('\n'));
+    const asset=p.doc.assets!.find((a)=>a.id===p.doc.voice!.voice.slice(10))!;
+    if(!existsSync(resolve(p.dir,asset.src)))throw new Error('The original recording is missing.');
+    const voice:VoiceManifest=Object.fromEntries(p.doc.scenes.flatMap((s)=>s.lines.map((l)=>[l.id,{duration:l.span!.end-l.span!.start,audio:'',words:l.words,key:createHash('sha256').update(JSON.stringify([asset.src,l.say,l.span,l.words])).digest('hex')}])));
+    writeFileSync(join(p.work,'voice.json'),JSON.stringify(voice));rmSync(estimateMark(p),{force:true});return voice;
+  }
   const lines = p.doc.scenes.flatMap((s) => s.lines.map((l) => ({id: l.id, say: sayOf(p.doc, l)})));
   const voicePath = join(p.work, 'voice.json');
   const audioDir = join(p.work, 'audio');
@@ -283,7 +335,6 @@ export function prepare(p: Project, models = process.env.KOKORO_DIR): VoiceManif
   const todo = lines.filter((l) => !kept(l));
   const voice: VoiceManifest = {};
   if (todo.length) {
-    if (!third && isCjk(p.doc.meta.lang)) throw new Error(narrationHint(p));
     if (!third && !models) throw new Error('narration needs a TTS model: pass --tts-models DIR or set KOKORO_DIR (kokoro-v1.0.onnx + voices-v1.0.bin), or name a voice provider: voice="minimax:<voice>" (also elevenlabs, volcengine, openai)');
     const speak = join(p.work, 'speak.json');
     const wavDir = join(p.dir, '.visotalk', '.tts-cache');
@@ -404,7 +455,7 @@ function ingest(p: Project, dist: string, artifact = false): VisoDoc {
  */
 async function mixSoundtrack(p: Project, doc: VisoDoc, voice: VoiceManifest, dist: string): Promise<string | undefined> {
   const c = solve(doc, voice);
-  const narration = c.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: join(p.work, l.audio!)}));
+  const narration = c.recording?[{at:0,duration:c.duration,src:resolve(p.dir,p.doc.assets!.find((a)=>a.id===p.doc.voice!.voice.slice(10))!.src)}]:c.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: join(p.work, l.audio!)}));
   const files = Object.fromEntries((p.doc.assets ?? []).map((a) => [a.id, resolve(p.dir, a.src)]));
   const sounds = c.sounds.map((s) => ({src: files[s.asset], at: s.start, end: s.end, loop: s.loop}));
   if (!narration.length && !sounds.length) return undefined;
@@ -417,8 +468,30 @@ async function mixSoundtrack(p: Project, doc: VisoDoc, voice: VoiceManifest, dis
   return name;
 }
 
+/** Export the same narration, effects and mixed buses used by the player, without drawing frames. */
+export async function exportAudio(p:Project,doc:VisoDoc,voice:VoiceManifest,out:string,bus:'narration'|'mix'|'effects'){
+ const c=solve(doc,voice),narration=c.recording?[{at:0,duration:c.duration,src:resolve(p.dir,p.doc.assets!.find((a)=>a.id===p.doc.voice!.voice.slice(10))!.src)}]:c.scenes.flatMap((s)=>s.lines).filter((l)=>l.audio).map((l)=>({at:l.from,duration:l.duration,src:join(p.work,l.audio!)}));
+ const sounds=c.sounds.map((s)=>({src:resolve(p.dir,p.doc.assets!.find((a)=>a.id===s.asset)!.src),at:s.start,end:s.end,loop:s.loop}));
+ const envelopes=c.sounds.map((s)=>Array.from({length:Math.ceil(c.duration*ENV_HZ)},(_,k)=>soundGain(c,s,k/ENV_HZ)));
+ await muxAudio(undefined,out,0,c.duration,{narration:bus==='effects'?[]:narration,sounds:bus==='narration'?[]:sounds,envelopes:bus==='narration'?[]:envelopes},'');return c;
+}
+
 /** An artifact page has no query string of its own: the theme it plays in is set before the player reads it */
 const artifactQuery = (o: {theme?: string}) => (o.theme ? `<script>history.replaceState(null, '', '?${new URLSearchParams({theme: o.theme})}')</script>\n` : '');
+
+/**
+ * three.js is the engine's, pinned beside React: a part that imports `three` or `three/addons/…` gets the engine's copy, wherever the
+ * document lives and whatever it has installed, so a style that draws in 3D works in every work, the hosted worker and a bundle. It joins the document's
+ * bundle only when the document imports it, and is not in the runtime file every player loads. Being a package, its code is not a project file, so
+ * the clock check (`codeIssues`) does not read it: a part still draws each frame from the clock, never from three's own loop.
+ */
+const THREE = {
+  name: 'three',
+  setup(build: PluginBuild) {
+    const base = dirname(RUNTIME);
+    build.onResolve({filter: /^three(\/|$)/}, (args) => args.resolveDir === base ? undefined : build.resolve(args.path, {kind: args.kind, resolveDir: base}));
+  },
+};
 
 /** What the runtime entry puts in `globalThis.__visotalkRuntime`, and the packages the document's bundle takes from it: the key, the package, and whether it is a CommonJS package (a `default` that is the whole of it) */
 const SHARED = [
@@ -466,6 +539,7 @@ async function runtimeShims(work: string): Promise<{entry: string; alias: Record
  * so a browser, or a store, that has it needs it no more. The page (`index.html`, or `player.html` for an artifact) is the one fixed name.
  */
 export async function buildPlayer(p: Project, opts: {out?: string; minify?: boolean; artifact?: boolean; theme?: string} = {}): Promise<string> {
+  checkNarrationVoice(p);
   const voicePath = join(p.work, 'voice.json');
   if (!existsSync(voicePath)) prepare(p);
   const dist = resolve(opts.out ?? join(p.work, 'dist'));
@@ -479,7 +553,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   if (faces.fonts.length) {
     if (!process.env.VISOTALK_FONTS) throw new Error(`the font "${faces.fonts[0].family}" is not installed: run visotalk doctor --fix`);
     writeFontFaces(faces.fonts, process.env.VISOTALK_FONTS, PYTHON(), [readFileSync(p.file, 'utf8'), p.overlay?.text ?? '', ...localSources(p).map((x) => x.text)].join('\n'), p.work);
-    doc.theme = {id: doc.theme?.id ?? DEFAULT_THEME, tokens: {...doc.theme?.tokens, fonts: {...themeTokens(doc.theme).fonts, sans: faces.sans}}};
+    doc.theme = {id: doc.theme?.id ?? DEFAULT_THEME, tokens: {...doc.theme?.tokens, fonts: {...themeTokens(doc.theme).fonts, sans: faces.sans, ...(faces.display && {display: faces.display})}}};
   }
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));
   const entry = join(p.work, 'entry.tsx');
@@ -495,7 +569,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   // the runtime with React and the IR is a file of its own that does not depend on the document, so it is the same bytes in every build of one engine; it puts what the document imports in `globalThis.__visotalkRuntime`
   await esbuild({...common, entryPoints: {runtime: shims.entry}, alias: shims.alias});
   // the document's bundle takes those imports from there (a shim per package, listing the names it exports) and holds only the document
-  await esbuild({...common, entryPoints: {app: entry}, alias: {...shims.shimmed, '@visotalk/ir': IR}});
+  await esbuild({...common, entryPoints: {app: entry}, alias: {...shims.shimmed, '@visotalk/ir': IR}, plugins: [THREE]});
   // every file is named by what it holds
   const named = (file: string) => {
     if (!existsSync(join(dist, file))) return undefined;
@@ -527,7 +601,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
       faceFiles.push(face);
     }
     for (const sheet of [runtimeCss, appCss]) if (sheet) rmSync(join(dist, sheet));
-    writeFileSync(join(dist, 'player.html'), `<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script src="${runtimeJs}"></script>\n<script src="${appJs}"></script>\n`);
+    writeFileSync(join(dist, 'player.html'), `<meta charset="utf-8">\n<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script src="${runtimeJs}"></script>\n<script src="${appJs}"></script>\n`);
     const files = [appJs, runtimeJs, ...faceFiles, ...(mix ? [mix] : []), ...(existsSync(join(dist, 'assets')) ? readdirSync(join(dist, 'assets')).map((f) => `assets/${f}`) : [])];
     writeFileSync(join(dist, 'artifact.json'), JSON.stringify({page: 'player.html', title: p.doc.meta.title, files}, null, 1));
     return dist;

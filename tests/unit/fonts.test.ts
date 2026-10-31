@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync, mkdtempSync, readFileSync} from 'node:fs';
 import {join} from 'node:path';
-import {FONTS, fontPlan, isInstalled, writeFontFaces} from '../../packages/cli/src/fonts.ts';
+import {FONTS, fontPlan, fontWarning, isInstalled, unavailableFonts, writeFontFaces} from '../../packages/cli/src/fonts.ts';
 
 const doc = (lang: string, sans?: string) => ({meta: {lang}, theme: sans ? {id: 'visotalk/dark', tokens: {fonts: {sans, mono: '"JetBrains Mono", monospace'}}} : undefined}) as Parameters<typeof fontPlan>[0];
 
@@ -20,6 +20,25 @@ test('fonts: a family named in the stack is the one used, whatever the language'
   assert.equal(serif.sans, '"Noto Serif SC", serif', 'the stack is the author\'s');
   assert.deepEqual(fontPlan(doc('en', "'LXGW WenKai', sans-serif")).fonts.map((f) => f.family), ['LXGW WenKai'], 'single quotes too, in an English document');
   assert.deepEqual(fontPlan(doc('en', '"Newsreader", serif')).fonts.map((f) => f.style ?? 'normal'), ['normal', 'italic'], 'a family with an italic brings both');
+});
+
+test('fonts: the display stack is embedded like the others, and a CJK document keeps its script beside Latin faces', () => {
+  const styled = {meta: {lang: 'zh-CN'}, theme: {id: 'visotalk/dark', tokens: {fonts: {sans: '"Hanken Grotesk", sans-serif', mono: '"JetBrains Mono", monospace', display: '"Big Shoulders Display", sans-serif'}}}} as Parameters<typeof fontPlan>[0];
+  const plan = fontPlan(styled);
+  assert.deepEqual(plan.fonts.map((f) => f.family), ['Big Shoulders Display', 'Hanken Grotesk', 'Noto Sans SC']);
+  assert.equal(plan.sans, '"Hanken Grotesk", "Noto Sans SC", sans-serif');
+  assert.equal(plan.display, '"Big Shoulders Display", "Noto Sans SC", sans-serif');
+  const english = fontPlan({...styled, meta: {...styled.meta, lang: 'en'}});
+  assert.deepEqual(english.fonts.map((f) => f.family), ['Big Shoulders Display', 'Hanken Grotesk']);
+  assert.equal(english.display, '"Big Shoulders Display", sans-serif');
+});
+
+test('fonts: a face no player carries is named, and bundled, catalogued and generic families are not', () => {
+  assert.deepEqual(unavailableFonts(doc('en', 'Georgia, "Liberation Serif", serif')), ['Georgia', 'Liberation Serif']);
+  assert.deepEqual(unavailableFonts(doc('en', '"Inter", "Caveat", system-ui, sans-serif')), []);
+  assert.deepEqual(unavailableFonts(doc('en')), []);
+  assert.equal(fontWarning([]), '');
+  assert.match(fontWarning(['Georgia']), /^font\.unavailable: "Georgia" is not a face.*Shantell Sans/);
 });
 
 test('fonts: an italic is written under its own name, with its own rule', (t) => {

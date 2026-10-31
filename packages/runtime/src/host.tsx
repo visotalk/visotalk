@@ -11,7 +11,7 @@ import '@fontsource/jetbrains-mono/700.css';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {flushSync} from 'react-dom';
-import {DEFAULT_FPS, solve, soundGain, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {DEFAULT_FPS, keepClearAt, solve, soundGain, themeTokens, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {Clock} from './clock';
 import {Readiness} from './readiness';
 import {MediaScheduler} from './media';
@@ -83,11 +83,11 @@ export function mount(opts: MountOptions) {
     const compiled = solve(doc, voice, fps);
     const assets = Object.fromEntries((doc.assets ?? []).map((a) => [a.id, a]));
     const theme = themeTokens(themeId ? {...doc.theme, id: themeId} : doc.theme);
-    const narration = compiled.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
+    const narration = compiled.recording?[{at:0,duration:compiled.duration,src:compiled.recording.audio}]:compiled.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: l.audio!}));
     const sounds = compiled.sounds.map((s) => ({...s, src: assets[s.asset]?.src ?? s.asset}));
     const stage = (
       <StageProvider doc={doc} c={compiled} bodies={bodies} theme={theme} preset={preset} live={mode === 'live'} solo={solo} assetUrl={(id) => assetBase + (assets[id]?.src ?? id)}>
-        <div style={{position: 'relative', width: preset.width, height: preset.height, overflow: 'hidden', background: C.bg}}>
+        <div style={{position: 'relative', width: preset.width, height: preset.height, overflow: 'hidden', background: params.get('alpha')==='1'?'transparent':C.bg}}>
           <Stage />
         </div>
       </StageProvider>
@@ -159,7 +159,8 @@ export function mount(opts: MountOptions) {
 
   // ---------------------------------------------------------------------------------------------- driven
   const {stage, narration, sounds} = shown;
-  document.body.style.background = C.bg;
+  document.body.style.background = params.get('alpha')==='1'?'transparent':C.bg;
+  if(params.get('alpha')==='1')document.documentElement.style.background='transparent';
   runtime.readiness.hold(
     Promise.all(['400 16px Inter', '700 16px Inter', '400 16px "JetBrains Mono"', '700 16px "JetBrains Mono"'].map((f) => document.fonts.load(f, 'A–×≈·'))),
   );
@@ -193,7 +194,12 @@ export function mount(opts: MountOptions) {
       invalidateAll();
       await runtime.readiness.settle();
     },
-    inspect: () => inspectFrame(rootEl, {width: preset.width, height: preset.height}),
+    // the presenter's region on this frame: the scene's own when it says one, else the document's
+    inspect: () => {
+      const t = runtime.clock.getTime(), sc = shown.compiled.scenes.findIndex((s) => t >= s.from && t < s.end);
+      const recording = shown.doc.voice?.voice.startsWith('recording:') && shown.doc.assets?.find((a) => a.id === shown.doc.voice!.voice.slice('recording:'.length));
+      return {...inspectFrame(rootEl, {width: preset.width, height: preset.height}), keepClear: keepClearAt(shown.doc, shown.doc.scenes[sc < 0 ? shown.doc.scenes.length - 1 : sc], t), footage: !!recording && recording.kind === 'video'};
+    },
   };
   return {compiled, runtime};
 }

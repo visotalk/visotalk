@@ -2,21 +2,11 @@
 // product, logo or look is depicted, and no usage figure, rating or user count is stated: every name,
 // time and message on the phone screen is made-up example content.
 import {Doc, Scene, Line, Part, Animation, Appear, Disappear, Tween} from '@visotalk/jsx';
-import {useProp, Obj} from '@visotalk/runtime';
+import {useProp, useText, Obj} from '@visotalk/runtime';
 
 const INK = '#f2f3f5', MUTED = '#9aa0ab', SCREEN = '#14161a', CARD = '#1f2229', LINE = '#2e323b';
 const ACCENT = '#47c9a8', URGENT = '#ff6b5e', GOLD = '#f2c14e';
 
-const NOTES = [
-  {title: 'Groceries', body: 'Oats, lemons, basil', day: 'Mon'},
-  {title: 'Trip ideas', body: 'Night train, coast walk', day: 'Sun'},
-  {title: 'Book club', body: 'Questions for Thursday', day: 'Fri'},
-];
-const SUMMARY = [
-  {id: 'r1', color: ACCENT, text: 'Reminder: call back'},
-  {id: 'r2', color: GOLD, text: 'Trip ideas edited'},
-  {id: 'r3', color: '#7c9cff', text: 'New comment from Sam'},
-];
 
 // Axis of the time track: 6 PM (18) to 10 AM (34).
 const TRACK_L = 28, TRACK_W = 368;
@@ -51,6 +41,17 @@ const Phone = () => {
   const tapA = useProp('tapA', 0), tapB = useProp('tapB', 0), sum = useProp('sum', 0), push = useProp('push', 0);
   const SHH = 520, sheetTop = 804 - SHH, sheetO = Math.max(0, (sheet - 0.4) / 0.6);
   const listTop = 290 + push * 140, hm = Math.max(0, 1 - 8 * Math.max(bn1, bn2, bn3, bn4)) * Math.max(0, 1 - 4 * sum), listO = Math.max(0, 1 - sheet * 3);
+  // the words on the screen, which a language overlay translates (`texts`)
+  const NOTES = [
+    {title: useText('note1-title', 'Groceries'), body: useText('note1-body', 'Oats, lemons, basil'), day: useText('note1-day', 'Mon')},
+    {title: useText('note2-title', 'Trip ideas'), body: useText('note2-body', 'Night train, coast walk'), day: useText('note2-day', 'Sun')},
+    {title: useText('note3-title', 'Book club'), body: useText('note3-body', 'Questions for Thursday'), day: useText('note3-day', 'Fri')},
+  ];
+  const SUMMARY = [
+    {id: 'r1', color: ACCENT, text: useText('summary-1', 'Reminder: call back')},
+    {id: 'r2', color: GOLD, text: useText('summary-2', 'Trip ideas edited')},
+    {id: 'r3', color: '#7c9cff', text: useText('summary-3', 'New comment from Sam')},
+  ];
   const handle = (h: number, glow: number) => ({position: 'absolute' as const, left: trackX(h) - 20, top: 168 - 20 + 7, width: 40, height: 40, borderRadius: 20, background: INK, boxShadow: `0 0 0 ${Math.round(glow * 10)}px rgba(71,201,168,${0.35 * glow})`});
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: 1080, height: 820, fontFamily: 'var(--vt-sans)'}}>
@@ -64,8 +65,8 @@ const Phone = () => {
         <div style={{position: 'absolute', opacity: hm, left: 28, top: 56, width: 38, height: 38, borderRadius: 12, background: ACCENT, color: '#0b2a22', fontSize: 28, fontWeight: 700, textAlign: 'center', lineHeight: '38px'}}>N</div>
         <div style={{position: 'absolute', opacity: hm, left: 78, top: 54, fontSize: 40, fontWeight: 700, color: INK}}>Nook</div>
         <svg style={{position: 'absolute', left: 354, top: 58, opacity: 0.9 * hm}} width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="6" fill="none" stroke={INK} strokeWidth="3.5" /><circle cx="18" cy="18" r="13" fill="none" stroke={INK} strokeWidth="3.5" strokeDasharray="6 6.8" /></svg>
-        <div style={{position: 'absolute', opacity: hm, left: 16, top: 120, width: 392, height: 56, borderRadius: 18, background: CARD, boxSizing: 'border-box', padding: '12px 20px', fontSize: 26, color: MUTED}}>Search notes</div>
-        <div style={{position: 'absolute', opacity: hm * listO, left: 28, top: 236, fontSize: 24, fontWeight: 700, color: MUTED}}>Recent</div>
+        <div style={{position: 'absolute', opacity: hm, left: 16, top: 120, width: 392, height: 56, borderRadius: 18, background: CARD, boxSizing: 'border-box', padding: '12px 20px', fontSize: 26, color: MUTED}}>{useText('search', 'Search notes')}</div>
+        <div style={{position: 'absolute', opacity: hm * listO, left: 28, top: 236, fontSize: 24, fontWeight: 700, color: MUTED}}>{useText('recent', 'Recent')}</div>
         {NOTES.map((n, i) => (
           <div key={n.title} style={{position: 'absolute', left: 16, opacity: listO, top: listTop + i * 116, width: 392, height: 104, borderRadius: 22, background: CARD, boxSizing: 'border-box', padding: '16px 20px'}}>
             <div style={{display: 'flex', justifyContent: 'space-between', fontSize: 30, fontWeight: 700, color: INK}}><span>{n.title}</span><span style={{fontSize: 22, fontWeight: 400, color: MUTED, paddingTop: 6}}>{n.day}</span></div>
@@ -74,7 +75,7 @@ const Phone = () => {
         ))}
         {/* summary card */}
         <Obj id="sumcard" style={{position: 'absolute', left: 16, top: 56 + (1 - sum) * 40, width: 392, height: 270, borderRadius: 26, background: '#1b2b29', border: `2px solid ${ACCENT}`, boxSizing: 'border-box', padding: '18px 20px'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', color: INK}}><span style={{fontSize: 32, fontWeight: 700}}>Your summary</span><span style={{fontSize: 24, color: ACCENT, fontWeight: 700}}>7:00 AM</span></div>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', color: INK}}><span style={{fontSize: 32, fontWeight: 700}}>{useText('summary-title', 'Your summary')}</span><span style={{fontSize: 24, color: ACCENT, fontWeight: 700}}>7:00 AM</span></div>
           {SUMMARY.map((r, i) => (
             <Obj key={r.id} id={r.id} style={{position: 'absolute', left: 20, top: 82 + i * 56, width: 348, height: 46, display: 'flex', alignItems: 'center', gap: 14, fontSize: 26, color: INK}}>
               <div style={{width: 14, height: 14, borderRadius: 7, background: r.color, flex: 'none'}} /><span>{r.text}</span>
@@ -91,7 +92,7 @@ const Phone = () => {
             <path d="M14 30 Q18 34 22 30" fill="none" stroke={tog > 0.5 ? ACCENT : INK} strokeWidth="3" />
             <path d="M5 5 L31 31" stroke={ACCENT} strokeWidth="3.5" strokeLinecap="round" opacity={tog} />
           </svg>
-          <div style={{position: 'absolute', left: 76, top: 34, fontSize: 36, fontWeight: 700, color: INK}}>Quiet Hours</div>
+          <div style={{position: 'absolute', left: 76, top: 34, fontSize: 36, fontWeight: 700, color: INK}}>{useText('feature', 'Quiet Hours')}</div>
           <div style={{position: 'absolute', left: 28, top: 92, fontSize: 46, fontWeight: 700, color: ACCENT}}>{clock12(rA)} – {clock12(rB)}</div>
           <div style={{position: 'absolute', left: TRACK_L, top: 175, width: TRACK_W, height: 14, borderRadius: 7, background: '#3a3f4b'}} />
           <div style={{position: 'absolute', left: trackX(rA), top: 175, width: trackX(rB) - trackX(rA), height: 14, borderRadius: 7, background: ACCENT}} />
@@ -102,32 +103,32 @@ const Phone = () => {
           ))}
           {/* toggle row */}
           <div style={{position: 'absolute', left: 16, top: 272, width: 392, height: 84, borderRadius: 22, background: CARD, boxSizing: 'border-box'}}>
-            <div style={{position: 'absolute', left: 20, top: 24, fontSize: 28, color: INK}}>Hold notifications</div>
+            <div style={{position: 'absolute', left: 20, top: 24, fontSize: 28, color: INK}}>{useText('hold', 'Hold notifications')}</div>
             <div style={{position: 'absolute', left: 292, top: 17, width: 84, height: 50, borderRadius: 25, background: tog > 0.5 ? ACCENT : '#4a4f5b'}}>
               <div style={{position: 'absolute', left: 4 + tog * 34, top: 4, width: 42, height: 42, borderRadius: 21, background: INK}} />
             </div>
           </div>
-          <Obj id="heldchip" style={{position: 'absolute', left: 28, top: 364, fontSize: 24, fontWeight: 700, color: ACCENT}}>Held until {clock12(rB)}</Obj>
+          <Obj id="heldchip" style={{position: 'absolute', left: 28, top: 364, fontSize: 24, fontWeight: 700, color: ACCENT}}>{useText('held-until', 'Held until')} {clock12(rB)}</Obj>
           <Obj id="urgent" style={{position: 'absolute', left: 16, top: 414, width: 392, height: 84, borderRadius: 22, background: CARD, border: `2px solid ${URGENT}`, boxSizing: 'border-box'}}>
             <div style={{position: 'absolute', left: 16, top: 14, width: 48, height: 48, borderRadius: 24, background: URGENT, color: '#2a0d0a', fontSize: 28, fontWeight: 700, textAlign: 'center', lineHeight: '48px'}}>M</div>
             <div style={{position: 'absolute', left: 78, top: 12, fontSize: 28, color: INK, fontWeight: 700}}>Mina R.</div>
-            <div style={{position: 'absolute', left: 78, top: 44, fontSize: 22, color: MUTED}}>Always allowed</div>
-            <div style={{position: 'absolute', left: 276, top: 22, padding: '4px 14px', borderRadius: 16, background: URGENT, color: '#2a0d0a', fontSize: 22, fontWeight: 700}}>Urgent</div>
+            <div style={{position: 'absolute', left: 78, top: 44, fontSize: 22, color: MUTED}}>{useText('always-allowed', 'Always allowed')}</div>
+            <div style={{position: 'absolute', left: 276, top: 22, padding: '4px 14px', borderRadius: 16, background: URGENT, color: '#2a0d0a', fontSize: 22, fontWeight: 700}}>{useText('urgent', 'Urgent')}</div>
           </Obj>
         </div>}
         {/* banners */}
-        <Banner id="b1" top={52} bn={bn1} color={GOLD} title="Reminder" body="Call back at noon" />
-        <Banner id="b2" top={128} bn={bn2} color="#7c9cff" title="Trip ideas edited" body="Sam changed the plan" />
-        <Banner id="b3" top={204} bn={bn3} color={ACCENT} title="New comment" body="On Book club" />
-        <Banner id="b4" top={52} bn={bn4} color={URGENT} title="Mina R. · Urgent" body="Call me when you land" />
+        <Banner id="b1" top={52} bn={bn1} color={GOLD} title={useText('banner1-title', 'Reminder')} body={useText('banner1-body', 'Call back at noon')} />
+        <Banner id="b2" top={128} bn={bn2} color="#7c9cff" title={useText('banner2-title', 'Trip ideas edited')} body={useText('banner2-body', 'Sam changed the plan')} />
+        <Banner id="b3" top={204} bn={bn3} color={ACCENT} title={useText('banner3-title', 'New comment')} body={useText('banner3-body', 'On Book club')} />
+        <Banner id="b4" top={52} bn={bn4} color={URGENT} title={useText('banner4-title', 'Mina R. · Urgent')} body={useText('banner4-body', 'Call me when you land')} />
         {/* taps */}
         <Tap x={372} y={76} p={tapA} />
         <Tap x={350} y={598} p={tapB} />
       </div>
       <Obj id="closing" style={{position: 'absolute', left: 540, top: 250, width: 500, color: INK}}>
-        <div style={{fontSize: 130, fontWeight: 700, lineHeight: 0.98}}>Quiet<br />Hours</div>
+        <div style={{fontSize: 130, fontWeight: 700, lineHeight: 0.98}}>{useText('closing-1', 'Quiet')}<br />{useText('closing-2', 'Hours')}</div>
       </Obj>
-      <Obj id="tagline" style={{position: 'absolute', left: 544, top: 540, width: 480, fontSize: 48, color: ACCENT, fontWeight: 700}}>New in Nook</Obj>
+      <Obj id="tagline" style={{position: 'absolute', left: 544, top: 540, width: 480, fontSize: 48, color: ACCENT, fontWeight: 700}}>{useText('tagline', 'New in Nook')}</Obj>
     </div>
   );
 };

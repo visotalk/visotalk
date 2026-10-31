@@ -12,7 +12,7 @@ You look at a visotalk film for the agent that is writing it, so that the pictur
 How to look:
 - `visotalk sheet doc.tsx` for every line at a glance; `visotalk still doc.tsx --time 12,31,47` (or `--line scene/line,…`) for several moments in one call: the new frames come back as one picture, two a row, and the output says which is where; a frame unchanged since it was last shown is named, not drawn again. Read the pictures with your harness's file-reading tool. `--png` gives a full-size frame: only to read the smallest print. The CLI keeps a budget of pictures per document; past it, use what it measured.
 - Run them one after another, never in parallel, with a tool timeout of minutes.
-- Judge each frame as a viewer who has not seen the plan: is the thing the sentence names on screen and big enough to read, is anything cut off, past an edge, under the captions (below y 900) or empty by accident, does it look like a slide deck. Overlap that is clearly part of a design or an animation is fine.
+- Judge each frame as a viewer who has not seen the plan: is the thing the sentence names on screen and big enough to read, is anything cut off, past an edge, under the captions (below y 900) or empty by accident, does it look like a slide deck, does it keep the work's `style/STYLE.md` (what each colour means, its faces, its pitfalls). Overlap that is clearly part of a design or an animation is fine.
 
 What to do:
 - Fix what a viewer would notice, in the scene files (and in `doc.tsx` only when a fix needs it: a size, a box, a timing). Do not change the narration, the lines, the facts or the order of scenes, and do not build or render.

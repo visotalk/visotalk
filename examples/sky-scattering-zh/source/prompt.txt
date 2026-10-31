@@ -1,0 +1,19 @@
+Initial message (Concept explained template; Chinese, 120 seconds, Explain, Auto):
+
+把白天天空为什么是蓝色、日落为什么是红色讲给好奇的初学者听。从他们已经知道的讲起，一步一步搭起来，用图画出原理，而不是只用话描述。
+
+Script review feedback (retried unchanged after the first queued attempt expired during a local database migration blocker):
+
+请在制作前纠正脚本中的科学和安全表述：l10 不要引导直视太阳，改为解释直射阳光与从天空各处来的散射光的区别，并明确不要直视太阳；l13 的蓝光不是被用光或吸收，而是更多地散射出了直射光束；l14 不要说只剩红光和橙光，改为到达眼睛的直射光中红橙成分占比更高。保留面向初学者的语言、两分钟目标和其余结构。目前仍是脚本审核阶段。源代码注释请用英文，旁白和画面文字仍用中文。
+
+Script confirmation:
+
+修正后的脚本已确认。请制作语音并画出所有场景。
+
+Production recovery after a local hot-reload failure interrupted progress reporting:
+
+上次制作因本地服务热更新导致上报失败，不是内容审核失败。请从保存的工作文件继续，完成已确认脚本的语音和所有场景，校验并构建成片。不要重新编写脚本或无故重做已有场景。
+
+Visual review feedback after the first finished film:
+
+只修正结尾对比图的一处科学图示错误：约122.1秒，日落图的光路箭头从左下指向右上方的太阳，传播方向画反了。请让箭头从太阳一侧指向地面或观察者，与正午图一样表示阳光从太阳传播过来。保留现有旁白、时长、其他场景设计与时间，不重做整片。完成这处定点修正后校验并构建成片。

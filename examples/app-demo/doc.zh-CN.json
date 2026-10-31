@@ -1,0 +1,68 @@
+{
+  "lang": "zh-CN",
+  "meta": {
+    "title": "Nook 的勿扰时段"
+  },
+  "voice": {
+    "voice": "minimax:Chinese (Mandarin)_News_Anchor"
+  },
+  "lines": {
+    "l1": { "text": "来认识一下勿扰时段，Nook 的新功能。" },
+    "l2": { "text": "提醒、共享编辑、评论，一下子全响了起来。" },
+    "l3": { "text": "那就打开设置，一张面板滑了上来。" },
+    "l4": { "text": "拖动两端，设定你的勿扰时段。" },
+    "l5": { "text": "比如，从晚上十点到早上七点。" },
+    "l6": { "text": "拨动开关，Nook 就会暂存每一条通知。" },
+    "l6b": { "text": "什么都不会丢，只是先替你收着。" },
+    "l7": { "text": "紧急联系人呢？他们的消息照样能送达。" },
+    "l8": { "text": "勿扰时段一结束，Nook 会送来一份汇总。" },
+    "l9": { "text": "你错过的一切，都在一个安静的地方等着你。" },
+    "l9b": { "text": "什么时候看，由你决定。" },
+    "l10": { "text": "勿扰时段，Nook 新功能。" }
+  },
+  "anchors": {
+    "l2": { "reminders": "提醒", "shared edits": "共享编辑", "comments": "评论" },
+    "l3": { "settings": "设置", "sheet": "面板" },
+    "l4": { "edges": "两端" },
+    "l5": { "ten at night": "晚上十点", "seven in the morning": "早上七点" },
+    "l6": { "flip": "拨动", "switch": "开关" },
+    "l6b": { "held": "收着" },
+    "l7": { "urgent contact": "紧急联系人", "still gets through": "照样能送达" },
+    "l8": { "hours end": "结束", "delivers": "送来", "summary": "汇总" },
+    "l9": { "you missed": "你错过的" },
+    "l10": { "quiet hours": "勿扰时段", "new in nook": "Nook 新功能" }
+  },
+  "texts": {
+    "note1-title": "购物清单",
+    "note1-body": "燕麦、柠檬、罗勒",
+    "note1-day": "周一",
+    "note2-title": "旅行计划",
+    "note2-body": "夜班火车、海边步道",
+    "note2-day": "周日",
+    "note3-title": "读书会",
+    "note3-body": "周四要讨论的问题",
+    "note3-day": "周五",
+    "summary-1": "提醒：回电话",
+    "summary-2": "旅行计划已修改",
+    "summary-3": "Sam 发来新评论",
+    "search": "搜索笔记",
+    "recent": "最近",
+    "summary-title": "你的汇总",
+    "feature": "勿扰时段",
+    "hold": "暂存通知",
+    "held-until": "暂存至",
+    "always-allowed": "始终允许",
+    "urgent": "紧急",
+    "banner1-title": "提醒",
+    "banner1-body": "中午回个电话",
+    "banner2-title": "旅行计划已修改",
+    "banner2-body": "Sam 改了行程",
+    "banner3-title": "新评论",
+    "banner3-body": "在“读书会”中",
+    "banner4-title": "Mina R. · 紧急",
+    "banner4-body": "落地后给我打电话",
+    "closing-1": "勿扰",
+    "closing-2": "时段",
+    "tagline": "Nook 新功能"
+  }
+}

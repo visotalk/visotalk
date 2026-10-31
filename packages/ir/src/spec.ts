@@ -1,1 +1,1 @@
-export * from '../../../spec/ir/0.6/ir.ts';
+export * from '../../../spec/ir/0.7/ir.ts';

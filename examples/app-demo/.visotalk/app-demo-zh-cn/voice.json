@@ -1,0 +1,166 @@
+{
+ "l1": {
+  "duration": 3.3205,
+  "audio": "audio/49d1c6347319.m4a",
+  "key": "49d1c6347319",
+  "words": [
+   {
+    "w": "nook",
+    "t0": 0.043,
+    "t1": 3.115
+   },
+   {
+    "w": "",
+    "t0": 3.115,
+    "t1": 3.115
+   }
+  ]
+ },
+ "l2": {
+  "duration": 5.12,
+  "audio": "audio/4ea6cf95241c.m4a",
+  "key": "4ea6cf95241c",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l3": {
+  "duration": 3.7036,
+  "audio": "audio/fcf51d9162ba.m4a",
+  "key": "fcf51d9162ba",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l4": {
+  "duration": 3.3205,
+  "audio": "audio/606fbf2a4d7d.m4a",
+  "key": "606fbf2a4d7d",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l5": {
+  "duration": 3.2392,
+  "audio": "audio/5fcc03970002.m4a",
+  "key": "5fcc03970002",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l6": {
+  "duration": 3.75,
+  "audio": "audio/092a4e0fa034.m4a",
+  "key": "092a4e0fa034",
+  "words": [
+   {
+    "w": "nook",
+    "t0": 0.043,
+    "t1": 3.584
+   },
+   {
+    "w": "",
+    "t0": 3.584,
+    "t1": 3.584
+   }
+  ]
+ },
+ "l6b": {
+  "duration": 3.2392,
+  "audio": "audio/03e390f32d03.m4a",
+  "key": "03e390f32d03",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l7": {
+  "duration": 3.8313,
+  "audio": "audio/ae2ae4b4c4e8.m4a",
+  "key": "ae2ae4b4c4e8",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l8": {
+  "duration": 3.6688,
+  "audio": "audio/a6d5961c7a58.m4a",
+  "key": "a6d5961c7a58",
+  "words": [
+   {
+    "w": "nook",
+    "t0": 0.043,
+    "t1": 3.413
+   },
+   {
+    "w": "",
+    "t0": 3.413,
+    "t1": 3.413
+   }
+  ]
+ },
+ "l9": {
+  "duration": 3.8313,
+  "audio": "audio/3c2924a4b4ff.m4a",
+  "key": "3c2924a4b4ff",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l9b": {
+  "duration": 2.2175,
+  "audio": "audio/ed836b64e483.m4a",
+  "key": "ed836b64e483",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l10": {
+  "duration": 2.2175,
+  "audio": "audio/2f97bcf430da.m4a",
+  "key": "2f97bcf430da",
+  "words": [
+   {
+    "w": "nook",
+    "t0": 0.043,
+    "t1": 2.048
+   },
+   {
+    "w": "",
+    "t0": 2.048,
+    "t1": 2.048
+   }
+  ]
+ }
+}

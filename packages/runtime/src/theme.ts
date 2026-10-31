@@ -14,6 +14,7 @@ export const C = Object.fromEntries(COLOR_KEYS.map((k) => [k, `var(--vt-${k})`])
 export const F = {
   sans: 'var(--vt-sans)',
   mono: 'var(--vt-mono)',
+  display: 'var(--vt-display)',
 };
 
 /** `color` at `alpha` (0..1), for token colours */
@@ -26,6 +27,8 @@ export function themeVars(tokens: ThemeTokens): Record<string, string> {
     ...Object.fromEntries(COLOR_KEYS.map((k) => [`--vt-${k}`, colors[k]])),
     '--vt-sans': tokens.fonts.sans,
     '--vt-mono': tokens.fonts.mono,
+    // a theme without a display face titles in its sans
+    '--vt-display': tokens.fonts.display ?? tokens.fonts.sans,
   };
 }
 

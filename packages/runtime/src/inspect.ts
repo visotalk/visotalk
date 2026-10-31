@@ -28,11 +28,16 @@ export interface ObjectInspection {
   opacity: number;
   /** where it draws furthest past its box, and what draws it: the side, how far, and the element or text */
   reach?: {side: 'left' | 'right' | 'top' | 'bottom'; px: number; what: string};
+  /** it draws the narration's own recording (a window or a circle of the presenter): it is the presenter, never drawn over them */
+  footage?: boolean;
   /** descendants whose content is cut off by their own overflow clipping */
   clipped: Array<{what: string; overflowX: number; overflowY: number; box: {w: number; h: number}; content: {w: number; h: number}}>;
 }
 
 export interface FrameInspection {
+  keepClear?:Array<{x:number;y:number;w:number;h:number}>;
+  /** the recording's video is the ground of every frame */
+  footage?: boolean;
   width: number;
   height: number;
   objects: ObjectInspection[];
@@ -63,6 +68,17 @@ const union = (a: Rect | null, b: Rect): Rect => {
 };
 
 const clips = (cs: CSSStyleDeclaration) => cs.overflowX !== 'visible' || cs.overflowY !== 'visible' || cs.clipPath !== 'none';
+
+/**
+ * A camera's frame (`data-vt-camera` on an element that clips its overflow): its content is a larger picture the camera moves over, so what lies
+ * past the frame is the camera's crop. Everything drawn inside it, SVG included, counts only where the frame shows it, and the frame is never
+ * reported as content cut off.
+ */
+const CAMERA = '[data-vt-camera]';
+const inCamera = (r: Rect, el: Element, stop: Element): Rect | null => {
+  const cam = el.parentElement?.closest(CAMERA);
+  return cam && stop.contains(cam) ? intersect(r, toRect(cam.getBoundingClientRect())) : r;
+};
 
 /** Clip a rect by `from` and every clipping ancestor of it up to (and including) `stop` */
 function clipUp(r: Rect, from: Element | null, stop: Element): Rect | null {
@@ -102,8 +118,8 @@ function inkOf(frame: HTMLElement, canvas: {width: number; height: number}): {in
     if (el instanceof SVGSVGElement) {
       for (const leaf of el.querySelectorAll('path,rect,ellipse,circle,line,polyline,polygon,text')) {
         if (!leaf.checkVisibility({opacityProperty: true, visibilityProperty: true}) || parseFloat(getComputedStyle(leaf).opacity) < 0.05) continue;
-        const r = toRect(leaf.getBoundingClientRect());
-        if (r.w > 0 || r.h > 0) add(r, label(leaf));
+        const r = inCamera(toRect(leaf.getBoundingClientRect()), leaf, frame);
+        if (r && (r.w > 0 || r.h > 0)) add(r, label(leaf));
       }
       return;
     }
@@ -111,7 +127,7 @@ function inkOf(frame: HTMLElement, canvas: {width: number; height: number}): {in
       const r = clipUp(toRect(el.getBoundingClientRect()), el.parentElement, frame);
       if (r && r.w * r.h < BACKDROP * canvas.width * canvas.height) add(r, label(el));
     }
-    if (el instanceof HTMLElement && clips(cs) && !el.querySelector('img,video') && el !== frame) {
+    if (el instanceof HTMLElement && clips(cs) && !el.querySelector('img,video') && !el.matches(CAMERA) && el !== frame) {
       const ox = el.scrollWidth - el.clientWidth, oy = el.scrollHeight - el.clientHeight;
       // which element it is: its tag and first class (a model that cannot tell which of its boxes is meant cannot fix it), what it holds, how large it is and how large its content is
       const klass = el.classList[0] ? `.${el.classList[0]}` : '';
@@ -262,7 +278,7 @@ export function inspectFrame(root: HTMLElement, canvas: {width: number; height: 
         if (px > (reach?.px ?? 0)) reach = {side, px: Math.round(px), what};
       }
     }
-    objects.push({id: frame.dataset.vt!, parent: frame.parentElement?.closest<HTMLElement>('[data-vt]')?.dataset.vt ?? null, box, ink: rel(ink), opacity, ...(reach && {reach}), clipped});
+    objects.push({id: frame.dataset.vt!, parent: frame.parentElement?.closest<HTMLElement>('[data-vt]')?.dataset.vt ?? null, box, ink: rel(ink), opacity, ...(reach && {reach}), ...(frame.querySelector('[data-vt-footage]') && {footage: true}), clipped});
   }
   const texts: FrameInspection['texts'] = [];
   const textEls: Element[] = [];

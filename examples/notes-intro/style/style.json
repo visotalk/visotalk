@@ -1,0 +1,59 @@
+{
+  "slug": "data-editorial",
+  "version": "1",
+  "name": {
+    "en": "Data Editorial"
+  },
+  "line": "A calm editorial explainer: evidence, quantities and mechanisms on a warm paper ground.",
+  "uses": [
+    "economic reasoning",
+    "technical mechanisms",
+    "quantitative comparisons"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/light",
+    "tokens": {
+      "colors": {
+        "bg": "#F6F3EA",
+        "text": "#1D2330",
+        "data": "#1F6FD0",
+        "good": "#1E9E55",
+        "bad": "#D13B3B",
+        "warn": "#B7791F"
+      },
+      "fonts": {
+        "sans": "\"Inter\", sans-serif",
+        "mono": "\"JetBrains Mono\", monospace"
+      }
+    }
+  },
+  "voice": {
+    "voice": "minimax:English_Trustworthy_Man",
+    "speed": 1,
+    "lexicon": {
+      "API": "A P I"
+    }
+  },
+  "pacing": {
+    "lead": 0.4,
+    "hold": 0.4,
+    "tail": 0.8
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "locked": [
+    "theme.tokens.fonts"
+  ],
+  "status": "Preview: two-person visual consistency review is deferred."
+}

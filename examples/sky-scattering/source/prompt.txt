@@ -1,0 +1,15 @@
+Initial message (Concept explained template; English, 120 seconds, Explain, Auto):
+
+Explain why the daytime sky is blue and sunsets are red to curious beginners. Start from what they already know, build it up one step at a time, and draw the mechanism instead of describing it.
+
+Script review feedback:
+
+Correct the science before production. In l10, red and blue light travel at the same speed in vacuum; long and short refer to wavelength, and their frequencies differ. Do not call their propagation slow or fast. In l28, blue light is scattered out of the direct beam, not used up or absorbed. Keep the beginner-friendly explanation and the rest of the script. This is still the script review stage.
+
+Script confirmation:
+
+The corrected script is confirmed. Make the voice and draw the scenes.
+
+Visual review feedback after the first finished film:
+
+Fix one scientific visual error in the existing film: around 82.3 seconds, while explaining why the sky is not violet, the whole sky dome turns purple. Keep the observed sky blue; represent violet only as a separate spectral/scattering or eye-sensitivity comparison so viewers cannot infer that the sky should look purple. Keep the narration, duration, all other scene designs and timing unchanged. Make only this targeted visual correction, then validate and build the film.

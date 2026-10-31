@@ -37,6 +37,10 @@ export function checkOverlay(doc: VisoDoc, o: Overlay): Issue[] {
     else if (typeof l.text !== 'string' || !l.text.trim()) add('overlay.line.text', `/lines/${id}/text`, `line "${id}" needs its caption, "text"`);
   }
   for (const id of Object.keys(given)) if (!lines.has(id)) add('overlay.line.unknown', `/lines/${id}`, `the document has no line "${id}"`);
+  if(doc.voice?.voice.startsWith('recording:')){
+    if(o.voice||o.anchors||o.assets||o.texts||o.fonts||Object.values(given).some((l)=>l.say!==undefined||l.hold!==undefined))add('recording.overlay','/','Recorded narration overlays change captions only.');
+    return issues;
+  }
   const used = new Map<string, Set<string>>();
   for (const a of wordAnchors(doc)) {
     if (!used.has(a.line)) used.set(a.line, new Set());
@@ -54,6 +58,13 @@ export function checkOverlay(doc: VisoDoc, o: Overlay): Issue[] {
 /** The document in the overlay's language. Call `checkOverlay` first: an anchor the overlay does not translate is left as the source phrase */
 export function localize(doc: VisoDoc, o: Overlay): VisoDoc {
   const d = structuredClone(doc);
+  if(doc.voice?.voice.startsWith('recording:')){
+    const issues=checkOverlay(doc,o);if(issues.length)throw new Error(issues.map((i)=>i.message).join('\n'));
+    d.meta={...d.meta,...o.meta,lang:o.lang};
+    if(o.captions)d.exports={...d.exports,captions:o.captions};
+    for(const sc of d.scenes)for(const line of sc.lines)line.text=o.lines[line.id].text;
+    return d;
+  }
   d.meta = {...d.meta, ...o.meta, id: localizedId(doc.meta.id, o.lang), lang: o.lang};
   if (o.voice) d.voice = {...(d.voice ?? {voice: ''}), ...o.voice} as VisoDoc['voice'];
   if (o.fonts) d.theme = {id: d.theme?.id ?? 'visotalk/dark', ...d.theme, tokens: {...d.theme?.tokens, fonts: {...d.theme?.tokens?.fonts, ...o.fonts} as never}};

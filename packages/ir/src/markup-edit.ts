@@ -23,6 +23,9 @@ export type Edit =
   | {op: 'duplicateScene'; scene: string}
   | {op: 'removeScene'; scene: string}
   /** `say` replaces the words of the line (a line with a <Mark> in it is edited as a whole by the agent, not here) */
+  | {op:'keepClear';regions:Array<{x:number;y:number;w:number;h:number}>}
+  | {op:'sound';scene:string;sound:string;set:{volume?:number;duck?:number;fadeIn?:number;fadeOut?:number}}
+  | {op:'caption';scene:string;line:string;text:string}
   | {op: 'line'; scene: string; line: string; say?: string; hold?: Num}
   /** `scene: null` is a part declared in <Doc> */
   | {op: 'part'; scene: string | null; part: string; box: {x?: Num; y?: Num; w?: Num; h?: Num}}
@@ -42,7 +45,8 @@ const ANCHOR_ATTRS = ['line', 'word', 'nth', 'edge', 'offset', 'after', 'at', 'm
 /** Timing attributes editable without changing the target, id or anchor */
 const TIMING = ['dur', 'stagger', 'easing', 'repeat', 'yoyo', 'offset', 'edge'];
 
-const attrSource = (name: string, value: number | string | boolean): string => {
+const attrSource = (name: string, value: number | string | boolean | object): string => {
+  if(typeof value==='object')return `${name}={${JSON.stringify(value)}}`;
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) throw new EditError(`${name} is not a finite number`);
     return `${name}={${value}}`;
@@ -51,7 +55,7 @@ const attrSource = (name: string, value: number | string | boolean): string => {
   return /^[A-Za-z0-9_.:-]+$/.test(value) ? `${name}="${value}"` : `${name}={${JSON.stringify(value)}}`;
 };
 
-function setAttr(src: string, node: El, name: string, value: number | string | boolean | null): string {
+function setAttr(src: string, node: El, name: string, value: number | string | boolean | object | null): string {
   const found = node.attrs.find((a) => a.name === name);
   if (value === null) {
     if (!found) return src;
@@ -162,7 +166,19 @@ function applyOne(src: string, edit: Edit): string {
       const [from, to] = chunk(src, find(src, scenePath(edit.scene), `scene "${edit.scene}"`));
       return src.slice(0, from) + src.slice(to);
     }
+    case 'keepClear': return setAttr(src,find(src,'/','document'),'keepClear',edit.regions);
+    case 'sound': {
+      const parsed=parseMarkup(src),scene=parsed.spans.get(`/scenes/${edit.scene}`);
+      const sounds=scene?.kids.filter((k)=>'tag' in k&&k.tag==='Sound')??[];
+      const node=edit.sound.startsWith('#')?sounds[Number(edit.sound.slice(1))]:sounds.find((k)=>'tag' in k&&k.attrs.some((a)=>a.name==='id'&&a.value===edit.sound));
+      if(!node||!('tag' in node))throw new EditError('No such sound');
+      let out=src;
+      for(const [key,value] of Object.entries(edit.set)){const fresh=parseMarkup(out).spans.get(`/scenes/${edit.scene}`)!.kids.filter((k)=>'tag' in k&&k.tag==='Sound')[sounds.indexOf(node)];if(!fresh||!('tag' in fresh))throw new EditError('No such sound');out=setAttr(out,fresh,key,value!);}
+      return out;
+    }
+    case 'caption': {if(!edit.text.trim())throw new EditError('A caption cannot be empty');return setAttr(src,find(src,`/scenes/${edit.scene}/lines/${edit.line}`,'line'),'text',edit.text.trim());}
     case 'line': {
+      if(parseMarkup(src).doc.voice?.voice.startsWith('recording:'))throw new EditError('Recorded speech cannot be rewritten; edit its caption instead');
       const path = `/scenes/${edit.scene}/lines/${edit.line}`;
       let out = src;
       if (edit.say !== undefined) {

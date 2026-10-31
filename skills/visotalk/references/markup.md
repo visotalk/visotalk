@@ -30,7 +30,7 @@ Attributes of the skeleton: `id="text"` is a string read as JSX reads it (no esc
 ## Lines
 
 - The words inside `<Line id>` are what is spoken. Write numbers as words (`three hundred bytes`): the aligner hears words, and a digit token gets no time of its own. When the caption must differ, give `text="… 300 bytes"`. `hold={seconds}` is extra silence after the line (default 0.4).
-- A scene without lines needs `duration={seconds}`.
+- A scene without lines needs `duration={seconds}`, except with recorded narration, where the recording gives every scene its length (`references/recorded.md`).
 - The narration is the clock: lines run in order, each starting 0.4 s after the previous one ends; the scene starts 0.4 s before its first line and keeps 0.8 s after its last.
 
 ## Scenes and parts

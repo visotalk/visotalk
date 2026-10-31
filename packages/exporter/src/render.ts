@@ -7,7 +7,7 @@
  * 3. Finish the video (H.264) and mix narration (−16 LUFS).
  */
 import {createHash} from 'node:crypto';
-import {existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync} from 'node:fs';
+import {closeSync, existsSync, fstatSync, openSync, readSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync} from 'node:fs';
 import {writeFile} from 'node:fs/promises';
 import {availableParallelism, tmpdir, totalmem} from 'node:os';
 import {dirname, join, relative, resolve, sep} from 'node:path';
@@ -20,6 +20,10 @@ export interface RenderOptions {
   dist: string;
   out: string;
   fps?: number;
+  /** Exact input frame rate (for example 30000/1001). */
+  fpsRate?: string;
+  layer?: 'mov'|'webm';
+  over?: string;
   from?: number;
   to?: number;
   /** explicit frame list (overrides from/to; e.g. regression samples) */
@@ -143,7 +147,7 @@ async function openSession(o: RenderOptions): Promise<Session> {
   const mediaCache = resolve(o.dist, '..', '.media-cache');
   await extractMedia(resolve(o.dist), mediaCache);
   const player = await servePlayer(o.dist, 0, mediaCache);
-  const query = new URLSearchParams({mode: 'driven', fps: String(fps), media: '/__media', reset: o.reset ?? 'flow', ...(o.preset ? {preset: o.preset} : {}), ...(o.theme ? {theme: o.theme} : {})});
+  const query = new URLSearchParams({mode: 'driven', fps: String(fps), media: '/__media', reset: o.reset ?? 'flow', ...(o.preset ? {preset: o.preset} : {}), ...(o.theme ? {theme: o.theme} : {}),...((o.layer||o.over)?{alpha:'1'}:{})});
   const url = `${player.url}?${query}`;
   try {
     const probeBrowser = await launch(chrome);
@@ -174,7 +178,7 @@ interface FilmProgress {
 
 async function renderUnlocked(o: RenderOptions, {url, meta, version}: Session, film?: FilmProgress): Promise<RenderReport> {
   const fps = o.fps ?? 30;
-  const format = o.format ?? 'png';
+  const format = o.layer||o.over?'png':o.format ?? 'png';
   const log = o.log ?? (() => {});
   const chrome = findChrome(o.chrome);
   const out = resolve(o.out);
@@ -204,7 +208,7 @@ async function renderUnlocked(o: RenderOptions, {url, meta, version}: Session, f
     // the video is encoded while the frames are drawn: each goes to ffmpeg's stdin in order, and never to disk
     if (o.encode && (o.order === 'random' || o.frames)) throw new Error('an encoded render takes its frames in order, from `from` to `to`');
     if (o.encode && to <= from) throw new Error(`no frames to encode between ${from} and ${to} (the film has ${total})`);
-    const encoder = (running = o.encode ? streamEncoder(ext, to - from, join(out, 'video.mp4'), fps, from) : undefined);
+    const encoder = (running = o.encode ? streamEncoder(ext, to - from, join(out, o.layer?`video.${o.layer}`:o.over?'overlay.mov':'video.mp4'), fps, from, o.layer??(o.over?'mov':undefined),o.fpsRate) : undefined);
     const inspections: Record<number, unknown> = {};
     let seekMs = 0, captureMs = 0, gpu: string | undefined;
     const t0 = performance.now();
@@ -265,9 +269,14 @@ async function renderUnlocked(o: RenderOptions, {url, meta, version}: Session, f
     if (encoder) {
       const e0 = performance.now();
       await encoder.close();
-      if (o.audio !== false && (meta.narration.length || meta.sounds.length)) {
+      if(o.over){
+        await run('ffmpeg',['-y','-v','error','-ss',String(from/fps),'-i',resolve(o.over),'-i',join(out,'overlay.mov'),'-filter_complex','[0:v][1:v]overlay=shortest=1:format=auto[v]','-map','[v]','-an',...X264,'-t',String((to-from)/fps),join(out,'video.mp4')]);
+      }
+      const video=join(out,o.layer?`video.${o.layer}`:'video.mp4');
+      const output=join(out,o.layer?`final.${o.layer}`:'final.mp4');
+      if (o.audio !== false && ((o.layer?0:meta.narration.length) || meta.sounds.length)) {
         log('mixing the soundtrack');
-        await muxAudio(join(out, 'video.mp4'), join(out, 'final.mp4'), from / fps, (to - from) / fps, meta, resolve(o.dist));
+        await muxAudio(video,output,from/fps,(to-from)/fps,{...meta,...(o.layer&&{narration:[]})},resolve(o.dist));
       }
       encodeMs = performance.now() - e0;
     }
@@ -431,11 +440,11 @@ const JPEG_QUALITY = 90;
  * order) and while ffmpeg is behind (the pipe's backpressure), so a browser holds at most the one frame it drew. `fail` wakes every waiter with the
  * error and stops ffmpeg; `close` ends the input and waits for the file. The frames are numbered from `first`.
  */
-export function streamEncoder(ext: 'jpg' | 'png', count: number, out: string, fps: number, first = 0) {
+export function streamEncoder(ext: 'jpg' | 'png', count: number, out: string, fps: number, first = 0, layer?:'mov'|'webm',fpsRate?:string) {
   // written beside `out` and moved over it once whole, so a failed render leaves the last good video where it was
   const part = out.replace(/(\.[^.\/]+)?$/, '.part$1');
-  const p = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', ext === 'jpg' ? 'mjpeg' : 'png', '-i', 'pipe:0',
-    '-frames:v', String(count), ...X264, '-movflags', '+faststart', part], {stdio: ['pipe', 'ignore', 'pipe']});
+  const p = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', fpsRate??String(fps), '-c:v', ext === 'jpg' ? 'mjpeg' : 'png', '-i', 'pipe:0',
+    '-frames:v', String(count), ...(layer==='mov'?['-c:v','prores_ks','-profile:v','4','-pix_fmt','yuva444p10le']:layer==='webm'?['-c:v','libvpx-vp9','-pix_fmt','yuva420p','-auto-alt-ref','0','-b:v','0','-crf','24']:X264),...(layer==='webm'?[]:['-movflags','+faststart']), part], {stdio: ['pipe', 'ignore', 'pipe']});
   let err = '';
   p.stderr!.on('data', (d) => (err = (err + d).slice(-4000)));
   let failed: Error | undefined;
@@ -487,66 +496,78 @@ export function streamEncoder(ext: 'jpg' | 'png', count: number, out: string, fp
 }
 
 const SR = 48000;
-/** What ffmpeg writes to its stdout, whole (a decoded file, a mixed bus) */
-function capture(args: string[]): Promise<Buffer> {
-  return new Promise((ok, fail) => {
-    const p = spawn('ffmpeg', ['-y', '-loglevel', 'error', ...args, '-f', 'f32le', '-ar', String(SR), '-ac', '2', 'pipe:1'], {stdio: ['ignore', 'pipe', 'pipe']});
-    const out: Buffer[] = [];
-    let err = '';
-    p.stdout!.on('data', (d: Buffer) => out.push(d));
-    p.stderr!.on('data', (d) => (err += d));
-    p.on('close', (code) => (code === 0 ? ok(Buffer.concat(out)) : fail(new Error(`ffmpeg exited ${code}: ${err.slice(-2000)}`))));
-  });
-}
-const samples = (b: Buffer) => new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4);
-
 /**
  * The soundtrack of a video that starts `offset` seconds into the film and runs `length` seconds. The narration clips each at their start, mixed and loudness-normalised
  * to −16 LUFS, as they are; then each sound of the document: its file (looped if it loops) set at its start, multiplied by its gain envelope (volume, fades, ducking: the
  * curve the player uses), and added to the narration without changing it. With a `video` it is muxed into a copy of it; without one it is written alone as an MP3 (the
  * one track a built player plays, so the page sounds as the video does).
  *
- * The narration goes through ffmpeg (it needs loudnorm); the sounds are summed here: each file is decoded once, to 48 kHz stereo, and each play of it touches only the
- * samples where it sounds. Doing that in an ffmpeg graph meant padding every sound and its envelope to the whole film, which cost as many film lengths as there were sounds
+ * The narration goes through ffmpeg (it needs loudnorm); sounds are decoded once to disk at 48 kHz stereo, then mixed in bounded blocks over their active spans. Doing that in an ffmpeg graph meant padding every sound and its envelope to the whole film, which cost as many film lengths as there were sounds
  * (a five-minute film with 150 sounds took fifteen minutes to mix).
  */
 export async function muxAudio(video: string | undefined, out: string, offset: number, length: number, meta: Pick<Meta, 'narration' | 'sounds' | 'envelopes'>, root: string) {
-  const lines = meta.narration.map((l) => ({at: l.at - offset, src: join(root, l.src)})).filter((l) => l.at >= 0);
-  const n = Math.round(length * SR), mix = new Float32Array(n * 2);
-  if (lines.length) {
-    const graph = [...lines.map((l, k) => `[${k}:a]adelay=${Math.round(l.at * 1000)}:all=1[a${k}]`),
-      `${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=${SR},apad=whole_dur=${length.toFixed(3)},atrim=0:${length.toFixed(3)}[nar]`]; // loudnorm returns 192 kHz, so it is resampled back; FFmpeg 5 leaves the mix's channel layout unspecified, which pan refuses, so it is named; loudnorm measures the stereo pair, since a mono level copied to two channels reads 3 LU louder; the pad keeps the track as long as the picture, whose last scene holds after the last word
-    const nar = samples(await capture([...lines.flatMap((l) => ['-i', l.src]), '-filter_complex', graph.join(';'), '-map', '[nar]']));
-    for (let i = 0; i < Math.min(nar.length, mix.length); i++) mix[i] += nar[i];
+  const lines = meta.narration.map((l) => ({at: l.at - offset,duration:l.duration, src: join(root, l.src)})).filter((l) => l.at+(l.duration??length)>0&&l.at<length);
+  // A continuous recording (or silence) needs no whole-film PCM buffer when there are no effects.
+  if(!meta.sounds.length&&lines.length<=1){
+    const line=lines[0],input=line?['-i',line.src]:['-f','lavfi','-i',`anullsrc=r=${SR}:cl=stereo`];
+    const filter=line?`atrim=start=${Math.max(0,-line.at)},asetpts=PTS-STARTPTS,adelay=${Math.max(0,Math.round(line.at*1000))}:all=1,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=${SR},apad,atrim=0:${length},alimiter=limit=0.95`:`atrim=0:${length}`;
+    const audio=out.endsWith('.webm')?['-c:a','libopus','-b:a','160k']:out.endsWith('.mov')?['-c:a','pcm_s24le']:video?['-c:a','aac','-b:a','160k']:['-c:a','libmp3lame','-b:a','96k'];
+    await run('ffmpeg',['-y','-v','error',...(video?['-i',video]:[]),...input,'-filter_complex',`[${video?1:0}:a]${filter}[a]`,...(video?['-map','0:v','-c:v','copy']:[]),'-map','[a]',...audio,'-ar',String(SR),'-t',String(length),...(!out.endsWith('.webm')&&video?['-movflags','+faststart']:[]),out]);return;
   }
-  const decoded = new Map<string, Float32Array>();
-  for (const [k, s] of meta.sounds.entries()) {
-    const src = join(root, s.src);
-    if (!decoded.has(src)) decoded.set(src, samples(await capture(['-i', src, '-af', `aresample=${SR},aformat=sample_fmts=flt:sample_rates=${SR}:channel_layouts=stereo`])));
-    const pcm = decoded.get(src)!, frames = pcm.length / 2, env = meta.envelopes[k];
-    if (!frames) continue;
-    // a sound that began before this piece is joined part-way in
-    const i0 = Math.round((s.at - offset) * SR), from = Math.max(0, i0), to = s.loop ? n : Math.min(n, i0 + frames);
-    for (let i = from; i < to; i++) {
-      const pos = (offset + i / SR) * ENV_HZ, e = Math.floor(pos), f = pos - e;
-      const gain = (env[e] ?? 0) * (1 - f) + (env[e + 1] ?? 0) * f; // the 200 Hz envelope, drawn straight between its points
-      if (gain === 0) continue;
-      const j = 2 * (s.loop ? (i - i0) % frames : i - i0);
-      mix[2 * i] += pcm[j] * gain;
-      mix[2 * i + 1] += pcm[j + 1] * gain;
-    }
-  }
-  const tmp = mkdtempSync(join(tmpdir(), 'visotalk-mix-'));
+  const n = Math.round(length * SR), tmp = mkdtempSync(join(tmpdir(), 'visotalk-mix-'));
+  const handles: number[] = [];
   try {
-    const raw = join(tmp, 'mix.f32');
-    writeFileSync(raw, Buffer.from(mix.buffer));
+    // Decode to disk and mix bounded blocks. Even an hour-long source never becomes a whole-film JS buffer.
+    const decoded = new Map<string, {fd: number; frames: number}>();
+    const decode = async (src: string) => {
+      if (!decoded.has(src)) {
+        const file = join(tmp, `source-${decoded.size}.f32`);
+        await run('ffmpeg', ['-y','-v','error','-i',src,'-f','f32le','-ar',String(SR),'-ac','2',file]);
+        const fd = openSync(file,'r'); handles.push(fd);
+        decoded.set(src,{fd,frames:Math.floor(fstatSync(fd).size/8)});
+      }
+      return decoded.get(src)!;
+    };
+    let narration: number | undefined;
+    if (lines.length) {
+      const graph = [...lines.map((l,k)=>`[${k}:a]atrim=start=${Math.max(0,-l.at).toFixed(6)},asetpts=PTS-STARTPTS,adelay=${Math.max(0,Math.round(l.at*1000))}:all=1[a${k}]`),
+        `${lines.map((_,k)=>`[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=${SR},apad,atrim=0:${length.toFixed(6)}[nar]`];
+      const file = join(tmp,'narration.f32');
+      await run('ffmpeg',['-y','-v','error',...lines.flatMap((l)=>['-i',l.src]),'-filter_complex',graph.join(';'),'-map','[nar]','-f','f32le','-ar',String(SR),'-ac','2',file]);
+      narration=openSync(file,'r');handles.push(narration);
+    }
+    for(const sound of meta.sounds)await decode(join(root,sound.src));
+    const sounds=meta.sounds.map((s)=>({...s,...decoded.get(join(root,s.src))!}));
+    const raw=join(tmp,'mix.f32'),outFd=openSync(raw,'w');handles.push(outFd);
+    const blockFrames=30*SR;
+    for(let start=0;start<n;start+=blockFrames){
+      const count=Math.min(blockFrames,n-start),buffer=Buffer.alloc(count*8),mix=new Float32Array(buffer.buffer,buffer.byteOffset,count*2);
+      if(narration!==undefined)readSync(narration,buffer,0,buffer.length,start*8);
+      for(const [k,s] of sounds.entries()){
+        if(!s.frames)continue;
+        const i0=Math.round((s.at-offset)*SR),from=Math.max(start,0,i0),to=s.loop?start+count:Math.min(start+count,i0+s.frames);
+        if(to<=from)continue;
+        const bytes=Buffer.alloc((to-from)*8);
+        for(let at=from;at<to;){
+          const pos=s.loop?(at-i0)%s.frames:at-i0,frames=Math.min(to-at,s.frames-pos);
+          readSync(s.fd,bytes,(at-from)*8,frames*8,pos*8);at+=frames;
+        }
+        const pcm=new Float32Array(bytes.buffer,bytes.byteOffset,bytes.length/4),env=meta.envelopes[k];
+        for(let i=from;i<to;i++){
+          const pos=(offset+i/SR)*ENV_HZ,e=Math.floor(pos),f=pos-e,gain=(env[e]??0)*(1-f)+(env[e+1]??0)*f,j=2*(i-from),dest=2*(i-start);
+          mix[dest]+=pcm[j]*gain;mix[dest+1]+=pcm[j+1]*gain;
+        }
+      }
+      writeFileSync(outFd,buffer);
+    }
     const input = ['-f', 'f32le', '-ar', String(SR), '-ac', '2', '-i', raw];
     const limit = `alimiter=limit=0.95,atrim=0:${length.toFixed(3)}`;
     const encode = video
-      ? ['-i', video, ...input, '-filter_complex', `[1:a]${limit}[aout]`, '-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart']
+      ? ['-i', video, ...input, '-filter_complex', `[1:a]${limit}[aout]`, '-map', '0:v', '-map', '[aout]', '-c:v', 'copy', '-c:a', out.endsWith('.webm')?'libopus':out.endsWith('.mov')?'pcm_s24le':'aac',...(!out.endsWith('.mov')?['-b:a','160k']:[]),...(!out.endsWith('.webm')?['-movflags','+faststart']:[])]
       : [...input, '-af', limit, '-c:a', 'libmp3lame', '-b:a', '96k'];
     await run('ffmpeg', ['-y', '-loglevel', 'error', ...encode, '-ar', String(SR), out]);
   } finally {
+    for(const fd of handles)closeSync(fd);
     rmSync(tmp, {recursive: true, force: true});
   }
 }

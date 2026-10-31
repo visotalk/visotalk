@@ -11,3 +11,5 @@ export * from './captions.ts';
 export * from './caption-blocks.ts';
 export * from './media.ts';
 export * from './overlay.ts';
+
+export * from './recording.ts';

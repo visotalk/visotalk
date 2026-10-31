@@ -66,6 +66,8 @@ export interface TSound {
 }
 
 export interface Compiled {
+  /** One continuous recording, never a clip per line. */
+  recording?: {audio:string;duration:number};
   /** frames per second the events are snapped to (see `snap`) */
   fps: number;
   duration: number;
@@ -87,20 +89,28 @@ export function solve(doc: VisoDoc, voice: VoiceManifest, fps: number = doc.expo
   const sn = (t: number) => snap(fps, t);
   const scenes: TScene[] = [];
   const pace = {...DEFAULT_PACING, ...(doc.pacing ?? {})};
+  const asset=doc.voice?.voice.startsWith('recording:')?doc.assets?.find((a)=>a.id===doc.voice!.voice.slice(10)):undefined;
+  const recorded=!!asset;
+  // A recorded scene starts where its first line was said, a scene with no speech where the speech before it ended (the film's start for the first);
+  // each one ends where the next starts, the last at the end of the recording, so music before, between and after the words belongs to a scene.
+  const recordedStarts = recorded
+    ? doc.scenes.map((scene, i) => (i === 0 ? 0 : scene.lines[0]?.span?.start ?? doc.scenes.slice(0, i).flatMap((s) => s.lines).at(-1)?.span?.end ?? 0))
+    : [];
   let cursor = 0;
   for (const scene of doc.scenes) {
-    const from = cursor;
+    const from = recorded ? recordedStarts[scenes.length] : cursor;
     let t = from + pace.lead;
     const lines: TLine[] = [];
     for (const l of scene.lines) {
       const v = voice[l.id];
       if (!v) throw new Error(`no voice entry for line "${l.id}"`);
-      lines.push({id: l.id, text: l.text, say: sayOf(doc, l), words: l.words ?? v.words, from: sn(t), duration: v.duration, audio: v.audio});
+      lines.push({id: l.id, text: l.text, say: sayOf(doc, l), words: l.words ?? v.words, from: recorded?l.span!.start:sn(t), duration: recorded?l.span!.end-l.span!.start:v.duration, ...(!recorded&&{audio:v.audio})});
       t += v.duration + (l.hold ?? pace.hold);
     }
     let end = lines.length ? t + pace.tail : from + (scene.duration ?? 0);
     // a scene scored to a beat ends on a grid line: its last hold is longer by what it takes (a hair under a whole cell is not one more)
-    if (lines.length && pace.grid) end = from + Math.ceil((end - from) / pace.grid - 1e-6) * pace.grid;
+    if (!recorded && lines.length && pace.grid) end = from + Math.ceil((end - from) / pace.grid - 1e-6) * pace.grid;
+    if (recorded) end = recordedStarts[scenes.length + 1] ?? asset!.analysis!.duration!;
     scenes.push({id: scene.id, from: sn(from), end: sn(end), duration: sn(end) - sn(from), lines});
     cursor = end;
   }
@@ -108,9 +118,9 @@ export function solve(doc: VisoDoc, voice: VoiceManifest, fps: number = doc.expo
   const actions: TAction[] = [];
   doc.scenes.forEach((scene, i) => compileScene(scene, scenes[i], fps, starts, actions));
   actions.sort((a, b) => a.start - b.start);
-  const duration = sn(cursor);
+  const duration = recorded?asset!.analysis!.duration!:sn(cursor);
   const sounds = doc.scenes.flatMap((scene, i) => (scene.sounds ?? []).map((s) => compileSound(s, scenes[i], fps, duration, doc.assets?.find((a) => a.id === s.asset)?.analysis?.duration))).sort((a, b) => a.start - b.start);
-  return {fps, duration, scenes, actions, sounds};
+  return {fps, duration, scenes, actions, sounds,...(recorded&&{recording:{audio:asset!.src,duration}})};
 }
 
 /** Letters and digits of any script, lower-cased, nothing else: how an aligned word and a phrase are compared */

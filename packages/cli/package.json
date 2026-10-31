@@ -1,6 +1,6 @@
 {
   "name": "visotalk",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "VisoTalk: explainer videos whose timeline is the narration. Write one, then validate, play and render it to video",
   "license": "MIT",
   "repository": {"type": "git", "url": "git+https://github.com/visotalk/visotalk.git", "directory": "packages/cli"},
@@ -17,6 +17,7 @@
     "puppeteer-core": "25.16.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "three": "0.187.0",
     "@fontsource/inter": "5.1.0",
     "@fontsource/jetbrains-mono": "5.1.1"
   },

@@ -18,6 +18,16 @@ The commands are listed in the header of the executable and in the agent skill t
 (`skills/visotalk/SKILL.md`): `validate`, `prepare`, `sheet`, `still`, `design`, `review`, `qa`, `render`,
 `play`, `schema`.
 
+## Recorded narration and sound
+
+`visotalk recording take.mp4 --out doc.tsx` transcribes an original audio/video file through MiniMax `asr-1.0`. Set `MINIMAX_API_KEY` (and optionally `MINIMAX_BASE_URL`); supported recognition languages are English and Chinese, and the document takes the language that was spoken (`--lang` only hints the recognizer). Files must have an audio stream and be at most one hour. Video must have a constant frame rate. The generated document keeps the original media, measured word times, pauses, dimensions and exact frame-rate ratio. `prepare` uses that recording rather than synthesizing speech. Edit captions with `text=`, keeping speech, line order and measured timings unchanged. Only when the person asks, `--trim fillers` cuts hesitations and `--trim fillers,pauses[=0.8]` also shortens silences between words to that many seconds: picture and sound are cut together at frame edges into a `-trimmed` file beside the original, before anything is drawn (the transcript is cached under `.visotalk/recordings/`, so deciding later costs no second recognition).
+
+Declare uploaded music/effects as audio assets and place them with `Sound`. Volume and ducking are dB; fades are seconds. `render doc.tsx --audio narration|mix|effects` exports an MP3 bus. `render doc.tsx --layer mov|webm` exports a transparent ProRes 4444 or VP9 layer, including effects but excluding narration. `render doc.tsx --over` composites graphics over the original video as MP4. These recording outputs retain the source dimensions, frame count and rational frame rate. Music generation is deferred; provide your own licensed audio.
+
+## Styles
+
+`visotalk style list` lists the built-in styles, one line each with the kinds of video it is made for, its look and what it fits; `style show stage-light` (or a pack directory) prints its configuration and its components. `style use stage-light doc.tsx` copies the complete pack into the work's `style/` and applies its tokens, caption skin included, as document literals. An existing copy is never overwritten. `style check doc.tsx` checks the local copy and document, reports locked-field disagreements and missing `STYLE.md` sections, and regenerates section 8 of `STYLE.md` from the components' literal `meta` exports. Checks never execute a component module. Adapting a work's copy does not change its source style.
+
 ## Requirements
 
 - Node.js 22.12 or later and `ffmpeg` on the `PATH`.

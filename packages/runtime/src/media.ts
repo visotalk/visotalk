@@ -207,6 +207,7 @@ export class MediaScheduler {
     } else {
       this.mix?.el.pause();
       this.mix = undefined;
+      if(c.recording)this.uses.push({kind:'narration',url:this.base+c.recording.audio,from:0,to:c.duration,loop:false,...(c.duration>LONG_AUDIO&&{long:this.longTrack(this.base+c.recording.audio,false)})});
       for (const sc of c.scenes) for (const l of sc.lines) if (l.audio) this.uses.push({kind: 'narration', url: this.base + l.audio, from: l.from, to: l.from + l.duration, loop: false});
       for (const s of c.sounds) {
         const a = assets.get(s.asset);

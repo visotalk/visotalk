@@ -111,6 +111,7 @@ export async function openDrivenPage(browser: Browser, url: string, width: numbe
   await cdp.send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: scale, mobile: false});
   page.on('pageerror', (e) => console.error(`[page error] ${e}`));
   page.on('response', (r) => r.status() >= 400 && console.error(`[http ${r.status()}] ${r.url()}`));
+  if(new URL(url).searchParams.get('alpha')==='1')await cdp.send('Emulation.setDefaultBackgroundColorOverride',{color:{r:0,g:0,b:0,a:0}});
   await loadPlayer(page, url);
   // Frame times live in the browser's TimeTicks base (CLOCK_MONOTONIC); times in its past are not honoured.
   let ticks = Number(process.hrtime.bigint() / 1000000n);

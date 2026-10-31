@@ -4,10 +4,10 @@
  *  - live (player):   a <video> slaved to the clock: native playback while playing, frame-centre seeks otherwise. The element is the media scheduler's, made ahead of the
  *                     clip's time and mounted here; a second <Video> of the same clip at the same time makes its own. A clip due with nothing to play yet holds the clock
  *                     once (bounded, as a narration clip's wait is), then plays on.
- * The source time is `in + (time - start) * rate`, `time` being seconds since the scene on screen started.
+ * The source time is `in + (time - start) * rate`, `time` being seconds since the scene on screen started; the narration's recording always shows the film's own time.
  */
 import React, {useLayoutEffect, useMemo, useRef, useSyncExternalStore} from 'react';
-import {useRuntime, useTime} from './react';
+import {useDocTime, useRuntime, useTime} from './react';
 import {mediaReady, mediaReadyNow} from './media';
 import {useStage} from './stage';
 
@@ -24,10 +24,13 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
   const info = doc.assets?.find((a) => a.id === asset);
   const fps = info?.analysis?.fps, frames = info?.analysis?.frames;
   if (info?.kind !== 'video' || !fps || !frames) throw new Error(`<Video asset="${asset}">: no video asset with that id in the document (declare it with <Asset kind="video"> and build it with visotalk)`);
-  const t = useTime() - start;
+  // the narration's recording is the film's clock: wherever it is drawn (under everything, in a corner, in half of a split) it shows the moment being heard
+  const recorded = doc.voice?.voice === `recording:${asset}`;
+  const filmTime = useDocTime(), sceneTime = useTime();
+  const t = recorded ? filmTime : sceneTime - start;
   // pausing does not change the time: without this the component would not draw again, and the video would play on without the clock
   const playing = useSyncExternalStore(rt.clock.subscribe, rt.clock.isPlaying);
-  const source = from + Math.max(0, t) * rate;
+  const source = recorded ? Math.max(0, t) : from + Math.max(0, t) * rate;
   const frame = Math.min(frames - 1, Math.max(0, Math.floor(source * fps + 1e-6)));
   // the middle of the last frame: a scene that outlasts its clip holds there, and nothing asks the element for a time it does not have
   const last = (frames - 0.5) / fps;
@@ -97,7 +100,9 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
     }
   });
 
-  if (video) return <div ref={holder} style={{width: '100%', height: '100%'}} />;
+  // the recording drawn by a part (in a window, a circle, half of a split) is the presenter, not something drawn over them: QA reads this mark
+  const footage = recorded ? {'data-vt-footage': ''} : {};
+  if (video) return <div ref={holder} style={{width: '100%', height: '100%'}} {...footage} />;
   const base = new URLSearchParams(location.search).get('media') ?? '/__media';
-  return <img alt="" src={`${base}/${asset}/${frame}.jpg`} style={box} />;
+  return <img alt="" src={`${base}/${asset}/${frame}.jpg`} style={box} {...footage} />;
 };

@@ -66,17 +66,34 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
   const [muted, setMuted] = useState(!!autoplay);
   useEffect(() => media?.setMuted(muted), [media, muted]);
   const viewerMuted = useRef(false);
-  // full screen is the player's own box, so the controls come with the picture; a browser that cannot (iPhone Safari) has no button
+  // full screen is the player's own box, so the controls come with the picture. A browser that cannot (iPhone Safari) has the button only in a frame
+  // whose page offers to fill the screen with it: the player announces itself with `{vt: 'fill', on: false}`, a page that can answers with
+  // `{vt: 'fill', on}`, and the button then asks it (`{vt: 'fill', on}`); a page that never answers leaves no button that does nothing
   const root = useRef<HTMLDivElement>(null);
   const [canFull, setCanFull] = useState(false);
   const [full, setFull] = useState(false);
+  const [fill, setFill] = useState(false);
   useEffect(() => {
     setCanFull(document.fullscreenEnabled);
     const change = () => setFull(document.fullscreenElement === root.current);
     document.addEventListener('fullscreenchange', change);
-    return () => document.removeEventListener('fullscreenchange', change);
+    if (document.fullscreenEnabled || window.parent === window) return () => document.removeEventListener('fullscreenchange', change);
+    const onMessage = (e: MessageEvent) => {
+      const m = e.data as {vt?: unknown; on?: unknown} | null;
+      if (e.source !== window.parent || !m || m.vt !== 'fill') return;
+      setFill(true);
+      setCanFull(true);
+      if (typeof m.on === 'boolean') setFull(m.on);
+    };
+    window.addEventListener('message', onMessage);
+    window.parent.postMessage({vt: 'fill', on: false}, '*');
+    return () => { document.removeEventListener('fullscreenchange', change); window.removeEventListener('message', onMessage); };
   }, []);
-  const toggleFull = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void root.current?.requestFullscreen().catch(() => {}); };
+  const toggleFull = () => {
+    if (fill) { window.parent.postMessage({vt: 'fill', on: !full}, '*'); setFull(!full); }
+    else if (document.fullscreenElement) void document.exitFullscreen();
+    else void root.current?.requestFullscreen().catch(() => {});
+  };
   const hasSound = !!media?.hasSound;
   const setSound = (on: boolean) => { viewerMuted.current = !on; setMuted(!on); if (on) media?.unlock(); };
   // the cover: the stage waits on the poster second until the film is played or moved
@@ -159,7 +176,7 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
 
   return (
     <div ref={root} className="vt-root" tabIndex={0} onKeyDown={onKey} onPointerDown={(e) => (e.currentTarget as HTMLElement).focus({preventScroll: true})}
-      style={{height: '100%', minHeight: 320, display: 'flex', flexDirection: 'column', background: C.bg}}>
+      style={{height: '100%', display: 'flex', flexDirection: 'column', background: C.bg}}>
       <style>{CSS}</style>
       <div ref={box} style={{position: 'relative', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'}}>
         <div style={{width: width * scale, height: height * scale}}>

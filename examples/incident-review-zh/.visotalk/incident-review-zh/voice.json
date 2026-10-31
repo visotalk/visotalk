@@ -1,0 +1,197 @@
+{
+ "l1": {
+  "duration": 4.7253,
+  "audio": "audio/caa940771769.m4a",
+  "key": "caa940771769",
+  "words": [
+   {
+    "w": "nook",
+    "t0": 0.043,
+    "t1": 4.48
+   },
+   {
+    "w": "",
+    "t0": 4.48,
+    "t1": 4.48
+   }
+  ]
+ },
+ "l2": {
+  "duration": 4.8994,
+  "audio": "audio/ef22ad48221f.m4a",
+  "key": "ef22ad48221f",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l3": {
+  "duration": 10.1936,
+  "audio": "audio/a46d29373407.m4a",
+  "key": "a46d29373407",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l4": {
+  "duration": 7.4188,
+  "audio": "audio/28223393b4df.m4a",
+  "key": "28223393b4df",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   },
+   {
+    "w": "nook",
+    "t0": 0.043,
+    "t1": 7.211
+   },
+   {
+    "w": "",
+    "t0": 7.211,
+    "t1": 7.211
+   }
+  ]
+ },
+ "l5": {
+  "duration": 5.7934,
+  "audio": "audio/9e17b80ec347.m4a",
+  "key": "9e17b80ec347",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l6": {
+  "duration": 7.3723,
+  "audio": "audio/dc839241b0d0.m4a",
+  "key": "dc839241b0d0",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l7": {
+  "duration": 8.0109,
+  "audio": "audio/4e73ff0c060b.m4a",
+  "key": "4e73ff0c060b",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l8": {
+  "duration": 6.3042,
+  "audio": "audio/08e7b045ab70.m4a",
+  "key": "08e7b045ab70",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l9": {
+  "duration": 7.3375,
+  "audio": "audio/288d0c16544f.m4a",
+  "key": "288d0c16544f",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l10": {
+  "duration": 7.1634,
+  "audio": "audio/8aa7d8fae711.m4a",
+  "key": "8aa7d8fae711",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l11": {
+  "duration": 7.9761,
+  "audio": "audio/5a5b246be756.m4a",
+  "key": "5a5b246be756",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l12": {
+  "duration": 7.9296,
+  "audio": "audio/66c1f8af5874.m4a",
+  "key": "66c1f8af5874",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l13": {
+  "duration": 5.2013,
+  "audio": "audio/891cbd34f1d2.m4a",
+  "key": "891cbd34f1d2",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l14": {
+  "duration": 10.3677,
+  "audio": "audio/cb11c104144d.m4a",
+  "key": "cb11c104144d",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ },
+ "l15": {
+  "duration": 4.5976,
+  "audio": "audio/52d6c45146e5.m4a",
+  "key": "52d6c45146e5",
+  "words": [
+   {
+    "w": "",
+    "t0": 0,
+    "t1": 0
+   }
+  ]
+ }
+}

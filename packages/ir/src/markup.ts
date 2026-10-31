@@ -123,6 +123,8 @@ class Parser {
   }
   /** Source before `export default <Doc`: the module's own code (imports, helpers, data), which the document never reads */
   prelude = '';
+  /** Each tag of the skeleton, where it is first written */
+  tags = new Map<string, Loc>();
   document(): El {
     const m = /^[ \t]*export[ \t]+default[ \t\n]*(\(?)[ \t\n]*(?=<Doc[\s>/])/m.exec(this.s);
     if (!m) this.fail('a document is `export default <Doc …>…</Doc>;`: no `export default <Doc` found');
@@ -143,6 +145,7 @@ class Parser {
     if (!name) this.fail('expected an element name after "<"');
     this.i += name.length;
     const el: El = {tag: name, attrs: [], kids: [], loc: this.loc(at), start: at, openEnd: at, closeStart: at, end: at};
+    if (!this.tags.has(name)) this.tags.set(name, el.loc);
     for (;;) {
       this.skip();
       if (this.s.startsWith('/>', this.i)) { this.i += 2; el.openEnd = el.closeStart = el.end = this.i; return el; }
@@ -297,10 +300,10 @@ class Parser {
 // ------------------------------------------------------------------------------------------------ compiler
 
 const META_EXTRA = ['description', 'poster', 'sources', 'generator', 'created', 'updated'];
-const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'pacing', 'texts', 'exports'];
-const SCENE_ATTRS = ['id', 'title', 'duration'];
+const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'tokens', 'voice', 'speed', 'lexicon', 'canvas', 'keepClear', 'pacing', 'texts', 'exports'];
+const SCENE_ATTRS = ['id', 'title', 'duration', 'keepClear'];
 const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
-const LINE_ATTRS = ['id', 'text', 'hold'];
+const LINE_ATTRS = ['id', 'text', 'hold', 'span', 'words'];
 /** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
 const SOUND_ATTRS = ['id', 'asset', 'dur', 'until', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 const ACTION_ATTRS = ['target', 'to', 'id', 'dur', 'until', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
@@ -378,7 +381,7 @@ class Compiler {
       else if (k.tag === 'Scene') scenes.push(this.scene(k));
       else this.fail(`<${k.tag}> cannot be inside <Doc>; use <Canvas>, <Asset>, <Part> (on screen in every scene) or <Scene>`, k.loc);
     }
-    doc.canvas = {presets: presets ?? [{id: '16x9', width: 1920, height: 1080}]};
+    doc.canvas = {presets: presets ?? [{id: '16x9', width: 1920, height: 1080}],...(a.keepClear!==undefined&&{keepClear:a.keepClear})};
     const attrLoc = (name: string) => root.attrs.find((x) => x.name === name)?.loc ?? root.loc;
     if (a.tokens !== undefined && a.theme === undefined) this.fail('tokens override a theme: add theme="…" (e.g. theme="visotalk/dark")', attrLoc('tokens'));
     for (const k of ['speed', 'lexicon']) if (a[k] !== undefined && a.voice === undefined) this.fail(`${k} belongs to the voice: add voice="…"`, attrLoc(k));
@@ -388,6 +391,7 @@ class Compiler {
     if (a.texts !== undefined) doc.texts = a.texts;
     if (assets.length) doc.assets = assets;
     if (parts.length) doc.parts = parts;
+    if(String(a.voice??'').startsWith('recording:'))for(const scene of scenes)for(const line of scene.lines)line.say??=line.text;
     doc.scenes = scenes;
     if (a.exports !== undefined) doc.exports = a.exports;
     const order = ['spec', 'meta', 'canvas', 'theme', 'voice', 'pacing', 'texts', 'assets', 'parts', 'scenes', 'exports'];
@@ -457,7 +461,7 @@ class Compiler {
       at.word = found.word;
       if (found.nth > 1) at.nth = found.nth;
     }
-    return {id, ...(a.title !== undefined && {title: a.title as string}), lines, ...(a.duration !== undefined && {duration: a.duration as number}), parts, animations, ...(sounds.length && {sounds})};
+    return {id, ...(a.title !== undefined && {title: a.title as string}), lines, ...(a.duration !== undefined && {duration: a.duration as number}), ...(a.keepClear !== undefined && {keepClear: a.keepClear as Scene['keepClear']}), parts, animations, ...(sounds.length && {sounds})};
   }
 
   line(el: El, scene: string): Line {
@@ -500,7 +504,7 @@ class Compiler {
     }
     this.marks.set(`${scene}/${a.id}`, byId);
     const text = (a.text as string | undefined) ?? say;
-    return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number})};
+    return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number}),...(a.span!==undefined&&{span:a.span as unknown as {start:number;end:number}}),...(a.words!==undefined&&{words:a.words as unknown as Line['words']})};
   }
 
   /** Where a motion or a sound starts: one of a word of a line (`line`, with `word` or `mark`, `nth`), `after` another action (motions only), or `at` seconds into the scene, "start" or "end" */
@@ -580,6 +584,8 @@ export interface Parsed {
   spans: Map<string, El>;
   /** The module's own code before `export default`: imports, helpers, data. Parts can use it, the engine does not read it. */
   prelude: string;
+  /** Each tag the skeleton uses (`Doc`, `Scene`, `Asset`…), where it is first written: the player runs the module, so each must be imported */
+  tags: Map<string, Loc>;
 }
 
 export function parseMarkup(src: string): Parsed {
@@ -587,7 +593,15 @@ export function parseMarkup(src: string): Parsed {
   const root = parser.document();
   const c = new Compiler(root);
   const doc = c.compile();
-  return {doc, locs: c.locs, spans: c.spans, prelude: parser.prelude};
+  return {doc, locs: c.locs, spans: c.spans, prelude: parser.prelude, tags: parser.tags};
+}
+
+/** Read one literal without evaluating JavaScript; `end` is where the literal ends. */
+export function parseLiteral(source: string): {value: unknown; end: number} {
+  const parser = new Parser(source);
+  parser.skip();
+  const value = parser.value();
+  return {value, end: parser.i};
 }
 
 /** The source position of the nearest part of the document an issue's path points into */

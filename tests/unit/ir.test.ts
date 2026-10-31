@@ -17,6 +17,16 @@ test('validator: a clean document has no issues', () => {
   assert.deepEqual(validate(BASIC), []);
 });
 
+test('validator: a caption skin is checked field by field, and passes through the theme', () => {
+  const scenes = '<Scene id="a"><Line id="l1">One.</Line></Scene>';
+  const good = doc(scenes, `theme="visotalk/light" tokens={{caption: {font: 'display', size: 40, background: 'none', padding: [8, 20], rule: '#c00', ruleSide: 'left'}}}`);
+  assert.deepEqual(validate(good), []);
+  assert.equal(themeTokens(good.theme).caption?.font, 'display');
+  const bad = validate(doc(scenes, `theme="visotalk/light" tokens={{caption: {size: -3, ruleSide: 'bottom', colour: 'red'}}}`));
+  assert.deepEqual(bad.map((i) => i.code), ['theme.caption', 'theme.caption', 'theme.caption']);
+  assert.match(bad.map((i) => i.message).join('\n'), /caption\.size is px.*\n.*ruleSide is top or left.*\n.*no field "colour"/s);
+});
+
 test('validator: seeded mistakes, each with its code and a fix', () => {
   const bad = (inner: string) => validate(doc(inner));
   assert.ok(codes(doc('<Scene id="Bad"><Line id="l">x</Line></Scene>')).includes('id.format'));

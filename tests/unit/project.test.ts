@@ -149,6 +149,27 @@ export default <Doc id="d" title="t" lang="en"><Scene id="s" duration={3}>
   assert.ok(found.every((i) => i.code === 'code.nondeterministic' && i.fix));
 });
 
+test('check: a tag nothing imports or defines is refused before the player runs the module and stops on it', async () => {
+  const {codeIssues} = await import('../../packages/cli/src/project.ts');
+  const text = `import {Doc, Scene, Line, Part} from '@visotalk/jsx';
+import {Chart as Plot} from './chart';
+function Legend() { return null; }
+export default <Doc id="d" title="t" lang="en">
+  <Asset id="leaf" kind="image" src="media/leaf.png" license={{id: "user-owned", attribution: "", obligations: []}} />
+  <Scene id="s">
+    <Line id="l">Words.</Line>
+    <Part id="p">{() => { const box = useRef<HTMLDivElement>(null); return <div ref={box}><Plot /><Legend/>
+      <PhaseDiscs n={3}/></div>; }}</Part>
+  </Scene>
+</Doc>;`;
+  const found = codeIssues(project('/nowhere', text)).filter((i) => i.code === 'code.unbound');
+  assert.deepEqual(found.map((i) => [i.at, i.message.split(' is used')[0], i.fix]), [
+    ['doc.tsx:5', '<Asset>', "add Asset to the import from '@visotalk/jsx'"],
+    ['doc.tsx:9', '<PhaseDiscs>', 'import PhaseDiscs or define it before `export default`'],
+  ]);
+  assert.deepEqual(codeIssues(project('/nowhere', TWO)), [], 'a document that imports what it uses has nothing to say');
+});
+
 test('narration: a line added after the narration was prepared gets an estimate, and the real lengths of the others are kept', async () => {
   const {estimateMissingVoice, estimateVoice, narrationPending} = await import('../../packages/cli/src/project.ts');
   const {existsSync, readFileSync} = await import('node:fs');
@@ -317,6 +338,51 @@ test('narration: a CJK document is spoken by a provider and timed from character
   assert.ok(Math.abs(estimateVoice(zh).l1.duration - 21 / 4.4) < 0.05);
 });
 
+test('narration: actual CJK speech cannot use Kokoro even with lang=en or reusable caches', async () => {
+  const {prepare, buildPlayer} = await import('../../packages/cli/src/project.ts');
+  const {kokoroKey} = await import('../../packages/cli/src/clip_key.ts');
+  for (const say of ['\u4e2d\u6587', '\u3042\u30a2', '\ud55c\uae00', '\u{20000}']) {
+    for (const cached of [true, false]) {
+      const dir = mkdtempSync('/tmp/vt-cjk-guard-');
+      try {
+        const p = project(dir, `export default <Doc id="d" title="t" lang="en" voice="am_adam"><Scene id="s"><Line id="l1" text="English caption.">${say}</Line></Scene></Doc>;`);
+        if (cached) {
+          writeFileSync(dir + '/clip.m4a', 'cached audio');
+          writeFileSync(dir + '/voice.json', JSON.stringify({l1: {duration: 1, audio: 'clip.m4a', key: kokoroKey('am_adam', 1, say)}}));
+        }
+        const error = /line "l1".*voice "am_adam".*Kokoro.*provider.*lang/i;
+        assert.throws(() => prepare(p, undefined), error);
+        await assert.rejects(buildPlayer(p), error);
+      } finally {
+        rmSync(dir, {recursive: true, force: true});
+      }
+    }
+  }
+});
+
+test('narration: English Kokoro and CJK provider clips still reuse their caches', async () => {
+  const {prepare, checkNarrationVoice} = await import('../../packages/cli/src/project.ts');
+  const {clipKey, kokoroKey} = await import('../../packages/cli/src/clip_key.ts');
+  for (const [lang, voice, say] of [['en', 'am_adam', 'English narration.'], ['zh-CN', 'minimax:Mandarin', '\u4e2d\u6587']]) {
+    const dir = mkdtempSync('/tmp/vt-voice-cache-');
+    try {
+      const p = project(dir, `export default <Doc id="d" title="t" lang="${lang}" voice="${voice}"><Scene id="s"><Line id="l1">${say}</Line></Scene></Doc>;`);
+      const key = voice.includes(':') ? clipKey({provider: 'minimax', voice: 'Mandarin', speed: 1, lang}, say) : kokoroKey(voice, 1, say);
+      const manifest = {l1: {duration: 1, audio: 'clip.m4a', key}};
+      writeFileSync(dir + '/clip.m4a', 'cached audio');
+      writeFileSync(dir + '/voice.json', JSON.stringify(manifest));
+      assert.deepEqual(prepare(p, undefined), manifest);
+      if (lang === 'en') {
+        p.doc.scenes[0].lines[0].text = '\u4e2d\u6587';
+        p.doc.scenes[0].lines[0].say = say;
+        assert.doesNotThrow(() => checkNarrationVoice(p), 'captions do not replace the actual English speech');
+      }
+    } finally {
+      rmSync(dir, {recursive: true, force: true});
+    }
+  }
+});
+
 test('artifact: the player is built with the soundtrack mixed into one MP3, a page and the list of files to publish', async (t) => {
   const {spawnSync} = await import('node:child_process');
   const {existsSync, readFileSync, readdirSync} = await import('node:fs');
@@ -339,7 +405,8 @@ export default <Doc id="a" title="A <b>" lang="en" theme="visotalk/dark" canvas=
   const length = Number(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', dist + '/' + list.files[2]], {encoding: 'utf8'}).stdout);
   assert.ok(Math.abs(length - 2.6) < 0.1, `soundtrack of ${length} s for a film of 2.6 s`); // lead 0.4, the line 1, its hold 0.4, the tail 0.8 (an MP3 adds a few ms)
   assert.match(readFileSync(dist + '/' + list.files[0], 'utf8'), /soundtrack\.[0-9a-f]{12}\.mp3/);
-  assert.match(readFileSync(dist + '/player.html', 'utf8'), /^<title>A &lt;b>/);
+  // UTF-8 said first: a host that wraps the page may not, and the bundle and the title carry characters past ASCII
+  assert.match(readFileSync(dist + '/player.html', 'utf8'), /^<meta charset="utf-8">\n<title>A &lt;b>/);
   assert.doesNotMatch(readFileSync(dist + '/player.html', 'utf8'), /replaceState/, 'no output named: the first one plays');
   // an artifact page has no query of its own, so the theme it plays in is set before the player reads it
   const named = await buildPlayer(load(dir + '/doc.tsx'), {artifact: true, theme: 'visotalk/light'});
@@ -365,4 +432,31 @@ test('init: a vertical script gets a 9:16 canvas and word captions, a horizontal
   assert.match(skeleton({title: 'T', canvas: '9x16', lines}), /canvas="9x16" exports=\{\{captions: 'words', fps: 30\}\}>/);
   assert.match(skeleton({title: 'T', lines}), /canvas="16x9">/);
   assert.doesNotMatch(skeleton({title: 'T', lines}), /exports=/);
+});
+
+test('three: a part that imports three or its addons gets the engine\'s copy, in the document\'s bundle only', async () => {
+  const {readFileSync, readdirSync} = await import('node:fs');
+  const {buildPlayer, load} = await import('../../packages/cli/src/project.ts');
+  const make = (part: string) => {
+    const dir = mkdtempSync('/tmp/vt-three-');
+    writeFileSync(dir + '/doc.tsx', `import {Doc, Scene, Line, Part, Animation, Appear} from '@visotalk/jsx';
+${part}
+export default <Doc id="t" title="T" lang="en" theme="visotalk/dark" canvas="16x9">
+  <Scene id="s"><Line id="l1">One two three.</Line><Part id="p">{() => <Stage/>}</Part><Animation><Appear target="p" line="l1" word="two"/></Animation></Scene>
+</Doc>;`);
+    mkdirSync(dir + '/.visotalk/t', {recursive: true});
+    writeFileSync(dir + '/.visotalk/t/voice.json', JSON.stringify({l1: {duration: 2}}));
+    return dir;
+  };
+  const js = async (dir: string) => {
+    const dist = await buildPlayer(load(dir + '/doc.tsx'));
+    const files = readdirSync(dist).filter((f) => f.endsWith('.js'));
+    return {app: readFileSync(dist + '/' + files.find((f) => f.startsWith('app.'))!, 'utf8'), runtime: readFileSync(dist + '/' + files.find((f) => f.startsWith('runtime.'))!, 'utf8')};
+  };
+  // the document has no three of its own: the import is resolved from the engine
+  const three = await js(make(`import * as THREE from 'three';\nimport {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';\nconst Stage = () => <div>{new THREE.Vector3(1, 2, 3).length() + new RoundedBoxGeometry(1, 1, 1).type}</div>;`));
+  assert.match(three.app, /RoundedBoxGeometry/);
+  assert.doesNotMatch(three.runtime, /WebGLRenderer/, 'the runtime every player loads does not carry three');
+  const plain = await js(make(`const Stage = () => <div>plain</div>;`));
+  assert.doesNotMatch(plain.app, /RoundedBoxGeometry|WebGLRenderer/, 'a document that does not import three does not carry it');
 });

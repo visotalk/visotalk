@@ -91,8 +91,11 @@ export function staticQa(doc: VisoDoc, c: Compiled): QaIssue[] {
 export function wordAt(c: Compiled, t: number): {line: string; word: string} | undefined {
   for (const sc of c.scenes) for (const l of sc.lines) {
     if (t < l.from || t >= l.from + l.duration) continue;
-    const w = l.words?.find((x) => t >= l.from + x.t0 && t < l.from + x.t1);
-    if (w) return {line: l.id, word: w.w};
+    if (l.words?.length) {
+      // between two timed words (a breath, a comma) the word is the last one said, never the whole line
+      const w = [...l.words].reverse().find((x) => t >= l.from + x.t0) ?? l.words[0];
+      return {line: l.id, word: w.w};
+    }
     const words = l.say.split(/\s+/).filter(Boolean);
     return {line: l.id, word: words[Math.min(words.length - 1, Math.floor(((t - l.from) / l.duration) * words.length))]};
   }

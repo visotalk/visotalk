@@ -21,9 +21,14 @@ interface ObjectInspection {
   ink: Rect | null;
   opacity: number;
   reach?: {side: 'left' | 'right' | 'top' | 'bottom'; px: number; what: string};
+  /** it draws the narration's own recording: it is the presenter, never drawn over them */
+  footage?: boolean;
   clipped: Array<{what: string; overflowX: number; overflowY: number; box: {w: number; h: number}; content: {w: number; h: number}}>;
 }
 export interface FrameInspection {
+  keepClear?:Array<{x:number;y:number;w:number;h:number}>;
+  /** the recording's video is the ground of every frame: room around the graphics is the footage's, not empty */
+  footage?: boolean;
   width: number;
   height: number;
   objects: ObjectInspection[];
@@ -39,7 +44,7 @@ export interface FrameInspection {
   partErrors?: Array<{part: string; scene?: string; message: string}>;
 }
 export interface FrameIssue {
-  code: 'overflow' | 'clipped' | 'offscreen' | 'caption' | 'caption-safe';
+  code: 'keep-clear' | 'overflow' | 'clipped' | 'offscreen' | 'caption' | 'caption-safe';
   at: string;
   frame: number;
   objects: string[];
@@ -48,6 +53,7 @@ export interface FrameIssue {
 }
 
 const FIX: Record<FrameIssue['code'], string> = {
+  'keep-clear':'Move the picture out of the presenter region, or explicitly revise the declared keepClear region.',
   overflow: 'shorten the text, or give the part or element more room (w, h)',
   clipped: 'give that element at least the size its content needs (width and height below), or shorten what is in it or lower its font size, or remove its `overflow` clipping; a reveal that is meant to cut (typing, a scroller) is drawn by tweening a number that slices the content, not by clipping',
   offscreen: 'move it into the canvas, or shorten the content',
@@ -75,6 +81,8 @@ export function frameIssues(f: FrameInspection, frame: number, at: string): Fram
   const shown = f.objects.filter((o) => o.ink && o.opacity >= 0.5);
   for (const o of shown) {
     const ink = o.ink!;
+    // a part that draws the recording itself (the presenter moved into a window) is where the presenter is, not over them
+    if (!o.footage) for(const region of f.keepClear??[]){const hit=intersect(ink,region);if(hit&&hit.w>2&&hit.h>2)add('keep-clear',[o.id],`"${o.id}" draws inside the presenter region`);}
     if (o.box.w >= 1 && o.box.h >= 1 && past(ink, o.box) > TOL) add('overflow', [o.id], `"${o.id}" draws ${Math.round(past(ink, o.box))}px past its box${o.reach ? `: ${o.reach.px}px past the ${o.reach.side} of it, by ${o.reach.what}` : ''}`);
     for (const c of o.clipped) add('clipped', [o.id], `"${o.id}": ${c.what} is cut off (${c.overflowX}px × ${c.overflowY}px): it is ${c.box.w}×${c.box.h}px and its content needs ${c.content.w}×${c.content.h}px`);
     if (past(ink, {x: 0, y: 0, w: f.width, h: f.height}) > 2) add('offscreen', [o.id], `"${o.id}" draws outside the canvas`);
@@ -92,9 +100,15 @@ export const issueKey = (i: {code: string; objects: string[]; at: string}) => `$
 /** Where the ink is above the caption band, or null when there is none to measure (nothing drawn) */
 function inkExtent(f: FrameInspection) {
   const top = f.caption ? Math.min(f.caption.y, f.height) : f.height;
-  const shown = f.objects.filter((o) => o.ink && o.opacity >= 0.5);
+  // a part whose ink covers nearly the whole frame is the ground the picture is drawn on (a sky, a paper), not where the picture is
+  const ground = (o: ObjectInspection) => {
+    const r = intersect(o.ink!, {x: 0, y: 0, w: f.width, h: top});
+    return !!r && r.w >= 0.9 * f.width && r.h >= 0.75 * top;
+  };
+  const shown = f.objects.filter((o) => o.ink && o.opacity >= 0.5 && !ground(o));
   if (!shown.length) return null;
-  const inside = shown.map((o) => intersect(o.ink!, {x: 0, y: 0, w: f.width, h: top})).filter((r): r is Rect => r !== null);
+  // the presenter's region (keepClear) is taken: the picture beside it is not pushed to one edge, it is beside someone
+  const inside = [...shown.map((o) => o.ink!), ...(f.keepClear ?? [])].map((r) => intersect(r, {x: 0, y: 0, w: f.width, h: top})).filter((r): r is Rect => r !== null);
   if (!inside.length) return null;
   const x0 = Math.min(...inside.map((r) => r.x)), y0 = Math.min(...inside.map((r) => r.y));
   const x1 = Math.max(...inside.map((r) => r.x + r.w)), y1 = Math.max(...inside.map((r) => r.y + r.h));
@@ -118,13 +132,14 @@ export function frameFacts(f: FrameInspection): string | null {
   const pct = (n: number, of: number) => Math.round((100 * n) / of);
   return `the ink spans x ${Math.round(x0)}–${Math.round(x1)} of ${f.width} and y ${Math.round(y0)}–${Math.round(y1)} of ${Math.round(top)} (above the captions); `
     + `empty margins: left ${Math.round(x0)} px (${pct(x0, f.width)}%), right ${Math.round(f.width - x1)} px (${pct(f.width - x1, f.width)}%), top ${Math.round(y0)} px, bottom ${Math.round(top - y1)} px (${pct(top - y1, top)}%); `
-    + `${shown.length} object${shown.length === 1 ? '' : 's'} touch ${pct(touched, COLS * ROWS)}% of the area above the captions`;
+    + `${shown.length} object${shown.length === 1 ? '' : 's'}${f.keepClear?.length ? ' and the presenter region' : ''} touch ${pct(touched, COLS * ROWS)}% of the area above the captions`;
 }
 
 /** What the engine itself finds wrong on a frame, under the names of the audit's questions: the author cannot answer `ok` to these */
 export interface FrameMeasured {
   empty: string[];
   edges: string[];
+  text: string[];
 }
 
 /**
@@ -134,8 +149,18 @@ export interface FrameMeasured {
  */
 export function frameMeasured(f: FrameInspection): FrameMeasured {
   const issues = frameIssues(f, 0, '');
-  const out: FrameMeasured = {empty: [], edges: issues.map((i) => i.message)};
-  const e = inkExtent(f);
+  const out: FrameMeasured = {empty: [], edges: issues.map((i) => i.message), text: []};
+  // text a viewer cannot read on a phone, or set where a screen or an editor's frame may cut it: the height of a line against the frame's
+  const small = 0.03 * f.height, safe = 0.04;
+  for (const t of f.texts) {
+    const r = t.rect, word = JSON.stringify(t.text.trim().slice(0, 40));
+    if (!t.text.trim() || r.w <= 0 || r.h <= 0 || (f.caption && intersect(r, f.caption))) continue;
+    if (r.h < small) out.text.push(`${word} is ${Math.round(r.h)} px tall: under ${Math.round(small)} px (3% of the frame's height) it cannot be read on a phone`);
+    const near = [r.x < safe * f.width && 'left', f.width - r.x - r.w < safe * f.width && 'right', r.y < safe * f.height && 'top', f.height - r.y - r.h < safe * f.height && 'bottom'].filter(Boolean);
+    if (near.length && r.x >= 0 && r.y >= 0 && r.x + r.w <= f.width && r.y + r.h <= f.height)
+      out.text.push(`${word} is ${near.map((n) => `${Math.round(n === 'left' ? r.x : n === 'right' ? f.width - r.x - r.w : n === 'top' ? r.y : f.height - r.y - r.h)} px from the ${n} edge`).join(' and ')}: keep text ${Math.round(safe * 100)}% in, where no screen or editor frame cuts it`);
+  }
+  const e = f.footage ? null : inkExtent(f);
   if (e) {
     const sides = [{w: 'left', a: e.x0, b: f.width - e.x1, of: f.width}, {w: 'top', a: e.y0, b: e.top - e.y1, of: e.top}];
     for (const {w, a, b, of} of sides) {

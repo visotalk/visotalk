@@ -4,9 +4,9 @@
  */
 import {randomUUID} from 'node:crypto';
 import {tmpdir} from 'node:os';
-import {existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, rmdirSync, statSync, writeFileSync} from 'node:fs';
+import {existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, rmdirSync, statSync, writeFileSync} from 'node:fs';
 import {basename, dirname, extname, join, resolve, sep} from 'node:path';
-import {BundleError, openBundle, packBundle, packPlayerBundle, sourceClosure, type BundleManifest} from '@visotalk/ir/bundle';
+import {BUNDLE_LIMITS, BundleError, openBundle, packBundle, packPlayerBundle, sourceClosure, type BundleManifest} from '@visotalk/ir/bundle';
 import {ID_PATTERN, MarkupError, parseMarkup, type VoiceManifest} from '@visotalk/ir';
 import {buildPlayer, check, load, narrationPending, voiceProvider, type Project} from './project.ts';
 
@@ -34,6 +34,31 @@ function filesUnder(dir: string, base = ''): Array<[string, string]> {
   });
 }
 
+/** A work-owned style is a complete pack, including unused guidance, parts, demos and assets. */
+function styleFiles(dir: string): Map<string, Uint8Array> {
+  const out = new Map<string, Uint8Array>();
+  const root = lstatSync(join(dir, 'style'), {throwIfNoEntry: false});
+  if (!root) return out;
+  if (!root.isDirectory()) throw new BundleError('style/ must be a directory, never a link');
+  let bytes = 0;
+  const walk = (relative: string) => {
+    for (const entry of readdirSync(join(dir, relative), {withFileTypes: true})) {
+      // These are local credentials, caches and harness state, not pack content.
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+      const path = `${relative}/${entry.name}`;
+      if (entry.isDirectory()) walk(path);
+      else {
+        if (!entry.isFile()) throw new BundleError(`${path}: a style pack cannot contain links or special files`);
+        bytes += lstatSync(join(dir, path)).size;
+        if (bytes > BUNDLE_LIMITS.bytes || out.size >= BUNDLE_LIMITS.entries) throw new BundleError('style/ exceeds the bundle file or size budget');
+        out.set(path, readFileSync(join(dir, path)));
+      }
+    }
+  };
+  walk('style');
+  return out;
+}
+
 function write(out: string, packed: {manifest: BundleManifest; bytes: Uint8Array}, voice: boolean) {
   mkdirSync(dirname(resolve(out)), {recursive: true});
   writeFileSync(out, packed.bytes);
@@ -42,14 +67,17 @@ function write(out: string, packed: {manifest: BundleManifest; bytes: Uint8Array
 
 /** Writes the talk as a bundle at `out`; returns what was written */
 export async function exportBundle(p: Project, out: string, opts: ExportOptions = {}): Promise<{manifest: BundleManifest; bytes: number; voice: boolean}> {
-  const read = (rel: string) => (statSync(join(p.dir, rel), {throwIfNoEntry: false})?.isFile() ? readFileSync(join(p.dir, rel)) : undefined);
+  const style = styleFiles(p.dir);
+  const read = (rel: string) => style.get(rel) ?? (statSync(join(p.dir, rel), {throwIfNoEntry: false})?.isFile() ? readFileSync(join(p.dir, rel)) : undefined);
   const source = sourceClosure(basename(p.file), read);
+  for (const [path, data] of style) source.set(path, data);
 
   let voice: Map<string, Uint8Array> | undefined;
   if (!narrationPending(p)) {
     const json = readFileSync(join(p.work, 'voice.json'));
     voice = new Map([['voice.json', json]]);
     for (const v of Object.values(JSON.parse(dec.decode(json)) as VoiceManifest)) {
+      if (!v.audio && p.doc.voice?.voice?.startsWith('recording:')) continue;
       const abs = resolve(p.work, v.audio);
       if (!abs.startsWith(p.work + sep) || !existsSync(abs)) throw new BundleError(`voice.json names ${v.audio}, which is not in ${p.work}`);
       voice.set(v.audio, readFileSync(abs));

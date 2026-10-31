@@ -157,7 +157,7 @@ export async function verifyBundle(entries: Map<string, Uint8Array>, spec = SPEC
   if (!raw) throw new BundleError('manifest.json is missing');
   const m = parseManifest(new TextDecoder().decode(raw));
   if (!formatCompatible(m.formatVersion)) throw new BundleError(`bundle format ${m.formatVersion} is not one this reader knows (${BUNDLE_VERSION}); it was written by ${m.generator.name}${m.generator.version ? ` ${m.generator.version}` : ''}`);
-  if (m.spec !== minorOf(spec)) throw new BundleError(`the talk is written in VisoTalk spec ${m.spec}, this reader speaks ${minorOf(spec)}; open it with the ${m.generator.name}${m.generator.version ? ` ${m.generator.version}` : ''} that wrote it`);
+  if (m.spec !== minorOf(spec) && !(m.spec==='0.6'&&minorOf(spec)==='0.7')) throw new BundleError(`the talk is written in VisoTalk spec ${m.spec}, this reader speaks ${minorOf(spec)}; open it with the ${m.generator.name}${m.generator.version ? ` ${m.generator.version}` : ''} that wrote it`);
 
   for (const path of entries.keys()) {
     const bad = pathIssue(path);
