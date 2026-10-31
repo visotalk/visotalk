@@ -14,7 +14,7 @@ import {homedir} from 'node:os';
 import {dirname, join} from 'node:path';
 import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
-import {Browser, computeExecutablePath, detectBrowserPlatform, install} from '@puppeteer/browsers';
+import {Browser, computeExecutablePath, detectBrowserPlatform, install, uninstall} from '@puppeteer/browsers';
 import {PINNED_CHROME} from '@visotalk/exporter';
 import {FONTS, fontFile, isInstalled} from './fonts.ts';
 
@@ -126,7 +126,10 @@ function check(): Item[] {
 
 const fixers: Record<string, (h: string) => Promise<void>> = {
   async chrome(h) {
-    await install({browser: Browser.CHROMEHEADLESSSHELL, buildId: PINNED_CHROME, cacheDir: join(h, 'chrome'), platform: detectBrowserPlatform()});
+    const build = {browser: Browser.CHROMEHEADLESSSHELL, buildId: PINNED_CHROME, cacheDir: join(h, 'chrome'), platform: detectBrowserPlatform()};
+    // an install cut off midway leaves the build's folder without its executable, and install() then refuses every retry
+    if (!existsSync(chromeIn(h))) await uninstall(build);
+    await install(build);
   },
   async kokoro(h) {
     for (const f of KOKORO) if (!hasSize(join(h, 'kokoro', f.file), f.bytes)) await download(f.url, join(h, 'kokoro', f.file), f);

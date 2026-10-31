@@ -8,7 +8,8 @@
  * Korean have their own sans.
  */
 import {spawnSync} from 'node:child_process';
-import {existsSync, mkdirSync, statSync, writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {existsSync, mkdirSync, readFileSync, statSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {themeTokens, type VisoDoc} from '@visotalk/ir';
 
@@ -80,15 +81,18 @@ const languageOf = (lang: string): 'zh' | 'ja' | 'ko' | undefined => (/^(zh|zho|
 
 /**
  * The fonts a document uses, and the sans and display stacks to draw with: the families it names in any of its three stacks, and, for a Chinese,
- * Japanese or Korean document that names no face for its script, its language's sans added to the sans and display stacks
+ * Japanese or Korean document that names no face for its script, its language's sans added to the sans and display stacks. A family the document's
+ * own code names in quotes (a part's `fontFamily: '"Noto Serif SC", serif'`, passed in `source`) is embedded beside them, so a heading face is never
+ * left to whatever the viewer's machine has.
  */
-export function fontPlan(doc: Pick<VisoDoc, 'theme' | 'meta'>): {fonts: Font[]; sans: string; display?: string} {
+export function fontPlan(doc: Pick<VisoDoc, 'theme' | 'meta'>, source = ''): {fonts: Font[]; sans: string; display?: string} {
   const {sans, mono, display} = themeTokens(doc.theme).fonts;
   const named = FONTS.filter((f) => [sans, mono, display ?? ''].some((stack) => mentions(stack, f.family)));
+  const inSource = FONTS.filter((f) => !named.includes(f) && mentions(source, f.family));
   const language = languageOf(doc.meta.lang);
   const fallback = language && !named.some((f) => HAN.has(f.family)) ? FONTS.find((f) => f.defaultFor === language) : undefined;
-  if (!fallback) return {fonts: named, sans, ...(display && {display})};
-  return {fonts: [...named, fallback], sans: withFamily(sans, fallback.family), ...(display && {display: withFamily(display, fallback.family)})};
+  if (!fallback) return {fonts: [...named, ...inSource], sans, ...(display && {display})};
+  return {fonts: [...named, fallback, ...inSource.filter((f) => f !== fallback)], sans: withFamily(sans, fallback.family), ...(display && {display: withFamily(display, fallback.family)})};
 }
 
 /**
@@ -105,9 +109,16 @@ export function writeFontFaces(fonts: Font[], fontsDir: string, python: string, 
   const rules = fonts.map((f) => {
     if (!isInstalled(fontsDir, f)) throw new Error(`the font "${f.family}" is not installed in ${fontsDir}: run visotalk doctor --fix`);
     const name = `${slug(f.family)}${f.style ? `-${f.style}` : ''}.woff2`;
-    const cut = spawnSync(python, ['-m', 'fontTools.subset', fontFile(fontsDir, f), `--text-file=${textFile}`, '--flavor=woff2', '--layout-features=*', `--output-file=${join(out, 'fonts', name)}`], {encoding: 'utf8'});
+    // cutting a CJK face takes seconds and every still, sheet and qa builds the player: a face cut from the same file to the same characters is kept
+    const src = fontFile(fontsDir, f), made = statSync(src);
+    const key = createHash('sha256').update(JSON.stringify([src, made.size, made.mtimeMs, [...chars].sort().join('')])).digest('hex');
+    const keyFile = join(out, 'fonts', `${name}.key`);
+    const rule = `@font-face {font-family: "${f.family}"; src: url(./fonts/${name}) format("woff2"); font-weight: ${f.weight}; font-style: ${f.style ?? 'normal'};}`;
+    if (existsSync(join(out, 'fonts', name)) && existsSync(keyFile) && readFileSync(keyFile, 'utf8') === key) return rule;
+    const cut = spawnSync(python, ['-m', 'fontTools.subset', src, `--text-file=${textFile}`, '--flavor=woff2', '--layout-features=*', `--output-file=${join(out, 'fonts', name)}`], {encoding: 'utf8'});
     if (cut.status !== 0) throw new Error(`could not cut "${f.family}" down to the document's characters (${python} -m fontTools.subset; doctor --fix installs fonttools and brotli): ${cut.stderr.trim().split('\n').slice(-2).join(' ')}`);
-    return `@font-face {font-family: "${f.family}"; src: url(./fonts/${name}) format("woff2"); font-weight: ${f.weight}; font-style: ${f.style ?? 'normal'};}`;
+    writeFileSync(keyFile, key);
+    return rule;
   });
   writeFileSync(join(out, 'fonts.css'), `${rules.join('\n')}\n`);
   return 'fonts.css';

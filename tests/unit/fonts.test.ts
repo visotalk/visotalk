@@ -22,6 +22,18 @@ test('fonts: a family named in the stack is the one used, whatever the language'
   assert.deepEqual(fontPlan(doc('en', '"Newsreader", serif')).fonts.map((f) => f.style ?? 'normal'), ['normal', 'italic'], 'a family with an italic brings both');
 });
 
+test('fonts: a family a part names is embedded too, without losing the language default', () => {
+  const part = `export const T = {display: '"Noto Serif SC", serif'};`;
+  const zh = fontPlan(doc('zh-CN'), part);
+  assert.deepEqual(zh.fonts.map((f) => f.family), ['Noto Sans SC', 'Noto Serif SC'], 'the Chinese sans stays the text face; the heading face comes beside it');
+  assert.equal(zh.sans, '"Inter", "Noto Sans SC", sans-serif');
+  const named = fontPlan(doc('zh-CN', '"Noto Sans SC", sans-serif'), part);
+  assert.deepEqual(named.fonts.map((f) => f.family), ['Noto Sans SC', 'Noto Serif SC'], 'beside the stack\'s faces, once each');
+  assert.deepEqual(fontPlan(doc('en'), `fontFamily: "'Newsreader', serif"`).fonts.map((f) => f.style ?? 'normal'), ['normal', 'italic'], 'an English document with a display face');
+  assert.deepEqual(fontPlan(doc('en'), '<text fontFamily="LXGW WenKai">x</text>').fonts.map((f) => f.family), ['LXGW WenKai'], 'a JSX attribute names it too');
+  assert.deepEqual(fontPlan(doc('en'), 'a serif display face for headings').fonts, [], 'a family is named in quotes, not mentioned in prose');
+});
+
 test('fonts: the display stack is embedded like the others, and a CJK document keeps its script beside Latin faces', () => {
   const styled = {meta: {lang: 'zh-CN'}, theme: {id: 'visotalk/dark', tokens: {fonts: {sans: '"Hanken Grotesk", sans-serif', mono: '"JetBrains Mono", monospace', display: '"Big Shoulders Display", sans-serif'}}}} as Parameters<typeof fontPlan>[0];
   const plan = fontPlan(styled);
@@ -63,6 +75,9 @@ test('fonts: a face is cut down to the document\'s characters and written with i
   assert.ok(existsSync(join(out, 'fonts', 'noto-sans-sc.woff2')));
   assert.match(readFileSync(join(out, 'fonts.css'), 'utf8'), /font-family: "Noto Sans SC"; src: url\(\.\/fonts\/noto-sans-sc\.woff2\) format\("woff2"\); font-weight: 100 900/);
   assert.throws(() => writeFontFaces([FONTS[0]], '/nowhere', python, 'x', out), /not installed.*doctor --fix/);
+  // the same face cut to the same characters is kept (a Python that cannot run proves nothing was cut); new characters cut it again
+  assert.equal(writeFontFaces([FONTS[0]], dir, '/bin/false', '\u5929\u7a7a', out), 'fonts.css');
+  assert.throws(() => writeFontFaces([FONTS[0]], dir, '/bin/false', '\u5929\u7a7a\u84dd', out), /could not cut/);
 });
 
 test('fonts: an artifact carries its CJK face as a file beside the page, with the rule inline', async (t) => {

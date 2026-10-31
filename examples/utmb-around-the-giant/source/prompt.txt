@@ -1,0 +1,14 @@
+Use the visotalk skill.
+
+# Brief T2: UTMB
+
+Make an English explainer video about UTMB (the Ultra-Trail du Mont-Blanc), rich in pictures and graphics. You may use material from the internet. It must run under 3 minutes.
+
+Research, the script, the visuals and the production are all yours to decide. Do not stop to ask anything; deliver the finished page.
+
+## Fixed rules
+
+- **Narration:** MiniMax text-to-speech only, voice `English_Trustworthy_Man`, speed 1.0. The key is in the environment as `MINIMAX_API_KEY`, and the account is a mainland China one, so the API base is `MINIMAX_BASE_URL` (`https://api.minimaxi.com`). No other speech engine, and no narration audio taken from elsewhere.
+- **Delivery is a web page, not a video file:** `out/index.html` plus any files it needs inside `out/`, referenced by relative paths. A 1920×1080 stage. Opening the page in a browser and clicking play must show the whole video with its narration.
+- **Never render or encode a video** (MP4 or any other format), and never export frame by frame. Single-frame screenshots to check your own work are fine.
+- **Notes:** write `out/NOTES.md` with the script, the sources and licences of any material you used, how to play the page, and anything left unfinished.

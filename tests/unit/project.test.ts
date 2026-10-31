@@ -434,6 +434,13 @@ test('init: a vertical script gets a 9:16 canvas and word captions, a horizontal
   assert.doesNotMatch(skeleton({title: 'T', lines}), /exports=/);
 });
 
+test('a name a file imports and declares again is refused: the bundler keeps the local one, and a component named like its import draws itself', async () => {
+  const {redeclared} = await import('../../packages/cli/src/project.ts');
+  const scene = "import {K, Check, Hand} from './art.tsx';\nimport {Seal as Mark} from './art.tsx';\n\nexport const Check = () => <Check s={2} />;\nconst Mark = 1;\nfunction Hand() {}\nconst Other = () => null;\n";
+  assert.deepEqual(redeclared('check.tsx', scene).map((i) => [i.code, i.at]), [['code.redeclared', 'check.tsx:4'], ['code.redeclared', 'check.tsx:5'], ['code.redeclared', 'check.tsx:6']]);
+  assert.deepEqual(redeclared('ok.tsx', "import {Check as Tick} from './art.tsx';\nexport const Check = () => <Tick />;\n"), [], 'an import under another name is fine');
+});
+
 test('three: a part that imports three or its addons gets the engine\'s copy, in the document\'s bundle only', async () => {
   const {readFileSync, readdirSync} = await import('node:fs');
   const {buildPlayer, load} = await import('../../packages/cli/src/project.ts');

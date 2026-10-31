@@ -48,6 +48,8 @@ export interface RenderOptions {
   reset?: 'flow' | 'display' | 'none';
   /** also measure each frame's layout for QA (window.__visotalk.inspect) */
   inspect?: boolean;
+  /** with `inspect`, the frames whose picture is wanted; the others are only measured, with no screenshot (most of what a frame costs) */
+  shots?: number[];
   /** called for every captured frame */
   onFrame?: (i: number, img: Buffer) => void;
   log?: (s: string) => void;
@@ -210,6 +212,8 @@ async function renderUnlocked(o: RenderOptions, {url, meta, version}: Session, f
     if (o.encode && to <= from) throw new Error(`no frames to encode between ${from} and ${to} (the film has ${total})`);
     const encoder = (running = o.encode ? streamEncoder(ext, to - from, join(out, o.layer?`video.${o.layer}`:o.over?'overlay.mov':'video.mp4'), fps, from, o.layer??(o.over?'mov':undefined),o.fpsRate) : undefined);
     const inspections: Record<number, unknown> = {};
+    if (o.shots && (!o.inspect || o.encode || o.saveFrames)) throw new Error('`shots` picks the frames to screenshot among frames that are only inspected');
+    const wanted = o.shots && new Set(o.shots);
     let seekMs = 0, captureMs = 0, gpu: string | undefined;
     const t0 = performance.now();
     // progress across every browser at once, at most every `progressMs` (and at the last frame): done, rate, and the time left at that rate
@@ -237,10 +241,15 @@ async function renderUnlocked(o: RenderOptions, {url, meta, version}: Session, f
         }
         for (const i of chunk) {
           const a = performance.now();
-          await d.page.evaluate(`window.__visotalk.seek(${i})`);
-          if (o.inspect) inspections[i] = await d.page.evaluate('window.__visotalk.inspect()');
+          await drawn(i, fps, d.page.evaluate(`window.__visotalk.seek(${i})`));
+          if (o.inspect) inspections[i] = await drawn(i, fps, d.page.evaluate('window.__visotalk.inspect()'));
           const b = performance.now();
-          const img = (await d.frame(format === 'jpeg' ? {format: 'jpeg', quality: JPEG_QUALITY} : {format: 'png'}))!;
+          if (wanted && !wanted.has(i)) {
+            await drawn(i, fps, d.frame());
+            progress();
+            continue;
+          }
+          const img = (await drawn(i, fps, d.frame(format === 'jpeg' ? {format: 'jpeg', quality: JPEG_QUALITY} : {format: 'png'})))!;
           seekMs += b - a;
           captureMs += performance.now() - b;
           hashes[i] = createHash('sha256').update(img).digest('hex').slice(0, 16);
@@ -434,6 +443,27 @@ function run(cmd: string, args: string[], input?: (stdin: NodeJS.WritableStream)
 const X264 = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p'];
 /** The quality of a JPEG frame handed to the encoder */
 const JPEG_QUALITY = 90;
+
+/**
+ * How long one step of drawing a frame may take. A frame takes well under a second, and waiting for its fonts, pictures and what a part holds a few;
+ * a page past this is stuck, most often in a part that loops forever (a component that renders itself), and Chrome would only say "Target closed"
+ * minutes later. Exported for tests.
+ */
+export const FRAME_LIMIT_MS = 30_000;
+
+/** `step` of drawing frame `i`, or an error naming the frame and its time once it has taken longer than `limit` */
+export async function drawn<T>(i: number, fps: number, step: Promise<T>, limit = FRAME_LIMIT_MS): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const stuck = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`frame ${i} (${(i / fps).toFixed(2)} s) did not finish drawing in ${limit / 1000} s: a part on screen then is stuck, most often a component that renders itself (one named like a component it imports) or a loop that never ends`)), limit);
+  });
+  try {
+    return await Promise.race([step, stuck]);
+  } finally {
+    clearTimeout(timer);
+    step.catch(() => {});
+  }
+}
 
 /**
  * An ffmpeg that encodes the frames it is handed through its stdin, in order: `write(i)` waits until frame `i - 1` has gone in (browsers finish out of

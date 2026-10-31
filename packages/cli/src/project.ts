@@ -109,7 +109,26 @@ export function codeIssues(p: Project): Issue[] {
       for (const f of FORBIDDEN) if (f.re.test(code)) issues.push({code: 'code.nondeterministic', at: `${basename(file)}:${first + i}`, message: `${f.what} in ${code.slice(0, 60)}: a frame must be a function of its time`, fix: f.use});
     });
   }
+  for (const {file, text} of [{file: p.file, text: p.prelude}, ...localSources(p)]) issues.push(...redeclared(basename(file), text));
   return [...issues, ...unboundTags(p, parts.map(({x, at}) => ({first: p.locs.get(at)?.line ?? 1, text: x.body ?? ''})))];
+}
+
+/** The names a file imports */
+const importedNames = (text: string) => [...text.matchAll(/\bimport\s+([^;'"]*?)\s+from\s+['"]/g)].flatMap((m) =>
+  m[1].replace(/[{}]/g, ',').split(',').flatMap((item) => /(?:^|\bas\s+)([A-Za-z_$][\w$]*)\s*$/.exec(item.trim())?.[1] ?? []));
+
+/**
+ * A name a file both imports and declares at its top level: TypeScript refuses it, but the bundler keeps the file's own and drops the import without a
+ * word, so a component named like the one it imports draws itself, forever, and the page hangs on its first frame
+ */
+export function redeclared(file: string, text: string): Issue[] {
+  const imported = new Set(importedNames(text));
+  const issues: Issue[] = [];
+  text.split('\n').forEach((line, i) => {
+    const name = /^(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function\*?|class|const|let|var)\s+([A-Za-z_$][\w$]*)/.exec(line)?.[1];
+    if (name && imported.has(name)) issues.push({code: 'code.redeclared', at: `${file}:${i + 1}`, message: `${name} is imported and declared again in ${file}: the file's own ${name} replaces the import, so a <${name}> inside it draws itself forever and the page hangs`, fix: `rename one of them, or import it as another name (\`import {${name} as ${name}Mark} from …\`)`});
+  });
+  return issues;
 }
 
 /** The names the module's own code binds: what it imports, and what it declares at the start of a statement */
@@ -538,7 +557,14 @@ async function runtimeShims(work: string): Promise<{entry: string; alias: Record
  * and `app.<hash>.js`, this document's module and data (with `app.<hash>.css` beside it). A file that is the same in two builds has the same name in both,
  * so a browser, or a store, that has it needs it no more. The page (`index.html`, or `player.html` for an artifact) is the one fixed name.
  */
-export async function buildPlayer(p: Project, opts: {out?: string; minify?: boolean; artifact?: boolean; theme?: string} = {}): Promise<string> {
+/** Everything the document's text is drawn from: the document, its language's overlay and its own imported files */
+const documentText = (p: Project) => [readFileSync(p.file, 'utf8'), p.overlay?.text ?? '', ...localSources(p).map((x) => x.text)].join('\n');
+
+/** The faces a build embeds for this document (`fontPlan` over its own text) */
+export const facesOf = (p: Project) => fontPlan(p.doc, documentText(p));
+
+/** `sound: false` leaves out the mixed soundtrack (about twenty seconds of ffmpeg): a page driven frame by frame for pictures (still, sheet, qa, render) never plays it */
+export async function buildPlayer(p: Project, opts: {out?: string; minify?: boolean; artifact?: boolean; theme?: string; sound?: boolean} = {}): Promise<string> {
   checkNarrationVoice(p);
   const voicePath = join(p.work, 'voice.json');
   if (!existsSync(voicePath)) prepare(p);
@@ -548,18 +574,18 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   for (const dir of ['assets', 'audio', 'fonts']) rmSync(join(dist, dir), {recursive: true, force: true});
   for (const f of readdirSync(dist)) if (/^(app|runtime|soundtrack)\.[0-9a-f]{12}\.(js|css|mp3)$/.test(f)) rmSync(join(dist, f));
   const doc = ingest(p, dist, opts.artifact);
-  // the embedded faces: the families the document names, or its language's default, cut to the document's characters and embedded (an artifact page loads no stylesheet: its rules go inline in player.html)
-  const faces = fontPlan(p.doc);
+  // the embedded faces: the families the document names (in its theme or its parts' code), or its language's default, cut to the document's characters and embedded (an artifact page loads no stylesheet: its rules go inline in player.html)
+  const faces = facesOf(p);
   if (faces.fonts.length) {
     if (!process.env.VISOTALK_FONTS) throw new Error(`the font "${faces.fonts[0].family}" is not installed: run visotalk doctor --fix`);
-    writeFontFaces(faces.fonts, process.env.VISOTALK_FONTS, PYTHON(), [readFileSync(p.file, 'utf8'), p.overlay?.text ?? '', ...localSources(p).map((x) => x.text)].join('\n'), p.work);
+    writeFontFaces(faces.fonts, process.env.VISOTALK_FONTS, PYTHON(), documentText(p), p.work);
     doc.theme = {id: doc.theme?.id ?? DEFAULT_THEME, tokens: {...doc.theme?.tokens, fonts: {...themeTokens(doc.theme).fonts, sans: faces.sans, ...(faces.display && {display: faces.display})}}};
   }
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));
   const entry = join(p.work, 'entry.tsx');
   const voice = JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest;
   // every player plays one track, the film's whole soundtrack mixed as the video's is; the clips and sounds stay beside it for what plays without a build (the web editor's edits)
-  const mix = await mixSoundtrack(p, doc, voice, dist);
+  const mix = opts.sound === false ? undefined : await mixSoundtrack(p, doc, voice, dist);
   // the document is also a module: its parts' React runs in the player
   writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './voice.json';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any${mix ? `, mix: '${mix}'` : ''}});\n`);
   const shims = await runtimeShims(p.work);

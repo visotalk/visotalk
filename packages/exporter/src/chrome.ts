@@ -2,6 +2,7 @@
 import {existsSync, linkSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import puppeteer, {type Browser, type CDPSession, type HTTPRequest, type HTTPResponse, type Page} from 'puppeteer-core';
 
 /** The chrome-headless-shell build (Chrome for Testing) the goldens were recorded with: another build can paint other pixels */
@@ -186,5 +187,60 @@ export async function withChromeLock<T>(fn: () => Promise<T>): Promise<T> {
     } catch {
       // already gone
     }
+  }
+}
+
+/** What the live player puts on the page (packages/runtime/src/host.tsx) */
+type LivePage = {__visotalkPlayer?: {clock: {getTime(): number}; duration: number}};
+
+export interface PlayCheck {
+  /** seconds of film that went by after Play, on the page's own clock */
+  ran: number;
+  /** whether any sound began (an audio element played, or a buffer started on the audio clock) */
+  sounded: boolean;
+  /** the film's length, in seconds */
+  duration: number;
+  /** requests for anything that is not in the page's folder (file:, data: and blob: are) */
+  outside: string[];
+  /** what failed: requests that did not load, page errors and console errors */
+  problems: string[];
+}
+
+/**
+ * Open a built page as a viewer does, from its folder (file://), in an ordinary (not driven) Chrome that needs a gesture before it plays sound, press
+ * Play with a real click, and watch the film run for a moment: what an agent would otherwise test by hand after every build.
+ */
+export async function checkPlays(chrome: string, dist: string): Promise<PlayCheck> {
+  const browser = await puppeteer.launch({executablePath: chrome, headless: 'shell', args: ['--no-sandbox', '--mute-audio', '--autoplay-policy=user-gesture-required']});
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({width: 1280, height: 720});
+    const outside: string[] = [], problems: string[] = [];
+    page.on('request', (r) => void (/^(file|data|blob):/.test(r.url()) || outside.push(r.url())));
+    page.on('requestfailed', (r) => void problems.push(`${r.url().split('/').pop()} did not load (${r.failure()?.errorText ?? 'failed'})`));
+    page.on('pageerror', (e) => void problems.push(`page error: ${e instanceof Error ? e.message : String(e)}`));
+    page.on('console', (m) => void (m.type() === 'error' && problems.push(`console: ${m.text()}`)));
+    // count every sound that begins: the narration plays from an audio element (a mix) or from buffers on the audio clock
+    await page.evaluateOnNewDocument(() => {
+      const w = window as unknown as {__vtSounded: number};
+      w.__vtSounded = 0;
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) { w.__vtSounded++; return play.call(this); };
+      const start = AudioBufferSourceNode.prototype.start;
+      AudioBufferSourceNode.prototype.start = function (this: AudioBufferSourceNode, ...a: Parameters<AudioBufferSourceNode['start']>) { w.__vtSounded++; return start.apply(this, a); };
+    });
+    await page.goto(pathToFileURL(join(dist, 'index.html')).href, {waitUntil: 'load'});
+    await page.waitForSelector('#vt-start', {visible: true, timeout: 20000});
+    await page.click('#vt-start');
+    const time = () => page.evaluate(() => (window as unknown as LivePage).__visotalkPlayer?.clock.getTime() ?? 0);
+    const from = await time();
+    // the clock holds while the media at the playhead loads, so give it a few seconds to get going, then let it run for two
+    await page.waitForFunction((t0: number) => ((window as unknown as LivePage).__visotalkPlayer?.clock.getTime() ?? 0) > t0 + 0.2, {timeout: 15000, polling: 100}, from).catch(() => {});
+    await new Promise((r) => setTimeout(r, 2000));
+    const ran = (await time()) - from;
+    const {sounded, duration} = await page.evaluate(() => ({sounded: (window as unknown as {__vtSounded: number}).__vtSounded > 0, duration: (window as unknown as LivePage).__visotalkPlayer?.duration ?? 0}));
+    return {ran, sounded, duration, outside, problems};
+  } finally {
+    await browser.close();
   }
 }

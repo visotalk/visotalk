@@ -1,6 +1,6 @@
 import {after, test} from 'node:test';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
+import {execFileSync, spawnSync} from 'node:child_process';
 import {existsSync, mkdtempSync, readFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -124,4 +124,24 @@ test('render in segments: a segment counts as done only with all its frames, and
   const keys = frames.map((l, i) => (l.includes('K') ? i : -1)).filter((i) => i >= 0);
   assert.ok(keys.includes(0) && keys.includes(40), `a key frame where each segment starts: ${keys}`);
   assert.ok(!existsSync(join(dir, 'video.part.mp4')));
+});
+
+test('still --zoom: x,y,w,h in stage pixels; the region is cut from the full-size frame and stops at its edge', async (t) => {
+  const {parseZoom, cropImage} = await import('../../packages/exporter/src/sheet.ts');
+  assert.deepEqual(parseZoom('100, 200,640,360'), {x: 100, y: 200, w: 640, h: 360});
+  assert.throws(() => parseZoom('100,200,640'), /four whole numbers/);
+  assert.throws(() => parseZoom('0,0,-5,100'), /four whole numbers/);
+  assert.throws(() => parseZoom('0,0,20,100'), /at least 40 x 40/);
+  const frame = spawnSync('ffmpeg', ['-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc=size=1920x1080', '-frames:v', '1', '-f', 'image2pipe', '-c:v', 'png', '-'], {maxBuffer: 64 << 20});
+  if (frame.status !== 0) return t.skip('no ffmpeg');
+  // a PNG's width and height are the two big-endian words after the IHDR tag
+  const size = (b: Buffer) => [b.readUInt32BE(16), b.readUInt32BE(20)];
+  assert.deepEqual(size(cropImage(frame.stdout, {x: 100, y: 200, w: 640, h: 360})), [640, 360]);
+  assert.deepEqual(size(cropImage(frame.stdout, {x: 1600, y: 900, w: 640, h: 360})), [320, 180], 'clipped at the right and bottom edges');
+});
+
+test('render: a frame step that never ends stops with the frame and its time, not a closed target minutes later', async () => {
+  const {drawn} = await import('../../packages/exporter/src/render.ts');
+  assert.equal(await drawn(3, 30, Promise.resolve('ok'), 50), 'ok');
+  await assert.rejects(drawn(150, 30, new Promise(() => {}), 50), /^Error: frame 150 \(5\.00 s\) did not finish drawing in 0\.05 s: .*renders itself/);
 });

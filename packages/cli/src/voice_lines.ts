@@ -8,7 +8,8 @@
  * a language it cannot align keeps real word anchors), and prints a JSON manifest {line_id: {file, duration}}.
  *
  * A provider is a function `(request) => {audio, ext, words?}`: a built-in one (`minimax`, `elevenlabs`, `volcengine`, `openai`), or the default export of a module whose path starts with `.` or `/`
- * (resolved from the current directory, which `prepare` sets to the document's own). `words` are one entry per whitespace token of `say`, in seconds from the clip start.
+ * (resolved from the current directory, which `prepare` sets to the document's own). `words` are one entry per token of `say` (a word between spaces; in Chinese, Japanese and
+ * Thai a character, as `speechTokens` splits it), in seconds from the clip start.
  * Credentials come from the environment, never from the document:
  *   minimax     MINIMAX_API_KEY (optional: MINIMAX_GROUP_ID, MINIMAX_TTS_MODEL, MINIMAX_BASE_URL: the default is the international site, https://api.minimaxi.com for a China account)
  *   elevenlabs  ELEVENLABS_API_KEY (optional: ELEVENLABS_BASE_URL, ELEVENLABS_MODEL); `voice` is a voice id
@@ -20,6 +21,7 @@ import {randomUUID} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {normalizeWord, speechTokens} from '@visotalk/ir';
 import {clipKey} from './clip_key.ts';
 
 export interface SpeakRequest {say: string; voice: string; lang: string; speed: number}
@@ -41,6 +43,7 @@ const key = (token: string) => token.toLowerCase().replace(/[^a-z0-9'\p{Script=H
  * it, as the aligner does. Undefined when the words it heard are not the words in `say`: a silent mismatch would move every anchor after it.
  */
 export function minimaxWords(entries: MinimaxEntry[], say: string): Word[] | undefined {
+  if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}]/u.test(say)) return unspacedWords(entries, say);
   const heard: Heard[] = [];
   let run: MinimaxEntry[] = [];
   const flush = () => {
@@ -51,6 +54,33 @@ export function minimaxWords(entries: MinimaxEntry[], say: string): Word[] | und
   for (const e of entries) (e.word.trim() ? run.push(e) : flush());
   if (run.length) flush();
   return matchWords(heard, say);
+}
+
+/**
+ * MiniMax times Chinese and Japanese a character at a time (punctuation included), which is the unit a phrase is matched in there (ADR 0019): its entries
+ * are matched to the tokens of `say` as `speechTokens` splits it, a token with no letters keeping an empty span at the end of the one before. MiniMax folds a
+ * pause into the character after it (measured: after a comma, a 0.47 s entry whose first 0.38 s are silent), so a character more than twice as long as the
+ * line's middle one is taken to start that long before its end. Undefined when the characters heard are not the ones in `say`.
+ */
+function unspacedWords(entries: MinimaxEntry[], say: string): Word[] | undefined {
+  const heard = entries.map((e) => ({text: normalizeWord(e.word), t0: e.time_begin / 1000, t1: e.time_end / 1000})).filter((h) => h.text);
+  const lengths = heard.map((h) => h.t1 - h.t0).sort((a, b) => a - b);
+  const typical = lengths[Math.floor((lengths.length - 1) / 2)] ?? 0;
+  const ms = (t: number) => Math.round(t * 1000) / 1000;
+  const out: Word[] = [];
+  let k = 0, last = 0;
+  for (const token of speechTokens(say)) {
+    const want = normalizeWord(token.text);
+    if (!want) { out.push({w: '', t0: last, t1: last}); continue; }
+    let got = '';
+    const first = heard[k];
+    while (k < heard.length && got !== want && want.startsWith(got + heard[k].text)) got += heard[k++].text;
+    if (got !== want) return undefined;
+    const end = heard[k - 1].t1;
+    const start = end - first.t0 > 2 * typical && first === heard[k - 1] ? end - typical : first.t0;
+    out.push({w: want, t0: ms(start), t1: (last = ms(end))});
+  }
+  return k === heard.length ? out : undefined;
 }
 
 /** The words a provider heard, in seconds, matched one to one to the whitespace tokens of `say`; undefined when they are not the same words */

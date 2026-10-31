@@ -149,7 +149,7 @@ export function alignmentIssues(doc: VisoDoc, c: Compiled): QaIssue[] {
     issues.push({
       code: 'align.estimated', at: 'document', objects: [],
       message: `line${estimated.length > 1 ? 's' : ''} ${estimated.slice(0, 8).map((l) => `"${l}"`).join(', ')}${estimated.length > 8 ? ` and ${estimated.length - 8} more` : ''} ha${estimated.length > 1 ? 've' : 's'} no word times for an anchored phrase, so word anchors in ${estimated.length > 1 ? 'them are' : 'it are'} placed by character position and can be off by half a second`,
-      fix: 'run `visotalk prepare` with torch and torchaudio installed (English only); otherwise keep an anchored word near the start of its line',
+      fix: 'name a voice that returns word times (MiniMax, ElevenLabs, Volcengine), or for English run `visotalk prepare` with torch and torchaudio installed; otherwise keep an anchored word near the start of its line',
     });
   }
   return issues;

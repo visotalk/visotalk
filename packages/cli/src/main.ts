@@ -13,7 +13,7 @@
  *   visotalk check    <doc.tsx> [--samples 40]   render sampled frames twice (second run in random order) and compare
  *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--full] [--limit 12]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.jpg
  *   visotalk sheet    <doc.tsx> [--at 0.85] [--shots] [--theme ID] [--out FILE.jpg]   contact sheet (JPEG, about 1280 wide): one frame per line at that fraction; --shots: one per shot of a video recording, at its middle
- *   visotalk still    <doc.tsx> --line SCENE/LINE[,SCENE/LINE…] [--at 0.85] | --time SECONDS[,SECONDS…]  [--theme ID] [--png] [--out FILE.jpg] [--out-each FILE.jpg,…]   frames as 1280x720 JPEG (--png: full-size 1920x1080 PNG), one Chrome run for all of them: each with what was measured on it and what the sentence names; --out-each writes each moment to its own file, in order, for a program
+ *   visotalk still    <doc.tsx> --line SCENE/LINE[,SCENE/LINE…] [--at 0.85] | --time SECONDS[,SECONDS…]  [--zoom X,Y,W,H] [--theme ID] [--png] [--out FILE.jpg] [--out-each FILE.jpg,…]   frames as JPEG, up to four to a picture (--png: full-size 1920x1080 PNG; --zoom: that region of the stage, in its pixels, at full resolution), one Chrome run for all of them: each with what was measured on it and what the sentence names
  *   visotalk style    list | show <slug-or-directory> | use <slug-or-directory> <doc.tsx> | check <doc.tsx>   copy a complete independent style; check local locks and component metadata
  *   visotalk asset    search "<words>" [--limit 8] | get <N> --id NAME   openly licensed pictures (Wikimedia Commons, Openverse): candidates as text, then one saved to media/ with its <Asset> declaration
  *   visotalk export   <doc.tsx> [--out FILE.visotalk] [--cover FILE] [--player]   the talk as one file: its source, its voice if it is prepared, captions and credits; --player: the built talk instead, which plays and has no document to open
@@ -22,11 +22,11 @@
  *
  * Every command that reads a document but export takes --lang LANG: the document in the language of the overlay doc.<lang>.json beside it.
  */
-import {existsSync, readFileSync, statSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
+import {existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
 import {alignmentIssues, captionsSrt, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
-import {contactSheet, lookImage, frameFacts, frameIssues, frameMeasured, renderBuilt, renderSegmented, servePlayer, type FrameInspection, type RenderOptions} from '@visotalk/exporter';
+import {checkPlays, contactSheet, cropImage, findChrome, lookImage, frameFacts, frameIssues, frameMeasured, parseZoom, renderBuilt, renderSegmented, servePlayer, withChromeLock, type FrameInspection, type RenderOptions} from '@visotalk/exporter';
 import {blockFrames, emptyAppearIssues, lineWindows, targetFrames, targetIssues} from './targets.ts';
 import {applyDefaults, doctor} from './doctor.ts';
 import {skeleton, type Script} from './init.ts';
@@ -38,10 +38,10 @@ import {fontWarning, unavailableFonts} from './fonts.ts';
 import {styleCmd} from './style.ts';
 import {assetCmd} from './asset.ts';
 import {Looks} from './looks.ts';
-import {narrationHint, narrationSource, anchoredWords, exportAudio, buildPlayer, check, checkNarrationVoice, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, speaks, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
+import {narrationHint, narrationSource, anchoredWords, exportAudio, buildPlayer, check, checkNarrationVoice, facesOf, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, speaks, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
-const COMMANDS = ['doctor', 'sound', 'recording', 'init', 'schema', 'asset', 'style', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
+const COMMANDS = ['doctor', 'recording', 'init', 'schema', 'asset', 'style', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
 const opt = (n: string, d?: string) => (rest.includes(`--${n}`) ? rest[rest.indexOf(`--${n}`) + 1] : d);
 const flag = (n: string) => rest.includes(`--${n}`);
 
@@ -80,6 +80,46 @@ function summarize(issues: Array<{code: string; at: string; message: string; fix
     if (g.fix) log(`${' '.repeat(18)} fix: ${g.fix}`);
   }
   if (all.length > shown.length) log(`… ${all.length - shown.length} more group(s); every issue is in ${file} (--full prints them)`);
+}
+
+/** What a built page holds, in one sentence: its captions, the faces embedded in it, and its files (`files`: the artifact's list; else all under `dist`) */
+function builtContents(p: Parameters<typeof speaks>[0], dist: string, files?: string[]) {
+  const all = files ?? (function walk(dir: string): string[] {
+    return readdirSync(dir, {withFileTypes: true}).flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)).map((f) => join(e.name, f)) : [e.name]));
+  })(dist);
+  const bytes = all.reduce((n, f) => n + statSync(join(dist, f)).size, 0);
+  const mode = p.doc.exports?.captions ?? 'burned';
+  const captions = !speaks(p) ? 'no narration, so no captions' : mode === 'none' || mode === 'sidecar' ? `captions not on screen (exports.captions "${mode}")` : `captions on screen (${mode})`;
+  const families = [...new Set(facesOf(p).fonts.map((f) => f.family))];
+  const faces = families.length ? `faces embedded, cut to the film's characters: ${families.join(', ')}` : 'no face embedded beyond the player\'s Inter and JetBrains Mono';
+  return `${captions}; ${faces}; ${all.length} files, ${(bytes / 1e6).toFixed(1)} MB`;
+}
+
+/**
+ * After `build`: open the page as a viewer does and say whether it plays, so the agent that built it does not test it in a browser of its own.
+ * A page that does not play is an error (exit 1) with what went wrong.
+ */
+async function reportBuilt(p: Parameters<typeof speaks>[0], dist: string) {
+  let chrome: string;
+  try {
+    chrome = findChrome(opt('chrome'));
+  } catch {
+    return console.log(`built ${dist} (not checked in a browser: no Chrome here; \`visotalk doctor --fix\` installs it)`);
+  }
+  const c = await withChromeLock(() => checkPlays(chrome, dist));
+  const failures = [
+    ...c.problems,
+    ...(c.outside.length ? [`it loads ${c.outside.length} file(s) from outside its folder: ${c.outside.slice(0, 3).join(', ')}`] : []),
+    ...(c.ran < 1 ? [`after Play the film ran ${c.ran.toFixed(1)} s in two seconds`] : []),
+    ...(speaks(p) && !c.sounded ? ['no sound began after Play'] : []),
+  ];
+  if (failures.length) {
+    console.error(`built ${dist}, but in Chrome from file:// it does not play as it should:\n  ${failures.join('\n  ')}`);
+    process.exit(1);
+  }
+  const length = `${Math.floor(c.duration / 60)}:${String(Math.round(c.duration % 60)).padStart(2, '0')}`;
+  console.log(`built ${dist}, ${length} long; checked in Chrome from file://: Play (#vt-start, or Space) started it and the film ran${speaks(p) ? ' with its narration' : ''}; `
+    + `nothing is loaded from outside the folder. It holds: ${builtContents(p, dist)}. Deliver it as it is: there is nothing left to check in the browser or in the folder.`);
 }
 
 /** `visotalk schema`: what a document is made of and the hooks a part calls */
@@ -205,6 +245,9 @@ async function main() {
   const p = load(file, opt('lang'));
   const fonts = fontWarning(unavailableFonts(p.doc));
   if (fonts && !flag('json')) console.error(fonts);
+  // a film that sets neither its ground nor a style is drawn on the theme's grey with one sans: it plays, and looks unmade
+  if (!p.doc.theme?.tokens?.colors?.bg && !existsSync(join(p.dir, 'style')) && p.doc.scenes.some((s) => s.parts.length) && !flag('json'))
+    console.error('look.default: the film draws on the theme\'s default ground and faces (no `bg` in <Doc tokens>, no style/): give it a look of its own (the skill\'s "The look") and write its ground and faces on <Doc>');
 
   const issues = check(p);
   if (issues.length) {
@@ -287,15 +330,14 @@ async function main() {
       console.log(JSON.stringify({doc:p.doc.meta.id,frames:Math.round(c.duration*c.fps),fps:c.fps},null,1));return void console.log(`video: ${file}`);
     }
   }
-  const dist = await buildPlayer(p, {out: cmd === 'build' ? opt('out') : undefined, artifact: cmd === 'build' && flag('artifact'), theme: opt('theme')});
+  const dist = await buildPlayer(p, {out: cmd === 'build' ? opt('out') : undefined, artifact: cmd === 'build' && flag('artifact'), theme: opt('theme'), sound: cmd === 'build' || cmd === 'play'});
   if (cmd === 'build' && flag('artifact')) {
     const {files} = JSON.parse(readFileSync(join(dist, 'artifact.json'), 'utf8')) as {files: string[]};
     const big = files.find((f) => statSync(join(dist, f)).size > 16e6);
     if (big) throw new Error(`${big} is over the 16 MB an artifact allows for one file`);
-    const bytes = files.reduce((n, f) => n + statSync(join(dist, f)).size, 0);
-    return void console.log(`built ${dist}: publish player.html with the ${files.length} files of artifact.json (${(bytes / 1e6).toFixed(1)} MB; a face the document names, or its CJK default, goes with it; otherwise the player uses the system's)`);
+    return void console.log(`built ${dist}: publish player.html with the files of artifact.json. It holds: ${builtContents(p, dist, files)}.`);
   }
-  if (cmd === 'build') return void console.log(`built ${dist}`);
+  if (cmd === 'build') return void (await reportBuilt(p, dist));
 
   if (cmd === 'play') {
     const s = await servePlayer(dist, Number(opt('port', '4800')));
@@ -371,8 +413,12 @@ async function main() {
       }
     }
     const unique = [...new Set(frames)];
+    // --zoom x,y,w,h: that region of each frame at full resolution, for print too small to read in a whole frame
+    const zoom = opt('zoom') !== undefined ? parseZoom(opt('zoom')!) : undefined;
+    const stage = p.doc.canvas.presets[0];
+    if (zoom && (zoom.x >= stage.width || zoom.y >= stage.height)) throw new Error(`--zoom: the region starts outside the ${stage.width} x ${stage.height} stage (got ${opt('zoom')})`);
     const img = new Map<number, Buffer>();
-    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: unique, encode: false, inspect: true, theme: opt('theme'), chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, b)});
+    const taken = await renderBuilt({dist, out: join(p.work, 'still'), fps, frames: unique, encode: false, inspect: true, theme: opt('theme'), chrome: opt('chrome'), onFrame: (i, b) => void img.set(i, zoom ? cropImage(b, zoom) : b)});
     // `--out-each FILE,FILE…` is a program asking for files, not a model looking: one JPEG per moment asked for, to the file in the same place, outside the look budget
     if (opt('out-each')) {
       const files = opt('out-each')!.split(',').map((f) => resolve(f));
@@ -384,8 +430,9 @@ async function main() {
       return void console.log(`${files.length} frame(s) written`);
     }
     // What a model looks at. Every picture stays in its conversation, so: a frame unchanged since it was shown is answered in words; the new
-    // ones go into one picture (1280 wide, two per row, up to six), not one file each; past the document's look budget no picture is made
-    // unless --image asks. `--png` writes each frame full size, lossless, for the smallest print.
+    // ones go into one picture (two per row, up to four, each cell 960 wide, so small print stays legible), not one file each; past the
+    // document's look budget no picture is made unless --image asks. `--png` writes each frame full size, lossless; a zoomed region is
+    // shown at up to twice its size.
     // `--out FILE` is a caller asking for that file (a cover, a script): it is always written, and a .png name gets the full-size frame
     const big = flag('png') || /\.png$/.test(opt('out') ?? '');
     const force = flag('image') || opt('out') !== undefined;
@@ -408,11 +455,12 @@ async function main() {
           made++;
         }
       } else {
-        for (let i = 0; i < fresh.length; i += 6) {
-          const group = fresh.slice(i, i + 6);
+        const cell = zoom ? Math.min(960, 2 * zoom.w) : 960;
+        for (let i = 0; i < fresh.length; i += 4) {
+          const group = fresh.slice(i, i + 4);
           const file = named('jpg');
-          if (group.length === 1) lookImage(img.get(group[0])!, file);
-          else contactSheet(group.map((f) => img.get(f)!), file, {cols: 2, cellW: 640});
+          if (group.length === 1) lookImage(img.get(group[0])!, file, zoom ? Math.min(1280, 2 * zoom.w) : 1280);
+          else contactSheet(group.map((f) => img.get(f)!), file, {cols: 2, cellW: cell});
           L.spend(file, group.map((f) => ({h: hashOf.get(f)!, t: f / fps})));
           group.forEach((f, k) => where.set(f, group.length === 1 ? file : `${file}, picture ${k + 1} (row ${Math.floor(k / 2) + 1}, ${k % 2 ? 'right' : 'left'})`));
           made++;
@@ -469,7 +517,9 @@ async function main() {
     let made = 0;
     for (const v of variants) {
       const images = new Map<number, Buffer>();
+      // qa measures the page, not the picture: only the frames on its sheet are screenshot, as JPEG (a 1080p PNG took about half a second)
       const r = await renderBuilt({dist, out, fps, frames, inspect: cmd === 'qa', concurrency: Number(opt('concurrency', '2')), saveFrames: flag('frames'),
+        ...(cmd === 'qa' && !flag('frames') ? {shots: samples.map((x) => x.frame), format: 'jpeg' as const} : {}),
         encode: false, preset: v.preset, theme: v.theme, chrome: opt('chrome'), onFrame: (i, img) => void images.set(i, img)});
       // about 1280 wide in all, as JPEG: an overview to find the frames worth a closer look, not to read small print on. The same sheet as one
       // already shown is not made again, and past the look budget none is made unless --image asks
@@ -482,7 +532,7 @@ async function main() {
       else if (!force && ledger.left() <= 0) sheet = 'no picture (look budget used)';
       else {
         sheet = resolve(p.work, opt('out', join(out, `${cmd}-${ledger.images + 1}${looks.length ? `-${nameOf(v).replace(/\W+/g, '-')}` : ''}.jpg`))!);
-        contactSheet(cells, sheet, {cols: cmd === 'qa' || cells.length > 9 ? 4 : 3, cellW: cmd === 'qa' || cells.length > 9 ? 320 : 424});
+        contactSheet(cells, sheet, {cols: cmd === 'qa' || cells.length > 9 ? 4 : 3, cellW: cmd === 'qa' || cells.length > 9 ? 320 : 424, ext: cmd === 'qa' && !flag('frames') ? 'jpg' : 'png'});
         ledger.spend(sheet, [{h}]);
         made++;
       }

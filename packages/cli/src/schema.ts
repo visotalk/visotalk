@@ -1,4 +1,16 @@
-/** What a document is made of and the hooks a part calls: what `visotalk schema` prints. The reference page of the documentation is held to it by a test. */
+/** What a document is made of, the hooks a part calls and the theme tokens' values: what `visotalk schema` prints. The reference page of the documentation is held to it by a test. */
+import {THEMES} from '@visotalk/ir';
+import {FONTS} from './fonts.ts';
+
+/** Each built-in theme's tokens, read from the themes themselves, so a part can match a colour without opening the engine's source */
+const themes = Object.fromEntries(Object.entries(THEMES).map(([id, {tokens: t}]) => [id,
+  `${Object.entries(t.colors).map(([k, v]) => `--vt-${k} ${v}`).join(' · ')} · --vt-sans ${t.fonts.sans} · --vt-mono ${t.fonts.mono} · radius ${t.radius} · space ${t.space.join(' ')}`]));
+
+/** The faces a film can use, so an agent need not look for fonts on the machine: the player brings its own and `build` embeds the rest */
+const faces = [...new Map(FONTS.map((f) => [f.family, f])).values()]
+  .map((f) => `${f.family}${f.defaultFor ? ` (default sans for ${f.defaultFor})` : ''}${FONTS.some((g) => g.family === f.family && g.style === 'italic') ? ' (with italic)' : ''} ${f.weight === '400' ? '400' : f.weight.replace(' ', '–')}`)
+  .join(', ');
+
 export const SCHEMA = {
   tags: {
     Doc: 'id title lang  [description poster sources generator created updated spec theme tokens voice speed lexicon canvas pacing exports keepClear]   the root; children: Canvas, Asset, Part (global: outlives the scenes), Scene',
@@ -33,5 +45,9 @@ export const SCHEMA = {
     'useSounds()': 'the <Sound>s as [{asset, start, end?}] in seconds of the video, for a picture that answers a sound (a flash on a hit)',
     '<Video asset in? start? rate? fit?>': 'a clip of an <Asset kind="video">: from `in` seconds of the source at `rate`, starting `start` seconds into the scene; its sound is not used',
     'random(key)': 'a deterministic random generator: the same key gives the same numbers; Math.random is refused',
+  },
+  themes: {
+    ...themes,
+    faces: `installed by \`visotalk doctor --fix\` and embedded by \`build\`, cut to the film's characters, when the theme's font stacks or a part's code name them in quotes: ${faces}; the player always has Inter (400, 700) and JetBrains Mono. A page never uses the viewer's fonts: there is nothing to look for on this machine`,
   },
 };

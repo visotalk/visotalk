@@ -1,6 +1,6 @@
 # Explainers that explain a source: what holds for any topic
 
-Read this when the video reports what studies, a paper or a dataset found, and when the same format is made again and again (a series). It is practice, not syntax: the
+Read this for the cover, for a lesson with formulas, when the video reports what studies, a paper or a dataset found, and when the same format is made again and again (a series). It is practice, not syntax: the
 syntax is in `markup.md`.
 
 ## The first frame
@@ -9,6 +9,13 @@ Frame 0 is the thumbnail and the first thing a viewer sees. Give it a part that 
 a chapter rail if the film has one. A poster is one illustration, one big figure and one short line, nothing else; the next scene's picture replaces it a few seconds in
 (`<Disappear target="poster" line="l1" word="…"/>`). A cover for a platform is that frame; a vertical film whose lower half is the caption block gets a cover with the poster
 lifted to the middle of the canvas, made from `still --time 0` and a crop.
+
+## A lesson and its formulas
+
+A viewer taught a law or a distribution expects to see its notation. A formula is a picture in HTML: variables in italic, powers and indices with `<sup>` and
+`<sub>`, a fraction as a column over a rule, Greek letters as characters (λ, μ, σ). Draw it large beside the chart it describes, one `<Obj>` per term, and light each
+term (its colour or weight) on the word that names it. The narration says what a term means; it does not read the formula out. A value in it that a line changes
+(λ = 4) is a prop a `<Tween>` counts, and the chart beside it follows the same prop.
 
 ## A phone screen (9x16)
 

@@ -1,0 +1,15 @@
+Use the visotalk skill.
+
+# Brief T3: probability distributions, in Mandarin
+
+Make an explainer video, in Mandarin Chinese, about the main kinds of probability distribution in statistics. Tie each one to everyday life so it is never dry. It must run under 5 minutes.
+
+Research, the script, the visuals and the production are all yours to decide. Do not stop to ask anything; deliver the finished page.
+
+## Fixed rules
+
+- **Narration:** MiniMax text-to-speech only, voice `Chinese (Mandarin)_Sincere_Adult`, speed 1.0. The key is in the environment as `MINIMAX_API_KEY`, and the account is a mainland China one, so the API base is `MINIMAX_BASE_URL` (`https://api.minimaxi.com`). No other speech engine, and no narration audio taken from elsewhere.
+- **Subtitles:** simplified Chinese, shown on the page in sync with the narration.
+- **Delivery is a web page, not a video file:** `out/index.html` plus any files it needs inside `out/`, referenced by relative paths. A 1920×1080 stage. Opening the page in a browser and clicking play must show the whole video with its narration and subtitles.
+- **Never render or encode a video** (MP4 or any other format), and never export frame by frame. Single-frame screenshots to check your own work are fine.
+- **Notes:** write `out/NOTES.md` with the script, the sources of any material you used, how to play the page, and anything left unfinished.

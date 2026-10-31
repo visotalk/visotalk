@@ -22,16 +22,23 @@ test('--help and no arguments print the usage', () => {
   }
 });
 
-test('schema lists the tags, the motions and the hooks a part calls, and refuses another topic', () => {
+test('the usage names every command the CLI accepts', () => {
+  const commands = cli('nosuchcommand').stderr.match(/one of: (.+)/)![1].trim().split(' ');
+  const usage = cli('--help').stderr;
+  for (const c of commands) assert.match(usage, new RegExp(`[<|\\s]${c}[|>\\s]`), `usage does not name "${c}"`);
+});
+
+test('schema lists the tags, the motions, the hooks a part calls and the theme tokens\' values, and refuses another topic', () => {
   const all = cli('schema');
   assert.equal(all.status, 0);
   for (const word of ['Scene ', 'Appear ', 'where it starts', 'useTarget(id)', 'useProp(name, base)', 'useProp(id, name, base)', 'random(key)']) assert.match(all.stdout, new RegExp(word.replace(/[()]/g, '\\$&')));
   assert.doesNotMatch(all.stdout, /Beat|pattern|PartRef/);
   assert.match(cli('schema', 'hooks').stdout, /^hooks:/);
-  assert.deepEqual(Object.keys(JSON.parse(cli('schema', '--json').stdout)), ['tags', 'motions', 'hooks']);
+  assert.match(cli('schema', 'themes').stdout, /visotalk\/dark\s+--vt-bg #0B0E14 .*--vt-data #6CB6FF/);
+  assert.deepEqual(Object.keys(JSON.parse(cli('schema', '--json').stdout)), ['tags', 'motions', 'hooks', 'themes']);
   const bad = cli('schema', 'objects');
   assert.equal(bad.status, 1);
-  assert.match(bad.stderr, /unknown topic "objects"; one of: tags motions hooks/);
+  assert.match(bad.stderr, /unknown topic "objects"; one of: tags motions hooks themes/);
 });
 
 
@@ -87,4 +94,36 @@ export default <Doc id="out-test" title="t" lang="en" canvas="16x9"><Scene id="s
   assert.equal(r.status, 0, r.stderr);
   assert.ok(existsSync(join(dir, '.visotalk', 'out-test', 'look.png')), 'next to the document\'s work files');
   assert.ok(!existsSync('look.png'), 'not in the working directory');
+});
+
+test('build opens the page it made in Chrome, presses Play and says that it plays, so nobody has to check it in a browser again', {skip: !process.env.VISOTALK_CHROME}, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'vt-build-'));
+  writeFileSync(join(dir, 'doc.tsx'), `import {Doc, Scene, Part, Animation, Appear} from '@visotalk/jsx';
+export default <Doc id="build-check" title="t" lang="en" canvas="16x9"><Scene id="s" duration={4}>
+  <Part id="dot" x={800} y={400} w={200} h={200}><div style={{width: 200, height: 200, borderRadius: 100, background: 'var(--vt-data)'}} /></Part>
+  <Animation><Appear target="dot" at="start" /></Animation></Scene></Doc>;`);
+  const r = cli('build', join(dir, 'doc.tsx'), '--out', join(dir, 'out'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /checked in Chrome from file:\/\/: Play \(#vt-start, or Space\) started it and the film ran/);
+  assert.match(r.stdout, /nothing is loaded from outside the folder/);
+  assert.match(r.stdout, /Deliver it as it is/);
+});
+
+test('a film on the theme\'s default ground and faces, with no style, is warned about; the example\'s own look is not', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'vt-look-'));
+  try {
+    for (const f of ['doc.tsx', 'parts/kit.tsx', 'parts/count.tsx', 'parts/orbit.tsx']) {
+      mkdirSync(join(dir, 'parts'), {recursive: true});
+      writeFileSync(join(dir, f), readFileSync(join('skills/visotalk/example', f), 'utf8'));
+    }
+    assert.doesNotMatch(cli('validate', join(dir, 'doc.tsx')).stderr, /look\.default/);
+    writeFileSync(join(dir, 'doc.tsx'), readFileSync(join(dir, 'doc.tsx'), 'utf8').replace(/\n\s*tokens=\{\{[^\n]*\}\}\}/, ''));
+    const r = cli('validate', join(dir, 'doc.tsx'));
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stderr, /^look\.default: /m);
+    mkdirSync(join(dir, 'style'));
+    assert.doesNotMatch(cli('validate', join(dir, 'doc.tsx')).stderr, /look\.default/, 'a work with a style has a look');
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
 });

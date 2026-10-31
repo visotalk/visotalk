@@ -4,6 +4,7 @@ import {existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync} from 'n
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {test} from 'node:test';
+import {alignedSpan} from '../../packages/ir/src/timeline.ts';
 import {elevenlabs, elevenLabsWords, minimax, minimaxWords, openai, run, volcengine, type MinimaxEntry, type SpeakRequest} from '../../packages/cli/src/voice_lines.ts';
 import {voiceProvider} from '../../packages/cli/src/project.ts';
 
@@ -30,6 +31,22 @@ test('minimax words: a spaced language that is not Latin, Korean, is timed word 
   const [an, nyeong, ha, se, yo] = [0xc548, 0xb155, 0xd558, 0xc138, 0xc694].map((c) => String.fromCodePoint(c));
   const entries = [e(an, 0, 100), e(nyeong, 100, 300), e(' ', 300, 300), e(ha, 320, 400), e(se, 400, 500), e(yo, 500, 700)];
   assert.deepEqual(minimaxWords(entries, `${an}${nyeong} ${ha}${se}${yo}`), [{w: `${an}${nyeong}`, t0: 0, t1: 0.3}, {w: `${ha}${se}${yo}`, t0: 0.32, t1: 0.7}]);
+});
+
+test('minimax words: Chinese is timed character by character, a pause is taken off the character after it, and anchors then use the times', () => {
+  // one-two-clock-in, comma, will-have: what MiniMax returned for the start of a measured sentence (ms), its pause before "will" folded into that character
+  const [yi, fen, zhong, li, comma, hui, you] = [0x4e00, 0x5206, 0x949f, 0x91cc, 0xff0c, 0x4f1a, 0x6709].map((c) => String.fromCodePoint(c));
+  const entries = [e(yi, 42, 213), e(fen, 213, 341), e(zhong, 341, 512), e(li, 512, 683), e(comma, 683, 725), e(hui, 725, 1195), e(you, 1195, 1365)];
+  const say = `${yi}${fen}${zhong}${li}${comma}${hui}${you}`;
+  const words = minimaxWords(entries, say);
+  assert.deepEqual(words, [
+    {w: yi, t0: 0.042, t1: 0.213}, {w: fen, t0: 0.213, t1: 0.341}, {w: zhong, t0: 0.341, t1: 0.512}, {w: li, t0: 0.512, t1: 0.683},
+    {w: '', t0: 0.683, t1: 0.683},
+    {w: hui, t0: 1.024, t1: 1.195}, {w: you, t0: 1.195, t1: 1.365},
+  ]);
+  const line = {say, words} as Parameters<typeof alignedSpan>[0];
+  assert.deepEqual(alignedSpan(line, `${hui}${you}`), {first: 5, last: 6}, 'the phrase is found among the timed characters, so it is not estimated');
+  assert.equal(minimaxWords(entries.slice(0, 6), say), undefined, 'a character missing from what was heard is refused');
 });
 
 test('minimax words: words other than the ones sent are refused rather than shifting every anchor after them', () => {
