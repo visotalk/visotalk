@@ -7,7 +7,6 @@
   </picture>
 </h1>
 
-**Narration is the new timeline.**<br>
 An open-source agent skill for explainer videos: a narration-driven motion engine and a library of built-in styles, ready out of the box.
 
 **English** · [&#20013;&#25991;](README.zh-CN.md)
