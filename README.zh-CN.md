@@ -7,9 +7,9 @@
   </picture>
 </h1>
 
-专注于讲解视频制作的开源 Agent Skill，基于旁白驱动的动效编排引擎和大量内置样式库，开箱即用。
-
 [English](README.md) · **简体中文**
+
+专注于讲解视频制作的开源 Agent Skill，基于旁白驱动的动效编排引擎和大量内置样式库，开箱即用。
 
 <a href="https://visotalk.dev/examples/"><img alt="观看示例" src="https://img.shields.io/badge/%E2%96%B6%20%E8%A7%82%E7%9C%8B%E7%A4%BA%E4%BE%8B-0E4F9C?style=for-the-badge"></a>
 <a href="https://visotalk.dev/styles/"><img alt="样式" src="https://img.shields.io/badge/%E6%A0%B7%E5%BC%8F-10%20%E7%A7%8D%E5%86%85%E7%BD%AE-262D38?style=for-the-badge"></a>
