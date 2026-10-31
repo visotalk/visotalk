@@ -7,12 +7,13 @@
   </picture>
 </h1>
 
-**English** · [&#20013;&#25991;](README.zh-CN.md)
-
+**Explainer videos are now your agent's job.**<br>
 An open-source agent skill for explainer videos: a narration-driven motion engine and a library of built-in styles, ready out of the box.
 
+**English** · [&#20013;&#25991;](README.zh-CN.md)
+
 <a href="https://visotalk.dev/examples/"><img alt="Watch the examples" src="https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20examples-0E4F9C?style=for-the-badge"></a>
-<a href="https://visotalk.dev/styles/"><img alt="Styles" src="https://img.shields.io/badge/Styles-10%20built%20in-262D38?style=for-the-badge"></a>
+<a href="https://visotalk.dev/styles/"><img alt="Styles" src="https://img.shields.io/badge/Styles-17%20built%20in-262D38?style=for-the-badge"></a>
 <a href="https://visotalk.dev/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-visotalk.dev-262D38?style=for-the-badge"></a>
 <a href="https://discord.gg/zDYMHqZMNy"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=for-the-badge&logo=discord&logoColor=white"></a>
 <a href="https://x.com/visotalk"><img alt="Follow on X" src="https://img.shields.io/badge/X-@visotalk-000000?style=for-the-badge&logo=x&logoColor=white"></a>
@@ -37,7 +38,7 @@ the narration and the picture follows. It is not a video generator: every frame 
 
 | | |
 |---|---|
-| **10** built-in styles | from a hand-drawn notebook to marks over your own footage |
+| **17** built-in styles | from a hand-drawn notebook to marks over your own footage |
 | **4** narration languages | English, Chinese, Japanese and Korean, with word-level timing in each |
 | **Frame for frame** | two renders of a document are identical, checked frame by frame in the regression suite |
 | **On your machine** | the voice (Kokoro), the word timing and the rendering run locally; roughly 4 to 8 s per second of video on four cores |
@@ -86,6 +87,22 @@ name, or ask the agent to make your own from it. Every sample plays on [visotalk
 <td width="50%" valign="top"><a href="https://visotalk.dev/styles/depth-stage/"><img src="https://visotalk.dev/styles/depth-stage/poster.jpg" alt="Depth Stage" width="100%"></a><br><b>Depth Stage</b> · <sub>story, science</sub><br><sub>Silhouette layers of a place at dusk under one camera that travels through them, haze paling what is far.</sub><br><sub><a href="https://visotalk.dev/styles/depth-stage/">▶ sample</a> · <a href="skills/visotalk/styles/depth-stage/STYLE.md">STYLE.md</a></sub></td>
 <td width="50%" valign="top"><a href="https://visotalk.dev/styles/ink-scroll/"><img src="https://visotalk.dev/styles/ink-scroll/poster.jpg" alt="Ink Scroll" width="100%"></a><br><b>Ink Scroll</b> · <sub>story, lesson</sub><br><sub>A handscroll unrolled from the right: ink washes bloom into hills and rivers, and a red seal is pressed on the conclusion.</sub><br><sub><a href="https://visotalk.dev/styles/ink-scroll/">▶ sample</a> · <a href="skills/visotalk/styles/ink-scroll/STYLE.md">STYLE.md</a></sub></td>
 </tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/field-atlas/"><img src="https://visotalk.dev/styles/field-atlas/poster.jpg" alt="Field Atlas" width="100%"></a><br><b>Field Atlas</b> · <sub>story, science, report</sub><br><sub>An atlas map the narration travels: a red route the camera rides, regions filled by value, a zoom from globe to town.</sub><br><sub><a href="https://visotalk.dev/styles/field-atlas/">▶ sample</a> · <a href="skills/visotalk/styles/field-atlas/STYLE.md">STYLE.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/evidence-board/"><img src="https://visotalk.dev/styles/evidence-board/poster.jpg" alt="Evidence Board" width="100%"></a><br><b>Evidence Board</b> · <sub>report, story</sub><br><sub>Sources pinned on dark felt: the camera pushes into the original line, a highlighter marks it, red thread ties the case.</sub><br><sub><a href="https://visotalk.dev/styles/evidence-board/">▶ sample</a> · <a href="skills/visotalk/styles/evidence-board/STYLE.md">STYLE.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/clay-world/"><img src="https://visotalk.dev/styles/clay-world/poster.jpg" alt="Clay World" width="100%"></a><br><b>Clay World</b> · <sub>science, story</sub><br><sub>Hand-pressed clay in real 3D under soft studio light: squeezed into being, landing with a squash, cut open.</sub><br><sub><a href="https://visotalk.dev/styles/clay-world/">▶ sample</a> · <a href="skills/visotalk/styles/clay-world/STYLE.md">STYLE.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/watercolor-tale/"><img src="https://visotalk.dev/styles/watercolor-tale/poster.jpg" alt="Watercolor Tale" width="100%"></a><br><b>Watercolor Tale</b> · <sub>story, lesson</sub><br><sub>An open picture book in transparent watercolour: wet washes glazed over pencil, and a page that turns.</sub><br><sub><a href="https://visotalk.dev/styles/watercolor-tale/">▶ sample</a> · <a href="skills/visotalk/styles/watercolor-tale/STYLE.md">STYLE.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/pixel-quest/"><img src="https://visotalk.dev/styles/pixel-quest/poster.jpg" alt="Pixel Quest" width="100%"></a><br><b>Pixel Quest</b> · <sub>tutorial, lesson</sub><br><sub>A 16-bit game screen: one stage per step, an XP bar that fills, and a boss for the hard part.</sub><br><sub><a href="https://visotalk.dev/styles/pixel-quest/">▶ sample</a> · <a href="skills/visotalk/styles/pixel-quest/STYLE.md">STYLE.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/riso-pop/"><img src="https://visotalk.dev/styles/riso-pop/poster.jpg" alt="Riso Pop" width="100%"></a><br><b>Riso Pop</b> · <sub>science, product</sub><br><sub>A two-ink risograph print: blue and pink shapes, halftone dots, violet overprints, plates that slip out of register.</sub><br><sub><a href="https://visotalk.dev/styles/riso-pop/">▶ sample</a> · <a href="skills/visotalk/styles/riso-pop/STYLE.md">STYLE.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/styles/live-studio/"><img src="https://visotalk.dev/styles/live-studio/poster.jpg" alt="Live Studio" width="100%"></a><br><b>Live Studio</b> · <sub>talking head, report</sub><br><sub>A broadcast package over your footage: layered straps, a channel bug and ticker, a score bar that ticks up.</sub><br><sub><a href="https://visotalk.dev/styles/live-studio/">▶ sample</a> · <a href="skills/visotalk/styles/live-studio/STYLE.md">STYLE.md</a></sub></td>
+<td width="50%" valign="top"></td>
+</tr>
 </table>
 
 `npx visotalk style list` prints every style with its scenarios; `visotalk style use <name>` copies one into your work to change.
@@ -108,6 +125,7 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 
 ## What's new
 
+- **0.7.1** · Seven more built-in styles, seventeen in all: [Field Atlas](skills/visotalk/styles/field-atlas/STYLE.md), [Evidence Board](skills/visotalk/styles/evidence-board/STYLE.md), [Clay World](skills/visotalk/styles/clay-world/STYLE.md), [Watercolor Tale](skills/visotalk/styles/watercolor-tale/STYLE.md), [Pixel Quest](skills/visotalk/styles/pixel-quest/STYLE.md), [Riso Pop](skills/visotalk/styles/riso-pop/STYLE.md) and [Live Studio](skills/visotalk/styles/live-studio/STYLE.md).
 - **0.7** · Graphics on your own recording ([On Air](skills/visotalk/styles/on-air/STYLE.md), [Marker Margin](skills/visotalk/styles/marker-margin/STYLE.md)), with `visotalk recording --trim` to cut hesitations and long pauses.
 - **0.7** · Ten built-in styles, grouped by the kind of video each is made for, and parts that draw in 3D with three.js.
 

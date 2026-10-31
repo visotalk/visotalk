@@ -172,11 +172,11 @@ function useRailLangs() {
   return {base, others, baseLabel: useText('rail-base-label', 'EN')};
 }
 const FS = 64; // the sentence's type size, before it is fitted to the frame
-const PIC_Y = 330; // centre of the pictures, at the top
+const PIC_Y = 280; // centre of the pictures, at the top
 const PIC_R = 54;
-const ROW_Y = 570; // centre of the sentence, under them
-const WAVE_Y = 650; // the spoken sentence's waveform, under the sentence
-const RULER_Y = 730; // the ruler of seconds, at the bottom
+const ROW_Y = 520; // centre of the sentence, under them
+const WAVE_Y = 600; // the spoken sentence's waveform, under the sentence
+const RULER_Y = 680; // the ruler of seconds, at the bottom
 /** The band the sentence's letters fill: a thread from the ruler stops short of it and starts again above it */
 const TEXT_TOP = ROW_Y - FS * 0.8, TEXT_BOTTOM = ROW_Y + FS * 0.6;
 const PX_PER_S = 300; // where a word is said, for the timestamps: a second of narration is this many px of the sentence
@@ -568,7 +568,7 @@ function GagCode() {
       </Obj>
       <Obj id="gag-word" style={{position: 'absolute', display: 'flex', alignItems: 'center', gap: 26}}>
         <span style={{fontFamily: MONO, fontSize: 26, color: GOOD, whiteSpace: 'pre'}}>VisoTalk</span>
-        <CodeLine parts={[['p', '<'], ['tag', 'Appear'], ['attr', ' on'], ['p', '='], ['str', '"sunlight"'], ['attr', ' line'], ['p', '='], ['str', '"l14"'], ['cue', ` word="${useText('gag-anchor', 'light')}"`], ['p', ' />']]} />
+        <CodeLine parts={[['p', '<'], ['tag', 'Appear'], ['attr', ' target'], ['p', '='], ['str', '"sunlight"'], ['attr', ' line'], ['p', '='], ['str', '"l14"'], ['cue', ` word="${useText('gag-anchor', 'light')}"`], ['p', ' />']]} />
       </Obj>
     </div>
   );
@@ -588,7 +588,7 @@ function LightClock() {
   const secs = useText('clk-secs', 's');
   const words: Array<[string, number, number]> = [[LET.text, LET.from, LET.to], [LIGHT.text, LIGHT.from, LIGHT.to]];
   const pinX = lerp(X(PIN_AT), X(LIGHT.from), smooth(hang));
-  const BY = 846, BH = 48, RY = 956, LY = 1040;
+  const BY = 700, BH = 48, RY = 810, LY = 890;
   return (
     <div style={{position: 'absolute', inset: 0}}>
       <svg width={1920} height={1080} style={{position: 'absolute', inset: 0}}>
@@ -638,10 +638,12 @@ const DOC_LINES: Array<{parts: Array<[string, string]>; tag?: string}> = [
   {parts: [['tag', '<Scene'], ['attr', ' id'], ['p', '='], ['str', '"growth"'], ['tag', '>']], tag: 'scene'},
   {parts: [['p', '  '], ['tag', '<Line'], ['attr', ' id'], ['p', '='], ['str', '"l1"'], ['tag', '>'], ['t', 'Sales tripled in a year.'], ['tag', '</Line>']], tag: 'line'},
   {parts: [['p', '  '], ['tag', '<Part'], ['attr', ' id'], ['p', '='], ['str', '"chart"'], ['tag', '>'], ['t', '<Bars data={SALES} />'], ['tag', '</Part>']], tag: 'part'},
-  {parts: [['p', '  '], ['tag', '<Appear'], ['attr', ' target'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" word="sales"'], ['tag', ' />']], tag: 'appear'},
-  {parts: [['p', '  '], ['tag', '<Tween'], ['attr', ' target'], ['p', '='], ['str', '"bar-4"'], ['attr', ' to'], ['p', '='], ['str', '{{h: 3}}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'tween'},
-  {parts: [['p', '  '], ['tag', '<Set'], ['attr', ' target'], ['p', '='], ['str', '"label"'], ['attr', ' to'], ['p', '='], ['str', '{{text: "×3"}}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'set'},
-  {parts: [['p', '  '], ['tag', '<Disappear'], ['attr', ' target'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" edge="end"'], ['tag', ' />']], tag: 'disappear'},
+  {parts: [['p', '  '], ['tag', '<Animation>']]},
+  {parts: [['p', '    '], ['tag', '<Appear'], ['attr', ' target'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" word="sales"'], ['tag', ' />']], tag: 'appear'},
+  {parts: [['p', '    '], ['tag', '<Tween'], ['attr', ' target'], ['p', '='], ['str', '"bar-4"'], ['attr', ' to'], ['p', '='], ['str', '{{h: 3}}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'tween'},
+  {parts: [['p', '    '], ['tag', '<Set'], ['attr', ' target'], ['p', '='], ['str', '"label"'], ['attr', ' to'], ['p', '='], ['str', '{{text: "×3"}}'], ['a', ' line="l1" word="tripled"'], ['tag', ' />']], tag: 'set'},
+  {parts: [['p', '    '], ['tag', '<Disappear'], ['attr', ' target'], ['p', '='], ['str', '"chart"'], ['a', ' line="l1" edge="end"'], ['tag', ' />']], tag: 'disappear'},
+  {parts: [['p', '  '], ['tag', '</Animation>']]},
   {parts: [['tag', '</Scene>']], tag: 'scene'},
 ];
 const SALES = [1, 1.3, 1.6, 1];
@@ -945,7 +947,7 @@ function LongFilm() {
         })()}
       </g>
       <g opacity={calm}>
-        <text x={960} y={910} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={34} fill="var(--vt-good)">one line longer · the later lines move, each animation still on its word</text>
+        <text x={960} y={880} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={34} fill="var(--vt-good)">one line longer · the later lines move, each animation still on its word</text>
       </g>
       <g opacity={snap}>
         <text x={L1} y={740} textAnchor="end" fontFamily="var(--vt-mono)" fontSize={26} fill="var(--vt-data)">{useText('bpm-label', '72 BPM · every scene ends on a bar')}</text>
@@ -1028,7 +1030,9 @@ function FlowCards() {
           <span style={{color: CODE.tag}}>{'<Scene '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>"proof"</span><span style={{color: CODE.tag}}>{'>\n'}</span>
           {'  '}<span style={{color: CODE.tag}}>{'<Line '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>"l18"</span><span style={{color: CODE.tag}}>{'>'}</span>{useText('script-line', 'Rewrite a line…')}<span style={{color: CODE.tag}}>{'</Line>\n'}</span>
           {'  '}<span style={{color: CODE.tag}}>{'<Part '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>"rail"</span><span style={{color: CODE.tag}}>{'>'}</span>{'<Rail />'}<span style={{color: CODE.tag}}>{'</Part>\n'}</span>
-          {'  '}<span style={{color: CODE.tag}}>{'<Tween '}</span><span style={{color: CODE.attr}}>target</span>=<span style={{color: CODE.str}}>"rail"</span>{' to={{ins2: 1}}\n         '}<span style={{color: CUE}}>{`word="${useText('script-anchor', 'rewrite a line')}"`}</span><span style={{color: CODE.tag}}>{' />\n'}</span>
+          {'  '}<span style={{color: CODE.tag}}>{'<Animation>\n'}</span>
+          {'    '}<span style={{color: CODE.tag}}>{'<Tween '}</span><span style={{color: CODE.attr}}>target</span>=<span style={{color: CODE.str}}>"rail"</span>{' to={{ins2: 1}}\n      '}<span style={{color: CODE.attr}}>line</span>=<span style={{color: CODE.str}}>"l18"</span>{' '}<span style={{color: CUE}}>{`word="${useText('script-anchor', 'rewrite a line')}"`}</span><span style={{color: CODE.tag}}>{' />\n'}</span>
+          {'  '}<span style={{color: CODE.tag}}>{'</Animation>\n'}</span>
           <span style={{color: CODE.tag}}>{'</Scene>'}</span>
         </div>
       </Card>
@@ -1105,7 +1109,7 @@ function WebPlayer() {
   const pause = useProp('pause', 0);
   const jump = useProp('jump', 0);
   const src = useProp('src', 0);
-  const L = 580, T = 170, IW = 760, SH = 428, total = 9;
+  const L = 580, T = 130, IW = 760, SH = 428, total = 9;
   const says = PLAY.map((p, i) => useText(`play-${i + 1}`, p.say));
   const sep = useText('play-sep', ' ');
   const k = Math.max(0, PLAY.findIndex((p) => pt >= p.from && pt < p.to));
@@ -1148,14 +1152,16 @@ function WebPlayer() {
         <span style={{fontFamily: MONO, fontSize: 20, color: MUTED}}>{`${mm(pt)} / ${mm(total)}`}</span>
       </div>
       {/* the document, the line being played lit */}
-      <div style={{position: 'absolute', left: L, top: T + SH + 64, width: IW, height: 760 - SH - 64, boxSizing: 'border-box', padding: '14px 20px', borderRadius: 6, background: PANEL, fontFamily: MONO, fontSize: 21, lineHeight: 1.65, whiteSpace: 'pre'}}>
+      <div style={{position: 'absolute', left: L, top: T + SH + 64, width: IW, height: 760 - SH - 64, boxSizing: 'border-box', padding: '14px 20px', borderRadius: 6, background: PANEL, fontFamily: MONO, fontSize: 21, lineHeight: 1.5, whiteSpace: 'pre'}}>
         <div style={{color: CODE.tag}}>{'<Scene id="moon">'}</div>
         {PLAY.map((p, i) => (
           <div key={i} style={{margin: '0 -20px', padding: '0 20px', background: i === k ? tint(CUE, 16) : 'transparent', boxShadow: i === k ? `inset 4px 0 0 ${CUE}` : 'none'}}>
             <span style={{color: CODE.tag}}>{'  <Line '}</span><span style={{color: CODE.attr}}>id</span>=<span style={{color: CODE.str}}>{`"l${i + 1}"`}</span><span style={{color: CODE.tag}}>{'>'}</span><span style={{color: TEXT}}>{says[i].split(' ').join(sep)}</span>
           </div>
         ))}
-        <div><span style={{color: CODE.tag}}>{'  <Appear '}</span><span style={{color: CODE.attr}}>target</span>=<span style={{color: CODE.str}}>"moon"</span> <span style={{color: k === 0 ? CUE : CODE.attr}}>{`word="${useText('play-anchor', 'Moon')}"`}</span><span style={{color: CODE.tag}}>{' />'}</span></div>
+        <div style={{color: CODE.tag}}>{'  <Animation>'}</div>
+        <div><span style={{color: CODE.tag}}>{'    <Appear '}</span><span style={{color: CODE.attr}}>target</span>=<span style={{color: CODE.str}}>"moon"</span> <span style={{color: CODE.attr}}>line</span>=<span style={{color: CODE.str}}>"l1"</span> <span style={{color: k === 0 ? CUE : CODE.attr}}>{`word="${useText('play-anchor', 'Moon')}"`}</span><span style={{color: CODE.tag}}>{' />'}</span></div>
+        <div style={{color: CODE.tag}}>{'  </Animation>'}</div>
       </div>
       <div style={{position: 'absolute', left: L + 24, top: T + 20, padding: '8px 16px', borderRadius: 8, background: CUE, color: '#14100c', fontFamily: MONO, fontSize: 22, fontWeight: 700, opacity: live}}>LIVE · doc.tsx</div>
       <div style={{position: 'absolute', left: L + IW / 2 - 50, top: T + 150, width: 100, height: 100, borderRadius: 50, background: 'rgba(11,14,20,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, opacity: pause}}>
@@ -1259,7 +1265,7 @@ function EndCard() {
 
 export default <Doc id="visotalk-intro" title="Narration is the new timeline" lang="en" poster={236.6} theme="visotalk/dark" canvas="16x9"
   tokens={{fonts: {sans: '"Inter", "Noto Sans SC", "Noto Sans JP", sans-serif', mono: '"JetBrains Mono", monospace'}}}
-  voice="minimax:English_Explanatory_Man" speed={1.1} exports={{variants: [{preset: "16x9"}], fps: 30, captions: "sidecar"}}>
+  voice="minimax:English_Explanatory_Man" speed={1.1} exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
   <Asset id="suosi-avatar" kind="image" src="suosi-avatar.jpg" source="https://avatars.githubusercontent.com/u/264293696" license={{id: "user-owned", obligations: []}} />
   <Asset id="oldest-cover" kind="image" src="oldest-cover.jpg" source="The Oldest Light (English cover, still --time 411.5)" license={{id: "user-owned", obligations: []}} />
   {/* A product-film music track, not in the repository (somebody else's track, 4 MB): python3 make-music.py fetches it into audio/music.mp3 (gitignored) */}
@@ -1369,16 +1375,16 @@ export default <Doc id="visotalk-intro" title="Narration is the new timeline" la
     <Line id="l16">Nothing waits for a second, or a frame. Every animation waits for a word.</Line>
     <Line id="l17" hold={1}>The engine speaks the script, times each word, and solves the timeline from them.</Line>
     <Part id="clock"><LightClock /></Part>
-    <Part id="gagcode" x={0} y={680} w={1920} h={100}><GagCode /></Part>
-    <Part id="nope" x={0} y={825} w={1920} h={80}>{() => (
+    <Part id="gagcode" x={0} y={575} w={1920} h={100}><GagCode /></Part>
+    <Part id="nope" x={0} y={700} w={1920} h={80}>{() => (
       <div style={{display: 'flex', justifyContent: 'center', gap: 60, fontFamily: MONO, fontSize: 46}}>
         <Obj id="nope-s" style={{color: MUTED, textDecoration: 'line-through', textDecorationColor: BAD, textDecorationThickness: 4}}>{useText('nope-s', 'at 0:02.4')}</Obj>
         <Obj id="nope-f" style={{color: MUTED, textDecoration: 'line-through', textDecorationColor: BAD, textDecorationThickness: 4}}>{useText('nope-f', 'frame #72')}</Obj>
       </div>
     )}</Part>
-    <Part id="code" x={0} y={925} w={1920} h={90}>{() => (
+    <Part id="code" x={0} y={790} w={1920} h={90}>{() => (
       <div style={{display: 'flex', justifyContent: 'center'}}>
-        <CodeLine parts={[['p', '<'], ['tag', 'Appear'], ['attr', ' on'], ['p', '='], ['str', '"moon"'], ['attr', ' line'], ['p', '='], ['str', '"l1"'], ['cue', ` word="${useText('play-anchor', 'Moon')}"`], ['p', ' />']]} />
+        <CodeLine parts={[['p', '<'], ['tag', 'Appear'], ['attr', ' target'], ['p', '='], ['str', '"moon"'], ['attr', ' line'], ['p', '='], ['str', '"l1"'], ['cue', ` word="${useText('play-anchor', 'Moon')}"`], ['p', ' />']]} />
       </div>
     )}</Part>
     <Animation>

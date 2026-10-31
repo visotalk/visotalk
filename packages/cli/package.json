@@ -1,6 +1,6 @@
 {
   "name": "visotalk",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "VisoTalk: explainer videos whose timeline is the narration. Write one, then validate, play and render it to video",
   "license": "MIT",
   "repository": {"type": "git", "url": "git+https://github.com/visotalk/visotalk.git", "directory": "packages/cli"},

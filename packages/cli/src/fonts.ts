@@ -9,7 +9,7 @@
  */
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {existsSync, mkdirSync, readFileSync, statSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {themeTokens, type VisoDoc} from '@visotalk/ir';
 
@@ -26,6 +26,8 @@ export interface Font {
   sha256: string;
   /** the weights the file holds: a variable face is a range, a single weight one number (bold is then synthesised) */
   weight: string;
+  /** the face's path inside `file` when the face is published only as a zip archive: `file` is the pinned archive, and a build reads the face out of it */
+  member?: string;
 }
 
 const NOTO = 'https://raw.githubusercontent.com/notofonts/noto-cjk';
@@ -38,18 +40,29 @@ export const FONTS: Font[] = [
   {family: 'LXGW WenKai', file: 'LXGWWenKai-Regular.ttf', url: 'https://github.com/lxgw/LxgwWenKai/releases/download/v1.530/LXGWWenKai-Regular.ttf', bytes: 25928940, sha256: '2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b', weight: '400'},
   {family: 'Newsreader', file: 'Newsreader-VF.ttf', url: `${GOOGLE_FONTS}/newsreader/Newsreader%5Bopsz,wght%5D.ttf`, bytes: 451664, sha256: '8a08d13f8a6c0d51be379a60af84f945f65369a67e509ee3c3bdcc421254d7c1', weight: '200 800'},
   {family: 'Newsreader', style: 'italic', file: 'Newsreader-Italic-VF.ttf', url: `${GOOGLE_FONTS}/newsreader/Newsreader-Italic%5Bopsz,wght%5D.ttf`, bytes: 495684, sha256: '796668611f80b64d5adf182fde3b6f29ed83b4e7cbec7b96937e84ac01364792', weight: '200 800'},
-  // the built-in styles' faces (skills/visotalk/styles): red-pencil's hand, lab-notebook's hand and text, stage-light's figures and text, on-air's text
+  // the built-in styles' faces (skills/visotalk/styles): red-pencil's hand, lab-notebook's hand and text, stage-light's figures and text, on-air's text, riso-pop's display
   {family: 'Caveat', file: 'Caveat-VF.ttf', url: `${GOOGLE_FONTS}/caveat/Caveat%5Bwght%5D.ttf`, bytes: 403648, sha256: '0bdb6b660482d31531b3945849fba5916b3ef8695da7024a9e6b9ee3c4157988', weight: '400 700'},
   {family: 'Shantell Sans', file: 'ShantellSans-VF.ttf', url: `${GOOGLE_FONTS}/shantellsans/ShantellSans%5BBNCE,INFM,SPAC,wght%5D.ttf`, bytes: 1284736, sha256: 'd98a7913853f78d71aa0b86daf66b5eddb5a3266c07bfd51ef70632b88c41084', weight: '300 800'},
   {family: 'Atkinson Hyperlegible Next', file: 'AtkinsonHyperlegibleNext-VF.ttf', url: `${GOOGLE_FONTS}/atkinsonhyperlegiblenext/AtkinsonHyperlegibleNext%5Bwght%5D.ttf`, bytes: 114552, sha256: '5a455d1cfa099b601ab70751bb9673e8fe1854dc4500c80e1a220d0d75e31745', weight: '200 800'},
   {family: 'Big Shoulders Display', file: 'BigShouldersDisplay-VF.ttf', url: `${GOOGLE_FONTS}/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf`, bytes: 219532, sha256: '60e208dc276a1c35fc5b62e94f9fb959c40c11783a9eb7548175c14b1fbeb720', weight: '100 900'},
+  // pixel-quest's faces: Silkscreen for the game's labels and titles, on an 8-unit pixel grid; Fusion Pixel (12 px grid, Latin and Chinese) for its
+  // text, captions and Chinese, published only as a zip of one face per language, so the archive is pinned and the Simplified Chinese face read from it
+  {family: 'Silkscreen', file: 'Silkscreen-Regular.ttf', url: `${GOOGLE_FONTS}/silkscreen/Silkscreen-Regular.ttf`, bytes: 32220, sha256: 'c845473330b94c2079ce9af01c51ac8ba2d99c24f4d14c039843bbb8e642ebd8', weight: '400'},
+  {family: 'Silkscreen', file: 'Silkscreen-Bold.ttf', url: `${GOOGLE_FONTS}/silkscreen/Silkscreen-Bold.ttf`, bytes: 30632, sha256: '768476aa712d4f5c3e18d3bce80f980a8bd3f72b7094d22ec5e768df3acfed61', weight: '700'},
+  {family: 'Fusion Pixel 12px Prop zh-Hans', file: 'fusion-pixel-font-12px-proportional-ttf-v2026.09.25.zip', member: 'fusion-pixel-12px-proportional-zh_hans.ttf', url: 'https://github.com/TakWolf/fusion-pixel-font/releases/download/2026.09.25/fusion-pixel-font-12px-proportional-ttf-v2026.09.25.zip', bytes: 49414580, sha256: '47585b9c4b6d8d57380e9dec75bc7e8043fdbfa77d1843c3aaa19a1e7bd15d50', weight: '400'},
   {family: 'Hanken Grotesk', file: 'HankenGrotesk-VF.ttf', url: `${GOOGLE_FONTS}/hankengrotesk/HankenGrotesk%5Bwght%5D.ttf`, bytes: 132892, sha256: '813b3f8fa0965405669a89b38e51bbefd95eef6b8e20d1cb2d8c10cce062662f', weight: '100 900'},
+  // clay-world's rounded face, for its titles, labels and captions
+  {family: 'Fredoka', file: 'Fredoka-VF.ttf', url: `${GOOGLE_FONTS}/fredoka/Fredoka%5Bwdth,wght%5D.ttf`, bytes: 159184, sha256: '2ba02e68b152868aef9ba28e24b3648c7d457fe6f25c761f2c2c53fb61a73fc8', weight: '300 700'},
+  // riso-pop's and watercolor-tale's display serif, for headlines, figures and a storybook's titles
+  {family: 'Fraunces', file: 'Fraunces-VF.ttf', url: `${GOOGLE_FONTS}/fraunces/Fraunces%5BSOFT,WONK,opsz,wght%5D.ttf`, bytes: 360440, sha256: '177ff6c0f14e5550a3c624247cd1189611d4eb65d000b14944c63d967958abbb', weight: '100 900'},
+  // watercolor-tale's pencilled hand
+  {family: 'Patrick Hand', file: 'PatrickHand-Regular.ttf', url: `${GOOGLE_FONTS}/patrickhand/PatrickHand-Regular.ttf`, bytes: 214772, sha256: '0f173b3e6cb6d1af25babf7f0057c5ac4ee11f9992b0469bb817e967ef4ad0fc', weight: '400'},
 ];
 
 /** Faces every player carries (`@visotalk/runtime` bundles them), so a document may name them without the catalogue */
 const BUNDLED = ['Inter', 'JetBrains Mono'];
 /** Faces that draw Han characters: a Chinese or Japanese document that names none of them gets its language's sans beside the faces it names */
-const HAN = new Set(['Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Serif SC', 'LXGW WenKai']);
+const HAN = new Set(['Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Serif SC', 'LXGW WenKai', 'Fusion Pixel 12px Prop zh-Hans']);
 const GENERIC = /^(serif|sans-serif|monospace|cursive|fantasy|system-ui|math|emoji|fangsong|ui-[a-z-]+)$/i;
 
 /** The family names of a font stack, in order: `"Big Shoulders Display", sans-serif` → ['Big Shoulders Display', 'sans-serif'] */
@@ -108,14 +121,21 @@ export function writeFontFaces(fonts: Font[], fontsDir: string, python: string, 
   writeFileSync(textFile, [...chars].join(''));
   const rules = fonts.map((f) => {
     if (!isInstalled(fontsDir, f)) throw new Error(`the font "${f.family}" is not installed in ${fontsDir}: run visotalk doctor --fix`);
-    const name = `${slug(f.family)}${f.style ? `-${f.style}` : ''}.woff2`;
+    const name = `${slug(f.family)}${f.style ? `-${f.style}` : ''}${/^[1-9]00$/.test(f.weight) && f.weight !== '400' ? `-${f.weight}` : ''}.woff2`;
     // cutting a CJK face takes seconds and every still, sheet and qa builds the player: a face cut from the same file to the same characters is kept
     const src = fontFile(fontsDir, f), made = statSync(src);
-    const key = createHash('sha256').update(JSON.stringify([src, made.size, made.mtimeMs, [...chars].sort().join('')])).digest('hex');
+    const key = createHash('sha256').update(JSON.stringify([src, f.member ?? null, made.size, made.mtimeMs, [...chars].sort().join('')])).digest('hex');
     const keyFile = join(out, 'fonts', `${name}.key`);
     const rule = `@font-face {font-family: "${f.family}"; src: url(./fonts/${name}) format("woff2"); font-weight: ${f.weight}; font-style: ${f.style ?? 'normal'};}`;
     if (existsSync(join(out, 'fonts', name)) && existsSync(keyFile) && readFileSync(keyFile, 'utf8') === key) return rule;
-    const cut = spawnSync(python, ['-m', 'fontTools.subset', src, `--text-file=${textFile}`, '--flavor=woff2', '--layout-features=*', `--output-file=${join(out, 'fonts', name)}`], {encoding: 'utf8'});
+    let face = src;
+    if (f.member) {
+      const open = spawnSync(python, ['-c', 'import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])', src, f.member, join(out, 'fonts')], {encoding: 'utf8'});
+      if (open.status !== 0) throw new Error(`could not read ${f.member} out of ${src}: ${open.stderr.trim().split('\n').slice(-1)[0]}`);
+      face = join(out, 'fonts', f.member);
+    }
+    const cut = spawnSync(python, ['-m', 'fontTools.subset', face, `--text-file=${textFile}`, '--flavor=woff2', '--layout-features=*', `--output-file=${join(out, 'fonts', name)}`], {encoding: 'utf8'});
+    if (f.member) rmSync(face, {force: true});
     if (cut.status !== 0) throw new Error(`could not cut "${f.family}" down to the document's characters (${python} -m fontTools.subset; doctor --fix installs fonttools and brotli): ${cut.stderr.trim().split('\n').slice(-2).join(' ')}`);
     writeFileSync(keyFile, key);
     return rule;
