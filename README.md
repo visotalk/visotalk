@@ -7,9 +7,9 @@
   </picture>
 </h1>
 
-An open-source agent skill for explainer videos: a narration-driven motion engine and a library of built-in styles, ready out of the box.
-
 **English** · [&#20013;&#25991;](README.zh-CN.md)
+
+An open-source agent skill for explainer videos: a narration-driven motion engine and a library of built-in styles, ready out of the box.
 
 <a href="https://visotalk.dev/examples/"><img alt="Watch the examples" src="https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20examples-0E4F9C?style=for-the-badge"></a>
 <a href="https://visotalk.dev/styles/"><img alt="Styles" src="https://img.shields.io/badge/Styles-10%20built%20in-262D38?style=for-the-badge"></a>
