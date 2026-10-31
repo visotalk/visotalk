@@ -1,13 +1,16 @@
 <div align="center">
 
-<img src="docs/brand/icon.svg" alt="VisoTalk" width="96" height="96">
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://visotalk.dev/lockup-dark.svg">
+    <img src="docs/brand/lockup.svg" alt="VisoTalk" width="360">
+  </picture>
+</h1>
 
-# VisoTalk
+**Narration is the new timeline.**<br>
+An open-source agent skill for explainer videos: a narration-driven motion engine and a library of built-in styles, ready out of the box.
 
-**Explainer videos your coding agent can write, check and render.**<br>
-The narration is the timeline: rewrite a line, change the voice or the language, and the picture stays on the words.
-
-**English** · [Chinese](README.zh-CN.md)
+**English** · [&#20013;&#25991;](README.zh-CN.md)
 
 <a href="https://visotalk.dev/examples/"><img alt="Watch the examples" src="https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20examples-0E4F9C?style=for-the-badge"></a>
 <a href="https://visotalk.dev/styles/"><img alt="Styles" src="https://img.shields.io/badge/Styles-10%20built%20in-262D38?style=for-the-badge"></a>
@@ -30,12 +33,8 @@ The narration is the timeline: rewrite a line, change the voice or the language,
 
 ## What it does
 
-Ask your agent for an explainer. It writes one file, `doc.tsx`: the narration, the pictures it shows (ordinary React), and the word each thing
-appears on. VisoTalk speaks the narration, times every word and solves the timeline from it; the same file plays in the browser and renders to MP4.
-
-It is not a video generator. Every frame is drawn by code from your words and your material, so the same document renders to the same frames
-every time, a fix is an edit to a sentence rather than to a timeline, and an animation that names a word the narration no longer says is an error
-before anything renders.
+Ask your agent for an explainer. It writes `doc.tsx`, where every animation starts on a word of the narration; rewrite, revoice or translate
+the narration and the picture follows. It is not a video generator: every frame is drawn by code, so a fix is an edit to a sentence.
 
 | | |
 |---|---|

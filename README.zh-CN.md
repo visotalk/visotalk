@@ -1,11 +1,14 @@
 <div align="center">
 
-<img src="docs/brand/icon.svg" alt="VisoTalk" width="96" height="96">
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://visotalk.dev/lockup-dark.svg">
+    <img src="docs/brand/lockup.svg" alt="VisoTalk" width="360">
+  </picture>
+</h1>
 
-# VisoTalk
-
-**让你的编程 agent 来写、检查并渲染讲解视频。**<br>
-旁白就是时间线：改一句词、换个声音或换一种语言，画面始终对在说出的那个词上。
+**旁白，就是新的时间线。**<br>
+专注于讲解视频制作的开源 Agent Skill，基于旁白驱动的动效编排引擎和大量内置样式库，开箱即用。
 
 [English](README.md) · **简体中文**
 
@@ -30,11 +33,8 @@
 
 ## 它做什么
 
-让你的 agent 做一支讲解视频，它只写一个文件 `doc.tsx`：旁白、画面（普通的 React），以及每样东西在哪个词上出现。VisoTalk 合成旁白、
-给每个词定时，再据此求出整条时间线；同一个文件既能在浏览器里播放，也能渲染成 MP4。
-
-它不是视频生成模型。每一帧都由代码根据你的文字和素材画出，所以同一份文档每次渲染出的帧都一模一样；修改是改一句话，而不是拖时间轴；
-如果某个动画挂在一个旁白已经不再说的词上，渲染之前就会报错。
+让你的 agent 做一支讲解视频，它会写出 `doc.tsx`，每个动画都从旁白里的某个词开始；改写、换声音或翻译旁白，画面都会跟着走。
+它不是视频生成模型：每一帧都由代码画出，修改就是改一句话。
 
 | | |
 |---|---|
