@@ -1,7 +1,8 @@
-/** Local motion selection and consistency checks; copying never replaces an existing work copy. */
+/** Motion selection (built-in, a directory, or the public catalogue) and consistency checks; copying never replaces an existing work copy. */
 import {existsSync,lstatSync,mkdirSync,readFileSync,readdirSync,renameSync,rmSync,writeFileSync,mkdtempSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {parseMarkup,validate} from '@visotalk/ir';
+import {MOTIONHUB,hubIndex,hubMotion,searchHub} from './motionhub.ts';
 import {BUILTIN_MOTIONS,MOTION_SCENARIOS,MOTION_TAGS,applyMotion,builtinMotion,builtinMotionList,inspectMotion as inspectPack,motionIndex,motionPath,motionSectionIssues} from '@visotalk/ir/motions';
 
 export function readMotion(dir: string): Map<string,Uint8Array> {
@@ -28,12 +29,14 @@ const inspectMotion=(files: Map<string,Uint8Array>, doc?: Parameters<typeof insp
   return {...pack,issues:[...motionSectionIssues(new TextDecoder().decode(files.get('motion/MOTION.md'))),...pack.issues]};
 };
 
-/** A built-in motion by its slug, else a pack directory; a name that is neither says which motions there are */
-export function selectedMotion(input: string): Map<string,Uint8Array> {
+/** A built-in motion by its slug, else a pack directory, else a motion of the public catalogue by its slug; a name that is none says where to look */
+export async function selectedMotion(input: string): Promise<Map<string,Uint8Array>> {
   const builtin=builtinMotion(input);
   if(builtin)return builtin;
-  if(!existsSync(resolve(input)))throw new Error(`"${input}" is neither a built-in motion (${BUILTIN_MOTIONS.join(', ')}) nor a motion directory`);
-  return readMotion(resolve(input));
+  if(existsSync(resolve(input)))return readMotion(resolve(input));
+  const hub=/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input)?await hubMotion(input):undefined;
+  if(hub)return hub;
+  throw new Error(`"${input}" is neither a built-in motion (${BUILTIN_MOTIONS.join(', ')}), a motion directory, nor a motion on ${MOTIONHUB} (visotalk motion search <words>)`);
 }
 export async function motionCmd(args: string[]): Promise<void> {
   const [command,input,file]=args;
@@ -41,10 +44,18 @@ export async function motionCmd(args: string[]): Promise<void> {
     for(const s of builtinMotionList())console.log(`${s.slug}  [${s.scenarios.join(', ')}]  ${s.line}  (looks: ${s.tags.join(', ')}; fits: ${s.uses.join('; ')})`);
     // the closed lists a motion's scenarios and tags come from, for an agent writing a motion.json of its own
     console.log(`\nScenarios: ${MOTION_SCENARIOS.join(', ')}\nTags: ${MOTION_TAGS.join(', ')}`);
+    console.log(`More motions, made by others: visotalk motion search <words> (${MOTIONHUB})`);
+    return;
+  }
+  if(command==='search') {
+    const rows=searchHub(await hubIndex(),args.slice(1));
+    // one line per motion, like list; a motion without a VisoTalk pack is followed by hand from its page
+    for(const m of rows)console.log(`${m.slug}  ${m.version}  ${m.line.en??Object.values(m.line)[0]}  (looks: ${m.tags.join(', ')}; by ${m.authors.map((a)=>a.github).join(', ')}; ${m.license.text}${m.tools.includes('visotalk')?'':`; no VisoTalk pack: follow ${MOTIONHUB}/m/${m.slug}/`})`);
+    console.log(rows.length?`${rows.length} on ${MOTIONHUB}; use one with visotalk motion use <slug> doc.tsx, only when the person chose it`:`No motion on ${MOTIONHUB} has every one of those words`);
     return;
   }
   if(command==='show'&&input) {
-    const files=selectedMotion(input), pack=inspectMotion(files);
+    const files=await selectedMotion(input), pack=inspectMotion(files);
     // what an agent chooses and draws by: the configuration, then the components one line each; MOTION.md is read from the copy once chosen
     console.log(JSON.stringify(pack.config,null,1));
     for(const c of pack.components)console.log(`${c.purpose}  ${c.file.slice(7)}  ${c.name.en??Object.values(c.name)[0]}: ${c.line} Fits: ${c.fits} Params: ${Object.entries(c.params).map(([k,v])=>`${k} (${v.type})`).join(', ')||'none'}`);
@@ -68,7 +79,7 @@ export async function motionCmd(args: string[]): Promise<void> {
   if(command==='use'&&input&&file) {
     const path=resolve(file), target=join(dirname(path),'motion');
     if(existsSync(target))throw new Error('This work already owns motion/. Use explicit synchronization instead of replacing it.');
-    const files=selectedMotion(input), pack=inspectMotion(files);
+    const files=await selectedMotion(input), pack=inspectMotion(files);
     if(pack.issues.length)throw new Error(pack.issues.map((i)=>`${i.at}: ${i.message}`).join('\n'));
     const source=readFileSync(path,'utf8'), next=applyMotion(source,pack.config);
     const issues=validate(parseMarkup(next).doc);
@@ -84,5 +95,5 @@ export async function motionCmd(args: string[]): Promise<void> {
     } finally {rmSync(temp,{recursive:true,force:true});rmSync(`${temp}.tsx`,{force:true});}
     console.log(`Copied ${files.size} motion files; check with visotalk motion check ${file}`);return;
   }
-  throw new Error('motion list | show <slug-or-directory> | use <slug-or-directory> doc.tsx | check doc.tsx');
+  throw new Error('motion list | search [words] | show <slug-or-directory> | use <slug-or-directory> doc.tsx | check doc.tsx');
 }

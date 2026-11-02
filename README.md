@@ -125,6 +125,7 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 
 ## What's new
 
+- **0.8.1** · Find and use motions other people made: `visotalk motion search [words]` searches the catalogue at [motionhub.dev](https://motionhub.dev), and `motion show` and `motion use` take its slugs.
 - **0.8** · Styles are now *motions*: `visotalk motion list | show | use | check`, packs in `skills/visotalk/motions/` with `motion.json` and `MOTION.md`, a work's copy in `motion/`. The animation tags are *actions* (`visotalk schema actions`, `action.*` codes), and spec 0.8 names an action's kind `kind`; documents written for 0.7 need no change.
 - **0.7.1** · Seven more built-in motions, seventeen in all: [Field Atlas](skills/visotalk/motions/field-atlas/MOTION.md), [Evidence Board](skills/visotalk/motions/evidence-board/MOTION.md), [Clay World](skills/visotalk/motions/clay-world/MOTION.md), [Watercolor Tale](skills/visotalk/motions/watercolor-tale/MOTION.md), [Pixel Quest](skills/visotalk/motions/pixel-quest/MOTION.md), [Riso Pop](skills/visotalk/motions/riso-pop/MOTION.md) and [Live Studio](skills/visotalk/motions/live-studio/MOTION.md).
 - **0.7** · Graphics on your own recording ([On Air](skills/visotalk/motions/on-air/MOTION.md), [Marker Margin](skills/visotalk/motions/marker-margin/MOTION.md)), with `visotalk recording --trim` to cut hesitations and long pauses.
