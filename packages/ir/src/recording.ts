@@ -11,8 +11,33 @@ const ms = (t: number) => Math.round(t * 1000) / 1000;
 const UNSPACED = '\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\u3000-\\u303F\\uFF00-\\uFFEF';
 const UNSPACED_END = new RegExp(`[${UNSPACED}]$`, 'u'),
   UNSPACED_START = new RegExp(`^[${UNSPACED}]`, 'u');
-/** The language a transcript is in, as a document's `lang`: the recognizer is told one, and answers in the language that was spoken */
-export const recordingLang = (text: string): 'zh-CN' | 'en' => (/\p{Script=Han}/u.test(text) ? 'zh-CN' : 'en');
+/**
+ * The language a transcript is in, as a document's `lang`: the recognizer is told one, and answers in the language that was spoken, so its script decides
+ * (kana is Japanese, Han without kana Mandarin, Hangul Korean, Cyrillic Russian) and a Latin transcript is in the language asked for when that is written in
+ * Latin letters, else English.
+ */
+export function recordingLang(text: string, asked = 'en'): string {
+  if (/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text)) return 'ja';
+  if (/\p{Script=Han}/u.test(text)) return 'zh-CN';
+  if (/\p{Script=Hangul}/u.test(text)) return 'ko';
+  if (/\p{Script=Cyrillic}/u.test(text)) return 'ru';
+  return /^(zh|ja|ko|ru)([-_]|$)/i.test(asked) ? 'en' : asked;
+}
+const HANGUL_END = /\p{Script=Hangul}$/u,
+  HANGUL_START = /^\p{Script=Hangul}/u;
+/**
+ * Korean is recognized a syllable at a time, a word's last syllable carrying the space after it: the syllables of one word become one
+ * unit, as a spaced language's words are, so its line is spaced between words and not between syllables.
+ */
+function hangulWords(units: RecordedUnit[]): RecordedUnit[] {
+  const out: RecordedUnit[] = [];
+  for (const unit of units) {
+    const last = out[out.length - 1];
+    if (last && typeof unit.text === 'string' && HANGUL_END.test(last.text) && HANGUL_START.test(unit.text) && unit.speaker === last.speaker) out[out.length - 1] = { ...last, text: last.text + unit.text, end: unit.end };
+    else out.push(unit);
+  }
+  return out;
+}
 export function recordingLines(units: RecordedUnit[], duration: number): Line[] {
   if (!Number.isFinite(duration) || duration <= 0 || duration > 3600) throw new Error('A recording must be between 0 and 3600 seconds');
   const lines: Line[] = [];
@@ -33,7 +58,7 @@ export function recordingLines(units: RecordedUnit[], duration: number): Line[] 
     });
     group = [];
   };
-  for (const unit of units) {
+  for (const unit of hangulWords(units)) {
     if (
       typeof unit.text !== 'string' ||
       !unit.text.trim() ||

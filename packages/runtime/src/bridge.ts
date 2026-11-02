@@ -28,9 +28,21 @@ export function installParentBridge(clock: Clock, win: BridgeWindow = window as 
   if (!parent || parent === (win as unknown)) return;
   win.addEventListener('message', (e) => {
     if (e.source !== parent) return;
-    const m = e.data as {vt?: unknown; t?: unknown; doc?: unknown; voice?: unknown; req?: unknown; fx?: unknown; fy?: unknown; words?: unknown; part?: unknown} | null;
+    const m = e.data as {
+      vt?: unknown;
+      t?: unknown;
+      rate?: unknown;
+      doc?: unknown;
+      voice?: unknown;
+      req?: unknown;
+      fx?: unknown;
+      fy?: unknown;
+      words?: unknown;
+      part?: unknown;
+    } | null;
     if (!m || typeof m !== 'object') return;
     if (m.vt === 'seek' && typeof m.t === 'number' && Number.isFinite(m.t)) clock.seek(m.t);
+    else if (m.vt === 'rate' && typeof m.rate === 'number') clock.setRate(m.rate);
     else if (m.vt === 'play') clock.play();
     else if (m.vt === 'pause') clock.pause();
     else if (m.vt === 'setDocument' && onDocument && m.doc && typeof m.doc === 'object' && m.voice && typeof m.voice === 'object') onDocument(m.doc, m.voice);

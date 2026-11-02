@@ -33,6 +33,13 @@ test('minimax words: a spaced language that is not Latin, Korean, is timed word 
   assert.deepEqual(minimaxWords(entries, `${an}${nyeong} ${ha}${se}${yo}`), [{w: `${an}${nyeong}`, t0: 0, t1: 0.3}, {w: `${ha}${se}${yo}`, t0: 0.32, t1: 0.7}]);
 });
 
+test('minimax words: Cyrillic and accented letters are letters, so a Russian or French word keeps its time', () => {
+  const ru = minimaxWords([e('Свет', 0, 300), e(' ', 300, 300), e('рассеивается', 320, 900)], 'Свет рассеивается.');
+  assert.deepEqual(ru, [{w: 'свет', t0: 0, t1: 0.3}, {w: 'рассеивается', t0: 0.32, t1: 0.9}]);
+  const fr = minimaxWords([e("L'été", 0, 400), e(' ', 400, 400), e('à', 420, 500), e(' ', 500, 500), e('Paris', 520, 900)], "L'été à Paris");
+  assert.deepEqual(fr, [{w: "l'été", t0: 0, t1: 0.4}, {w: 'à', t0: 0.42, t1: 0.5}, {w: 'paris', t0: 0.52, t1: 0.9}]);
+});
+
 test('minimax words: Chinese is timed character by character, a pause is taken off the character after it, and anchors then use the times', () => {
   // one-two-clock-in, comma, will-have: what MiniMax returned for the start of a measured sentence (ms), its pause before "will" folded into that character
   const [yi, fen, zhong, li, comma, hui, you] = [0x4e00, 0x5206, 0x949f, 0x91cc, 0xff0c, 0x4f1a, 0x6709].map((c) => String.fromCodePoint(c));

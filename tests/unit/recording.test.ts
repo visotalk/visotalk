@@ -116,6 +116,26 @@ test('measured English words keep their sentences and their spaces', async () =>
   assert.deepEqual(recordingLines([{ text: '\u6570\uff0c', start: 0, end: 0.2 }, { text: '\u4e00', start: 0.2, end: 0.4 }, { text: '\u6837\u3002', start: 0.4, end: 0.6 }], 2).map((l) => l.say), ['\u6570\uff0c\u4e00\u6837\u3002']);
 });
 
+test('Korean recognized a syllable at a time is spaced between its words, each word one timed unit', async () => {
+  const { recordingLines } = await import('../../packages/ir/src/index.ts');
+  // escapes, as MiniMax answered "\ud558\ub298\uc740 \uc65c \ud30c\ub784\uae4c\uc694?": the space after a word's last syllable
+  const syllables = ['\ud558', '\ub298', '\uc740 ', '\uc65c ', '\ud30c', '\ub784', '\uae4c', '\uc694?'];
+  const [line] = recordingLines(syllables.map((text, i) => ({ text, start: i * 0.2, end: i * 0.2 + 0.15 })), 4);
+  assert.equal(line.say, '\ud558\ub298\uc740 \uc65c \ud30c\ub784\uae4c\uc694?');
+  assert.deepEqual(line.words, [{ w: '\ud558\ub298\uc740', t0: 0, t1: 0.55 }, { w: '\uc65c', t0: 0.6, t1: 0.75 }, { w: '\ud30c\ub784\uae4c\uc694?', t0: 0.8, t1: 1.55 }]);
+});
+
+test("a transcript's script decides its document language, and a Latin one keeps the Latin language asked for", async () => {
+  const { recordingLang } = await import('../../packages/ir/src/index.ts');
+  assert.equal(recordingLang('\u7a7a\u306f\u306a\u305c', 'en'), 'ja');
+  assert.equal(recordingLang('\u5929\u7a7a', 'ja'), 'zh-CN');
+  assert.equal(recordingLang('\ud558\ub298', 'en'), 'ko');
+  assert.equal(recordingLang('\u041f\u043e\u0447\u0435\u043c\u0443 \u043d\u0435\u0431\u043e \u0433\u043e\u043b\u0443\u0431\u043e\u0435?', 'en'), 'ru');
+  assert.equal(recordingLang('Por qu\u00e9 el cielo es azul', 'es'), 'es');
+  assert.equal(recordingLang('Why is the sky blue', 'zh-CN'), 'en');
+  assert.equal(recordingLang('Why is the sky blue'), 'en');
+});
+
 test('long continuous narration with looping effects remains synchronized across mix blocks', async () => {
   const {mkdtempSync,rmSync}=await import('node:fs');
   const {execFileSync}=await import('node:child_process');

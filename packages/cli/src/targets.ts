@@ -84,7 +84,7 @@ export function targetIssues(p: Project, c: Compiled, fps: number, inspections: 
     });
   });
   // inside a global part an element is invisible until an appear shows it: one that nothing appears never shows
-  const appeared = new Set(c.actions.filter((a) => a.motion === 'appear').map((a) => a.target));
+  const appeared = new Set(c.actions.filter((a) => a.kind === 'appear').map((a) => a.target));
   const never = new Set<string>();
   for (const ins of Object.values(inspections)) for (const id of (ins as FrameInspection).registeredGlobal ?? []) if (!appeared.has(id)) never.add(id);
   for (const id of never) {
@@ -120,14 +120,14 @@ export function emptyAppearIssues(p: Project, c: Compiled, fps: number, inspecti
   for (const a of c.actions) {
     const scene = p.doc.scenes.find((x) => x.id === a.scene);
     const sc = c.scenes.find((x) => x.id === a.scene);
-    if (a.motion !== 'appear' || !scene || !sc || !(globals.has(a.target) || scene.parts.some((x) => x.id === a.target))) continue;
+    if (a.kind !== 'appear' || !scene || !sc || !(globals.has(a.target) || scene.parts.some((x) => x.id === a.target))) continue;
     const ins = page(sc, a.start + 0.15);
     const box = ins?.objects.find((o) => o.id === a.target && o.parent === null);
     // too faint yet to tell what it draws, or it draws something
     if (!ins || !box || box.opacity < 0.05 || box.ink) continue;
     const visible = new Set(ins.objects.filter((o) => o.opacity >= 0.05).map((o) => o.id));
     const later = c.actions
-      .filter((b) => b.motion === 'appear' && b.scene === a.scene && b.start > a.start && b.target !== a.target && ins.registered.includes(b.target) && !visible.has(b.target))
+      .filter((b) => b.kind === 'appear' && b.scene === a.scene && b.start > a.start && b.target !== a.target && ins.registered.includes(b.target) && !visible.has(b.target))
       .sort((x, y) => x.start - y.start);
     const held = later.filter((b) => {
       const there = page(sc, b.start + 0.15);
@@ -141,9 +141,9 @@ export function emptyAppearIssues(p: Project, c: Compiled, fps: number, inspecti
     const before = page(sc, first.start - 0.05)?.objects.find((o) => o.id === a.target && o.parent === null);
     if (!before || before.opacity < 0.05 || before.ink) continue;
     reported.add(key);
-    const k = scene.animations.findIndex((x) => x.motion === 'appear' && [x.target].flat().includes(a.target));
+    const k = scene.animations.findIndex((x) => x.kind === 'appear' && [x.target].flat().includes(a.target));
     // where the first content is anchored, as the document says it (a word the narration names), else the word spoken then
-    const own = scene.animations.find((x) => x.motion === 'appear' && [x.target].flat().includes(first.target))?.at;
+    const own = scene.animations.find((x) => x.kind === 'appear' && [x.target].flat().includes(first.target))?.at;
     const anchor = own && 'line' in own ? `line="${own.line}"${own.word ? ` word="${own.word}"` : ''}` : (() => {
       const w = wordAt(c, first.start + 0.02);
       return w ? `line="${w.line}" word="${w.word}"` : undefined;

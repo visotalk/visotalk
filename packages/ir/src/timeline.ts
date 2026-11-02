@@ -4,7 +4,7 @@
  * Inputs: the document and the measured duration of every narration line (TTS). Word anchors use the line's word
  * timings when present (forced alignment), otherwise the character position of the phrase in the spoken text.
  */
-import type {Action, Anchor, Easing, Id, MotionKind, Sound, VisoDoc} from './spec.ts';
+import type {Action, Anchor, Easing, Id, ActionKind, Sound, VisoDoc} from './spec.ts';
 import {sayOf} from './normalize.ts';
 
 /** Default pacing (seconds); documents override it with `pacing` */
@@ -34,16 +34,16 @@ export interface TScene {
   lines: TLine[];
 }
 
-/** Default durations per motion (seconds) */
-export const MOTION_DUR: Record<MotionKind, number> = {appear: 0.45, disappear: 0.3, tween: 0.6, set: 0};
-/** Motions that decide whether a target is on screen */
-const PRESENCE = new Set<MotionKind>(['appear', 'disappear']);
+/** Default durations per action kind (seconds) */
+export const ACTION_DUR: Record<ActionKind, number> = {appear: 0.45, disappear: 0.3, tween: 0.6, set: 0};
+/** Actions that decide whether a target is on screen */
+const PRESENCE = new Set<ActionKind>(['appear', 'disappear']);
 
 export interface TAction {
   scene: Id;
   /** one target of the document's action (an action on several targets compiles to one per target) */
   target: Id;
-  motion: MotionKind;
+  kind: ActionKind;
   start: number;
   dur: number;
   easing?: Easing;
@@ -259,7 +259,7 @@ export function resolveStarts(doc: VisoDoc, scenes: TScene[], fps: number): Map<
   };
   const endOf = (e: Entry): number => {
     const last = snap(fps, startOf(e) + ([e.a.target].flat().length - 1) * (e.a.stagger ?? 0));
-    return e.a.motion === 'set' ? last : e.a.until ? Math.max(last, snap(fps, anchorStart(e.sc, e.a.until))) : last + playTime(e.a);
+    return e.a.kind === 'set' ? last : e.a.until ? Math.max(last, snap(fps, anchorStart(e.sc, e.a.until))) : last + playTime(e.a);
   };
   entries.forEach(startOf);
   return starts;
@@ -272,7 +272,7 @@ function compileScene(scene: VisoDoc['scenes'][number], sc: TScene, fps: number,
     const until = a.until && snap(fps, anchorStart(sc, a.until));
     [a.target].flat().forEach((target, k) => {
       const at = snap(fps, start + k * (a.stagger ?? 0));
-      actions.push({scene: sc.id, target, motion: a.motion, start: at, dur: until !== undefined ? Math.max(0, until - at) : a.dur ?? MOTION_DUR[a.motion], easing: a.easing, ...(a.repeat !== undefined && {repeat: a.repeat}), ...(a.yoyo !== undefined && {yoyo: a.yoyo}), to: a.to ?? {}});
+      actions.push({scene: sc.id, target, kind: a.kind, start: at, dur: until !== undefined ? Math.max(0, until - at) : a.dur ?? ACTION_DUR[a.kind], easing: a.easing, ...(a.repeat !== undefined && {repeat: a.repeat}), ...(a.yoyo !== undefined && {yoyo: a.yoyo}), to: a.to ?? {}});
     });
   }
 }
@@ -289,7 +289,7 @@ function compileSound(s: Sound, sc: TScene, fps: number, filmEnd: number, fileLe
 const clamp01 = (p: number) => Math.min(1, Math.max(0, p));
 
 /** How long an action plays: `dur` for each of its plays (a repeat forever counts as one: whatever follows it starts after the first) */
-export const playTime = (a: Pick<Action, 'motion' | 'dur' | 'repeat'>): number => (a.dur ?? MOTION_DUR[a.motion]) * (a.repeat !== undefined && a.repeat > 0 ? a.repeat + 1 : 1);
+export const playTime = (a: Pick<Action, 'kind' | 'dur' | 'repeat'>): number => (a.dur ?? ACTION_DUR[a.kind]) * (a.repeat !== undefined && a.repeat > 0 ? a.repeat + 1 : 1);
 
 /**
  * The actions on a target, in time order: indexed once per compiled document, since every part asks at every frame. A target in a scene's part lives and
@@ -351,13 +351,13 @@ export const easeAt = (e: Easing | undefined, p: number): number => (easingFn(e)
  * `scene` is the scene whose part holds the target (see `actionsOf`); absent for a target of a global part.
  */
 export function presenceAt(c: Compiled, target: Id, t: number, scene?: Id, hidden = false): number {
-  const acts = actionsOf(c, target, scene).filter((a) => PRESENCE.has(a.motion));
-  let ramp = {from: hidden || acts[0]?.motion === 'appear' ? 0 : 1, to: 0, start: -Infinity, dur: 0, easing: undefined as Easing | undefined};
+  const acts = actionsOf(c, target, scene).filter((a) => PRESENCE.has(a.kind));
+  let ramp = {from: hidden || acts[0]?.kind === 'appear' ? 0 : 1, to: 0, start: -Infinity, dur: 0, easing: undefined as Easing | undefined};
   ramp.to = ramp.from;
   const at = (time: number) => (ramp.dur > 0 ? ramp.from + (ramp.to - ramp.from) * easeAt(ramp.easing, clamp01((time - ramp.start) / ramp.dur)) : time >= ramp.start ? ramp.to : ramp.from);
   for (const a of acts) {
     if (t < a.start) break;
-    ramp = {from: at(a.start), to: a.motion === 'appear' ? 1 : 0, start: a.start, dur: a.dur, easing: a.easing ?? (a.motion === 'appear' ? 'easeOut' : 'easeInOut')};
+    ramp = {from: at(a.start), to: a.kind === 'appear' ? 1 : 0, start: a.start, dur: a.dur, easing: a.easing ?? (a.kind === 'appear' ? 'easeOut' : 'easeInOut')};
   }
   return at(t);
 }
@@ -430,11 +430,11 @@ export function propAt(c: Compiled, target: Id, name: string, t: number, base: V
     }
     return q >= 1 ? tween.to : q <= 0 ? tween.from : mixValue(tween.from, tween.to, easeAt(tween.easing, q))!;
   };
-  const events = actionsOf(c, target, scene).filter((a) => (a.motion === 'set' || a.motion === 'tween') && a.to[name] !== undefined && a.start <= t);
+  const events = actionsOf(c, target, scene).filter((a) => (a.kind === 'set' || a.kind === 'tween') && a.to[name] !== undefined && a.start <= t);
   for (const a of events) {
     const to = a.to[name];
     const from = valueAt(a.start);
-    if (a.motion === 'tween' && mixValue(from, to, 0.5) !== undefined) {
+    if (a.kind === 'tween' && mixValue(from, to, 0.5) !== undefined) {
       value = to;
       tween = {from, to, start: a.start, dur: a.dur, easing: a.easing ?? 'easeInOut', repeat: a.repeat, yoyo: a.yoyo};
     } else {

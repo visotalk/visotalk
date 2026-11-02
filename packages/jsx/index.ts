@@ -58,8 +58,8 @@ export const Sound: Tag<{
 /** Where an action or a sound ends, instead of `dur`: "end" (or "start") of its scene, seconds into it, a word of a line, or a scene edge with an offset: `until="end"`, `until={{line: "l3", word: "the curve"}}`, `until={{scene: "end", offset: 1.5}}` */
 type Until = 'start' | 'end' | number | {line: string; word?: string; nth?: number; edge?: 'start' | 'end'; offset?: number} | {scene: 'start' | 'end'; offset?: number} | {at: number};
 
-/** A motion needs exactly one place to start: a word of a line (`line` + `word`, `nth` for the nth occurrence), `after` another action, or `at` seconds into the scene (or "start", "end") */
-interface MotionProps {
+/** An action needs exactly one place to start: a word of a line (`line` + `word`, `nth` for the nth occurrence), `after` another action, or `at` seconds into the scene (or "start", "end") */
+interface ActionProps {
   /** a part, or an element a part registers with `useTarget` or `<Obj>`: ids are unique within a scene */
   target: string | string[];
   id?: string; dur?: number; stagger?: number; easing?: Easing;
@@ -72,9 +72,9 @@ interface MotionProps {
   line?: string; word?: string; nth?: number; mark?: string;
   edge?: 'start' | 'end'; offset?: number;
 }
-export const Appear: Tag<MotionProps> = tag('Appear');
-export const Disappear: Tag<MotionProps> = tag('Disappear');
+export const Appear: Tag<ActionProps> = tag('Appear');
+export const Disappear: Tag<ActionProps> = tag('Disappear');
 /** `to` holds numbers, colours and lengths: `<Tween target="bar" to={{w: 1100}} line="l1" word="counted" dur={1.4}/>`; read with `useProp("bar", "w", 0)`. `x`, `y`, `scale` and `rotate` move the target itself */
-export const Tween: Tag<MotionProps & {to: Record<string, number | string>}> = tag('Tween');
+export const Tween: Tag<ActionProps & {to: Record<string, number | string>}> = tag('Tween');
 /** Like `<Tween>`, at once, and a value may be a string or true/false */
-export const Set: Tag<MotionProps & {to: Record<string, number | string | boolean>}> = tag('Set');
+export const Set: Tag<ActionProps & {to: Record<string, number | string | boolean>}> = tag('Set');

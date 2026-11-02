@@ -14,11 +14,11 @@
  *   visotalk qa       <doc.tsx> [--per-line 3] [--theme ID] [--frames] [--json] [--full] [--limit 12]   layout checks on sampled frames of every output the document lists in `exports.variants` (else each canvas), or the one named + static checks; writes qa.json and sheet.jpg
  *   visotalk sheet    <doc.tsx> [--at 0.85] [--shots] [--theme ID] [--out FILE.jpg]   contact sheet (JPEG, about 1280 wide): one frame per line at that fraction; --shots: one per shot of a video recording, at its middle
  *   visotalk still    <doc.tsx> --line SCENE/LINE[,SCENE/LINE…] [--at 0.85] | --time SECONDS[,SECONDS…]  [--zoom X,Y,W,H] [--theme ID] [--png] [--out FILE.jpg] [--out-each FILE.jpg,…]   frames as JPEG, up to four to a picture (--png: full-size 1920x1080 PNG; --zoom: that region of the stage, in its pixels, at full resolution), one Chrome run for all of them: each with what was measured on it and what the sentence names
- *   visotalk style    list | show <slug-or-directory> | use <slug-or-directory> <doc.tsx> | check <doc.tsx>   copy a complete independent style; check local locks and component metadata
+ *   visotalk motion    list | show <slug-or-directory> | use <slug-or-directory> <doc.tsx> | check <doc.tsx>   copy a complete independent motion; check local locks and component metadata
  *   visotalk asset    search "<words>" [--limit 8] | get <N> --id NAME   openly licensed pictures (Wikimedia Commons, Openverse): candidates as text, then one saved to media/ with its <Asset> declaration
  *   visotalk export   <doc.tsx> [--out FILE.visotalk] [--cover FILE] [--player]   the talk as one file: its source, its voice if it is prepared, captions and credits; --player: the built talk instead, which plays and has no document to open
  *   visotalk import   <FILE.visotalk> [DIR] [--remix] [--allow-voice-module]   unpack a source bundle into a new directory, checked as any document is; --remix starts a talk of its own
- *   visotalk schema   [tags | hooks | motions] [--json]   what a document is made of and the hooks a part calls
+ *   visotalk schema   [tags | hooks | actions] [--json]   what a document is made of and the hooks a part calls
  *
  * Every command that reads a document but export takes --lang LANG: the document in the language of the overlay doc.<lang>.json beside it.
  */
@@ -35,13 +35,13 @@ import {exportBundle, importBundle} from './bundle.ts';
 import {SCHEMA} from './schema.ts';
 import {recordingCmd, videoCuts} from './recording.ts';
 import {fontWarning, unavailableFonts} from './fonts.ts';
-import {styleCmd} from './style.ts';
+import {motionCmd} from './motion.ts';
 import {assetCmd} from './asset.ts';
 import {Looks} from './looks.ts';
 import {narrationHint, narrationSource, anchoredWords, exportAudio, buildPlayer, check, checkNarrationVoice, facesOf, estimateMissingVoice, estimateVoice, load, narrationPending, prepare, speaks, prepareMarked, preparing, startPrepare, waitForPrepare} from './project.ts';
 
 const [cmd, file, ...rest] = process.argv.slice(2);
-const COMMANDS = ['doctor', 'recording', 'init', 'schema', 'asset', 'style', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
+const COMMANDS = ['doctor', 'recording', 'init', 'schema', 'asset', 'motion', 'validate', 'prepare', 'build', 'render', 'play', 'check', 'qa', 'sheet', 'still', 'export', 'import'];
 const opt = (n: string, d?: string) => (rest.includes(`--${n}`) ? rest[rest.indexOf(`--${n}`) + 1] : d);
 const flag = (n: string) => rest.includes(`--${n}`);
 
@@ -152,7 +152,7 @@ function silence(c: ReturnType<typeof solve>, t: number): string {
 }
 
 function usage(): never {
-  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still|export> <doc.tsx> [options]\n       visotalk recording <audio-or-video> --out doc.tsx [--lang en|zh-CN] [--trim fillers,pauses[=0.8]]\n       visotalk import <file.visotalk> [dir] [--remix] [--allow-voice-module]\n       visotalk asset search "<words>" | get <N> --id NAME\n       visotalk style list | show <slug> | use <slug> <doc.tsx> | check <doc.tsx>\n       visotalk schema [tags | hooks | motions] [--json]\nThe options of each command are in the header of this program and in the skill (skills/visotalk/SKILL.md).');
+  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still|export> <doc.tsx> [options]\n       visotalk recording <audio-or-video> --out doc.tsx [--lang en|zh-CN] [--trim fillers,pauses[=0.8]]\n       visotalk import <file.visotalk> [dir] [--remix] [--allow-voice-module]\n       visotalk asset search "<words>" | get <N> --id NAME\n       visotalk motion list | show <slug> | use <slug> <doc.tsx> | check <doc.tsx>\n       visotalk schema [tags | hooks | actions] [--json]\nThe options of each command are in the header of this program and in the skill (skills/visotalk/SKILL.md).');
   process.exit(2);
 }
 
@@ -161,7 +161,7 @@ function commandHelp(command: string): never {
   const header = readFileSync(new URL(import.meta.url), 'utf8').split('*/')[0];
   const lines = header.split('\n').filter((l) => l.startsWith(` *   visotalk ${command} `));
   console.log(lines.length ? lines.map((l) => l.slice(3).trim()).join('\n') : `visotalk ${command}: see skills/visotalk/SKILL.md`);
-  if (!['export', 'recording', 'doctor', 'schema', 'style', 'asset', 'import', 'sound'].includes(command)) console.log('Every command that reads a document but export also takes --lang LANG (the overlay doc.<lang>.json beside it).');
+  if (!['export', 'recording', 'doctor', 'schema', 'motion', 'asset', 'import', 'sound'].includes(command)) console.log('Every command that reads a document but export also takes --lang LANG (the overlay doc.<lang>.json beside it).');
   process.exit(0);
 }
 
@@ -235,7 +235,7 @@ async function main() {
   if (cmd === 'recording') return recordingCmd(process.argv.slice(3));
   if (cmd === 'doctor') return doctor(process.argv.slice(3));
   if (cmd === 'schema') return schema(file);
-  if (cmd === 'style') { await styleCmd(process.argv.slice(3)); process.exit(process.exitCode ?? 0); }
+  if (cmd === 'motion') { await motionCmd(process.argv.slice(3)); process.exit(process.exitCode ?? 0); }
   if (cmd === 'asset') return assetCmd(file, rest);
   if (cmd === 'init') return init();
   if (cmd === 'import') return importCmd();
@@ -245,9 +245,9 @@ async function main() {
   const p = load(file, opt('lang'));
   const fonts = fontWarning(unavailableFonts(p.doc));
   if (fonts && !flag('json')) console.error(fonts);
-  // a film that sets neither its ground nor a style is drawn on the theme's grey with one sans: it plays, and looks unmade
-  if (!p.doc.theme?.tokens?.colors?.bg && !existsSync(join(p.dir, 'style')) && p.doc.scenes.some((s) => s.parts.length) && !flag('json'))
-    console.error('look.default: the film draws on the theme\'s default ground and faces (no `bg` in <Doc tokens>, no style/): give it a look of its own (the skill\'s "The look") and write its ground and faces on <Doc>');
+  // a film that sets neither its ground nor a motion is drawn on the theme's grey with one sans: it plays, and looks unmade
+  if (!p.doc.theme?.tokens?.colors?.bg && !existsSync(join(p.dir, 'motion')) && p.doc.scenes.some((s) => s.parts.length) && !flag('json'))
+    console.error('look.default: the film draws on the theme\'s default ground and faces (no `bg` in <Doc tokens>, no motion/): give it a look of its own (the skill\'s "The look") and write its ground and faces on <Doc>');
 
   const issues = check(p);
   if (issues.length) {
@@ -261,7 +261,7 @@ async function main() {
     if (flag('anchors')) for (const sc of p.doc.scenes) for (const a of sc.animations) {
       if (!('line' in a.at) || a.at.word === undefined) continue;
       const line = sc.lines.find((l) => l.id === (a.at as {line: string}).line)!;
-      console.log(`${sc.id}/${line.id}  ${a.motion} ${[a.target].flat().join(',')}  ${markPhrase(sayOf(p.doc, line), a.at.word, a.at.nth) ?? '(not found)'}`);
+      console.log(`${sc.id}/${line.id}  ${a.kind} ${[a.target].flat().join(',')}  ${markPhrase(sayOf(p.doc, line), a.at.word, a.at.nth) ?? '(not found)'}`);
     }
     return;
   }

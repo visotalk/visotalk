@@ -41,13 +41,13 @@ test('markup: the skeleton is read, a part body is kept as source, module code i
   assert.deepEqual(intro.parts.map((p) => [p.id, p.x, p.y, p.w, p.h]), [['bar', 100, 200, 800, 60]]);
   assert.match(intro.parts[0].body!, /useTarget\("fill"\)[\s\S]*a > b && c < d/);
   assert.deepEqual(intro.animations, [
-    {motion: 'appear', target: 'bar', at: {line: 'l1', word: 'billion'}},
-    {id: 'grow', motion: 'tween', target: 'fill', at: {line: 'l1', word: 'counted'}, dur: 1.4, easing: 'easeOut', to: {w: 1100}},
-    {motion: 'set', target: 'fill', at: {after: 'grow'}, to: {label: 'done'}},
-    {motion: 'disappear', target: ['bar', 'fill'], at: {scene: 'end', offset: -0.5}, stagger: 0.1},
+    {kind: 'appear', target: 'bar', at: {line: 'l1', word: 'billion'}},
+    {id: 'grow', kind: 'tween', target: 'fill', at: {line: 'l1', word: 'counted'}, dur: 1.4, easing: 'easeOut', to: {w: 1100}},
+    {kind: 'set', target: 'fill', at: {after: 'grow'}, to: {label: 'done'}},
+    {kind: 'disappear', target: ['bar', 'fill'], at: {scene: 'end', offset: -0.5}, stagger: 0.1},
   ]);
   assert.deepEqual(next.parts, [{id: 'bar', x: 50, body: '<div/>'}]);
-  assert.deepEqual(next.animations, [{motion: 'appear', target: 'bar', at: {at: 1.25}}]);
+  assert.deepEqual(next.animations, [{kind: 'appear', target: 'bar', at: {at: 1.25}}]);
 });
 
 test('markup: a mark names a phrase of a line, and compiles to the word and occurrence an author could have written', () => {

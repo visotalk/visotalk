@@ -34,8 +34,11 @@ export interface MinimaxEntry {word: string; time_begin: number; time_end: numbe
 
 interface Heard {text: string; t0: number; t1: number}
 
-/** What a word is compared by: its Latin letters and digits, and Hangul (Korean is spaced, so MiniMax times its words; Han and kana have no spaces to match on) */
-const key = (token: string) => token.toLowerCase().replace(/[^a-z0-9'\p{Script=Hangul}]/gu, '');
+/**
+ * What a word is compared by: its letters (any script, accents included: Cyrillic, "é", Hangul) and digits, in composed form. Han and kana have no spaces to
+ * match on and are matched a character at a time instead (`unspacedWords`).
+ */
+const key = (token: string) => token.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{M}\p{N}']/gu, '');
 
 /**
  * MiniMax's syllables ("M" "ine" "'" "s"), matched to the whitespace tokens of `say`. What it gives is an entry for the space between words, and that

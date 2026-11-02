@@ -41,6 +41,7 @@ const PLAYING_EPS = 0.4;
  * `loopLength` is the file's length for a looping sound, whose wrap from the end to the start is not drift.
  */
 export function follow(clock: Clock, el: HTMLMediaElement, state: {held: boolean}, want: number, loopLength = 0): boolean {
+  if (el.playbackRate !== clock.getRate()) el.playbackRate = clock.getRate();
   const off = Math.abs(el.currentTime - want);
   const wrapped = loopLength > 0 && Math.abs(off - loopLength) < PLAYING_EPS;
   if (off > (el.paused ? PAUSED_EPS : PLAYING_EPS) && !wrapped) {
@@ -151,6 +152,8 @@ export class MediaScheduler {
   private uses: Use[] = [];
   private mix?: {el: HTMLAudioElement; held: boolean; starting: boolean; unlocking: boolean; unlocked: boolean};
   private muted = true;
+  private volume = 1;
+  private rate = 1;
   private requests = 0;
   private anchor?: {ctx: number; doc: number};
   private playing = new Map<Use, {src: AudioBufferSourceNode; gain: GainNode} | 'left out'>();
@@ -178,7 +181,7 @@ export class MediaScheduler {
     if (!this.ctx && this.env.AudioContext) {
       this.ctx = new this.env.AudioContext();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 1;
+      this.master.gain.value = this.muted ? 0 : this.volume;
       this.master.connect(this.ctx.destination);
       this.ctx.addEventListener('statechange', () => this.evaluate());
     }
@@ -199,6 +202,7 @@ export class MediaScheduler {
         const el = new Audio(this.base + draw.mix);
         el.preload = 'auto';
         el.muted = this.muted;
+        el.volume = this.volume;
         // a phone fetches nothing for an element before it is played: the file is asked for now, and the element then finds it in the cache (it is named by its content)
         // (not from a page opened as a file: fetch() refuses file://, and the element reads the file itself)
         if (typeof location === 'undefined' || location.protocol !== 'file:') void this.env.fetch(this.base + draw.mix, {priority: 'high'} as RequestInit).then((res) => res.arrayBuffer()).catch(() => undefined);
@@ -252,7 +256,15 @@ export class MediaScheduler {
   setMuted(muted: boolean): void {
     this.muted = muted;
     if (this.mix) this.mix.el.muted = muted;
-    if (this.master && this.ctx) this.master.gain.setTargetAtTime(muted ? 0 : 1, this.ctx.currentTime, 0.01);
+    if (this.master && this.ctx) this.master.gain.setTargetAtTime(muted ? 0 : this.volume, this.ctx.currentTime, 0.01);
+  }
+
+  /** Volume is independent of mute and never persisted as browsing history. */
+  setVolume(volume: number): void {
+    if (!Number.isFinite(volume)) return;
+    this.volume = Math.min(1, Math.max(0, volume));
+    if (this.mix) this.mix.el.volume = this.volume;
+    this.setMuted(this.muted);
   }
 
   /** From the viewer's tap: browsers let the audio context and the elements sound only after one. The clock waits for the warm-up, so the picture never runs ahead of a sound that cannot start yet */
@@ -292,8 +304,8 @@ export class MediaScheduler {
     return this.anchor && this.ctx?.state === 'running' ? this.docOf(this.ctx.currentTime) : undefined;
   }
 
-  private docOf = (ctxTime: number) => this.anchor!.doc + (ctxTime - this.anchor!.ctx);
-  private ctxOf = (docTime: number) => this.anchor!.ctx + (docTime - this.anchor!.doc);
+  private docOf = (ctxTime: number) => this.anchor!.doc + (ctxTime - this.anchor!.ctx) * this.rate;
+  private ctxOf = (docTime: number) => this.anchor!.ctx + (docTime - this.anchor!.doc) / this.rate;
 
   /** Called on every change of the clock (every frame while it plays) */
   private evaluate(): void {
@@ -301,6 +313,7 @@ export class MediaScheduler {
     this.evaluating = true;
     try {
       const t = this.clock.getTime();
+      if (this.rate !== this.clock.getRate()) { this.halt(); this.rate = this.clock.getRate(); }
       this.pump(t);
       this.demand(t);
       if (this.mix) this.syncMix(t);
@@ -365,12 +378,13 @@ export class MediaScheduler {
     const src = ctx.createBufferSource();
     src.buffer = buffer;
     src.loop = u.loop;
+    src.playbackRate.value = this.rate;
     const gain = ctx.createGain();
     src.connect(gain).connect(this.master!);
     const when = Math.max(this.ctxOf(at), ctx.currentTime);
     const natural = u.loop ? Infinity : at + (buffer.duration - into);
     const end = Math.min(u.to, natural);
-    if (u.gain && end - at > 0.001) gain.gain.setValueCurveAtTime(gainCurve(u.gain, at, end), when, end - at);
+    if (u.gain && end - at > 0.001) gain.gain.setValueCurveAtTime(gainCurve(u.gain, at, end), when, (end - at) / this.rate);
     src.start(when, into);
     if (end < natural) src.stop(this.ctxOf(end));
     src.onended = () => { src.disconnect(); gain.disconnect(); };
@@ -381,6 +395,7 @@ export class MediaScheduler {
   private playLong(u: Use, long: NonNullable<Use['long']>, t: number): void {
     if (long.unlocking) return;
     const el = long.el;
+    el.playbackRate = this.rate;
     long.node.gain.value = u.gain ? u.gain(t) : 1;
     if (t < u.from) return;
     const length = el.duration;

@@ -57,6 +57,9 @@ export function videoCuts(file: string): number[] {
     .filter((t) => Number.isFinite(t) && t >= 0.5).reduce<number[]>((a, t) => (a.length && t - a.at(-1)! < 0.5 ? a : [...a, t]), []);
 }
 /** Measured words of a recording from MiniMax `asr-1.0`, in chunks of at most 470 s; kept beside the work by the file's hash, so asking again (a trim decided later) is free */
+/** The languages the recognizer is asked for (MiniMax asr-1.0, tried on a narrated paragraph in each): a language subtag, and a region after it. */
+const RECOGNIZED = /^(en|zh|ja|ko|es|fr|de|pt|it|ru)(-[A-Za-z]{2,4})?$/;
+
 export async function transcribeRecording(file: string, duration: number, lang: string, cache: string): Promise<RecordedUnit[]> {
   if (existsSync(cache)) return JSON.parse(readFileSync(cache, 'utf8')) as RecordedUnit[];
   const key = process.env.MINIMAX_API_KEY;
@@ -159,7 +162,7 @@ export async function recordingCmd(args: string[]) {
   const file = resolve(input),
     info = recordingProbe(file),
     lang = opt('lang', 'en')!;
-  if (!['en', 'zh', 'zh-CN'].includes(lang)) throw new Error('Recording recognition supports en and zh-CN');
+  if (!RECOGNIZED.test(lang)) throw new Error('Recording recognition supports en, zh-CN, ja, ko, es, fr, de, pt, it and ru');
   const trim = trimOptions(opt('trim'), info.fps ?? 100);
   const digest = createHash('sha256');
   for await (const chunk of createReadStream(file)) digest.update(chunk);
@@ -169,7 +172,7 @@ export async function recordingCmd(args: string[]) {
   const recognition = createHash('sha256').update(JSON.stringify(['asr-1.0', lang.split('-')[0], process.env.MINIMAX_BASE_URL ?? 'https://api.minimax.io', 'word', 1])).digest('hex').slice(0, 16);
   const units = await transcribeRecording(file, info.duration, lang, join(work, '.visotalk', 'recordings', `${hash}-${recognition}.json`));
   let lines = recordingLines(units, info.duration);
-  const spoken = recordingLang(lines.map((l) => l.say).join(' '));
+  const spoken = recordingLang(lines.map((l) => l.say).join(' '), lang === 'zh' ? 'zh-CN' : lang);
   const own = relative(work, file).split('\\').join('/');
   const media = /^media\/[a-z0-9][a-z0-9-]*\.[a-z0-9]+$/.test(own) ? own : `media/recording-${hash}${extname(file).toLowerCase()}`,
     id = `recording-${hash}`;
@@ -206,6 +209,6 @@ export async function recordingCmd(args: string[]) {
   const canvas = a.width ? `<Canvas><Preset id="recording" width={${a.width}} height={${a.height}}/></Canvas>` : '';
   const source = `${recordingOutline(lines, a.duration, a.width ? videoCuts(join(work, asset.src)) : [])}import {Doc,Scene,Line,Asset,Canvas,Preset} from '@visotalk/jsx';\nexport default <Doc spec="${SPEC_VERSION}" id="${id}" title={${JSON.stringify(basename(file, extname(file)))}} lang={${JSON.stringify(spoken)}} voice="recording:take" exports={{fps:${a.fps ?? 30}}}>\n${canvas}\n<Asset id="take" kind="${a.width ? 'video' : 'audio'}" src={${JSON.stringify(asset.src)}} analysis={${JSON.stringify(a)}}${asset.cut ? ` trim={${JSON.stringify(asset.cut)}}` : ''} license={{id:'user-owned',obligations:[]}}/>\n${body}\n</Doc>;\n`;
   writeFileSync(target, source);
-  if (opt('lang') && spoken !== (lang === 'zh' ? 'zh-CN' : lang)) console.error(`the recording speaks ${spoken === 'en' ? 'English' : 'Chinese'}, not ${lang}: the document is lang="${spoken}"`);
+  if (opt('lang') && spoken !== (lang === 'zh' ? 'zh-CN' : lang)) console.error(`the recording is not in ${lang} but in ${spoken}: the document is lang="${spoken}"`);
   console.log(`Transcribed ${lines.length} lines into ${target}; original recording preserved${asset.cut ? `, the trimmed one is ${asset.src}` : ''}.`);
 }

@@ -28,17 +28,17 @@ test('the usage names every command the CLI accepts', () => {
   for (const c of commands) assert.match(usage, new RegExp(`[<|\\s]${c}[|>\\s]`), `usage does not name "${c}"`);
 });
 
-test('schema lists the tags, the motions, the hooks a part calls and the theme tokens\' values, and refuses another topic', () => {
+test('schema lists the tags, the actions, the hooks a part calls and the theme tokens\' values, and refuses another topic', () => {
   const all = cli('schema');
   assert.equal(all.status, 0);
   for (const word of ['Scene ', 'Appear ', 'where it starts', 'useTarget(id)', 'useProp(name, base)', 'useProp(id, name, base)', 'random(key)']) assert.match(all.stdout, new RegExp(word.replace(/[()]/g, '\\$&')));
   assert.doesNotMatch(all.stdout, /Beat|pattern|PartRef/);
   assert.match(cli('schema', 'hooks').stdout, /^hooks:/);
   assert.match(cli('schema', 'themes').stdout, /visotalk\/dark\s+--vt-bg #0B0E14 .*--vt-data #6CB6FF/);
-  assert.deepEqual(Object.keys(JSON.parse(cli('schema', '--json').stdout)), ['tags', 'motions', 'hooks', 'themes']);
+  assert.deepEqual(Object.keys(JSON.parse(cli('schema', '--json').stdout)), ['tags', 'actions', 'hooks', 'themes']);
   const bad = cli('schema', 'objects');
   assert.equal(bad.status, 1);
-  assert.match(bad.stderr, /unknown topic "objects"; one of: tags motions hooks themes/);
+  assert.match(bad.stderr, /unknown topic "objects"; one of: tags actions hooks themes/);
 });
 
 
@@ -109,7 +109,7 @@ export default <Doc id="build-check" title="t" lang="en" canvas="16x9"><Scene id
   assert.match(r.stdout, /Deliver it as it is/);
 });
 
-test('a film on the theme\'s default ground and faces, with no style, is warned about; the example\'s own look is not', () => {
+test('a film on the theme\'s default ground and faces, with no motion, is warned about; the example\'s own look is not', () => {
   const dir = mkdtempSync(join(tmpdir(), 'vt-look-'));
   try {
     for (const f of ['doc.tsx', 'parts/kit.tsx', 'parts/count.tsx', 'parts/orbit.tsx']) {
@@ -121,8 +121,8 @@ test('a film on the theme\'s default ground and faces, with no style, is warned 
     const r = cli('validate', join(dir, 'doc.tsx'));
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stderr, /^look\.default: /m);
-    mkdirSync(join(dir, 'style'));
-    assert.doesNotMatch(cli('validate', join(dir, 'doc.tsx')).stderr, /look\.default/, 'a work with a style has a look');
+    mkdirSync(join(dir, 'motion'));
+    assert.doesNotMatch(cli('validate', join(dir, 'doc.tsx')).stderr, /look\.default/, 'a work with a motion has a look');
   } finally {
     rmSync(dir, {recursive: true, force: true});
   }

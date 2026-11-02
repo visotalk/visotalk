@@ -866,6 +866,7 @@ function LongFilm() {
   const zoom = useProp('zoom', 0);
   const [, soupFrom, soupTo] = OLDEST.en.scenes[1];
   const soupLines = OLDEST.en.lines.map((l, i) => ({i, from: l[0], to: l[1]})).filter((l) => l.from >= soupFrom - 0.01 && l.to <= soupTo + 0.01);
+  const lineLabel = useText('soup-line-label', 'a line');
   const GROW_LINE = soupLines[1].i; // the second line of "soup"
   const shift = BAR * smooth(grow);
   const row = (lang: 'en' | 'zh', y: number, a: number, live: boolean) => {
@@ -938,7 +939,7 @@ function LongFilm() {
                     <rect x={x0} y={780} width={Math.max(4, x1 - x0 - 8)} height={18} rx={4} fill={grown && grow > 0 ? GOOD : TEXT} opacity={0.85} />
                     <circle cx={lerp(x0, x1, 0.3 + 0.4 * hash(l.i, 9))} cy={764} r={8} fill={CUE} />
                     <line x1={lerp(x0, x1, 0.3 + 0.4 * hash(l.i, 9))} y1={772} x2={lerp(x0, x1, 0.3 + 0.4 * hash(l.i, 9))} y2={780} stroke={CUE} strokeWidth={2} />
-                    {k === 0 && <text x={x0} y={828} fontFamily="var(--vt-mono)" fontSize={20} fill="var(--vt-muted)">a line</text>}
+                    {k === 0 && <text x={x0} y={828} fontFamily="var(--vt-mono)" fontSize={20} fill="var(--vt-muted)">{lineLabel}</text>}
                   </g>
                 );
               })}
@@ -947,7 +948,7 @@ function LongFilm() {
         })()}
       </g>
       <g opacity={calm}>
-        <text x={960} y={880} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={34} fill="var(--vt-good)">one line longer · the later lines move, each animation still on its word</text>
+        <text x={960} y={880} textAnchor="middle" fontFamily="var(--vt-sans)" fontSize={34} fill="var(--vt-good)">{useText('calm-label', 'one line longer · the later lines move, each animation still on its word')}</text>
       </g>
       <g opacity={snap}>
         <text x={L1} y={740} textAnchor="end" fontFamily="var(--vt-mono)" fontSize={26} fill="var(--vt-data)">{useText('bpm-label', '72 BPM · every scene ends on a bar')}</text>

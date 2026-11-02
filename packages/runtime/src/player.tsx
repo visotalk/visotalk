@@ -3,7 +3,7 @@
  * The sound itself, and what is loaded when, is the media scheduler's (`media.ts`). `bare` (`?bare` on the page) draws the picture alone, for a page that has controls of its own.
  * The controls are the brand's, not the video theme's: square, a cue-orange play button and playhead;
  * only the greys and the ground (the letterbox and the control bar) come from the theme's `--vt-*` variables, so a light film gets a light player.
- * A document's `meta.poster` is its cover: until the first Play the stage shows that second of the film and the big Play stands over it; Play starts the film from 0.
+ * A document's `meta.poster` is its cover: until the first Play the stage shows that second of the film and the big Play stands over it, while the controls stand at 0; Play starts the film from 0.
  */
 import React, {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {Clock} from './clock';
@@ -46,16 +46,64 @@ const Glyph: React.FC<{name: 'play' | 'pause' | 'sound' | 'muted' | 'full' | 'ex
 /** 82.53 -> "1:22" */
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export const Player: React.FC<{clock: Clock; width: number; height: number; poster?: number; media?: MediaScheduler; ticks?: number[]; hint?: string; autoplay?: boolean; loop?: boolean; bare?: boolean; children: React.ReactNode}> = ({
-  clock: ck, width, height, poster, media, ticks = [], hint, autoplay, loop, bare, children,
+export const Player: React.FC<{
+  clock: Clock;
+  width: number;
+  height: number;
+  poster?: number;
+  media?: MediaScheduler;
+  ticks?: number[];
+  hint?: string;
+  autoplay?: boolean;
+  loop?: boolean;
+  bare?: boolean;
+  captionLines?: Array<{ from: number; duration: number; text: string }>;
+  embeddedCaptions?: boolean;
+  children: React.ReactNode;
+}> = ({
+  clock: ck,
+  width,
+  height,
+  poster,
+  media,
+  ticks = [],
+  hint,
+  autoplay,
+  loop,
+  bare,
+  captionLines = [],
+  embeddedCaptions = true,
+  children,
 }) => {
+  const [captions, setCaptions] = useState(embeddedCaptions);
+  useEffect(() => {
+    const capabilities = () =>
+      window.parent !== window &&
+      window.parent.postMessage(
+        { vt: 'capabilities', speed: true, volume: !!media?.hasSound, captions: captionLines.length > 0, captionsOn: embeddedCaptions },
+        '*',
+      );
+    const receive = (event: MessageEvent) => {
+      if (event.source !== window.parent || !event.data || typeof event.data !== 'object') return;
+      const m = event.data;
+      if (m.vt === 'capabilities') capabilities();
+      else if (m.vt === 'volume' && typeof m.volume === 'number' && Number.isFinite(m.volume)) media?.setVolume(m.volume);
+      else if (m.vt === 'captions' && typeof m.on === 'boolean') setCaptions(m.on);
+    };
+    window.addEventListener('message', receive);
+    capabilities();
+    return () => window.removeEventListener('message', receive);
+  }, [media, captionLines.length, embeddedCaptions]);
   const t = useSyncExternalStore(ck.subscribe, ck.getTime);
   const playing = useSyncExternalStore(ck.subscribe, ck.isPlaying);
   const buffering = useSyncExternalStore(ck.subscribe, ck.isBuffering);
   // a wait shorter than a blink is not worth showing
   const [waiting, setWaiting] = useState(false);
   useEffect(() => {
-    if (!buffering) { setWaiting(false); return undefined; }
+    if (!buffering) {
+      setWaiting(false);
+      return undefined;
+    }
     const id = setTimeout(() => setWaiting(true), 250);
     return () => clearTimeout(id);
   }, [buffering]);
@@ -79,23 +127,32 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
     document.addEventListener('fullscreenchange', change);
     if (document.fullscreenEnabled || window.parent === window) return () => document.removeEventListener('fullscreenchange', change);
     const onMessage = (e: MessageEvent) => {
-      const m = e.data as {vt?: unknown; on?: unknown} | null;
+      const m = e.data as { vt?: unknown; on?: unknown } | null;
       if (e.source !== window.parent || !m || m.vt !== 'fill') return;
       setFill(true);
       setCanFull(true);
       if (typeof m.on === 'boolean') setFull(m.on);
     };
     window.addEventListener('message', onMessage);
-    window.parent.postMessage({vt: 'fill', on: false}, '*');
-    return () => { document.removeEventListener('fullscreenchange', change); window.removeEventListener('message', onMessage); };
+    window.parent.postMessage({ vt: 'fill', on: false }, '*');
+    return () => {
+      document.removeEventListener('fullscreenchange', change);
+      window.removeEventListener('message', onMessage);
+    };
   }, []);
   const toggleFull = () => {
-    if (fill) { window.parent.postMessage({vt: 'fill', on: !full}, '*'); setFull(!full); }
-    else if (document.fullscreenElement) void document.exitFullscreen();
+    if (fill) {
+      window.parent.postMessage({ vt: 'fill', on: !full }, '*');
+      setFull(!full);
+    } else if (document.fullscreenElement) void document.exitFullscreen();
     else void root.current?.requestFullscreen().catch(() => {});
   };
   const hasSound = !!media?.hasSound;
-  const setSound = (on: boolean) => { viewerMuted.current = !on; setMuted(!on); if (on) media?.unlock(); };
+  const setSound = (on: boolean) => {
+    viewerMuted.current = !on;
+    setMuted(!on);
+    if (on) media?.unlock();
+  };
   // the cover: the stage waits on the poster second until the film is played or moved
   const [covered, setCovered] = useState(poster !== undefined && !autoplay);
   const coverAt = useRef(0);
@@ -103,20 +160,28 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
     if (!covered) return undefined;
     ck.seek(poster!);
     coverAt.current = ck.getTime();
-    return ck.subscribe(() => { if (ck.isPlaying() || ck.getTime() !== coverAt.current) setCovered(false); });
+    return ck.subscribe(() => {
+      if (ck.isPlaying() || ck.getTime() !== coverAt.current) setCovered(false);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the cover is decided once, when the player mounts
   }, []);
   const toggle = () => {
-    if (playing) { ck.pause(); return; }
+    if (playing) {
+      ck.pause();
+      return;
+    }
     if (!viewerMuted.current) setSound(true);
-    if (covered) { setCovered(false); ck.seek(0); }
+    if (covered) {
+      setCovered(false);
+      ck.seek(0);
+    }
     ck.play();
   };
   // a page that frames a bare player has the sound button: `{vt: 'sound', on}` from the parent is a press of it (see `bridge.ts`)
   useEffect(() => {
     if (!bare) return undefined;
     const onMessage = (e: MessageEvent) => {
-      const m = e.data as {vt?: unknown; on?: unknown} | null;
+      const m = e.data as { vt?: unknown; on?: unknown } | null;
       if (e.source === window.parent && m && m.vt === 'sound' && typeof m.on === 'boolean') setSound(m.on);
     };
     window.addEventListener('message', onMessage);
@@ -152,6 +217,8 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
     }
   }, [ck, t]);
 
+  // the cover is a picture, not a place in the film: the controls stand at 0 until it lifts
+  const at = covered ? 0 : t;
   const seekTo = (clientX: number) => {
     const r = seekBar.current!.getBoundingClientRect();
     ck.seek(Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * ck.duration);
@@ -159,10 +226,11 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
   const onKey = (e: React.KeyboardEvent) => {
     // typing in a field of the video, or pressing a button, is not the player's key
     const el = e.target as HTMLElement;
-    if (el.closest('input, textarea, select, [contenteditable]') || (el.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter'))) return;
+    if (el.closest('input, textarea, select, [contenteditable]') || (el.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')))
+      return;
     if (e.key === ' ' || e.key === 'k') toggle();
-    else if (e.key === 'ArrowRight') ck.seek(ck.getTime() + 5);
-    else if (e.key === 'ArrowLeft') ck.seek(ck.getTime() - 5);
+    else if (e.key === 'ArrowRight') ck.seek(at + 5);
+    else if (e.key === 'ArrowLeft') ck.seek(at - 5);
     else if (e.key === 'Home') ck.seek(0);
     else if (e.key === 'End') ck.seek(ck.duration);
     else if (e.key === 'f' && canFull && !bare) toggleFull();
@@ -170,57 +238,146 @@ export const Player: React.FC<{clock: Clock; width: number; height: number; post
     else return;
     e.preventDefault();
   };
-  const frac = ck.duration > 0 ? t / ck.duration : 0;
+  const frac = ck.duration > 0 ? at / ck.duration : 0;
   // the first and the last frame are not a reason to press anything: a big Play says what to do
   const idle = !playing && (covered || t <= 0 || t >= ck.duration);
 
   return (
-    <div ref={root} className="vt-root" tabIndex={0} onKeyDown={onKey} onPointerDown={(e) => (e.currentTarget as HTMLElement).focus({preventScroll: true})}
-      style={{height: '100%', display: 'flex', flexDirection: 'column', background: C.bg}}>
-      <style>{CSS}</style>
-      <div ref={box} style={{position: 'relative', flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'}}>
-        <div style={{width: width * scale, height: height * scale}}>
-          <div style={{transform: `scale(${scale})`, transformOrigin: '0 0'}}>{children}</div>
+    <div
+      ref={root}
+      className={`vt-root${!captions ? ' vt-hide-captions' : ''}`}
+      tabIndex={0}
+      onKeyDown={onKey}
+      onPointerDown={(e) => (e.currentTarget as HTMLElement).focus({ preventScroll: true })}
+      style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}
+    >
+      <style>{CSS + `.vt-hide-captions [data-caption]{display:none!important}`}</style>
+      <div
+        ref={box}
+        style={{
+          position: 'relative',
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ width: width * scale, height: height * scale }}>
+          <div style={{ transform: `scale(${scale})`, transformOrigin: '0 0' }}>{children}</div>
         </div>
-        {waiting && <div className="vt-wait" role="status" aria-label="Loading"><i /><i /><i /></div>}
+        {captions && !embeddedCaptions && captionLines.some((line) => t >= line.from && t < line.from + line.duration) && (
+          <div style={{ position: 'absolute', bottom: 16, left: '8%', right: '8%', textAlign: 'center', pointerEvents: 'none' }}>
+            <span
+              style={{
+                background: 'rgba(0,0,0,.85)',
+                color: '#fff',
+                fontFamily: F.sans,
+                fontSize: 'clamp(12px,2vw,20px)',
+                padding: '4px 8px',
+                boxDecorationBreak: 'clone',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {captionLines.find((line) => t >= line.from && t < line.from + line.duration)?.text}
+            </span>
+          </div>
+        )}
+        {waiting && (
+          <div className="vt-wait" role="status" aria-label="Loading">
+            <i />
+            <i />
+            <i />
+          </div>
+        )}
         {idle && !bare && (
-          <button id="vt-start" type="button" className="vt-b vt-cue" aria-label="Play" onClick={toggle}
-            style={{position: 'absolute', left: '50%', top: '50%', width: 72, height: 72, transform: 'translate(-50%, -50%)'}}>
-            <svg viewBox="0 0 24 24" aria-hidden="true" style={{width: 32, height: 32}}><path d="M7 4.5L19 12L7 19.5Z" fill="currentColor" /></svg>
+          <button
+            id="vt-start"
+            type="button"
+            className="vt-b vt-cue"
+            aria-label="Play"
+            onClick={toggle}
+            style={{ position: 'absolute', left: '50%', top: '50%', width: 72, height: 72, transform: 'translate(-50%, -50%)' }}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" style={{ width: 32, height: 32 }}>
+              <path d="M7 4.5L19 12L7 19.5Z" fill="currentColor" />
+            </svg>
           </button>
         )}
       </div>
-      {!bare && hint && <div style={{fontFamily: F.sans, fontSize: 13, color: C.muted, padding: '6px 16px 0'}}>{hint}</div>}
-      {!bare && <div style={{height: 56, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px'}}>
-        <button id="vt-play" type="button" className="vt-b vt-cue" aria-label={playing ? 'Pause' : 'Play'} onClick={toggle}>
-          <Glyph name={playing ? 'pause' : 'play'} />
-        </button>
-        <div id="vt-seek" ref={seekBar} className="vt-seek" role="slider" tabIndex={0} aria-label="Seek" aria-valuemin={0} aria-valuemax={Math.round(ck.duration)}
-          aria-valuenow={Math.round(t)} aria-valuetext={`${clock(t)} of ${clock(ck.duration)}`}
-          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); seekTo(e.clientX); }}
-          onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) seekTo(e.clientX); }}>
-          <div style={{position: 'absolute', left: 0, right: 0, top: 18, height: 4, background: C.border}}>
-            <div style={{width: `${frac * 100}%`, height: 4, background: C.text}} />
-            {ticks.map((at, i) => (
-              <i key={i} style={{position: 'absolute', top: -5, left: `${(at / ck.duration) * 100}%`, width: 2, height: 14, background: at <= t ? C.text : C.faint}} />
-            ))}
+      {!bare && hint && <div style={{ fontFamily: F.sans, fontSize: 13, color: C.muted, padding: '6px 16px 0' }}>{hint}</div>}
+      {!bare && (
+        <div style={{ height: 56, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px' }}>
+          <button id="vt-play" type="button" className="vt-b vt-cue" aria-label={playing ? 'Pause' : 'Play'} onClick={toggle}>
+            <Glyph name={playing ? 'pause' : 'play'} />
+          </button>
+          <div
+            id="vt-seek"
+            ref={seekBar}
+            className="vt-seek"
+            role="slider"
+            tabIndex={0}
+            aria-label="Seek"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(ck.duration)}
+            aria-valuenow={Math.round(at)}
+            aria-valuetext={`${clock(at)} of ${clock(ck.duration)}`}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              seekTo(e.clientX);
+            }}
+            onPointerMove={(e) => {
+              if (e.currentTarget.hasPointerCapture(e.pointerId)) seekTo(e.clientX);
+            }}
+          >
+            <div style={{ position: 'absolute', left: 0, right: 0, top: 18, height: 4, background: C.border }}>
+              <div style={{ width: `${frac * 100}%`, height: 4, background: C.text }} />
+              {ticks.map((tick, i) => (
+                <i
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    top: -5,
+                    left: `${(tick / ck.duration) * 100}%`,
+                    width: 2,
+                    height: 14,
+                    background: tick <= at ? C.text : C.faint,
+                  }}
+                />
+              ))}
+            </div>
+            <i style={{ position: 'absolute', top: 11, left: `calc(${frac * 100}% - 3px)`, width: 6, height: 18, background: CUE }} />
           </div>
-          <i style={{position: 'absolute', top: 11, left: `calc(${frac * 100}% - 3px)`, width: 6, height: 18, background: CUE}} />
+          <span style={{ fontFamily: F.mono, fontSize: 12, color: C.muted, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+            {clock(at)} / {clock(ck.duration)}
+          </span>
+          {hasSound && (
+            <button
+              id="vt-sound"
+              type="button"
+              className="vt-b"
+              aria-label={muted ? 'Sound on' : 'Sound off'}
+              aria-pressed={!muted}
+              onClick={() => setSound(muted)}
+            >
+              <Glyph name={muted ? 'muted' : 'sound'} />
+            </button>
+          )}
+          {canFull && (
+            <button
+              id="vt-full"
+              type="button"
+              className="vt-b"
+              aria-label={full ? 'Exit full screen' : 'Full screen'}
+              aria-pressed={full}
+              onClick={toggleFull}
+            >
+              <Glyph name={full ? 'exit' : 'full'} />
+            </button>
+          )}
         </div>
-        <span style={{fontFamily: F.mono, fontSize: 12, color: C.muted, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'}}>
-          {clock(t)} / {clock(ck.duration)}
-        </span>
-        {hasSound && (
-          <button id="vt-sound" type="button" className="vt-b" aria-label={muted ? 'Sound on' : 'Sound off'} aria-pressed={!muted} onClick={() => setSound(muted)}>
-            <Glyph name={muted ? 'muted' : 'sound'} />
-          </button>
-        )}
-        {canFull && (
-          <button id="vt-full" type="button" className="vt-b" aria-label={full ? 'Exit full screen' : 'Full screen'} aria-pressed={full} onClick={toggleFull}>
-            <Glyph name={full ? 'exit' : 'full'} />
-          </button>
-        )}
-      </div>}
+      )}
     </div>
   );
 };

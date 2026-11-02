@@ -74,7 +74,7 @@ test('export, then import, gives the talk back: the same files, the same revisio
   assert.deepEqual(Object.keys(first.manifest.files).sort(), ['captions/en.srt', 'credits.md', 'source/doc.tsx', 'source/media/pic.png', 'voice/audio/abc123.m4a', 'voice/voice.json']);
   assert.equal(first.manifest.entry, 'source/doc.tsx');
   assert.deepEqual(first.manifest.voice, {}, 'a voice is carried, and the document names none');
-  assert.equal(first.manifest.spec, '0.7');
+  assert.equal(first.manifest.spec, '0.8');
   assert.equal(first.manifest.created, '2025-10-09T08:53:20Z');
 
   const back = join(tmp('back'), 'talk');
@@ -91,55 +91,55 @@ test('export, then import, gives the talk back: the same files, the same revisio
   assert.deepEqual(readFileSync(again), readFileSync(out));
 });
 
-test('an adapted style keeps all its files through CLI export, import and re-export', async () => {
+test('an adapted motion keeps all its files through CLI export, import and re-export', async () => {
   const p = project();
   const files = new Map<string, Uint8Array>([
-    ['style.json', enc.encode('{"slug":"red-pencil","version":"1","locked":[]}')],
-    ['STYLE.md', enc.encode('Adapted guidance, not a catalogue lookup.')],
+    ['motion.json', enc.encode('{"slug":"red-pencil","version":"1","locked":[]}')],
+    ['MOTION.md', enc.encode('Adapted guidance, not a catalogue lookup.')],
     ['parts/unused.tsx', enc.encode('export const unused = 42;')],
     ['demo/doc.tsx', enc.encode(DOC())],
     ['assets/unreferenced.png', new Uint8Array([137, 80, 78, 71, 0, 255])],
   ]);
   for (const [name, bytes] of files) {
-    mkdirSync(join(p.dir, 'style', name, '..'), {recursive: true});
-    writeFileSync(join(p.dir, 'style', name), bytes);
+    mkdirSync(join(p.dir, 'motion', name, '..'), {recursive: true});
+    writeFileSync(join(p.dir, 'motion', name), bytes);
   }
-  writeFileSync(join(p.dir, 'style/.env'), 'LOCAL_SECRET=must-not-export');
-  const out = join(tmp('out'), 'style.visotalk');
+  writeFileSync(join(p.dir, 'motion/.env'), 'LOCAL_SECRET=must-not-export');
+  const out = join(tmp('out'), 'motion.visotalk');
   const first = await exportBundle(p, out);
   const opened = await openBundle(readFileSync(out));
-  for (const [name, bytes] of files) assert.deepEqual(opened.entries.get(`source/style/${name}`), bytes, name);
-  assert.ok(!opened.entries.has('source/style/.env'));
-  const imported = await importBundle(out, join(tmp('style-back'), 'work'));
-  const again = join(tmp('out'), 'style-again.visotalk');
+  for (const [name, bytes] of files) assert.deepEqual(opened.entries.get(`source/motion/${name}`), bytes, name);
+  assert.ok(!opened.entries.has('source/motion/.env'));
+  const imported = await importBundle(out, join(tmp('motion-back'), 'work'));
+  const again = join(tmp('out'), 'motion-again.visotalk');
   const second = await exportBundle(imported.project, again);
   assert.equal(second.manifest.revision, first.manifest.revision);
   assert.deepEqual(readFileSync(again), readFileSync(out));
 });
 
-test('an oversized style file is refused before it is read into the bundle', async () => {
+test('an oversized motion file is refused before it is read into the bundle', async () => {
   const p = project();
-  mkdirSync(join(p.dir, 'style'));
-  const file = join(p.dir, 'style/oversized.bin');
+  mkdirSync(join(p.dir, 'motion'));
+  const file = join(p.dir, 'motion/oversized.bin');
   writeFileSync(file, '');
   truncateSync(file, 200_000_001);
-  const out = join(tmp('style-out'), 'oversized.visotalk');
-  await assert.rejects(exportBundle(p, out), /style.*budget/);
+  const out = join(tmp('motion-out'), 'oversized.visotalk');
+  await assert.rejects(exportBundle(p, out), /motion.*budget/);
   assert.ok(!existsSync(out));
 });
 
-test('style collection refuses linked roots, linked files and linked directories', async () => {
-  const outside = tmp('style-outside');
+test('motion collection refuses linked roots, linked files and linked directories', async () => {
+  const outside = tmp('motion-outside');
   writeFileSync(join(outside, 'private.txt'), 'must not leave this directory');
   for (const kind of ['root', 'file', 'directory']) {
     const p = project();
-    if (kind === 'root') symlinkSync(outside, join(p.dir, 'style'));
+    if (kind === 'root') symlinkSync(outside, join(p.dir, 'motion'));
     else {
-      mkdirSync(join(p.dir, 'style'));
-      symlinkSync(kind === 'file' ? join(outside, 'private.txt') : outside, join(p.dir, 'style', kind));
+      mkdirSync(join(p.dir, 'motion'));
+      symlinkSync(kind === 'file' ? join(outside, 'private.txt') : outside, join(p.dir, 'motion', kind));
     }
-    const out = join(tmp('style-out'), 'refused.visotalk');
-    await assert.rejects(exportBundle(p, out), /style.*link|link.*style/i, kind);
+    const out = join(tmp('motion-out'), 'refused.visotalk');
+    await assert.rejects(exportBundle(p, out), /motion.*link|link.*motion/i, kind);
     assert.ok(!existsSync(out));
   }
 });

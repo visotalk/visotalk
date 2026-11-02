@@ -47,7 +47,7 @@ export function staticQa(doc: VisoDoc, c: Compiled): QaIssue[] {
   for (const a of c.actions) {
     const sc = c.scenes.find((s) => s.id === a.scene);
     if (sc && a.start >= sc.end) {
-      issues.push({code: 'action.outside-scene', at: a.scene, objects: [a.target], message: `${a.motion} of "${a.target}" starts at ${(a.start - sc.from).toFixed(1)} s into scene "${a.scene}", which is over at ${(sc.end - sc.from).toFixed(1)} s`,
+      issues.push({code: 'action.outside-scene', at: a.scene, objects: [a.target], message: `${a.kind} of "${a.target}" starts at ${(a.start - sc.from).toFixed(1)} s into scene "${a.scene}", which is over at ${(sc.end - sc.from).toFixed(1)} s`,
         fix: 'anchor it on a word of the scene, or at="end" with a negative offset; to hold the scene longer give its last line a hold'});
     }
   }
@@ -59,7 +59,7 @@ export function staticQa(doc: VisoDoc, c: Compiled): QaIssue[] {
     const parts = new Set(scene.parts.map((x) => x.id));
     const sc = c.scenes[i];
     if (!sc) return;
-    const ids = [...new Set(c.actions.filter((a) => a.scene === scene.id && a.motion === 'appear').map((a) => a.target))];
+    const ids = [...new Set(c.actions.filter((a) => a.scene === scene.id && a.kind === 'appear').map((a) => a.target))];
     for (const id of ids) {
       let seen = false;
       const scope = global.has(id) || (scenesOf.get(id)?.size ?? 0) > 1 ? undefined : scene.id;

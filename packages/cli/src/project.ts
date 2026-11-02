@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {closeSync, copyFileSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {basename, dirname, extname, join, relative, resolve, sep} from 'node:path';
-import {build as esbuild, type PluginBuild} from 'esbuild';
+import {build as esbuild, buildSync, type BuildFailure, type PluginBuild} from 'esbuild';
 import {localImports} from '@visotalk/ir/bundle';
 import {clipKey, kokoroKey} from './clip_key.ts';
 import {fontPlan, writeFontFaces} from './fonts.ts';
@@ -110,7 +110,34 @@ export function codeIssues(p: Project): Issue[] {
     });
   }
   for (const {file, text} of [{file: p.file, text: p.prelude}, ...localSources(p)]) issues.push(...redeclared(basename(file), text));
-  return [...issues, ...unboundTags(p, parts.map(({x, at}) => ({first: p.locs.get(at)?.line ?? 1, text: x.body ?? ''})))];
+  return [...issues, ...unboundTags(p, parts.map(({x, at}) => ({first: p.locs.get(at)?.line ?? 1, text: x.body ?? ''}))), ...unbuildable(p)];
+}
+
+/** What the player's build gives a document to import, besides its own files and packages installed beside it. */
+const PROVIDED = ['@visotalk/*', 'react', 'react/*', 'react-dom', 'react-dom/*', 'three', 'three/*'];
+
+/**
+ * What the player's build would refuse in the document's code, found the way it finds it (esbuild, over the document and every file it imports), so
+ * the check before a build says it rather than the build: an import that resolves to nothing passes every other check.
+ */
+function unbuildable(p: Project): Issue[] {
+  // a document held only in memory has nothing on disk for a build to read
+  if (!existsSync(p.file)) return [];
+  try {
+    buildSync({entryPoints: [p.file], bundle: true, write: false, outdir: join(p.work, 'check'), format: 'iife', jsx: 'automatic', loader: {'.woff2': 'empty', '.woff': 'empty', '.ttf': 'empty'}, external: PROVIDED, logLevel: 'silent'});
+    return [];
+  } catch (e) {
+    return ((e as BuildFailure).errors ?? []).map((error) => ({
+      code: 'code.unbuildable',
+      at: error.location ? `${basename(error.location.file)}:${error.location.line}:${error.location.column + 1}` : basename(p.file),
+      message: error.text,
+      fix: /^Could not resolve "visotalk(\/|")/.test(error.text)
+        ? "the markup's components are imported from '@visotalk/jsx', and the hooks (useProp, useTime, Obj…) from '@visotalk/runtime'"
+        : /^Could not resolve/.test(error.text)
+          ? "a document imports '@visotalk/jsx', '@visotalk/runtime', react, three, its own files by a relative path, or a package installed beside it"
+          : undefined,
+    }));
+  }
 }
 
 /** The names a file imports */
@@ -500,7 +527,7 @@ const artifactQuery = (o: {theme?: string}) => (o.theme ? `<script>history.repla
 
 /**
  * three.js is the engine's, pinned beside React: a part that imports `three` or `three/addons/…` gets the engine's copy, wherever the
- * document lives and whatever it has installed, so a style that draws in 3D works in every work, the hosted worker and a bundle. It joins the document's
+ * document lives and whatever it has installed, so a motion that draws in 3D works in every work, the hosted worker and a bundle. It joins the document's
  * bundle only when the document imports it, and is not in the runtime file every player loads. Being a package, its code is not a project file, so
  * the clock check (`codeIssues`) does not read it: a part still draws each frame from the clock, never from three's own loop.
  */

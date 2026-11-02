@@ -102,8 +102,13 @@ export class Clock {
     this.emit();
   }
 
+  getRate = (): number => this.rate;
+
   setRate(rate: number): void {
+    if (!Number.isFinite(rate) || rate < 0.5 || rate > 2 || rate === this.rate) return;
     this.rate = rate;
+    this.last = performance.now();
+    this.emit();
   }
 
   private emit(): void {

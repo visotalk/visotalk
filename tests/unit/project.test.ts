@@ -434,6 +434,23 @@ test('init: a vertical script gets a 9:16 canvas and word captions, a horizontal
   assert.doesNotMatch(skeleton({title: 'T', lines}), /exports=/);
 });
 
+test('check: what the player\'s build cannot resolve is refused before a build, with the import a document makes instead', async () => {
+  const {codeIssues} = await import('../../packages/cli/src/project.ts');
+  const dir = mkdtempSync('/tmp/vt-unbuildable-');
+  mkdirSync(dir + '/parts');
+  writeFileSync(dir + '/parts/kit.tsx', "import * as THREE from 'three';\nimport {useProp} from '@visotalk/runtime';\nimport {chart} from './missing';\nexport const Kit = () => chart(THREE, useProp);\n");
+  const write = (text: string) => (writeFileSync(dir + '/doc.tsx', text), codeIssues(project(dir, text)).filter((i) => i.code === 'code.unbuildable'));
+  const wrong = write(TWO.replace("'@visotalk/jsx'", "'visotalk'"));
+  assert.deepEqual(wrong.map((i) => [i.at, i.message]), [['doc.tsx:1:57', 'Could not resolve "visotalk"']]);
+  assert.match(wrong[0].fix!, /'@visotalk\/jsx'/);
+  const withKit = `import {Kit} from './parts/kit';\n${TWO.replace('<div>bars</div>', '<Kit />')}`;
+  const local = write(withKit);
+  assert.deepEqual(local.map((i) => [i.at, i.message]), [['kit.tsx:3:21', 'Could not resolve "./missing"']], 'three and the runtime are the build\'s; a missing file of its own is not');
+  writeFileSync(dir + '/parts/kit.tsx', 'export const Kit = () => null;\n');
+  assert.deepEqual(write(withKit), []);
+  rmSync(dir, {recursive: true, force: true});
+});
+
 test('a name a file imports and declares again is refused: the bundler keeps the local one, and a component named like its import draws itself', async () => {
   const {redeclared} = await import('../../packages/cli/src/project.ts');
   const scene = "import {K, Check, Hand} from './art.tsx';\nimport {Seal as Mark} from './art.tsx';\n\nexport const Check = () => <Check s={2} />;\nconst Mark = 1;\nfunction Hand() {}\nconst Other = () => null;\n";

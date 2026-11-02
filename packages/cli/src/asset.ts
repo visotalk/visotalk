@@ -31,15 +31,23 @@ interface Candidate {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** GET with patience: 429 and 5xx wait (Retry-After or doubling from 4 s) and try again, up to `tries` times */
+/** How long one request may take to answer: a host that cannot be reached (a network that drops it) answers never, and is told apart from a busy one by this. */
+const ANSWER_MS = 20_000;
+
+/**
+ * GET with patience for a busy service: 429 and 5xx wait (Retry-After or doubling from 4 s) and try again, up to `tries` times. A request that gets no
+ * answer at all is tried once more, then given up on at once: the host is unreachable from here, and waiting longer finds nothing.
+ */
 async function patient(url: string, tries = 5): Promise<Response> {
   let wait = 4000;
+  let unanswered = 0;
   for (let i = 0; ; i++) {
     let res: Response | undefined;
     try {
-      res = await fetch(url, {headers: {'User-Agent': UA, 'Api-User-Agent': UA}});
+      res = await fetch(url, {headers: {'User-Agent': UA, 'Api-User-Agent': UA}, signal: AbortSignal.timeout(ANSWER_MS)});
     } catch (e) {
-      if (i + 1 >= tries) throw e;
+      if (++unanswered >= 2 || i + 1 >= tries) throw new Error(`no answer from ${new URL(url).host} (${e instanceof Error ? e.message : String(e)}): it cannot be reached from here`);
+      continue;
     }
     if (res && res.status !== 429 && res.status < 500) return res;
     if (i + 1 >= tries) {

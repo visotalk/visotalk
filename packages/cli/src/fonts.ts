@@ -1,6 +1,6 @@
 /**
  * The fonts a document can name, and how a build embeds them: the CJK faces, Newsreader (a display serif for a Latin-script film that
- * wants the weight a system sans lacks), and the faces the built-in styles use. A document picks a face by naming its family in the theme's font stacks
+ * wants the weight a system sans lacks), and the faces the built-in motions use. A document picks a face by naming its family in the theme's font stacks
  * (`tokens={{fonts: {sans: '"Noto Serif SC", sans-serif', mono: …}}}`); a Chinese, Japanese or Korean document that names none gets the sans
  * face of its language, so the page never depends on which fonts the machine has. `visotalk doctor --fix` downloads the files (pinned by size
  * and SHA-256, all under the SIL Open Font License) into ~/.visotalk/fonts, and `build` cuts each one down to the characters the document
@@ -40,7 +40,7 @@ export const FONTS: Font[] = [
   {family: 'LXGW WenKai', file: 'LXGWWenKai-Regular.ttf', url: 'https://github.com/lxgw/LxgwWenKai/releases/download/v1.530/LXGWWenKai-Regular.ttf', bytes: 25928940, sha256: '2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b', weight: '400'},
   {family: 'Newsreader', file: 'Newsreader-VF.ttf', url: `${GOOGLE_FONTS}/newsreader/Newsreader%5Bopsz,wght%5D.ttf`, bytes: 451664, sha256: '8a08d13f8a6c0d51be379a60af84f945f65369a67e509ee3c3bdcc421254d7c1', weight: '200 800'},
   {family: 'Newsreader', style: 'italic', file: 'Newsreader-Italic-VF.ttf', url: `${GOOGLE_FONTS}/newsreader/Newsreader-Italic%5Bopsz,wght%5D.ttf`, bytes: 495684, sha256: '796668611f80b64d5adf182fde3b6f29ed83b4e7cbec7b96937e84ac01364792', weight: '200 800'},
-  // the built-in styles' faces (skills/visotalk/styles): red-pencil's hand, lab-notebook's hand and text, stage-light's figures and text, on-air's text, riso-pop's display
+  // the built-in motions' faces (skills/visotalk/motions): red-pencil's hand, lab-notebook's hand and text, stage-light's figures and text, on-air's text, riso-pop's display
   {family: 'Caveat', file: 'Caveat-VF.ttf', url: `${GOOGLE_FONTS}/caveat/Caveat%5Bwght%5D.ttf`, bytes: 403648, sha256: '0bdb6b660482d31531b3945849fba5916b3ef8695da7024a9e6b9ee3c4157988', weight: '400 700'},
   {family: 'Shantell Sans', file: 'ShantellSans-VF.ttf', url: `${GOOGLE_FONTS}/shantellsans/ShantellSans%5BBNCE,INFM,SPAC,wght%5D.ttf`, bytes: 1284736, sha256: 'd98a7913853f78d71aa0b86daf66b5eddb5a3266c07bfd51ef70632b88c41084', weight: '300 800'},
   {family: 'Atkinson Hyperlegible Next', file: 'AtkinsonHyperlegibleNext-VF.ttf', url: `${GOOGLE_FONTS}/atkinsonhyperlegiblenext/AtkinsonHyperlegibleNext%5Bwght%5D.ttf`, bytes: 114552, sha256: '5a455d1cfa099b601ab70751bb9673e8fe1854dc4500c80e1a220d0d75e31745', weight: '200 800'},
@@ -60,7 +60,7 @@ export const FONTS: Font[] = [
 ];
 
 /** Faces every player carries (`@visotalk/runtime` bundles them), so a document may name them without the catalogue */
-const BUNDLED = ['Inter', 'JetBrains Mono'];
+export const BUNDLED = ['Inter', 'JetBrains Mono'];
 /** Faces that draw Han characters: a Chinese or Japanese document that names none of them gets its language's sans beside the faces it names */
 const HAN = new Set(['Noto Sans SC', 'Noto Sans JP', 'Noto Sans KR', 'Noto Serif SC', 'LXGW WenKai', 'Fusion Pixel 12px Prop zh-Hans']);
 const GENERIC = /^(serif|sans-serif|monospace|cursive|fantasy|system-ui|math|emoji|fangsong|ui-[a-z-]+)$/i;

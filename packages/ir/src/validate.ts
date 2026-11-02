@@ -32,13 +32,13 @@ const FIXES: Record<string, string> = {
   'action.target': 'name one or more targets: <Appear target="id" …/> or target={["id", "id"]}',
   'anchor.cycle': 'anchor one action of the cycle on a word, a scene time or a scene edge',
   'anchor.after-negative': 'raise `offset` so the action does not start before the action it hangs on',
-  'motion.tween': 'a tween needs numbers, colours ("#426894", "hsl(212 46% 68%)") or lengths ("12px"): <Tween target="id" to={{name: 0.5}} at="start"/>',
-  'motion.set': 'a set needs values in `to`: <Set target="id" to={{name: 1}} at="start"/>',
-  'motion.to': 'appear and disappear take no `to`: change a value with <Set> or <Tween>',
-  'motion.easing': 'easing is linear, easeIn, easeOut, easeInOut, one of those with Sine, Quad, Quart, Quint or Back (easeOutQuart, easeOutBack(2.2)), or cubic-bezier(x1, y1, x2, y2)',
-  'motion.repeat': '`repeat` (0 or more extra plays, or -1 to go on for the whole film) and `yoyo` belong to <Tween>',
-  'motion.time': '`dur`, `stagger` and `hold` are seconds, 0 or more',
-  'motion.until': 'end it on a word, a scene time or a scene edge of its own scene, with no `dur`: until="end", until={{line: "l3", word: "the curve"}}, until={{scene: "end", offset: 1.5}}',
+  'action.tween': 'a tween needs numbers, colours ("#426894", "hsl(212 46% 68%)") or lengths ("12px"): <Tween target="id" to={{name: 0.5}} at="start"/>',
+  'action.set': 'a set needs values in `to`: <Set target="id" to={{name: 1}} at="start"/>',
+  'action.to': 'appear and disappear take no `to`: change a value with <Set> or <Tween>',
+  'action.easing': 'easing is linear, easeIn, easeOut, easeInOut, one of those with Sine, Quad, Quart, Quint or Back (easeOutQuart, easeOutBack(2.2)), or cubic-bezier(x1, y1, x2, y2)',
+  'action.repeat': '`repeat` (0 or more extra plays, or -1 to go on for the whole film) and `yoyo` belong to <Tween>',
+  'action.time': '`dur`, `stagger` and `hold` are seconds, 0 or more',
+  'action.until': 'end it on a word, a scene time or a scene edge of its own scene, with no `dur`: until="end", until={{line: "l3", word: "the curve"}}, until={{scene: "end", offset: 1.5}}',
   'sound.asset': 'declare the file as <Asset id="…" kind="audio" src="…" license={{…}}/> and name its id: <Sound asset="id" …/>',
   'sound.params': '`volume` and `duck` are dB (numbers), `loop` is true or false, `fadeIn`, `fadeOut` and `dur` are seconds, 0 or more; `fadeOut` needs `dur` or `loop`',
 };
@@ -81,7 +81,7 @@ export function validate(doc: VisoDoc): Issue[] {
   const add = (code: string, at: string, message: string, fix: string | undefined = FIXES[code]) => issues.push({code, at, message, ...(fix ? {fix} : {})});
 
   const minor = SPEC_VERSION.split('.').slice(0, 2).join('.');
-  if (!doc.spec.startsWith(`${minor}.`) && !doc.spec.startsWith('0.6.')) add('spec.version', '/spec', `spec ${doc.spec} is not ${minor}.x`);
+  if (!doc.spec.startsWith(`${minor}.`) && !doc.spec.startsWith('0.6.') && !doc.spec.startsWith('0.7.')) add('spec.version', '/spec', `spec ${doc.spec} is not ${minor}.x`);
   if (doc.theme && !Object.hasOwn(THEMES, doc.theme.id)) add('theme.unknown', '/theme/id', `unknown theme "${doc.theme.id}" (built-in: ${Object.keys(THEMES).join(', ')})`);
   for (const problem of captionSkinProblems(doc.theme?.tokens?.caption)) add('theme.caption', '/theme/tokens/caption', problem);
   if (!doc.canvas.presets.length) add('canvas.presets', '/canvas/presets', 'a canvas needs at least one preset (the first is the default)');
@@ -89,14 +89,14 @@ export function validate(doc: VisoDoc): Issue[] {
     if (!doc.canvas.presets.some((p) => p.id === v.preset)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the canvas "${v.preset}", which the document does not have (${doc.canvas.presets.map((p) => p.id).join(', ')})`, 'name a canvas of the document, or add it: canvas="16x9,9x16"');
     if (v.theme !== undefined && !Object.hasOwn(THEMES, v.theme)) add('export.variant', `/exports/variants/${i}`, `variant ${i + 1} names the theme "${v.theme}" (built-in: ${Object.keys(THEMES).join(', ')})`);
   });
-  for (const k of ['lead', 'hold', 'tail', 'grid'] as const) if (doc.pacing?.[k] !== undefined && !seconds(doc.pacing[k])) add('motion.time', `/pacing/${k}`, `${k} is seconds, 0 or more`);
+  for (const k of ['lead', 'hold', 'tail', 'grid'] as const) if (doc.pacing?.[k] !== undefined && !seconds(doc.pacing[k])) add('action.time', `/pacing/${k}`, `${k} is seconds, 0 or more`);
 
   for (const [id, text] of Object.entries(doc.texts ?? {})) {
     if (!ID.test(id)) add('id.format', `/texts/${id}`, `text id "${id}" is lowercase letters, digits, - and _, starting with a letter`);
     if (typeof text !== 'string') add('text.value', `/texts/${id}`, `text "${id}" is a string`);
   }
 
-  if (doc.meta.poster !== undefined && !seconds(doc.meta.poster)) add('motion.time', '/meta/poster', 'poster is the second of the film shown as its cover, 0 or more');
+  if (doc.meta.poster !== undefined && !seconds(doc.meta.poster)) add('action.time', '/meta/poster', 'poster is the second of the film shown as its cover, 0 or more');
 
   // the document's id names a directory (`.visotalk/<id>/`, in a bundle's archive too): it is a plain id, never a path
   if (!ID.test(doc.meta.id)) add('id.format', '/meta/id', `document id "${doc.meta.id}" is not a valid id`);
@@ -153,7 +153,7 @@ export function validate(doc: VisoDoc): Issue[] {
   }
   // part id → where an appear shows it: a scene's part by an appear in its scene, a global part by an appear in any scene
   const shown = new Set<string>();
-  for (const scene of doc.scenes) for (const a of scene.animations) if (a.motion === 'appear') for (const t of [a.target].flat()) shown.add(global.has(t) ? t : `${scene.id}:${t}`);
+  for (const scene of doc.scenes) for (const a of scene.animations) if (a.kind === 'appear') for (const t of [a.target].flat()) shown.add(global.has(t) ? t : `${scene.id}:${t}`);
 
   const lineIds = new Set<string>();
   for (const scene of doc.scenes) {
@@ -161,12 +161,12 @@ export function validate(doc: VisoDoc): Issue[] {
     uniq('scene', scene.id, sat);
     if (recorded && scene.duration !== undefined) add('recording.duration', `${sat}/duration`, 'with recorded narration a scene lasts from where it starts in the recording to where the next one does: remove duration');
     else if (!recorded && !scene.lines.length && scene.duration === undefined) add('scene.duration', sat, 'a scene without lines needs a duration');
-    if (scene.duration !== undefined && !seconds(scene.duration)) add('motion.time', `${sat}/duration`, 'duration is seconds, 0 or more');
+    if (scene.duration !== undefined && !seconds(scene.duration)) add('action.time', `${sat}/duration`, 'duration is seconds, 0 or more');
     for (const l of scene.lines) {
       uniq('line', l.id, `${sat}/lines/${l.id}`);
       if (lineIds.has(l.id)) continue;
       lineIds.add(l.id);
-      if (l.hold !== undefined && !seconds(l.hold)) add('motion.time', `${sat}/lines/${l.id}/hold`, 'hold is seconds, 0 or more');
+      if (l.hold !== undefined && !seconds(l.hold)) add('action.time', `${sat}/lines/${l.id}/hold`, 'hold is seconds, 0 or more');
     }
     for (const p of scene.parts) {
       const at = `${sat}/parts/${p.id}`;
@@ -184,7 +184,7 @@ export function validate(doc: VisoDoc): Issue[] {
 
 function checkAnchor(doc: VisoDoc, scene: Scene, a: ActionAnchor, at: string, add: (c: string, at: string, m: string) => void) {
   const offset = (a as {offset?: unknown}).offset;
-  if (offset !== undefined && !(typeof offset === 'number' && Number.isFinite(offset))) add('motion.time', `${at}/offset`, 'offset is seconds');
+  if (offset !== undefined && !(typeof offset === 'number' && Number.isFinite(offset))) add('action.time', `${at}/offset`, 'offset is seconds');
   if ('after' in a) return; // checked across the whole document by checkAfter
   if ('at' in a) {
     if (!seconds(a.at)) add('anchor.at', at, `\`at\` ${a.at} is before the start of the scene`);
@@ -204,8 +204,8 @@ function checkAnchor(doc: VisoDoc, scene: Scene, a: ActionAnchor, at: string, ad
 
 /** Where an action or a sound ends: an anchor of its own scene, never another action; `wrong` is what else makes it wrong, if anything */
 function checkUntil(doc: VisoDoc, scene: Scene, until: Anchor, at: string, add: (c: string, at: string, m: string) => void, wrong?: string) {
-  if (wrong) add('motion.until', `${at}/until`, wrong);
-  if ('after' in (until as ActionAnchor)) add('motion.until', `${at}/until`, '`until` is a word, a scene time or a scene edge, not another action');
+  if (wrong) add('action.until', `${at}/until`, wrong);
+  if ('after' in (until as ActionAnchor)) add('action.until', `${at}/until`, '`until` is a word, a scene time or a scene edge, not another action');
   else checkAnchor(doc, scene, until, `${at}/until`, add);
 }
 
@@ -213,14 +213,14 @@ function checkAction(doc: VisoDoc, scene: Scene, a: Action, at: string, add: (c:
   if (![a.target].flat().length) add('action.target', `${at}/target`, 'an action with no targets does nothing');
   for (const t of [a.target].flat()) if (!ID.test(t)) add('id.format', `${at}/target`, `target "${t}" is not a valid id`);
   checkAnchor(doc, scene, a.at, `${at}/at`, add);
-  for (const k of ['dur', 'stagger'] as const) if (a[k] !== undefined && !seconds(a[k])) add('motion.time', `${at}/${k}`, `${k} is seconds, 0 or more`);
-  if (a.until !== undefined) checkUntil(doc, scene, a.until, at, add, a.dur !== undefined ? '`until` replaces `dur`: give one of them' : a.repeat !== undefined ? 'a repeated tween plays `dur` each time, so it takes `dur`, not `until`' : a.motion === 'set' ? 'a set happens at once: it has no `until`' : undefined);
-  if (a.easing !== undefined && !easingFn(a.easing)) add('motion.easing', `${at}/easing`, `unknown easing "${a.easing}"`);
-  if ((a.repeat !== undefined || a.yoyo !== undefined) && (a.motion !== 'tween' || (a.repeat !== undefined && !(Number.isInteger(a.repeat) && a.repeat >= -1)) || (a.yoyo !== undefined && typeof a.yoyo !== 'boolean'))) add('motion.repeat', at, a.motion === 'tween' ? '`repeat` is a whole number, -1 or more; `yoyo` is true or false' : `${a.motion} does not repeat`);
+  for (const k of ['dur', 'stagger'] as const) if (a[k] !== undefined && !seconds(a[k])) add('action.time', `${at}/${k}`, `${k} is seconds, 0 or more`);
+  if (a.until !== undefined) checkUntil(doc, scene, a.until, at, add, a.dur !== undefined ? '`until` replaces `dur`: give one of them' : a.repeat !== undefined ? 'a repeated tween plays `dur` each time, so it takes `dur`, not `until`' : a.kind === 'set' ? 'a set happens at once: it has no `until`' : undefined);
+  if (a.easing !== undefined && !easingFn(a.easing)) add('action.easing', `${at}/easing`, `unknown easing "${a.easing}"`);
+  if ((a.repeat !== undefined || a.yoyo !== undefined) && (a.kind !== 'tween' || (a.repeat !== undefined && !(Number.isInteger(a.repeat) && a.repeat >= -1)) || (a.yoyo !== undefined && typeof a.yoyo !== 'boolean'))) add('action.repeat', at, a.kind === 'tween' ? '`repeat` is a whole number, -1 or more; `yoyo` is true or false' : `${a.kind} does not repeat`);
   const to = a.to ?? {};
-  if (a.motion === 'tween' && (!Object.keys(to).length || !Object.values(to).every((v) => tweenable(v) && (typeof v !== 'number' || Number.isFinite(v))))) add('motion.tween', at, 'a tween needs one or more values in `to`, each a number, a colour or a length');
-  if (a.motion === 'set' && (!Object.keys(to).length || !Object.values(to).every((v) => typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))))) add('motion.set', at, 'a set needs one or more number, string or boolean values in `to`');
-  if ((a.motion === 'appear' || a.motion === 'disappear') && a.to !== undefined) add('motion.to', at, `${a.motion} takes no to values`);
+  if (a.kind === 'tween' && (!Object.keys(to).length || !Object.values(to).every((v) => tweenable(v) && (typeof v !== 'number' || Number.isFinite(v))))) add('action.tween', at, 'a tween needs one or more values in `to`, each a number, a colour or a length');
+  if (a.kind === 'set' && (!Object.keys(to).length || !Object.values(to).every((v) => typeof v === 'string' || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))))) add('action.set', at, 'a set needs one or more number, string or boolean values in `to`');
+  if ((a.kind === 'appear' || a.kind === 'disappear') && a.to !== undefined) add('action.to', at, `${a.kind} takes no to values`);
 }
 
 function checkSound(doc: VisoDoc, scene: Scene, s: Sound, at: string, add: (c: string, at: string, m: string) => void) {
@@ -262,7 +262,7 @@ function checkAfter(doc: VisoDoc, add: (c: string, at: string, m: string) => voi
       else {
         // from the head's first target to its edge: the solver's `endOf` is its last target's start plus `dur`
         const stagger = Math.max(0, [ref.target].flat().length - 1) * (ref.stagger ?? 0);
-        const span = a.at.edge === 'start' ? 0 : stagger + (ref.motion === 'set' ? 0 : playTime(ref));
+        const span = a.at.edge === 'start' ? 0 : stagger + (ref.kind === 'set' ? 0 : playTime(ref));
         if ((a.at.offset ?? 0) < -span) add('anchor.after-negative', `${at}/at`, `\`offset\` ${a.at.offset} puts the action before the start of "${ref.id}"`);
         visit(ref, [...path, a.id ?? '?']);
       }

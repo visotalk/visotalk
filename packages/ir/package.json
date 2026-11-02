@@ -4,6 +4,6 @@
   "description": "VisoTalk IR: types, validator, safe expressions, time solver, migrations",
   "license": "MIT",
   "type": "module",
-  "exports": {".": "./src/index.ts", "./bundle": "./src/bundle.ts", "./styles": "./src/styles.ts"},
+  "exports": {".": "./src/index.ts", "./bundle": "./src/bundle.ts", "./motions": "./src/motions.ts"},
   "dependencies": {"fflate": "0.8.3"}
 }

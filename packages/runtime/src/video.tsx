@@ -83,15 +83,15 @@ export const Video: React.FC<{asset: string; start?: number; in?: number; rate?:
     }
     if (t >= 0 && playing && !rt.clock.isBuffering() && source >= last) {
       if (!v.paused) v.pause();
-      v.playbackRate = rate;
+      v.playbackRate = rate * rt.clock.getRate();
       if (Math.abs(v.currentTime - last) > 0.5 / fps) v.currentTime = last;
     } else if (t >= 0 && playing && !rt.clock.isBuffering()) {
       // a video that has only just started (or a decoder a little behind) is caught up by its rate, so the narration never stops for it
       const behind = source - v.currentTime;
       if (Math.abs(behind) > DRIFT) {
         seekTo(source);
-        v.playbackRate = rate;
-      } else v.playbackRate = rate * (1 + Math.max(-NUDGE, Math.min(NUDGE, behind)));
+        v.playbackRate = rate * rt.clock.getRate();
+      } else v.playbackRate = rate * rt.clock.getRate() * (1 + Math.max(-NUDGE, Math.min(NUDGE, behind)));
       if (v.paused && !rt.clock.isBuffering()) void v.play().catch(() => {});
     } else {
       if (!v.paused) v.pause();

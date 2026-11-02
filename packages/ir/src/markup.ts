@@ -17,7 +17,7 @@
  *   </Doc>;
  */
 import {normalizeWord, occurrenceAt, tweenable} from './timeline.ts';
-import type {Action, ActionAnchor, Anchor, Asset, Line, MotionKind, Part, Scene, Sound, VisoDoc} from './spec.ts';
+import type {Action, ActionAnchor, Anchor, Asset, Line, ActionKind, Part, Scene, Sound, VisoDoc} from './spec.ts';
 import {SPEC_VERSION} from './spec.ts';
 
 export class MarkupError extends Error {
@@ -62,7 +62,7 @@ interface Txt {
   loc: Loc;
 }
 
-const MOTIONS: Record<string, MotionKind> = {Appear: 'appear', Disappear: 'disappear', Tween: 'tween', Set: 'set'};
+const ACTION_TAGS: Record<string, ActionKind> = {Appear: 'appear', Disappear: 'disappear', Tween: 'tween', Set: 'set'};
 const PRESETS: Record<string, [number, number]> = {'16x9': [1920, 1080], '9x16': [1080, 1920], '1x1': [1080, 1080]};
 const ENTITIES: Record<string, string> = {lt: '<', gt: '>', amp: '&', quot: '"', apos: "'"};
 
@@ -304,7 +304,7 @@ const DOC_ATTRS = ['spec', 'id', 'title', 'lang', ...META_EXTRA, 'theme', 'token
 const SCENE_ATTRS = ['id', 'title', 'duration', 'keepClear'];
 const PART_ATTRS = ['id', 'x', 'y', 'w', 'h', 'z'];
 const LINE_ATTRS = ['id', 'text', 'hold', 'span', 'words'];
-/** What every motion takes; `set` and `tween` take, besides these, the props they change as attributes */
+/** What every action takes; `set` and `tween` take, besides these, the props they change as attributes */
 const SOUND_ATTRS = ['id', 'asset', 'dur', 'until', 'volume', 'loop', 'fadeIn', 'fadeOut', 'duck', 'at', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 const ACTION_ATTRS = ['target', 'to', 'id', 'dur', 'until', 'stagger', 'easing', 'repeat', 'yoyo', 'at', 'after', 'line', 'word', 'nth', 'mark', 'edge', 'offset'];
 
@@ -428,7 +428,7 @@ class Compiler {
       else if (k.tag === 'Animation') {
         this.attrs(k, []);
         for (const m of this.elements(k)) {
-          if (!own(MOTIONS, m.tag)) this.fail(`<${m.tag}> cannot be inside <Animation>; use ${Object.keys(MOTIONS).map((t) => `<${t}>`).join(', ')}`, m.loc);
+          if (!own(ACTION_TAGS, m.tag)) this.fail(`<${m.tag}> cannot be inside <Animation>; use ${Object.keys(ACTION_TAGS).map((t) => `<${t}>`).join(', ')}`, m.loc);
           const action = this.action(m);
           // the validator addresses an action by its id when it has one, else by its place
           this.locs.set(`/scenes/${id}/animations/${animations.length}`, m.loc);
@@ -507,7 +507,7 @@ class Compiler {
     return {id: a.id, text, ...(text !== say && {say}), ...(a.hold !== undefined && {hold: a.hold as number}),...(a.span!==undefined&&{span:a.span as unknown as {start:number;end:number}}),...(a.words!==undefined&&{words:a.words as unknown as Line['words']})};
   }
 
-  /** Where a motion or a sound starts: one of a word of a line (`line`, with `word` or `mark`, `nth`), `after` another action (motions only), or `at` seconds into the scene, "start" or "end" */
+  /** Where an action or a sound starts: one of a word of a line (`line`, with `word` or `mark`, `nth`), `after` another action (actions only), or `at` seconds into the scene, "start" or "end" */
   anchor(el: El, a: Obj, allowAfter: boolean): ActionAnchor {
     const anchors = (['line', ...(allowAfter ? ['after'] : []), 'at'] as const).filter((k) => a[k] !== undefined);
     if (anchors.length !== 1) this.fail(`<${el.tag}> needs exactly one of line (with word), ${allowAfter ? 'after, ' : ''}or at: when does it start?`, el.loc);
@@ -554,14 +554,14 @@ class Compiler {
   }
 
   action(el: El): Action {
-    const motion = own(MOTIONS, el.tag)!;
-    const takesProps = motion === 'set' || motion === 'tween';
+    const kind = own(ACTION_TAGS, el.tag)!;
+    const takesProps = kind === 'set' || kind === 'tween';
     const a = this.attrs(el, ACTION_ATTRS);
     if (a.to !== undefined && !takesProps) this.fail(`<${el.tag}> does not take to; use <Tween> or <Set> to change values`, el.loc);
     if (takesProps && (a.to === null || typeof a.to !== 'object' || Array.isArray(a.to))) this.fail(`<${el.tag}> needs to={{name: value}}`, el.loc);
     const to = a.to as Record<string, unknown> | undefined;
     if (to) for (const [name, value] of Object.entries(to)) {
-      if (!(motion === 'tween' ? tweenable(value) && (typeof value !== 'number' || Number.isFinite(value)) : typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value)))) this.fail(`${name} of <${el.tag}>.to is ${motion === 'tween' ? 'a number, a colour or a length such as "12px"' : 'a number, a string or true/false'}`, el.loc);
+      if (!(kind === 'tween' ? tweenable(value) && (typeof value !== 'number' || Number.isFinite(value)) : typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value)))) this.fail(`${name} of <${el.tag}>.to is ${kind === 'tween' ? 'a number, a colour or a length such as "12px"' : 'a number, a string or true/false'}`, el.loc);
     }
     this.elements(el);
     this.numbers(el, a, ['dur', 'stagger', 'offset', 'nth', 'repeat', ...(typeof a.at === 'string' ? [] : ['at'])]);
@@ -569,7 +569,7 @@ class Compiler {
     const at = this.anchor(el, a, true);
     const until = this.until(el, a.until);
     return {
-      ...(a.id !== undefined && {id: a.id as string}), motion, target: a.target as string | string[], at,
+      ...(a.id !== undefined && {id: a.id as string}), kind, target: a.target as string | string[], at,
       ...(a.dur !== undefined && {dur: a.dur as number}), ...(until && {until}), ...(a.stagger !== undefined && {stagger: a.stagger as number}), ...(a.easing !== undefined && {easing: a.easing as Action['easing']}),
       ...(a.repeat !== undefined && {repeat: a.repeat as number}), ...(a.yoyo !== undefined && {yoyo: a.yoyo as boolean}),
       ...(takesProps && to && {to: to as Action['to']}),

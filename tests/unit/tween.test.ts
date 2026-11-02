@@ -25,9 +25,9 @@ test('easings: the families of easings.net, back overshoots, and a CSS cubic-bez
 test('validator: an unknown easing, repeat on a non-tween, and tween values that cannot be moved', () => {
   const codes = (anim: string) => validate(doc(anim)).map((i) => i.code);
   assert.deepEqual(codes('<Tween target="p" to={{w: 1}} at="start" easing="easeOutQuart"/>'), []);
-  assert.deepEqual(codes('<Tween target="p" to={{w: 1}} at="start" easing="bouncy"/>'), ['motion.easing']);
-  assert.deepEqual(codes('<Appear target="p" at="start" repeat={2}/>'), ['motion.repeat']);
-  assert.deepEqual(codes('<Tween target="p" to={{w: 1}} at="start" repeat={1.5}/>'), ['motion.repeat']);
+  assert.deepEqual(codes('<Tween target="p" to={{w: 1}} at="start" easing="bouncy"/>'), ['action.easing']);
+  assert.deepEqual(codes('<Appear target="p" at="start" repeat={2}/>'), ['action.repeat']);
+  assert.deepEqual(codes('<Tween target="p" to={{w: 1}} at="start" repeat={1.5}/>'), ['action.repeat']);
   assert.deepEqual(codes('<Tween target="p" to={{w: 1}} at="start" repeat={-1} yoyo/>'), []);
   assert.throws(() => doc('<Tween target="p" to={{w: "wide"}} at="start"/>'), /a number, a colour or a length/);
 });
@@ -59,5 +59,5 @@ test('tween: colours blend in sRGB, lengths of one unit, and a later tween start
 test('solver: an action after a repeated tween waits for every play', () => {
   const d = doc('<Tween id="t" target="p" to={{x: 1}} at="start" dur={1} repeat={2}/><Set target="p" to={{y: 1}} after="t"/>');
   const c = solve(d, voice(d), 30);
-  assert.equal(c.actions.find((a) => a.motion === 'set')!.start, c.scenes[0].from + 3);
+  assert.equal(c.actions.find((a) => a.kind === 'set')!.start, c.scenes[0].from + 3);
 });

@@ -24,9 +24,9 @@ The commands are listed in the header of the executable and in the agent skill t
 
 Declare uploaded music/effects as audio assets and place them with `Sound`. Volume and ducking are dB; fades are seconds. `render doc.tsx --audio narration|mix|effects` exports an MP3 bus. `render doc.tsx --layer mov|webm` exports a transparent ProRes 4444 or VP9 layer, including effects but excluding narration. `render doc.tsx --over` composites graphics over the original video as MP4. These recording outputs retain the source dimensions, frame count and rational frame rate. Music generation is deferred; provide your own licensed audio.
 
-## Styles
+## Motions
 
-`visotalk style list` lists the built-in styles, one line each with the kinds of video it is made for, its look and what it fits; `style show stage-light` (or a pack directory) prints its configuration and its components. `style use stage-light doc.tsx` copies the complete pack into the work's `style/` and applies its tokens, caption skin included, as document literals. An existing copy is never overwritten. `style check doc.tsx` checks the local copy and document, reports locked-field disagreements and missing `STYLE.md` sections, and regenerates section 8 of `STYLE.md` from the components' literal `meta` exports. Checks never execute a component module. Adapting a work's copy does not change its source style.
+`visotalk motion list` lists the built-in motions, one line each with the kinds of video it is made for, its look and what it fits; `motion show stage-light` (or a pack directory) prints its configuration and its components. `motion use stage-light doc.tsx` copies the complete pack into the work's `motion/` and applies its tokens, caption skin included, as document literals. An existing copy is never overwritten. `motion check doc.tsx` checks the local copy and document, reports locked-field disagreements and missing `MOTION.md` sections, and regenerates section 8 of `MOTION.md` from the components' literal `meta` exports. Checks never execute a component module. Adapting a work's copy does not change its source motion.
 
 ## Requirements
 

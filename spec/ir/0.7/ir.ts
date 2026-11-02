@@ -269,12 +269,12 @@ export type Anchor =
  */
 export type ActionAnchor = Anchor | {after: Id; edge?: 'start' | 'end'; offset?: Seconds};
 
-export type MotionKind = 'appear' | 'disappear' | 'tween' | 'set';
+export type ActionKind = 'appear' | 'disappear' | 'tween' | 'set';
 
 export interface Action {
   /** Unique in the document; another action's `at.after` names it */
   id?: Id;
-  motion: MotionKind;
+  motion: ActionKind;
   /** A part of the scene or a global part, or an element a part registers (`useTarget`): ids are unique within a scene */
   target: Id | Id[];
   at: ActionAnchor;

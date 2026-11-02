@@ -124,8 +124,19 @@ export function mount(opts: MountOptions) {
       media.set({doc: shown.doc, compiled: shown.compiled, mix: mixed() ? opts.mix : undefined});
       root.render(
         <RuntimeProvider runtime={runtime}>
-          <Player clock={runtime.clock} width={shown.preset.width} height={shown.preset.height} poster={shown.doc.meta.poster} media={media} ticks={shown.compiled.scenes.slice(1).map((s) => s.from)}
-            autoplay={params.has('autoplay')} loop={params.has('loop')} bare={params.has('bare')}>
+          <Player
+            clock={runtime.clock}
+            width={shown.preset.width}
+            height={shown.preset.height}
+            poster={shown.doc.meta.poster}
+            media={media}
+            ticks={shown.compiled.scenes.slice(1).map((s) => s.from)}
+            captionLines={shown.compiled.scenes.flatMap((scene) => scene.lines).filter((line) => line.duration > 0)}
+            embeddedCaptions={!['none', 'sidecar'].includes(shown.doc.exports?.captions ?? 'burned')}
+            autoplay={params.has('autoplay')}
+            loop={params.has('loop')}
+            bare={params.has('bare')}
+          >
             {shown.stage}
           </Player>
         </RuntimeProvider>,

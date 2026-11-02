@@ -34,9 +34,9 @@ The stage is yours, as for any explainer: the canvas is 1920×1080 unless you se
 - **A full-frame cutaway** (a chart, a screen, a photo) covers the person: one subject, a few seconds, and back to them; never two scenes in a row without them.
 - **Moving the person** (a circle in a corner while a chart takes the frame, one half of a split): a part that draws `<Video asset="take" fit="cover"/>`, with `Video` imported from `@visotalk/runtime`, inside the shape you want. The recording always shows the moment being heard, wherever it is drawn. A part that covers the whole frame hides the video under it. Move the person at a scene's start, not in the middle of a sentence, and at most a few times a minute, and say where they are in that scene with `keepClear` on the `<Scene>` (`[]` when the recorded position is covered).
 
-## A style for footage
+## A motion for footage
 
-A built-in style that draws its own ground (paper, a notebook, a stage) would cover the footage. Over a video recording, choose one made for `talking-head` (`visotalk style list`), such as `on-air`: it draws no ground and its components are tags made to sit on a shot. `style use` on a recording applies only the look; the recording keeps its voice, clock and frame.
+A built-in motion that draws its own ground (paper, a notebook, a stage) would cover the footage. Over a video recording, choose one made for `talking-head` (`visotalk motion list`), such as `on-air`: it draws no ground and its components are tags made to sit on a shot. `motion use` on a recording applies only the look; the recording keeps its voice, clock and frame.
 
 ## A filmed video (shots, a brand film, a vlog)
 

@@ -21,7 +21,7 @@ export const SCHEMA = {
     Sound: 'asset  + where it starts  [id dur|until volume loop fadeIn fadeOut duck]   music or an effect of an <Asset kind="audio">, in a Scene: volume and duck are dB (the narration is never changed), fadeIn/fadeOut/dur seconds; loop without dur lasts to the end of the film; fadeOut needs dur or loop; duck steps it back while the narration speaks',
     Asset: 'id kind src license  [source analysis proxy]   a file the document uses; read in a part with useAsset(id)',
   },
-  motions: {
+  actions: {
     Appear: 'target  + where it starts  [dur|until stagger easing id]   easing: linear, easeIn/easeOut/easeInOut (cubic), those with Sine Quad Quart Quint Back (easeOutQuart, easeOutBack(2.2)), cubic-bezier(x1, y1, x2, y2); every part is invisible until an Appear shows it; so is any other target whose first appear or disappear is an appear',
     Disappear: 'target  + where it starts  [dur|until stagger easing id]',
     Tween: 'target  + where it starts  to={{...}} (numbers, colours, lengths)  [dur|until stagger easing repeat yoyo id]   props in to reach their values over dur, from the value they have then; repeat plays it again (-1: for the whole film), yoyo back and forth; x y (px) scale rotate (deg) move the target itself',

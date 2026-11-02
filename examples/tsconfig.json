@@ -2,7 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {"jsx": "react-jsx", "paths": {
     "@visotalk/jsx": ["../packages/jsx/index.ts"], "@visotalk/runtime": ["../packages/runtime/src/index.ts"],
-    "react": ["../packages/runtime/node_modules/@types/react"], "react/jsx-runtime": ["../packages/runtime/node_modules/@types/react/jsx-runtime"]
+    "react": ["../packages/runtime/node_modules/@types/react"], "react/jsx-runtime": ["../packages/runtime/node_modules/@types/react/jsx-runtime"],
+    "three": ["../packages/runtime/node_modules/@types/three"], "three/addons/*": ["../packages/runtime/node_modules/@types/three/examples/jsm/*"]
   }},
   "include": ["**/doc.tsx", "../packages/jsx"]
 }

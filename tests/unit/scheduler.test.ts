@@ -29,13 +29,18 @@ class FakeGain extends Node_ {
   gain = {value: 1, setValueCurveAtTime: (values: Float32Array, at: number, dur: number) => this.curves.push({values, at, dur}), setTargetAtTime: () => {}};
 }
 class FakeSource extends Node_ {
-  buffer: {duration: number} | null = null;
+  buffer: { duration: number } | null = null;
   loop = false;
+  playbackRate = { value: 1 };
   onended: (() => void) | null = null;
-  started?: {when: number; offset: number};
+  started?: { when: number; offset: number };
   stopped?: number;
-  start(when: number, offset: number) { this.started = {when, offset}; }
-  stop(when = 0) { this.stopped = when; }
+  start(when: number, offset: number) {
+    this.started = { when, offset };
+  }
+  stop(when = 0) {
+    this.stopped = when;
+  }
 }
 class FakeCtx {
   currentTime = 0;
@@ -304,4 +309,30 @@ test('the warm-up play the first tap starts holds the clock: the film does not r
   assert.equal(clock.isBuffering(), false, 'let go once the sound can start');
   assert.equal(el.currentTime, 0, 'and the track was never moved past its start');
   clock.pause();
+});
+
+
+test('rate changes re-anchor scheduled audio, scale buffer rates and keep the document clock on the audio clock', async () => {
+  const make = await rig({ 'l1.m4a': 2, 'l2.m4a': 2, 'tick.wav': 0.5 });
+  const doc = FILM();
+  const r = make(doc, voice(doc));
+  await r.settle();
+  r.clock.play();
+  await r.settle();
+  r.frame(0.2);
+  const before = r.clock.getTime();
+  const previous = r.ctx.sources.filter((source) => source.started).at(-1)!;
+  r.clock.setRate(2);
+  assert.equal(r.clock.getRate(), 2);
+  assert.equal(previous.stopped, 0);
+  assert.equal(r.ctx.sources.at(-1)!.playbackRate.value, 2);
+  r.frame(0.2);
+  assert.ok(Math.abs(r.clock.getTime() - before - 0.4) < 0.001);
+  r.clock.setRate(Number.NaN);
+  r.clock.setRate(0);
+  assert.equal(r.clock.getRate(), 2);
+  r.clock.setRate(0.5);
+  r.frame(0.2);
+  assert.ok(Math.abs(r.clock.getTime() - before - 0.5) < 0.001);
+  r.clock.pause();
 });
