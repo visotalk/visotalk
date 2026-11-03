@@ -133,6 +133,7 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 
 ## 最近更新
 
+- **0.8.4** · 目录里的风格改用作者名命名：`visotalk motion use @creator/slug doc.tsx`，名字以 `motion search` 列出的为准；`motion share` 发布到你自己的名下。
 - **0.8.3** · 新增四种内置风格，共二十一种：[Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md)、[Earth Block](skills/visotalk/motions/earth-block/MOTION.md)、[Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) 和 [Light Bench](skills/visotalk/motions/light-bench/MOTION.md)。构建后再编辑页面时，旁白和配乐的音量比例保持不变。
 - **0.8.2** · 分享你自己的风格：`visotalk motion share` 把它整理成 [motionhub.dev](https://motionhub.dev) 的格式，加 `--pr` 会直接开 pull request。风格的组件现在用 `@motionhub/runtime` 绘制。
 - **0.8.1** · 查找并使用别人做的风格：`visotalk motion search [关键词]` 搜索 [motionhub.dev](https://motionhub.dev) 上的目录，`motion show` 和 `motion use` 可以直接用目录里的 slug。

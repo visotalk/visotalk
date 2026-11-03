@@ -24,8 +24,8 @@ importers:
         specifier: 5.1.1
         version: 5.1.1
       '@motionhub/cli':
-        specifier: 0.1.0
-        version: 0.1.0
+        specifier: 0.3.0
+        version: 0.3.0
       '@motionhub/runtime':
         specifier: 0.2.0
         version: 0.2.0(react@18.3.1)
@@ -290,8 +290,8 @@ packages:
   '@fontsource/jetbrains-mono@5.1.1':
     resolution: {integrity: sha512-5rwvmdQQpXev4LlBX1P+7h2dguu6iwW/9Npjde4+DEq+HgpVJI/7QY8DI1NVVFdvLtXZNP+vO2L/5BQED6FUhA==}
 
-  '@motionhub/cli@0.1.0':
-    resolution: {integrity: sha512-hefLBviYhU1p9S5O4qUOSybguiw3c9HNEJw943ExOPJijV8jiRuzNx2pmf4ajlkvivp46iF/j1i+xMEzwfW3/g==}
+  '@motionhub/cli@0.3.0':
+    resolution: {integrity: sha512-6UWp2LD2LepBfvavfs+4abVlq+OUx5aEagCF1MrHWfN8f5oZTh5cck6XMMu+XX04zSWY9q9QN1yBJLvB02hZaw==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -563,7 +563,7 @@ snapshots:
 
   '@fontsource/jetbrains-mono@5.1.1': {}
 
-  '@motionhub/cli@0.1.0': {}
+  '@motionhub/cli@0.3.0': {}
 
   '@motionhub/runtime@0.2.0(react@18.3.1)':
     dependencies:

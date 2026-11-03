@@ -13,9 +13,11 @@ import {dirname,join,resolve} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {checkMotion} from '@motionhub/cli';
 import {BUNDLED,FONTS} from './fonts.ts';
-import {MOTION_SECTIONS,MOTION_TAGS} from '@visotalk/ir/motions';
+import {BUILTIN_MOTIONS,MOTION_SECTIONS,MOTION_TAGS} from '@visotalk/ir/motions';
 
 export const MOTIONHUB = 'https://motionhub.dev';
+/** The built-in motions are published on the catalogue by SuoSi, under this scope (scripts/export-motionhub.ts) */
+export const BUILTIN_SCOPE = 'iamsuosi';
 const TIMEOUT_MS = 20_000;
 
 /** One row of the catalogue's index (`/api/motions.json`) */
@@ -75,9 +77,13 @@ export function packFromPackage(row: HubMotion, gz: Uint8Array): Map<string,Uint
   return packFromHub(motion);
 }
 
-/** A catalogue motion by its slug, as a VisoTalk pack, or undefined when the catalogue has no such slug */
-export async function hubMotion(slug: string, base = MOTIONHUB): Promise<Map<string,Uint8Array> | undefined> {
-  const row = (await hubIndex(base)).find((m) => m.slug === slug);
+/** A motion's id on the catalogue: its author's scope and its slug, `@iamsuosi/red-pencil`; there are no unscoped ids there */
+export const HUB_ID = /^@[a-z0-9](?:[a-z0-9-]{0,38})\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const hubId = (scope: string, slug: string) => `@${scope}/${slug}`;
+
+/** A catalogue motion by its id (`@scope/slug`, the index row's `slug`), as a VisoTalk pack, or undefined when the catalogue has no such motion */
+export async function hubMotion(id: string, base = MOTIONHUB): Promise<Map<string,Uint8Array> | undefined> {
+  const row = (await hubIndex(base)).find((m) => m.slug === id);
   if (!row) return undefined;
   return packFromPackage(row, new Uint8Array(await (await get(new URL(row.package.url, base).href)).arrayBuffer()));
 }
@@ -174,7 +180,8 @@ export function captionTokens(k: Record<string, any>, fonts: Record<string, stri
   return out;
 }
 
-export type HubIdentity = {slug: string; version: string; authors: {name: string; github: string}[]; license: {text: string; code: string}; credit: string};
+/** Who a motion is published by and under which id: every motion on the catalogue has a scope, its author's GitHub login in lowercase, and its id is @<scope>/<slug> */
+export type HubIdentity = {scope: string; slug: string; version: string; authors: {name: string; github: string}[]; license: {text: string; code: string}; credit: string};
 
 const TOOL = 'react/';
 /** The pack's paths the catalogue keeps, under react/: the components, the files they import, their previews, the reel the catalogue plays and its sound */
@@ -206,7 +213,7 @@ export function toHub(pack: Map<string,Uint8Array>, id: HubIdentity): {files: Ma
 
   const files = new Map<string,Uint8Array>();
   const put = (path: string, data: string | Uint8Array) => files.set(path, typeof data === 'string' ? Buffer.from(data) : data);
-  put('motion.json', JSON.stringify({spec: 'motion/0.1', slug: id.slug, version: id.version, name, line: {en: line}, authors: id.authors, license: id.license, lang: 'en', ...(src.tags?.length ? {tags: src.tags} : {})}, null, 2) + '\n');
+  put('motion.json', JSON.stringify({spec: 'motion/0.3', scope: id.scope, slug: id.slug, version: id.version, name, line: {en: line}, authors: id.authors, license: id.license, lang: 'en', ...(src.tags?.length ? {tags: src.tags} : {})}, null, 2) + '\n');
   put('tokens.json', JSON.stringify({
     color: {$type: 'color', ...Object.fromEntries(Object.entries(tokens.colors as Record<string,string>).map(([k, v]) => [k, {$value: cssColor(v)}]))},
     font: {$type: 'fontFamily', ...Object.fromEntries(Object.entries(fontStacks).map(([k, v]) => [k, {$value: families(v)}]))},
@@ -310,26 +317,27 @@ export async function shareMotion(pack: Map<string,Uint8Array>, options: ShareOp
   if (!account?.login) throw new Error('Sharing needs your GitHub account: sign in with gh (gh auth login), or pass --github <login>');
   const slug = options.slug ?? config.slug;
   if (typeof slug !== 'string' || !/^(?=.{3,40}$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`"${slug}" is not a catalogue slug (3 to 40 characters of a-z, 0-9 and single hyphens); choose one with --slug`);
-  const published = (await hubIndex(base)).find((m) => m.slug === slug);
-  if (published && !published.authors.some((a) => a.github.toLowerCase() === account.login.toLowerCase())) {
-    throw new Error(`${slug} is already published by ${published.authors.map((a) => a.github).join(', ')}; share yours under another slug (--slug)`);
-  }
+  // the motion is published under the person's own scope, so its id is theirs alone and a published one is their earlier version
+  const scope = account.login.toLowerCase(), id = hubId(scope, slug);
+  const published = (await hubIndex(base)).find((m) => m.slug === id);
   const [text, code] = (options.license ?? 'CC-BY-4.0,MIT').split(',');
-  // a pack names what it started from in basedOn; a work's copy of a motion still carries that motion's slug, so a new slug means it is based on that one
-  const origin = typeof config.basedOn === 'string' && config.basedOn ? config.basedOn : typeof config.slug === 'string' && config.slug !== slug ? config.slug : undefined;
+  // a pack names what it started from in basedOn; a work's copy of a motion still carries that motion's slug, so a new slug means it is based on that one.
+  // A built-in motion is published on the catalogue as SuoSi's, @iamsuosi/<slug>
+  const from = typeof config.basedOn === 'string' && config.basedOn ? config.basedOn : typeof config.slug === 'string' && config.slug !== slug ? config.slug : undefined;
+  const origin = from && !from.startsWith('@') && (BUILTIN_MOTIONS as readonly string[]).includes(from) ? hubId(BUILTIN_SCOPE, from) : from;
   const basedOn = origin ? ` It is based on ${origin} (${base}/m/${origin}/), under its licence.` : '';
   const version = nextVersion(published?.version, Number(String(config.version ?? '1').split('.')[0]) || 1);
-  const {files, leftOut} = toHub(pack, {slug, version, authors: [{name: account.name || account.login, github: account.login}], license: {text, code: code ?? 'MIT'},
+  const {files, leftOut} = toHub(pack, {scope, slug, version, authors: [{name: account.name || account.login, github: account.login}], license: {text, code: code ?? 'MIT'},
     credit: `${config.name?.en ?? slug} is a motion by ${account.name || account.login}, made with VisoTalk.${basedOn}`});
 
   // a motion's directory is named by its slug, so --out names the directory it is written into
   const out = resolve(options.out ?? 'motionhub', slug);
   rmSync(out, {recursive: true, force: true});
   for (const [path, data] of files) { mkdirSync(dirname(join(out, path)), {recursive: true}); writeFileSync(join(out, path), data); }
-  const was = published ? await (await get(`${base}/m/${slug}/motion.json`)).json() : undefined;
+  const was = published ? await (await get(`${base}/m/${id}/motion.json`)).json() : undefined;
   const issues = checkMotion(out, {author: account.login, was}) as {code: string; at: string; message: string}[];
   if (issues.length) throw new Error(`${out} does not pass the catalogue's checks:\n${issues.map((i) => `${i.at}  ${i.code}  ${i.message}`).join('\n')}`);
-  const note = `${slug} ${version}${published ? ` (after ${published.version})` : ''} written to ${out} and checked${leftOut.length ? `; left out, as the catalogue holds no video: ${leftOut.join(', ')}` : ''}`;
+  const note = `${id} ${version}${published ? ` (after ${published.version})` : ''} written to ${out} and checked${leftOut.length ? `; left out, as the catalogue holds no video: ${leftOut.join(', ')}` : ''}`;
   if (!options.pr) return `${note}. Nothing is published yet: with the person's go-ahead, run again with --pr to open the pull request on github.com/${REPO} from their account.`;
 
   const dir = mkdtempSync(join(tmpdir(), 'motionhub-'));
@@ -338,9 +346,10 @@ export async function shareMotion(pack: Map<string,Uint8Array>, options: ShareOp
     run('gh', ['repo', 'fork', REPO, '--clone=false']);
     must('git', ['clone', '--quiet', `https://github.com/${REPO}.git`, dir]);
     must('git', ['checkout', '--quiet', '-b', branch], dir);
-    rmSync(join(dir, 'motions', slug), {recursive: true, force: true});
-    cpSync(out, join(dir, 'motions', slug), {recursive: true});
-    must('git', ['add', join('motions', slug)], dir);
+    // the catalogue keeps a motion at motions/<its id>/
+    rmSync(join(dir, 'motions', id), {recursive: true, force: true});
+    cpSync(out, join(dir, 'motions', id), {recursive: true});
+    must('git', ['add', join('motions', id)], dir);
     must('git', ['commit', '--quiet', '--signoff', '-m', `${published ? 'Update' : 'Add'} ${name} ${version}`], dir);
     must('git', ['-c', 'credential.helper=', '-c', 'credential.helper=!gh auth git-credential', 'push', '--quiet', `https://github.com/${account.login}/motions.git`, `HEAD:refs/heads/${branch}`], dir);
     const url = must('gh', ['pr', 'create', '--repo', REPO, '--head', `${account.login}:${branch}`, '--title', `${published ? 'Update' : 'Add'} ${name} ${version}`,

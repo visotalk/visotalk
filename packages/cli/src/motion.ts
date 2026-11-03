@@ -2,7 +2,7 @@
 import {existsSync,lstatSync,mkdirSync,readFileSync,readdirSync,renameSync,rmSync,writeFileSync,mkdtempSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {parseMarkup,validate} from '@visotalk/ir';
-import {MOTIONHUB,hubIndex,hubMotion,searchHub,shareMotion} from './motionhub.ts';
+import {HUB_ID,MOTIONHUB,hubIndex,hubMotion,searchHub,shareMotion} from './motionhub.ts';
 import {BUILTIN_MOTIONS,MOTION_SCENARIOS,MOTION_TAGS,applyMotion,builtinMotion,builtinMotionList,inspectMotion as inspectPack,motionIndex,motionPath,motionSectionIssues} from '@visotalk/ir/motions';
 
 export function readMotion(dir: string): Map<string,Uint8Array> {
@@ -29,14 +29,14 @@ const inspectMotion=(files: Map<string,Uint8Array>, doc?: Parameters<typeof insp
   return {...pack,issues:[...motionSectionIssues(new TextDecoder().decode(files.get('motion/MOTION.md'))),...pack.issues]};
 };
 
-/** A built-in motion by its slug, else a pack directory, else a motion of the public catalogue by its slug; a name that is none says where to look */
+/** A built-in motion by its slug, else a pack directory, else a motion of the public catalogue by its id (@creator/slug); a name that is none says where to look */
 export async function selectedMotion(input: string): Promise<Map<string,Uint8Array>> {
   const builtin=builtinMotion(input);
   if(builtin)return builtin;
   if(existsSync(resolve(input)))return readMotion(resolve(input));
-  const hub=/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input)?await hubMotion(input):undefined;
+  const hub=HUB_ID.test(input)?await hubMotion(input):undefined;
   if(hub)return hub;
-  throw new Error(`"${input}" is neither a built-in motion (${BUILTIN_MOTIONS.join(', ')}), a motion directory, nor a motion on ${MOTIONHUB} (visotalk motion search <words>)`);
+  throw new Error(`"${input}" is neither a built-in motion (${BUILTIN_MOTIONS.join(', ')}), a motion directory, nor a motion on ${MOTIONHUB}, which is named @<creator>/<slug> (visotalk motion search <words>)`);
 }
 export async function motionCmd(args: string[]): Promise<void> {
   const [command,input,file]=args;
@@ -51,7 +51,7 @@ export async function motionCmd(args: string[]): Promise<void> {
     const rows=searchHub(await hubIndex(),args.slice(1));
     // one line per motion, like list; one without components brings its theme and guidance only
     for(const m of rows)console.log(`${m.slug}  ${m.version}  ${m.line.en??Object.values(m.line)[0]}  (looks: ${m.tags.join(', ')}; by ${m.authors.map((a)=>a.github).join(', ')}; ${m.license.text}${m.tools.includes('react')?'':'; theme and guidance, no components'})`);
-    console.log(rows.length?`${rows.length} on ${MOTIONHUB}; use one with visotalk motion use <slug> doc.tsx, only when the person chose it`:`No motion on ${MOTIONHUB} has every one of those words`);
+    console.log(rows.length?`${rows.length} on ${MOTIONHUB}; use one with visotalk motion use <@creator/slug> doc.tsx, only when the person chose it`:`No motion on ${MOTIONHUB} has every one of those words`);
     return;
   }
   if(command==='show'&&input) {

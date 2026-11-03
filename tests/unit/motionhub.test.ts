@@ -17,20 +17,21 @@ const {checkMotion} = await import(createRequire(join(import.meta.dirname, '../.
 
 /** A built-in pack with a poster, as a work's motion/ or a skills/visotalk/motions/<slug>/ directory holds it */
 const withPoster = (slug: string) => new Map([...builtinMotion(slug)!, ['motion/poster.jpg', new Uint8Array(read(join(import.meta.dirname, '../../skills/visotalk/motions', slug, 'poster.jpg')))]]);
-const ID = {authors: [{name: 'SuoSi', github: 'iamsuosi'}], license: {text: 'CC-BY-4.0', code: 'MIT'}, credit: 'Original.'};
+const ID = {scope: 'iamsuosi', authors: [{name: 'SuoSi', github: 'iamsuosi'}], license: {text: 'CC-BY-4.0', code: 'MIT'}, credit: 'Original.'};
 
 /** The built-in `slug` as the catalogue publishes it (toHub), with `change` applied to its directory; and its index row */
 function hubPackage(slug: string, change: (root: string) => void = () => {}): {row: HubMotion; gz: Buffer} {
-  const dir = mkdtempSync(join(tmpdir(), 'hub-')), root = join(dir, slug);
+  // the catalogue names a motion @<scope>/<slug>, and its package holds it under that path
+  const id = `@iamsuosi/${slug}`, dir = mkdtempSync(join(tmpdir(), 'hub-')), root = join(dir, id);
   for (const [path, data] of toHub(withPoster(slug), {slug, version: '1.0.1', ...ID}).files) {
     mkdirSync(dirname(join(root, path)), {recursive: true});
     writeFileSync(join(root, path), data);
   }
   change(root);
-  const gz = execFileSync('tar', ['-czf', '-', '-C', dir, slug]);
-  const row: HubMotion = {slug, version: '1.0.1', name: {en: 'Red Pencil'}, line: {en: 'A printed page marked up in red.'}, tags: ['hand-drawn', 'light'],
-    authors: ID.authors, license: ID.license, poster: `/m/${slug}/poster.jpg`, tools: existsSync(join(root, 'react')) ? ['react'] : [],
-    package: {url: `/m/${slug}/1.0.1.tgz`, sha256: createHash('sha256').update(gz).digest('hex'), bytes: gz.length}};
+  const gz = execFileSync('tar', ['-czf', '-', '-C', dir, id]);
+  const row: HubMotion = {slug: id, version: '1.0.1', name: {en: 'Red Pencil'}, line: {en: 'A printed page marked up in red.'}, tags: ['hand-drawn', 'light'],
+    authors: ID.authors, license: ID.license, poster: `/m/${id}/poster.jpg`, tools: existsSync(join(root, 'react')) ? ['react'] : [],
+    package: {url: `/m/${id}/1.0.1.tgz`, sha256: createHash('sha256').update(gz).digest('hex'), bytes: gz.length}};
   return {row, gz};
 }
 const text = (pack: Map<string,Uint8Array>, path: string) => Buffer.from(pack.get(path)!).toString('utf8');
@@ -84,7 +85,7 @@ test('search matches every word against slugs, names, lines and tags', () => {
   assert.equal(searchHub([row], []).length, 1);
 });
 
-test('a motion is fetched from the catalogue by its slug; an unknown slug is no motion', async () => {
+test('a motion is fetched from the catalogue by its id; an unknown id is no motion', async () => {
   const {row, gz} = hubPackage('red-pencil');
   const server = createServer((req, res) => {
     if (req.url === '/api/motions.json') { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({spec: 'motion/0.1', motions: [row]})); }
@@ -94,8 +95,9 @@ test('a motion is fetched from the catalogue by its slug; an unknown slug is no 
   await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
   const base = `http://127.0.0.1:${(server.address() as {port: number}).port}`;
   try {
-    assert.deepEqual(inspectMotion((await hubMotion('red-pencil', base))!).issues, []);
-    assert.equal(await hubMotion('no-such-motion', base), undefined);
+    assert.deepEqual(inspectMotion((await hubMotion('@iamsuosi/red-pencil', base))!).issues, []);
+    assert.equal(await hubMotion('@iamsuosi/no-such-motion', base), undefined);
+    assert.equal(await hubMotion('red-pencil', base), undefined, 'the catalogue has no unscoped ids');
   } finally { server.close(); }
 });
 
@@ -144,23 +146,25 @@ test('the next version is the next patch, or a new major', () => {
   assert.equal(nextVersion('1.0.4', 2), '2.0.0');
 });
 
-test('sharing writes a checked motion under the person\'s account, and never takes someone else\'s slug', async () => {
+test('sharing writes a checked motion under the person\'s own scope, and an update of their own after the version published', async () => {
   const {row} = hubPackage('red-pencil');
-  const published = {spec: 'motion/0.1', slug: 'red-pencil', version: '1.0.1', name: {en: 'Red Pencil'}, line: {en: 'x'}, authors: ID.authors, license: ID.license};
+  const published = {spec: 'motion/0.2', scope: 'iamsuosi', slug: 'red-pencil', version: '1.0.1', name: {en: 'Red Pencil'}, line: {en: 'x'}, authors: ID.authors, license: ID.license};
   const server = createServer((req, res) => {
     if (req.url === '/api/motions.json') res.end(JSON.stringify({spec: 'motion/0.1', motions: [{...row, version: '1.0.1'}]}));
-    else if (req.url === '/m/red-pencil/motion.json') res.end(JSON.stringify(published));
+    else if (req.url === '/m/@iamsuosi/red-pencil/motion.json') res.end(JSON.stringify(published));
     else { res.statusCode = 404; res.end(); }
   });
   await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
   const base = `http://127.0.0.1:${(server.address() as {port: number}).port}`, out = mkdtempSync(join(tmpdir(), 'shared-'));
   try {
-    await assert.rejects(shareMotion(withPoster('red-pencil'), {github: 'someone', out: join(out, 'a')}, base), /already published by iamsuosi/);
-    const mine = await shareMotion(withPoster('red-pencil'), {github: 'someone', slug: 'my-red-pencil', out: join(out, 'b')}, base);
-    assert.match(mine, /my-red-pencil 1\.0\.0 written .* Nothing is published yet/);
-    const manifest = JSON.parse(read(join(out, 'b', 'my-red-pencil', 'motion.json'), 'utf8'));
-    assert.deepEqual(manifest.authors, [{name: 'someone', github: 'someone'}]);
-    assert.match(await shareMotion(withPoster('red-pencil'), {github: 'iamsuosi', out: join(out, 'c')}, base), /red-pencil 1\.0\.2 \(after 1\.0\.1\)/);
-    assert.ok(!existsSync(join(out, 'a')), 'a refused share writes nothing');
+    // another person's red-pencil is theirs: a new motion under their scope
+    assert.match(await shareMotion(withPoster('red-pencil'), {github: 'Someone', out: join(out, 'a')}, base), /@someone\/red-pencil 1\.0\.0 written .* Nothing is published yet/);
+    const manifest = JSON.parse(read(join(out, 'a', 'red-pencil', 'motion.json'), 'utf8'));
+    assert.equal(manifest.scope, 'someone');
+    assert.deepEqual(manifest.authors, [{name: 'Someone', github: 'Someone'}]);
+    // under a new slug it is based on the built-in, which the catalogue names @iamsuosi/<slug>
+    await shareMotion(withPoster('red-pencil'), {github: 'someone', slug: 'my-red-pencil', out: join(out, 'b')}, base);
+    assert.match(read(join(out, 'b', 'my-red-pencil', 'CREDITS.md'), 'utf8'), /based on @iamsuosi\/red-pencil \(.*\/m\/@iamsuosi\/red-pencil\/\)/);
+    assert.match(await shareMotion(withPoster('red-pencil'), {github: 'iamsuosi', out: join(out, 'c')}, base), /@iamsuosi\/red-pencil 1\.0\.2 \(after 1\.0\.1\)/);
   } finally { server.close(); }
 });

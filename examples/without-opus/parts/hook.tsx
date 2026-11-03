@@ -1,4 +1,4 @@
-// The opening: films made with Opus, ours and LemoLab's, each credited in its corner, cut to its own score (audio/opening.mp3, 120 BPM, a bar is 2 s; the same cut as the first VisoTalk promo's):
+// The opening: films other makers and we made in code, each credited in its corner, cut to its own score (audio/opening.mp3, 120 BPM, a bar is 2 s; the same cut as the first VisoTalk promo's):
 //   "intro" (bars 1-8): a question, then its film; the first for three bars, then faster until one lands every eighth note
 //   "hook": the drop, the camera pulls back into a wall of them, and the film's own question comes up over it
 import {Obj, useAsset, useProp, useTime, Video} from '@visotalk/runtime';
@@ -16,26 +16,28 @@ type Ask = {q: string; by: string; still: string; clip?: string; in?: number; ra
 
 // scene seconds, cut to the score: 3 bars, 1, 1, two halves, four quarters, eight eighths (16 s)
 // each film plays from the middle of its action, sped up: [question, who made it, still, clip, its first second, rate]
-// LemoLab's demo films are CC BY 4.0: the licence asks for the credit, a link and a note that they were changed (LEMO, in the corner of each)
-const LEMO = 'LemoLab × Claude Opus 5.5 · github.com/lemomo-ai/lemo-opuscar · CC BY 4.0 · 片段有剪辑';
+// the corner names each film's project; the link, the licence and the note that it was cut are in the video's description, which CC BY 4.0 allows for LemoLab's
+const LEMO = 'LemoLab';
+const HUASHU = 'huashu-motion';
+const SHOTCRAFT = 'video-shotcraft';
 const LIST: Array<[string, string, string, string?, number?, number?]> = [
-  ['一副耳机,怎么拍出玻璃的质感?', LEMO, 'l-glass-product', 'c-glass-product', 0, 1.4],
-  ['一扇彩窗,怎么讲完一个故事?', LEMO, 'l-stained-glass', 'c-stained-glass', 0, 1.5],
-  ['闪电是从哪儿来的?', 'VisoTalk · Night Diagram', 'poster-night-diagram', 'o-night', 1, 1.6],
-  ['一盏灯,怎么守过一场风暴?', LEMO, 'l-hd-2d', 'c-hd-2d', 0, 1.5],
-  ['微缩城市的早高峰,是什么样?', LEMO, 'l-tilt-shift', 'c-tilt-shift', 0, 1.5],
-  ['一把键盘拆开,里面有什么?', LEMO, 'l-teardown', 'c-teardown', 0, 1.5],
-  ['走向那座山,要看过哪五景?', LEMO, 'l-ukiyoe'],
-  ['雨水落下来,都去哪儿了?', 'VisoTalk · Earth Block', 'poster-earth-block'],
-  ['1987 年的城市夜晚,什么颜色?', LEMO, 'l-cel-anime-80s'],
-  ['剑客和河,有什么故事?', LEMO, 'l-ink-wash'],
-  ['大海到底有多深?', 'VisoTalk · Plumb Line', 'poster-plumb-line'],
-  ['纸页里,藏着什么冒险?', LEMO, 'l-paper-popup'],
-  ['白光里藏着什么?', 'VisoTalk · Light Bench', 'poster-light-bench'],
-  ['一座小岛,怎么长出来?', LEMO, 'l-lowpoly-island'],
-  ['一张地铁图,能讲什么?', LEMO, 'l-transit-map'],
-  ['一座桥,怎么走成长镜头?', LEMO, 'l-printed-long-take'],
-  ['一场雨里,有多少把伞?', LEMO, 'l-impasto'],
+  ['一副耳机，怎么拍出玻璃的质感？', LEMO, 'l-glass-product', 'c-glass-product', 0, 1.4],
+  ['一把键盘拆开，里面有什么？', LEMO, 'l-teardown', 'c-teardown', 0, 1.5],
+  ['一台机器，怎么一层层拆开？', HUASHU, 'x-huashu-gears', 'c-huashu-gears', 1.3, 1.5],
+  ['一盏灯，怎么守过一场风暴？', LEMO, 'l-hd-2d', 'c-hd-2d', 0, 1.5],
+  ['一扇彩窗，怎么讲完一个故事？', LEMO, 'l-stained-glass', 'c-stained-glass', 0, 1.5],
+  ['闪电是从哪儿来的？', 'VisoTalk', 'poster-night-diagram', 'o-night', 1, 1.6],
+  ['一百多个镜头，摆在一起什么样？', SHOTCRAFT, 'x-shotcraft-wall'],
+  ['指着画面，就能改？', HUASHU, 'x-huashu-painting'],
+  ['雨水落下来，都去哪儿了？', 'VisoTalk', 'poster-earth-block'],
+  ['一页纸，怎么讲一个项目？', SHOTCRAFT, 'x-shotcraft-press'],
+  ['微缩城市的早高峰，是什么样？', LEMO, 'l-tilt-shift'],
+  ['同一份提案，换一身衣服？', HUASHU, 'x-huashu-pages'],
+  ['大海到底有多深？', 'VisoTalk', 'poster-plumb-line'],
+  ['镜头怎么层层落下？', SHOTCRAFT, 'x-shotcraft-cascade'],
+  ['一场众筹，能有多少种样子？', HUASHU, 'x-huashu-design'],
+  ['这一段，用什么风格？', HUASHU, 'x-huashu-flying'],
+  ['白光里藏着什么？', 'VisoTalk', 'poster-light-bench'],
 ];
 const SLOTS = [[0, 6], [6, 8], [8, 10], [10, 11], [11, 12], [12, 12.5], [12.5, 13], [13, 13.5], [13.5, 14],
   ...Array.from({length: 8}, (_, k) => [14 + k * 0.25, 14.25 + k * 0.25])];
@@ -149,11 +151,11 @@ export const Wall = () => {
       </div>
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(900px 520px at 50% 52%, rgba(5,7,10,0.0), rgba(5,7,10,0.82))'}} />
       <Obj id="claim" style={{position: 'absolute', left: 0, top: 400, width: 1920, textAlign: 'center', transform: `scale(${s})`}}>
-        <div style={{fontFamily: SANS, fontSize: 150, fontWeight: 900, color: '#fff', textShadow: '0 10px 60px rgba(0,0,0,0.8)'}}>都是 <span style={{color: DATA}}>Opus</span> 做的</div>
+        <div style={{fontFamily: SANS, fontSize: 150, fontWeight: 900, color: '#fff', textShadow: '0 10px 60px rgba(0,0,0,0.8)'}}>都是<span style={{color: DATA}}>代码</span>写出来的</div>
       </Obj>
       <Obj id="title" style={{position: 'absolute', left: 0, top: 300, width: 1920, textAlign: 'center'}}>
         <div style={{fontFamily: SANS, fontSize: 104, fontWeight: 900, color: INK, lineHeight: 1.25, textShadow: '0 10px 50px rgba(0,0,0,0.9)'}}>
-          没有 <span style={{color: DATA}}>Opus</span>,<br />可以做出圈的 AI 视频吗?
+          没有 <span style={{color: DATA}}>Opus</span>，<br />可以做出圈的 AI 视频吗？
         </div>
       </Obj>
     </div>

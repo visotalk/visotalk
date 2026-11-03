@@ -133,6 +133,7 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 
 ## What's new
 
+- **0.8.4** · Catalogue motions go by their author's name: `visotalk motion use @creator/slug doc.tsx`, as `motion search` prints it, and `motion share` publishes under your own.
 - **0.8.3** · Four more built-in motions, twenty-one in all: [Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md), [Earth Block](skills/visotalk/motions/earth-block/MOTION.md), [Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) and [Light Bench](skills/visotalk/motions/light-bench/MOTION.md). A page edited after its build keeps the balance of voice and score.
 - **0.8.2** · Share your own motion: `visotalk motion share` prepares it for [motionhub.dev](https://motionhub.dev), and `--pr` opens the pull request. Motion components now draw with `@motionhub/runtime`.
 - **0.8.1** · Find and use motions other people made: `visotalk motion search [words]` searches the catalogue at [motionhub.dev](https://motionhub.dev), and `motion show` and `motion use` take its slugs.

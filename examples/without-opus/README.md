@@ -1,6 +1,6 @@
 # Without Opus
 
-The second VisoTalk promo, made with VisoTalk: Mandarin, 16:9, 4:09, in the voice `minimax:Chinese (Mandarin)_Radio_Host` at 1.0×. It asks whether a
+The second VisoTalk promo, made with VisoTalk: Mandarin, 16:9, 4:21, in the voice `minimax:Chinese (Mandarin)_Radio_Host` at 1.0×. It asks whether a
 cheap model can make an explainer worth sharing. Opus writes four motions down, DeepSeek makes four films with them, and each film is shown beside the
 Opus sample it learned from, flaws included. The conclusion: taste can be written down; 2D fully, 2.5D too, and 3D still rests on the model. The
 narration, line by line, is [`source/script.md`](source/script.md).
@@ -19,6 +19,7 @@ narration, line by line, is [`source/script.md`](source/script.md).
 | `media/ds-{free,long}.mp4` | DeepSeek on the Roadster question, without and with a motion. They keep the captions they were made with |
 | `media/flaw-*.jpg`, `media/bench-still.jpg` | Single frames of those films, with nothing added to the image |
 | `media/lemo/` | LemoLab's demo films, cut to the seconds played, and stills, for the opening (see below) |
+| `media/ext/` | Films by Huashu and video-shotcraft, cut to the seconds played, and stills, for the opening (see below) |
 | `media/poster-*.jpg` | The posters of the 21 built-in motions |
 | `audio/opening.mp3` | The first bars of the first promo's score, for the opening only |
 | `audio/music.mp3` | `examples/visotalk-intro`'s Pixabay track, gitignored: copy it from there (`python3 make-music.py` in that folder fetches it) |
@@ -49,9 +50,10 @@ What the evidence does not show, and the film should not be taken to claim:
 
 ## Licences
 
-- **LemoLab's demo films and stills** (`media/lemo/`, from [lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar)) are CC BY 4.0: the credit, the link and the note that they were changed are in the corner of each. They play cut, sped up and without sound. Demos with third-party archive footage were left out. The keyboard demo is drawn from the Corne keyboard's data by foostan (MIT / CC BY 4.0, listed in that demo's `CREDITS`).
+- **LemoLab's demo films and stills** (`media/lemo/`, from [lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar)) are CC BY 4.0: the corner of each names the project, and the credit, the link and the note that they were changed go in the video's description, so **the description must carry them wherever the film is published**. They play cut, sped up and without sound. Demos with third-party archive footage were left out. The keyboard demo is drawn from the Corne keyboard's data by foostan (MIT / CC BY 4.0, listed in that demo's `CREDITS`).
+- **Huashu's films** (`media/ext/huashu-*`, from the [huashu-motion](https://github.com/alchaincyf/huashu-motion) v0.2.0 release) and **video-shotcraft's own films** (`media/ext/shotcraft-*`, from [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)'s showcase release) are named in the corner and credited in the description the same way. Those repositories' MIT and Apache-2.0 licences name their code and docs, not their films, so this use rests on quoting a few seconds with credit, not on a licence; ask the authors if that needs to be firmer. Shots with Huashu's "bean" character, which is excluded from the licence, or with other companies' products or a person's face, were left out.
 - **The wall at 0:16 carries no credit of its own**, by decision: each film is credited as it passes in the opening. Name LemoLab and link the repository in the video's description when it is published.
-- **The cases indexed by [opus-video-prompts](https://github.com/joeseesun/opus-video-prompts) and [Awesome Opus 5.5 Videos](https://aiidelist.com/blog/awesome-opus-5-5-videos) are not used.** A credit is not a licence, and their authors have not been asked.
+- **The community films in video-shotcraft's showcase, [pdoom-video](https://github.com/mexicat/pdoom-video) (it keeps no film, and its lyrics are not under its licence) and the cases indexed by [opus-video-prompts](https://github.com/joeseesun/opus-video-prompts) and [Awesome Opus 5.5 Videos](https://aiidelist.com/blog/awesome-opus-5-5-videos) are not used.** They belong to other people, and those people have not been asked.
 
 ## Rebuild
 

@@ -6,7 +6,7 @@ import {Asks, Wall} from './parts/hook.tsx';
 /*
  * Can a cheap model make an explainer worth sharing? Opus wrote four motions down, DeepSeek made four films with them, and this film shows each next to
  * the Opus sample it learned from, flaws included. The clips and stills under media/ are those films and samples, rendered without their captions,
- * cut to the seconds played and otherwise unchanged. The series' second film: the ground, the type and the music are examples/visotalk-intro's; the opening is the first promo's, with LemoLab's demo films (CC BY 4.0) among ours.
+ * cut to the seconds played and otherwise unchanged. The series' second film: the ground, the type and the music are examples/visotalk-intro's; the opening is the first promo's, with other makers' films among ours.
  */
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -125,7 +125,7 @@ function Specimen() {
       {/* the title stays still above the camera: first as a slide's, then set */}
       <div style={{position: 'absolute', left: 44, top: 34, fontFamily: 'Arial, sans-serif', fontSize: 40, color: '#333', opacity: 1 - Math.max(c, f)}}>光为什么会弯</div>
       <div style={{position: 'absolute', left: 44, top: 34, fontFamily: 'Arial, sans-serif', fontSize: 40, color: '#e8eefc', opacity: c * (1 - f)}}>光为什么会弯</div>
-      <div style={{position: 'absolute', left: 56, top: 24, fontFamily: SERIF, fontWeight: 900, fontSize: 58, letterSpacing: '0.01em', color: '#fff', opacity: f, transform: `translateY(${(1 - f) * 14}px)`, textShadow: '0 4px 24px rgba(0,0,0,0.7)'}}>光,为什么会弯</div>
+      <div style={{position: 'absolute', left: 56, top: 24, fontFamily: SERIF, fontWeight: 900, fontSize: 58, letterSpacing: '0.01em', color: '#fff', opacity: f, transform: `translateY(${(1 - f) * 14}px)`, textShadow: '0 4px 24px rgba(0,0,0,0.7)'}}>光，为什么会弯</div>
       {/* the viewfinder, once a camera is what is being talked about */}
       <svg width={W} height={H} style={{position: 'absolute', inset: 0, opacity: k}}>
         {[[18, 18, 1, 1], [W - 18, 18, -1, 1], [18, H - 18, 1, -1], [W - 18, H - 18, -1, -1]].map(([x, y, a, b]) => <path key={`${x}${y}`} d={`M${x} ${y + 44 * b}V${y}H${x + 44 * a}`} fill="none" stroke="#fff" strokeWidth={3} opacity={0.85} />)}
@@ -149,7 +149,7 @@ function TasteRow({id, name, spec, typed, draw, children}: {id: string; name: st
 
 function Taste() {
   const rule = smooth(useProp('rule', 0));
-  const typed = clamp(useProp('typed', 0));
+  const t0 = clamp(useProp('t0', 0)), t1 = clamp(useProp('t1', 0)), t2 = clamp(useProp('t2', 0));
   const r0 = useProp('r0', 0), r1 = useProp('r1', 0), r2 = useProp('r2', 0), run = smooth(useProp('k', 0));
   const SWATCH = [NIGHT_A, NIGHT_B, EMBER, ICE, '#ffffff'];
   return (
@@ -162,16 +162,16 @@ function Taste() {
       <div style={{position: 'absolute', left: 1210, top: 118, width: 614}}>
         <Obj id="taste-word" style={{fontFamily: SERIF, fontWeight: 900, fontSize: 168, lineHeight: 1.12, letterSpacing: '0.02em', color: TEXT}}>审美</Obj>
         <div style={{height: 4, width: `${rule * 100}%`, background: CUE, margin: '10px 0 26px'}} />
-        <TasteRow id="taste-0" name="配色" spec="ember / ice on deep night" typed={typed} draw={r0}>
+        <TasteRow id="taste-0" name="配色" spec="ember / ice on deep night" typed={t0} draw={r0}>
           <div style={{display: 'flex', gap: 10}}>{SWATCH.map((c) => <span key={c} style={{width: 38, height: 38, borderRadius: 19, background: c, border: `1px solid ${tint(TEXT, 30)}`}} />)}</div>
         </TasteRow>
-        <TasteRow id="taste-1" name="字体" spec="serif 900 / mono, never default" typed={typed} draw={r1}>
+        <TasteRow id="taste-1" name="字体" spec="serif 900 / mono, never default" typed={t1} draw={r1}>
           <span style={{fontSize: 46, color: TEXT}}><span style={{fontFamily: 'Arial, sans-serif', color: MUTED, textDecoration: 'line-through'}}>光</span><span style={{margin: '0 14px', color: FAINT}}>→</span><span style={{fontFamily: SERIF, fontWeight: 900}}>光</span></span>
         </TasteRow>
-        <TasteRow id="taste-2" name="镜头" spec="hold, push in on the word, hold" typed={typed} draw={r2}>
+        <TasteRow id="taste-2" name="镜头" spec="hold, push in on the word, hold" typed={t2} draw={r2}>
           <svg width={230} height={40}><line x1={4} y1={20} x2={226} y2={20} stroke={tint(TEXT, 30)} strokeWidth={2} /><line x1={70} y1={20} x2={160} y2={20} stroke={CUE} strokeWidth={4} /><circle cx={70 + 90 * run} cy={20} r={9} fill={CUE} /></svg>
         </TasteRow>
-        <Obj id="taste-ask" style={{marginTop: 8, paddingTop: 18, borderTop: `2px solid ${tint(TEXT, 22)}`, fontFamily: SERIF, fontWeight: 900, fontSize: 60, color: CUE}}>能写下来吗?</Obj>
+        <Obj id="taste-ask" style={{marginTop: 8, paddingTop: 18, borderTop: `2px solid ${tint(TEXT, 22)}`, fontFamily: SERIF, fontWeight: 900, fontSize: 48, lineHeight: 1.3, color: CUE}}>能写成一套风格，<br />让别的模型复用吗？</Obj>
       </div>
     </div>
   );
@@ -226,11 +226,11 @@ function Handoff() {
   return (
     <div style={{...CENTER, gap: 56}}>
       <div style={{display: 'flex', alignItems: 'center', gap: 40, fontFamily: MONO, fontSize: 44}}>
-        <span style={{padding: '14px 36px', borderRadius: 14, border: `2px solid ${VIOLET}`, color: TEXT}}>Opus</span>
+        <span style={{padding: '14px 36px', borderRadius: 14, border: `2px solid ${VIOLET}`, color: TEXT}}>Claude Opus 5.5</span>
         <span style={{fontFamily: SANS, fontSize: 32, color: MUTED}}>写风格</span>
         <span style={{color: FAINT}}>→</span>
         <span style={{fontFamily: SANS, fontSize: 32, color: MUTED}}>照着做</span>
-        <Obj id="hand-ds" style={{padding: '14px 36px', borderRadius: 14, border: `2px solid ${CUE}`, color: TEXT}}>DeepSeek</Obj>
+        <Obj id="hand-ds" style={{padding: '14px 36px', borderRadius: 14, border: `2px solid ${CUE}`, color: TEXT}}>DeepSeek V4.1 Flash</Obj>
       </div>
       <div style={{display: 'flex', gap: 30}}>
         {STYLES.map((s, i) => (
@@ -260,20 +260,20 @@ function Compare({opus, opusIn, opusRate, topic, ds, dsIn, dsRate, motion, kind,
   );
   return (
     <div style={FULL}>
-      <div style={{position: 'absolute', left: x, top: y - 56}}>{label('Opus', VIOLET, `${motion} · ${topic}`)}</div>
+      <div style={{position: 'absolute', left: x, top: y - 56}}>{label('Claude Opus 5.5', VIOLET, `${motion} · ${topic}`)}</div>
       <div style={{position: 'absolute', left: x, top: y, width: w, height: h, borderRadius: 14, overflow: 'hidden', border: `2px solid ${VIOLET}`, background: '#000'}}>
         <Video asset={opus} in={opusIn} rate={opusRate} fit="cover" />
       </div>
       {ds && (
         <div style={{opacity: split}}>
-          <div style={{position: 'absolute', left: 976, top: 144}}>{label('DeepSeek', CUE, q)}</div>
+          <div style={{position: 'absolute', left: 976, top: 144}}>{label('DeepSeek V4.1 Flash', CUE, q)}</div>
           <div style={{position: 'absolute', left: 976, top: 200, width: 880, height: 495, borderRadius: 14, overflow: 'hidden', border: `2px solid ${CUE}`, background: '#000'}}>
             <Video asset={ds} in={dsIn} rate={dsRate} fit="cover" />
           </div>
           <div style={{position: 'absolute', left: 976, top: 720, display: 'flex', gap: 56, fontFamily: MONO, fontSize: 38}}>
             <span style={{color: CUE}}>{kind}</span><span style={{color: GOOD}}>{cost}</span><span style={{color: MUTED}}>{took}</span>
           </div>
-          <div style={{position: 'absolute', left: 64, top: 720, fontFamily: SANS, fontSize: 32, color: MUTED}}>风格,是 Opus 给的</div>
+          <div style={{position: 'absolute', left: 64, top: 720, fontFamily: SANS, fontSize: 32, color: MUTED}}>风格，是 Claude Opus 5.5 给的</div>
         </div>
       )}
     </div>
@@ -338,8 +338,8 @@ function Caveats() {
   return (
     <div style={FULL}>
       <div style={{position: 'absolute', left: 96, top: 210, width: 800}}>
-        {stat('cav-0', '1', '每种风格,只跑了一次', CUE)}
-        {stat('cav-1', '4', '个题目,都是我们挑的', DATA)}
+        {stat('cav-0', '1', '每种风格，只跑了一次', CUE)}
+        {stat('cav-1', '4', '个题目，都是我们挑的', DATA)}
       </div>
       <div style={{position: 'absolute', left: 1020, top: 0, width: 800, height: 1080}}>
         {STEP_H.map((h, i) => {
@@ -364,7 +364,7 @@ function Caveats() {
 
 const Headline = () => (
   <div style={CENTER}>
-    <div style={{fontFamily: SANS, fontWeight: 800, fontSize: 150, letterSpacing: '-0.02em', color: TEXT}}>审美,<span style={{color: CUE}}>可以写下来</span>。</div>
+    <div style={{fontFamily: SANS, fontWeight: 800, fontSize: 150, letterSpacing: '-0.02em', color: TEXT}}>审美，<span style={{color: CUE}}>可以写下来</span>。</div>
   </div>
 );
 
@@ -373,7 +373,7 @@ function Verdict() {
   const rows = [
     {id: 'v-2d', kind: '2D', asset: 'poster-night-diagram', say: '完全可以', c: GOOD, mark: '✓'},
     {id: 'v-25d', kind: '2.5D', asset: 'poster-earth-block', say: '也可以', c: GOOD, mark: '✓'},
-    {id: 'v-3d', kind: '3D', asset: 'poster-light-bench', say: '呢?', c: AMBER, mark: '?'},
+    {id: 'v-3d', kind: '3D', asset: 'poster-light-bench', say: '呢？', c: AMBER, mark: '?'},
   ];
   return (
     <div style={{...CENTER, gap: 34}}>
@@ -427,7 +427,7 @@ function Own({left, leftIn = 0, leftHead, right, rightIn = 0, rightHead, rate = 
 const TryModels = () => (
   <Obj id="own-try" style={{position: 'absolute', left: 0, right: 0, top: 780, display: 'flex', justifyContent: 'center', gap: 22, fontFamily: MONO, fontSize: 34, color: TEXT}}>
     {['DeepSeek', 'GLM', 'MiniMax', 'Kimi', 'Qwen'].map((m) => <span key={m} style={{padding: '8px 28px', borderRadius: 999, border: `2px solid ${BORDER}`}}>{m}</span>)}
-    <span style={{padding: '8px 28px', borderRadius: 999, border: `2px solid ${CUE}`, color: CUE, fontFamily: SANS}}>你的模型?</span>
+    <span style={{padding: '8px 28px', borderRadius: 999, border: `2px solid ${CUE}`, color: CUE, fontFamily: SANS}}>你的模型？</span>
   </Obj>
 );
 
@@ -477,7 +477,7 @@ function Writable() {
           <div style={{fontFamily: SANS, fontWeight: 600, fontSize: 32, color: EMBER}}>写不下</div>
           <div style={{marginTop: 10, fontFamily: SERIF, fontWeight: 900, fontSize: 68, lineHeight: 1.25, color: TEXT}}>镜头<br />往哪儿走</div>
         </Obj>
-        <Obj id="w-base" style={{marginTop: 26, fontFamily: SANS, fontWeight: 700, fontSize: 36, color: CUE}}>3D,还要靠模型底子</Obj>
+        <Obj id="w-base" style={{marginTop: 26, fontFamily: SANS, fontWeight: 700, fontSize: 36, color: CUE}}>3D，还要靠模型底子</Obj>
       </div>
     </div>
   );
@@ -491,7 +491,7 @@ function Meet() {
     <div style={{...CENTER, gap: 46}}>
       <Lockup width={940} draw={draw} />
       <Obj id="meet-tag" style={{fontFamily: SANS, fontSize: 52, color: MUTED}}>一个做讲解视频的 agent 技能</Obj>
-      <Obj id="meet-rule" style={{marginTop: 40, fontFamily: SERIF, fontWeight: 900, fontSize: 76, color: TEXT}}>让更多模型,也做出<span style={{color: CUE}}>顶配的讲解视频</span></Obj>
+      <Obj id="meet-rule" style={{marginTop: 40, fontFamily: SERIF, fontWeight: 900, fontSize: 76, color: TEXT}}>让更多模型，也做出<span style={{color: CUE}}>顶配的讲解视频</span></Obj>
     </div>
   );
 }
@@ -517,10 +517,10 @@ function Library() {
       {Array.from({length: 7}, (_, c) => {
         const k = c === 0 ? smooth(next) : smooth(more * 6 - (c - 1));
         return <div key={c} style={{position: 'absolute', left: x(c), top: y(3), width: TILE, height: TILE_H, boxSizing: 'border-box', borderRadius: 10, border: `2px dashed ${c === 0 ? VIOLET : FAINT}`, opacity: k,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 30, color: c === 0 ? VIOLET : FAINT}}>{c === 0 ? '+1 Opus' : '+1'}</div>;
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 30, color: c === 0 ? VIOLET : FAINT}}>{c === 0 ? '+1 Opus 5.5' : '+1'}</div>;
       })}
       <div style={{...FULL, background: `radial-gradient(ellipse 60% 50% at 50% 46%, ${tint(BG, 96)}, ${tint(BG, 72)})`, opacity: dim}} />
-      <Obj id="lib-claim" style={{position: 'absolute', left: 0, right: 0, top: 400, textAlign: 'center', fontFamily: SERIF, fontWeight: 900, fontSize: 132, color: TEXT, textShadow: '0 10px 50px rgba(0,0,0,0.8)'}}>审美,<span style={{color: CUE}}>可以写下来</span></Obj>
+      <Obj id="lib-claim" style={{position: 'absolute', left: 0, right: 0, top: 400, textAlign: 'center', fontFamily: SERIF, fontWeight: 900, fontSize: 132, color: TEXT, textShadow: '0 10px 50px rgba(0,0,0,0.8)'}}>审美，<span style={{color: CUE}}>可以写下来</span></Obj>
       <Obj id="lib-count" style={{position: 'absolute', left: 0, right: 0, top: 54, textAlign: 'center', fontFamily: MONO, fontSize: 36, color: CUE}}>21 motions</Obj>
       <Obj id="lib-any" style={{position: 'absolute', left: 0, right: 0, top: 812, display: 'flex', justifyContent: 'center', gap: 22, fontFamily: MONO, fontSize: 30, color: TEXT}}>
         {['DeepSeek', 'GLM', 'MiniMax', '…'].map((m) => <span key={m} style={{padding: '6px 26px', borderRadius: 999, border: `2px solid ${BORDER}`}}>{m}</span>)}
@@ -538,7 +538,7 @@ function MadeBy() {
       <Window title="without-opus/doc.tsx" width={1320}>
         <div style={{padding: '14px 44px 44px', fontFamily: MONO, fontSize: 38, lineHeight: 1.75, whiteSpace: 'pre', color: MUTED}}>
           <div><span style={{color: c.t}}>&lt;Scene</span> <span style={{color: c.a}}>id</span>=<span style={{color: c.s}}>"close"</span><span style={{color: c.t}}>&gt;</span></div>
-          <Obj id="made-line"><span>  </span><span style={{color: c.t}}>&lt;Line</span> <span style={{color: c.a}}>id</span>=<span style={{color: c.s}}>"l28"</span><span style={{color: c.t}}>&gt;</span><span style={{fontFamily: SANS, color: TEXT}}>对了,这部片子本身……</span><span style={{color: c.t}}>&lt;/Line&gt;</span></Obj>
+          <Obj id="made-line"><span>  </span><span style={{color: c.t}}>&lt;Line</span> <span style={{color: c.a}}>id</span>=<span style={{color: c.s}}>"l28"</span><span style={{color: c.t}}>&gt;</span><span style={{fontFamily: SANS, color: TEXT}}>对了，这部片子本身……</span><span style={{color: c.t}}>&lt;/Line&gt;</span></Obj>
           <Obj id="made-act"><span>  </span><span style={{color: c.t}}>&lt;Appear</span> <span style={{color: c.a}}>target</span>=<span style={{color: c.s}}>"made"</span> <span style={{color: c.a}}>line</span>=<span style={{color: c.s}}>"l28"</span> <span style={{color: CUE}}>word=<span>"VisoTalk"</span></span><span style={{color: c.t}}> /&gt;</span></Obj>
           <div><span style={{color: c.t}}>&lt;/Scene&gt;</span></div>
         </div>
@@ -566,7 +566,7 @@ function EndCard() {
   return (
     <div style={{...CENTER, gap: 56}}>
       <Lockup width={800} draw={draw} />
-      <Obj id="end-title" style={{marginTop: 20, fontFamily: SANS, fontWeight: 800, fontSize: 96, color: TEXT}}>审美,<span style={{color: CUE}}>可以写下来</span>。</Obj>
+      <Obj id="end-title" style={{marginTop: 20, fontFamily: SANS, fontWeight: 800, fontSize: 96, color: TEXT}}>审美，<span style={{color: CUE}}>可以写下来</span>。</Obj>
       <Obj id="end-tag" style={{fontFamily: MONO, fontSize: 38, color: CUE}}>visotalk.dev</Obj>
     </div>
   );
@@ -574,7 +574,7 @@ function EndCard() {
 
 // ---- the document -------------------------------------------------------------------------
 
-export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI 视频吗?" lang="zh-CN" poster={149.4} theme="visotalk/dark" canvas="16x9"
+export default <Doc id="without-opus" title="没有 Opus，可以做出圈的 AI 视频吗？" lang="zh-CN" poster={159.3} theme="visotalk/dark" canvas="16x9"
   tokens={{fonts: {sans: '"Inter", "Noto Sans SC", sans-serif', mono: '"JetBrains Mono", monospace'}}}
   voice="minimax:Chinese (Mandarin)_Radio_Host" speed={1.0} exports={{variants: [{preset: "16x9"}], fps: 30, captions: "burned"}}>
   <Asset id="poster-stage-light" kind="image" src="media/poster-stage-light.jpg" source="The stage-light motion's poster" license={{id: "user-owned", obligations: []}} />
@@ -611,9 +611,6 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   <Asset id="free" kind="video" src="media/free.mp4" source="DeepSeek with no style, vbench T8" license={{id: "user-owned", obligations: []}} />
   <Asset id="c-glass-product" kind="video" src="media/lemo/glass-product.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="c-stained-glass" kind="video" src="media/lemo/stained-glass.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="c-hd-2d" kind="video" src="media/lemo/hd-2d.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="c-tilt-shift" kind="video" src="media/lemo/tilt-shift.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="c-teardown" kind="video" src="media/lemo/teardown.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="l-glass-product" kind="image" src="media/lemo/glass-product.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="l-stained-glass" kind="image" src="media/lemo/stained-glass.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="l-hd-2d" kind="image" src="media/lemo/hd-2d.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
@@ -621,13 +618,18 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   <Asset id="l-teardown" kind="image" src="media/lemo/teardown.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="l-ukiyoe" kind="image" src="media/lemo/ukiyoe.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="l-cel-anime-80s" kind="image" src="media/lemo/cel-anime-80s.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="l-ink-wash" kind="image" src="media/lemo/ink-wash.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="l-paper-popup" kind="image" src="media/lemo/paper-popup.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="l-lowpoly-island" kind="image" src="media/lemo/lowpoly-island.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="l-transit-map" kind="image" src="media/lemo/transit-map.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="l-printed-long-take" kind="image" src="media/lemo/printed-long-take.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
-  <Asset id="l-impasto" kind="image" src="media/lemo/impasto.jpg" source="https://github.com/lemomo-ai/lemo-opuscar/tree/main/docs/frames" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="bench-still" kind="image" src="media/bench-still.jpg" source="The Light Bench film, one frame" license={{id: "user-owned", obligations: []}} />
+  <Asset id="c-huashu-gears" kind="video" src="media/ext/huashu-gears.mp4" source="https://github.com/alchaincyf/huashu-motion/releases/tag/v0.2.0" license={{id: "mit", attribution: "Huashu, github.com/alchaincyf/huashu-motion (cut, sped up, without sound)", url: "https://github.com/alchaincyf/huashu-motion/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-huashu-design" kind="image" src="media/ext/huashu-design.jpg" source="https://github.com/alchaincyf/huashu-motion/releases/tag/v0.2.0" license={{id: "mit", attribution: "Huashu, github.com/alchaincyf/huashu-motion (cut, sped up, without sound)", url: "https://github.com/alchaincyf/huashu-motion/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-huashu-pages" kind="image" src="media/ext/huashu-pages.jpg" source="https://github.com/alchaincyf/huashu-motion/releases/tag/v0.2.0" license={{id: "mit", attribution: "Huashu, github.com/alchaincyf/huashu-motion (cut, sped up, without sound)", url: "https://github.com/alchaincyf/huashu-motion/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-huashu-gears" kind="image" src="media/ext/huashu-gears.jpg" source="https://github.com/alchaincyf/huashu-motion/releases/tag/v0.2.0" license={{id: "mit", attribution: "Huashu, github.com/alchaincyf/huashu-motion (cut, sped up, without sound)", url: "https://github.com/alchaincyf/huashu-motion/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-huashu-painting" kind="image" src="media/ext/huashu-painting.jpg" source="https://github.com/alchaincyf/huashu-motion/releases/tag/v0.2.0" license={{id: "mit", attribution: "Huashu, github.com/alchaincyf/huashu-motion (cut, sped up, without sound)", url: "https://github.com/alchaincyf/huashu-motion/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-huashu-flying" kind="image" src="media/ext/huashu-flying.jpg" source="https://github.com/alchaincyf/huashu-motion/releases/tag/v0.2.0" license={{id: "mit", attribution: "Huashu, github.com/alchaincyf/huashu-motion (cut, sped up, without sound)", url: "https://github.com/alchaincyf/huashu-motion/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-shotcraft-wall" kind="image" src="media/ext/shotcraft-wall.jpg" source="https://github.com/Vincentwei1021/video-shotcraft/releases/tag/showcase-media" license={{id: "apache-2.0", attribution: "video-shotcraft, github.com/Vincentwei1021/video-shotcraft (cut, sped up, without sound)", url: "https://github.com/Vincentwei1021/video-shotcraft/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-shotcraft-cascade" kind="image" src="media/ext/shotcraft-cascade.jpg" source="https://github.com/Vincentwei1021/video-shotcraft/releases/tag/showcase-media" license={{id: "apache-2.0", attribution: "video-shotcraft, github.com/Vincentwei1021/video-shotcraft (cut, sped up, without sound)", url: "https://github.com/Vincentwei1021/video-shotcraft/blob/main/LICENSE", obligations: []}} />
+  <Asset id="x-shotcraft-press" kind="image" src="media/ext/shotcraft-press.jpg" source="https://github.com/Vincentwei1021/video-shotcraft/releases/tag/showcase-media" license={{id: "apache-2.0", attribution: "video-shotcraft, github.com/Vincentwei1021/video-shotcraft (cut, sped up, without sound)", url: "https://github.com/Vincentwei1021/video-shotcraft/blob/main/LICENSE", obligations: []}} />
+  <Asset id="c-teardown" kind="video" src="media/lemo/teardown.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
+  <Asset id="c-hd-2d" kind="video" src="media/lemo/hd-2d.mp4" source="https://github.com/lemomo-ai/lemo-opuscar/releases/tag/web" license={{id: "cc-by-4.0", attribution: "LemoLab × Claude Opus 5.5, github.com/lemomo-ai/lemo-opuscar (cut, sped up, without sound)", url: "https://creativecommons.org/licenses/by/4.0/", obligations: []}} />
   <Asset id="flaw-night" kind="image" src="media/flaw-night.jpg" source="The Night Diagram film, one frame" license={{id: "user-owned", obligations: []}} />
   <Asset id="flaw-block" kind="image" src="media/flaw-block.jpg" source="The Earth Block film, one frame" license={{id: "user-owned", obligations: []}} />
   <Asset id="music" kind="audio" src="audio/music.mp3" source="https://pixabay.com/music/corporate-tutorial-technology-182513/"
@@ -652,24 +654,24 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   </Scene>
 
   <Scene id="hook" title="The drop: a wall of them; then the question">
-    <Line id="a1">最近,用 Opus 做的讲解视频,挺出圈的。</Line>
-    <Line id="a2" hold={1.2}>这些片子,换个便宜的模型,还做得出来吗?</Line>
+    <Line id="a1">最近，用 Opus 这样的顶配模型做的视频，挺出圈的。</Line>
+    <Line id="a2" hold={1.2}>这些片子，如果没有 Opus，还做得出来吗？</Line>
     <Part id="hook"><Wall /></Part>
     <Animation>
       <Appear target="hook" at="start" dur={0} />
       <Appear target="claim" at="start" dur={0} />
       <Tween target="hook" to={{slam: 1}} at="start" dur={0.35} easing="easeOutQuart" />
       <Tween target="hook" to={{pull: 1}} at="start" dur={1.6} easing="linear" />
-      <Disappear target="claim" line="a2" word="便宜的模型" />
-      <Tween target="hook" to={{dim: 1}} line="a2" word="便宜的模型" dur={0.8} />
+      <Disappear target="claim" line="a2" word="如果没有" />
+      <Tween target="hook" to={{dim: 1}} line="a2" word="如果没有" dur={0.8} />
       <Appear target="title" line="a2" word="做得出来" dur={0.6} />
     </Animation>
   </Scene>
 
   <Scene id="question">
-    <Line id="l3">便宜的模型也会写代码,也讲得清道理。差距最大的地方,往往是审美。</Line>
-    <Line id="l4">可审美是什么?是配色,是字体,是镜头什么时候动、什么时候不动。</Line>
-    <Line id="l5" hold={0.9}>这些东西,能不能写下来?</Line>
+    <Line id="l3">别的模型也会写代码，也讲得清道理。差距最大的地方，往往是审美。</Line>
+    <Line id="l4">可审美是什么？是配色，是字体，是镜头什么时候动、什么时候不动。</Line>
+    <Line id="l5" hold={0.9}>那能不能把审美写下来，做成一套风格，让不同的模型都能参考和复用？</Line>
     <Part id="taste"><Taste /></Part>
     <Animation>
       <Appear target={["ground", "chapter"]} at="start" dur={0} />
@@ -687,15 +689,17 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
       <Appear target="taste-2" line="l4" word="镜头" dur={0} />
       <Tween target="taste" to={{r2: 1}} line="l4" word="镜头" dur={0.5} />
       <Tween target="taste" to={{k: 1}} line="l4" word="什么时候动" dur={1} easing="easeInOutSine" />
-      <Tween target="taste" to={{typed: 1}} line="l5" word="这些东西" until={{line: "l5", edge: "end"}} easing="linear" />
-      <Appear target="taste-ask" line="l5" word="写下来" dur={0.4} />
+      <Tween target="taste" to={{t0: 1}} line="l5" word="写下来" dur={0.3} easing="linear" />
+      <Tween target="taste" to={{t1: 1}} line="l5" word="写下来" offset={0.16} dur={0.3} easing="linear" />
+      <Tween target="taste" to={{t2: 1}} line="l5" word="写下来" offset={0.32} dur={0.3} easing="linear" />
+      <Appear target="taste-ask" line="l5" word="复用" dur={0.4} />
     </Animation>
     <Sound asset="tick" line="l5" word="写下来" volume={-10} />
   </Scene>
 
   <Scene id="experiment">
-    <Line id="l6" text="我们让 Opus 把审美写成四套风格:一份不到 8000 字节的说明,加一组画好的组件。">我们让 Opus 把审美写成四套风格:一份不到八千字节的说明,加一组画好的组件。</Line>
-    <Line id="l7">然后交给一个便宜得多的模型:DeepSeek。四套风格,四个它没见过的问题。</Line>
+    <Line id="l6" text="我们让 Opus 把审美写成四套风格：一份不到 8000 字节的说明，加一组画好的组件。">我们让 Opus 把审美写成四套风格：一份不到八千字节的说明，加一组画好的组件。</Line>
+    <Line id="l7">然后交给一个价格低得多的模型：DeepSeek。四套风格，四个它没见过的问题。</Line>
     {/* the opening's score has faded; the film's own music comes in with the experiment */}
     <Sound asset="music" line="l6" loop volume={-8} duck={3} fadeIn={1.2} fadeOut={4} />
     <Part id="style-file"><StyleFile /></Part>
@@ -716,12 +720,12 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   </Scene>
 
   <Scene id="n-style">
-    <Line id="n1">第一套,夜光图解。Opus 的样片,讲闪电从哪儿来。</Line>
+    <Line id="n1">第一套，夜光图解。Opus 的样片，讲闪电从哪儿来。</Line>
     <Part id="c-na"><Compare opus="o-night" opusIn={0} opusRate={1.2} topic="闪电从哪儿来" motion="Night Diagram" kind="2D" q="神经细胞放电" cost="$0.089" took="10.5 min" /></Part>
     <Animation><Appear target="c-na" at="start" dur={0.3} /></Animation>
   </Scene>
   <Scene id="n-film">
-    <Line id="n2">DeepSeek 换成神经细胞放电的那一瞬。细胞膜、离子、放电曲线,全是它照着风格的规矩自己画的。</Line>
+    <Line id="n2">DeepSeek 换成神经细胞放电的那一瞬。细胞膜、离子、放电曲线，全是它照着风格的规矩自己画的。</Line>
     <Part id="c-nb"><Compare opus="o-night" opusIn={6} opusRate={1.2} topic="闪电从哪儿来" ds="night" dsIn={0} dsRate={2.2} motion="Night Diagram" kind="2D" q="神经细胞放电" cost="$0.089" took="10.5 min" /></Part>
     <Animation>
       <Appear target="c-nb" at="start" dur={0} />
@@ -729,25 +733,25 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
     </Animation>
   </Scene>
   <Scene id="b-style">
-    <Line id="b1">第二套,大地块。Opus 切开一块地,讲雨水去了哪儿。</Line>
-    <Part id="c-ba"><Compare opus="o-block" opusIn={0} opusRate={1.3} topic="雨水去哪儿了" motion="Earth Block" kind="2.5D" q="街道下面埋着什么" cost="$0.136" took="15.8 min" /></Part>
+    <Line id="b1">第二套，大地块。Opus 切开一块地，讲雨水去了哪儿。</Line>
+    <Part id="c-ba"><Compare opus="o-block" opusIn={1.7} opusRate={1.3} topic="雨水去哪儿了" motion="Earth Block" kind="2.5D" q="街道下面埋着什么" cost="$0.136" took="15.8 min" /></Part>
     <Animation><Appear target="c-ba" at="start" dur={0.3} /></Animation>
   </Scene>
   <Scene id="b-film">
-    <Line id="b2">DeepSeek 换成街道下面埋着什么。它把一条街切开,一层一层往下讲,讲到地铁隧道。</Line>
-    <Part id="c-bb"><Compare opus="o-block" opusIn={12} opusRate={1.3} topic="雨水去哪儿了" ds="block" dsIn={0} dsRate={4} motion="Earth Block" kind="2.5D" q="街道下面埋着什么" cost="$0.136" took="15.8 min" /></Part>
+    <Line id="b2">DeepSeek 换成街道下面埋着什么。它把一条街切开，一层一层往下讲，讲到地铁隧道。</Line>
+    <Part id="c-bb"><Compare opus="o-block" opusIn={11.4} opusRate={1.3} topic="雨水去哪儿了" ds="block" dsIn={0} dsRate={4} motion="Earth Block" kind="2.5D" q="街道下面埋着什么" cost="$0.136" took="15.8 min" /></Part>
     <Animation>
       <Appear target="c-bb" at="start" dur={0} />
       <Tween target="c-bb" to={{split: 1}} at="start" dur={0.7} />
     </Animation>
   </Scene>
   <Scene id="p-style">
-    <Line id="p1">第三套,铅垂线。Opus 放下一根线,一路沉到海底。</Line>
+    <Line id="p1">第三套，铅垂线。Opus 放下一根线，一路沉到海底。</Line>
     <Part id="c-pa"><Compare opus="o-plumb" opusIn={0} opusRate={1.5} topic="大海有多深" motion="Plumb Line" kind="2D" q="大气层有多高" cost="$0.139" took="14.3 min" /></Part>
     <Animation><Appear target="c-pa" at="start" dur={0.3} /></Animation>
   </Scene>
   <Scene id="p-film">
-    <Line id="p2">DeepSeek 反过来往上走:大气层有多高。一路爬到一万公里,再退回来,护住我们的,只有细细一条线。</Line>
+    <Line id="p2">DeepSeek 反过来往上走：大气层有多高。一路爬到一万公里，再退回来，护住我们的，只有细细一条线。</Line>
     <Part id="c-pb"><Compare opus="o-plumb" opusIn={12} opusRate={1.5} topic="大海有多深" ds="plumb" dsIn={0} dsRate={4.5} motion="Plumb Line" kind="2D" q="大气层有多高" cost="$0.139" took="14.3 min" /></Part>
     <Animation>
       <Appear target="c-pb" at="start" dur={0} />
@@ -755,12 +759,12 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
     </Animation>
   </Scene>
   <Scene id="o-style">
-    <Line id="o1">第四套,光学台。这回是 3D,Opus 用一块棱镜,把白光拆开。</Line>
+    <Line id="o1">第四套，光学台。这回是 3D，Opus 用一块棱镜，把白光拆开。</Line>
     <Part id="c-oa"><Compare opus="o-bench" opusIn={0} opusRate={1.2} topic="白光里有什么" motion="Light Bench" kind="3D" q="镜头怎么成像" cost="$0.211" took="25.5 min" /></Part>
     <Animation><Appear target="c-oa" at="start" dur={0.3} /></Animation>
   </Scene>
   <Scene id="o-film">
-    <Line id="o2">DeepSeek 换成镜头怎么成像,光路是它一条一条算出来的。</Line>
+    <Line id="o2">DeepSeek 换成镜头怎么成像，光路是它一条一条算出来的。</Line>
     <Part id="c-ob"><Compare opus="o-bench" opusIn={8} opusRate={1.2} topic="白光里有什么" ds="bench" dsIn={0} dsRate={2} motion="Light Bench" kind="3D" q="镜头怎么成像" cost="$0.211" took="25.5 min" /></Part>
     <Animation>
       <Appear target="c-ob" at="start" dur={0} />
@@ -768,7 +772,7 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
     </Animation>
   </Scene>
   <Scene id="bill">
-    <Line id="l14" hold={0.8}>四部片子,模型费一共不到一美元,配音另算。</Line>
+    <Line id="l14" hold={0.8}>四部片子，模型费一共不到一美元，配音另算。</Line>
     <Part id="bill-card"><Bill /></Part>
     <Animation>
       <Appear target="bill-card" at="start" dur={0} />
@@ -779,12 +783,12 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   </Scene>
 
   <Scene id="honest">
-    <Line id="l15">先说毛病。夜光图解的细胞里,冒出了一排不该有的地平线。</Line>
-    <Line id="l16">大地块的管线,中途消失了一幕。</Line>
-    <Line id="l17">每种风格只跑了一次,题目也是我们挑的。</Line>
-    <Line id="l17b" hold={0.8}>但这只是第一轮的结果。多修几轮,还能继续提升,毕竟便宜模型省钱,修得起。</Line>
+    <Line id="l15">先说毛病。夜光图解的细胞里，冒出了一排不该有的地平线。</Line>
+    <Line id="l16">大地块的管线，中途消失了一幕。</Line>
+    <Line id="l17">每种风格只跑了一次，题目也是我们挑的。</Line>
+    <Line id="l17b" hold={0.8}>但这只是第一轮的结果。多修几轮，还能继续提升，毕竟 DeepSeek 省钱，修得起。</Line>
     <Part id="flaw-1"><Flaw asset="flaw-night" x={760} y={862} rx={560} ry={66} note="不该有的地平线" /></Part>
-    <Part id="flaw-2"><Flaw asset="flaw-block" x={900} y={530} rx={430} ry={190} note="管线,这一幕不见了" /></Part>
+    <Part id="flaw-2"><Flaw asset="flaw-block" x={900} y={530} rx={430} ry={190} note="管线，这一幕不见了" /></Part>
     <Part id="caveats"><Caveats /></Part>
     <Animation>
       <Set target="chapter" to={{n: "03", name: "老实话"}} at="start" />
@@ -803,9 +807,9 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
     </Animation>
   </Scene>
   <Scene id="conclusion">
-    <Line id="l18" hold={1}>但结论已经看得出来:审美可以写下来。</Line>
-    <Line id="l19" hold={0.3}>2D,完全可以。</Line>
-    <Line id="l20" hold={1.4} text="2.5D,也可以。">二点五D,也可以。</Line>
+    <Line id="l18" hold={1}>但结论已经看得出来：审美可以写下来。</Line>
+    <Line id="l19" hold={0.3}>2D，完全可以。</Line>
+    <Line id="l20" hold={1.4} text="2.5D，也可以。">二点五D，也可以。</Line>
     <Part id="headline"><Headline /></Part>
     <Part id="verdict"><Verdict /></Part>
     <Animation>
@@ -820,8 +824,8 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
     <Sound asset="chime" line="l20" volume={-12} />
   </Scene>
   <Scene id="three-d">
-    <Line id="l21">3D 呢?物体和光路都对,可镜头几乎不动,光也过曝了。</Line>
-    <Line id="l22" hold={1}>风格写得下材料,写不下镜头该往哪儿走。3D,还要靠模型底子。</Line>
+    <Line id="l21">3D 呢？物体和光路都对，可镜头几乎不动，光也过曝了。</Line>
+    <Line id="l22" hold={1}>风格写得下材料，写不下镜头该往哪儿走。3D，还要靠模型底子。</Line>
     <Part id="three"><ThreeD /></Part>
     <Part id="writable"><Writable /></Part>
     <Animation>
@@ -841,8 +845,8 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   </Scene>
 
   <Scene id="lens-pair">
-    <Line id="m1">同一道题,不给风格,它老老实实画了一张 2D 图,讲得还不差。</Line>
-    <Line id="m2">给了风格,它才真正做成了 3D,只是还没讲得更清楚。</Line>
+    <Line id="m1">同一道题，不给风格，它老老实实画了一张 2D 图，讲得还不差。</Line>
+    <Line id="m2">给了风格，它才真正做成了 3D，只是还没讲得更清楚。</Line>
     <Part id="own-a"><Own left="free" leftIn={0} leftHead="镜头怎么成像 · 不给风格 · 2D" right="bench" rightIn={22} rightHead="镜头怎么成像 · 给了风格 · 3D" rate={1.5} rightId="own-a-r" /></Part>
     <Animation>
       <Appear target="own-a" at="start" dur={0.3} />
@@ -850,9 +854,9 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
     </Animation>
   </Scene>
   <Scene id="tesla-pair">
-    <Line id="m3">再换一道题,特斯拉 Roadster 怎么贴在墙上。不给风格,是一张平面示意图。</Line>
-    <Line id="m4">给了风格,车轮和气流都立起来了,这回强了一大截。</Line>
-    <Line id="m5" hold={1}>所以 3D 这一块,大家可以多换几个模型,自己试试。</Line>
+    <Line id="m3">再换一道题，特斯拉 Roadster 怎么贴在墙上。不给风格，是一张平面示意图。</Line>
+    <Line id="m4">给了风格，车轮和气流都立起来了，这回强了一大截。</Line>
+    <Line id="m5" hold={1}>所以 3D 这一块，大家可以多换几个模型，自己试试。</Line>
     <Part id="own-b"><Own left="ds-free" leftHead="Roadster 怎么贴墙 · 不给风格" right="ds-long" rightHead="Roadster 怎么贴墙 · 给了风格" rightId="own-b-r"><TryModels /></Own></Part>
     <Animation>
       <Appear target="own-b" at="start" dur={0.3} />
@@ -862,11 +866,11 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   </Scene>
 
   <Scene id="visotalk">
-    <Line id="l23">这些风格,就放在 VisoTalk 里。</Line>
-    <Line id="l24" hold={1}>VisoTalk 是一个做讲解视频的 agent 技能。它的目标,是让更多模型,也能做出顶配的讲解视频。</Line>
-    <Line id="l25">它有一座样式库,今天是二十一套风格。</Line>
-    <Line id="l26">这就是我们说的,审美,可以写下来。Opus 这样的顶配模型写一次,样式库就多一套,此后每个模型都能用。</Line>
-    <Line id="l27" hold={1}>你用什么模型不重要。顶配模型的审美,可以一直攒下去。</Line>
+    <Line id="l23">这些风格，就放在 VisoTalk 里。</Line>
+    <Line id="l24" hold={1}>VisoTalk 是一个做讲解视频的 agent 技能。它的目标，是让更多模型，也能做出顶配的讲解视频。</Line>
+    <Line id="l25">它有一座样式库，今天是二十一套风格。</Line>
+    <Line id="l26">这就是我们说的，审美，可以写下来。Opus 这样的顶配模型写一次，样式库就多一套，此后每个模型都能用。</Line>
+    <Line id="l27" hold={1}>你用什么模型不重要。顶配模型的审美，可以一直攒下去。</Line>
     <Part id="meet"><Meet /></Part>
     <Part id="library"><Library /></Part>
     <Animation>
@@ -897,9 +901,9 @@ export default <Doc id="without-opus" title="没有 Opus,可以做出圈的 AI �
   </Scene>
 
   <Scene id="close">
-    <Line id="l28" hold={0.8}>对了,这部片子本身,也是 VisoTalk 来做的。</Line>
-    <Line id="l30">VisoTalk 开源,一条命令就能把技能装进你的 agent。</Line>
-    <Line id="l31" hold={5}>审美,可以写下来。</Line>
+    <Line id="l28" hold={0.8}>对了，这部片子本身，也是 VisoTalk 来做的。</Line>
+    <Line id="l30">VisoTalk 开源，一条命令就能把技能装进你的 agent。</Line>
+    <Line id="l31" hold={5}>审美，可以写下来。</Line>
     <Part id="made"><MadeBy /></Part>
     <Part id="cmd"><Command /></Part>
     <Part id="end"><EndCard /></Part>

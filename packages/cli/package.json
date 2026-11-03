@@ -1,6 +1,6 @@
 {
   "name": "visotalk",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "VisoTalk: explainer videos whose timeline is the narration. Write one, then validate, play and render it to video",
   "license": "MIT",
   "repository": {
@@ -30,7 +30,7 @@
   "dependencies": {
     "@fontsource/inter": "5.1.0",
     "@fontsource/jetbrains-mono": "5.1.1",
-    "@motionhub/cli": "0.1.0",
+    "@motionhub/cli": "0.3.0",
     "@motionhub/runtime": "0.2.0",
     "@puppeteer/browsers": "3.2.6",
     "esbuild": "0.28.2",
