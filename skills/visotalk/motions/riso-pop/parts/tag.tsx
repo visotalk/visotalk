@@ -32,11 +32,11 @@ export function Tag({text, at, point, ink = 'blue', size = 40, show = 1, slip = 
       <mask id={id} maskUnits="userSpaceOnUse" x={0} y={0} width={1920} height={1080}>
         <rect width={1920} height={1080} fill="#fff" />
         <g><text x={x + n + size * 0.45} y={y + size * 0.36} fontSize={size} fill="#000"
-          style={{fontFamily: 'var(--vt-sans)', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase'}}>{text}</text>
+          style={{fontFamily: 'var(--font-sans)', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase'}}>{text}</text>
         <circle cx={x + n * 0.95} cy={y} r={size * 0.14} fill="#000" /></g>
       </mask>
       <Plate ink={ink} slip={slip}>
-        {point && <path d={`M${x} ${y}L${x + (point[0] - x) * lead} ${y + (point[1] - y) * lead}`} stroke={`var(--vt-${ink === 'blue' ? 'data' : 'grad'})`} strokeWidth={5} fill="none" />}
+        {point && <path d={`M${x} ${y}L${x + (point[0] - x) * lead} ${y + (point[1] - y) * lead}`} stroke={`var(--color-${ink === 'blue' ? 'data' : 'grad'})`} strokeWidth={5} fill="none" />}
         {point && lead >= 1 && <circle cx={point[0]} cy={point[1]} r={11} />}
         {stamp > 0 && <path d={shape} transform={at1} mask={`url(#${id})`} />}
       </Plate>

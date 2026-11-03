@@ -28,12 +28,12 @@ export function Callout({at, knee, text, count = '', side = 'right', draw = 1, s
   return (
     <>
       <svg width={1} height={1} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}}>
-        {draw > 0 && <circle cx={at[0]} cy={at[1]} r={5.5} fill="var(--vt-text)" opacity={phase(draw, 0, 0.08)} />}
+        {draw > 0 && <circle cx={at[0]} cy={at[1]} r={5.5} fill="var(--color-text)" opacity={phase(draw, 0, 0.08)} />}
         {lead > 0 && <path d={`M${at[0]} ${at[1]} L${k[0]} ${k[1]}${lead >= 1 ? ` L${shelfEnd} ${knee[1]}` : ''}`} stroke={LINE.thin.color} strokeWidth={2} fill="none" />}
       </svg>
       {write > 0 && (
-        <div style={{position: 'absolute', top: knee[1] - size * 1.25, ...(dir > 0 ? {left: knee[0] + 8} : {right: `calc(100% - ${knee[0] - 8}px)`}), ...lettering(size), color: 'var(--vt-text)', ...typed(write)}}>
-          {text}{count && <span style={{color: 'var(--vt-muted)', marginLeft: '0.5em'}}>{count}</span>}
+        <div style={{position: 'absolute', top: knee[1] - size * 1.25, ...(dir > 0 ? {left: knee[0] + 8} : {right: `calc(100% - ${knee[0] - 8}px)`}), ...lettering(size), color: 'var(--color-text)', ...typed(write)}}>
+          {text}{count && <span style={{color: 'var(--color-muted)', marginLeft: '0.5em'}}>{count}</span>}
         </div>
       )}
     </>

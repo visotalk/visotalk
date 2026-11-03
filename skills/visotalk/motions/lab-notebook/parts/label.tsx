@@ -21,7 +21,7 @@ export function HandLabel({text, write = 1, size = 52, pen = 'ink', underline = 
   const line = unit((write - 0.85) / 0.15);
   return (
     <div style={{position: 'relative', display: 'inline-block', transform: `rotate(${tilt}deg)`, transformOrigin: 'left center'}}>
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, lineHeight: 1.25, fontWeight: 500, color: PEN[pen], whiteSpace: 'nowrap',
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, lineHeight: 1.25, fontWeight: 500, color: PEN[pen], whiteSpace: 'nowrap',
         clipPath: `inset(-25% ${((1 - shown) * 100).toFixed(1)}% -25% -4%)`}}>{text}</div>
       {underline && line > 0 && (
         <svg width="100%" height={16} style={{position: 'absolute', left: 0, bottom: -6, overflow: 'visible'}} viewBox="0 0 100 16" preserveAspectRatio="none">

@@ -53,16 +53,16 @@ export function Ring({x, y, w, h, draw = 1}: {x: number; y: number; w: number; h
   const grow = (pulse * 20) / z;     // the pulse spreads 20 screen pixels outward
   return (
     <svg width={W + m * 2} height={H + m * 2} style={{position: 'absolute', left: x - pad - m, top: y - pad - m, overflow: 'visible', pointerEvents: 'none'}}>
-      <path d={path} fill="var(--vt-data)" fillOpacity={0.07 * halo} stroke="var(--vt-grad)" strokeWidth={sw * 3.2} strokeOpacity={0.85 * halo} strokeLinejoin="round" />
+      <path d={path} fill="var(--color-data)" fillOpacity={0.07 * halo} stroke="var(--color-grad)" strokeWidth={sw * 3.2} strokeOpacity={0.85 * halo} strokeLinejoin="round" />
       {pulse > 0.001 && pulse < 0.999 && (
-        <rect x={m - grow} y={m - grow} width={W + grow * 2} height={H + grow * 2} rx={r + grow} fill="none" stroke="var(--vt-data)" strokeWidth={sw * (1 - pulse * 0.6)} strokeOpacity={0.55 * (1 - pulse)} />
+        <rect x={m - grow} y={m - grow} width={W + grow * 2} height={H + grow * 2} rx={r + grow} fill="none" stroke="var(--color-data)" strokeWidth={sw * (1 - pulse * 0.6)} strokeOpacity={0.55 * (1 - pulse)} />
       )}
-      <path d={path} fill="none" stroke="var(--vt-data)" strokeWidth={sw} strokeLinecap="round" strokeDasharray={`${len} ${len}`} strokeDashoffset={len * (1 - e)} />
+      <path d={path} fill="none" stroke="var(--color-data)" strokeWidth={sw} strokeLinecap="round" strokeDasharray={`${len} ${len}`} strokeDashoffset={len * (1 - e)} />
       {stroke < 0.999 && (
         <g>
-          <circle cx={hx} cy={hy} r={13 / z} fill="var(--vt-data)" opacity={0.18} />
-          <circle cx={hx} cy={hy} r={7 / z} fill="var(--vt-data)" opacity={0.35} />
-          <circle cx={hx} cy={hy} r={4 / z} fill="#FFFFFF" stroke="var(--vt-data)" strokeWidth={2.5 / z} />
+          <circle cx={hx} cy={hy} r={13 / z} fill="var(--color-data)" opacity={0.18} />
+          <circle cx={hx} cy={hy} r={7 / z} fill="var(--color-data)" opacity={0.35} />
+          <circle cx={hx} cy={hy} r={4 / z} fill="#FFFFFF" stroke="var(--color-data)" strokeWidth={2.5 / z} />
         </g>
       )}
     </svg>

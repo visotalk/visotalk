@@ -32,20 +32,20 @@ export function Sheen({p}: {p: number}) {
   const t = unit(p);
   if (t <= 0 || t >= 1) return null;
   const x = (-60 + t * 220).toFixed(1);
-  return h('div', {'data-vt-camera': '', style: {position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none'}},
+  return h('div', {'data-camera': '', style: {position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none'}},
     h('div', {style: {position: 'absolute', top: '-20%', bottom: '-20%', left: `${x}%`, width: '34%', transform: 'skewX(-24deg)',
       background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)'}}));
 }
 /** The channel colour, the one accent of the package */
-export const RED = 'var(--vt-data)';
+export const RED = 'var(--color-data)';
 /** The ink strip: nearly opaque, so white type reads on any shot */
-export const ink: React.CSSProperties = {background: 'color-mix(in srgb, var(--vt-panel) 94%, transparent)', color: 'var(--vt-text)'};
+export const ink: React.CSSProperties = {background: 'color-mix(in srgb, var(--color-panel) 94%, transparent)', color: 'var(--color-text)'};
 /** The white plate: ink type on it, the strip a name or a headline is set on */
-export const plate: React.CSSProperties = {background: 'var(--vt-text)', color: 'var(--vt-bg)'};
+export const plate: React.CSSProperties = {background: 'var(--color-text)', color: 'var(--color-bg)'};
 /** The shadow every piece casts on the footage: short and soft, so it sits on the picture rather than in it */
 export const shade = '0 16px 34px -16px rgba(0, 0, 0, 0.9)';
 /** A tab or label: condensed capitals in the display face */
-export const label: React.CSSProperties = {fontFamily: 'var(--vt-display)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1};
+export const label: React.CSSProperties = {fontFamily: 'var(--font-display)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1};
 /** A wipe that uncovers its content from one side as `p` goes from 0 to 1 */
 export const wipe = (p: number, from: 'left' | 'right' | 'top' | 'bottom' = 'left'): React.CSSProperties => {
   const rest = (100 * (1 - unit(p))).toFixed(2);
@@ -55,7 +55,7 @@ export const wipe = (p: number, from: 'left' | 'right' | 'top' | 'bottom' = 'lef
 /** Type pushed up into its strip from below the strip's edge: it moves down by a share of its height and is cut at the line where the strip ends */
 export const rise = (p: number, by = 1.1): React.CSSProperties => ({transform: `translateY(${((1 - unit(p)) * by * 100).toFixed(2)}%)`});
 /** The strip that type rises into: it masks what has not risen yet. Marked as a frame the type moves through, so a check does not read the mask as text cut off. */
-export const mask = {'data-vt-camera': '', style: {overflow: 'hidden'} as React.CSSProperties};
+export const mask = {'data-camera': '', style: {overflow: 'hidden'} as React.CSSProperties};
 /**
  * A word that changes by rolling: the old one goes up and out, the new one comes up from below, inside a box that clips them. `p` 0 shows `from`, 1 shows `to`.
  */
@@ -65,7 +65,7 @@ export function Roll({from, to, p, style}: {from: React.ReactNode; to: React.Rea
   if (t >= 1) return h('div', {style}, to);
   const e = t < 0.5 ? 8 * t ** 4 : 1 - (-2 * t + 2) ** 4 / 2;
   const up = (e * 100).toFixed(2), down = ((1 - e) * 100).toFixed(2);
-  return h('div', {'data-vt-camera': '', style: {...style, position: 'relative', overflow: 'hidden'}},
+  return h('div', {'data-camera': '', style: {...style, position: 'relative', overflow: 'hidden'}},
     h('div', {style: {visibility: 'hidden'}}, to),
     h('div', {style: {position: 'absolute', inset: 0, transform: `translateY(-${up}%)`}}, from),
     h('div', {style: {position: 'absolute', inset: 0, transform: `translateY(${down}%)`}}, to));
@@ -85,7 +85,7 @@ export function Digits({value, places, style}: {value: number; places: number; s
   });
   const cell: React.CSSProperties = {display: 'block', height: '1em', lineHeight: '1em'};
   return h('span', {style: {display: 'inline-flex', ...style}}, cols.map((d, i) =>
-    h('span', {key: i, 'data-vt-camera': '', style: {display: 'inline-block', position: 'relative', overflow: 'hidden', height: '1em', width: '0.56em', textAlign: 'center'}},
+    h('span', {key: i, 'data-camera': '', style: {display: 'inline-block', position: 'relative', overflow: 'hidden', height: '1em', width: '0.56em', textAlign: 'center'}},
       h('span', {style: {position: 'absolute', left: 0, right: 0, top: 0, transform: `translateY(${(-d).toFixed(3)}em)`,
         filter: d % 1 > 0.02 && d % 1 < 0.98 ? `blur(${(Math.sin(Math.PI * (d % 1)) * 4).toFixed(2)}px)` : undefined}},
         Array.from({length: 11}, (_, n) => h('span', {key: n, style: cell}, String(n % 10)))))));

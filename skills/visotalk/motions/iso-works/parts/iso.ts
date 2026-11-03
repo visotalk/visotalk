@@ -42,18 +42,18 @@ export const ringPoints = (x: number, y: number, w: number, d: number, grow: num
 // What each part of a system does is its colour, from the theme tokens. 'idle' is a part that is not the subject.
 export type Role = 'intake' | 'process' | 'store' | 'output' | 'idle' | 'plain';
 export const ROLE: Record<Role, string> = {
-  intake: 'var(--vt-op)',
-  process: 'var(--vt-data)',
-  store: 'var(--vt-warn)',
-  output: 'var(--vt-grad)',
-  idle: 'var(--vt-faint)',
-  plain: 'var(--vt-panel2)',
+  intake: 'var(--color-op)',
+  process: 'var(--color-data)',
+  store: 'var(--color-warn)',
+  output: 'var(--color-grad)',
+  idle: 'var(--color-faint)',
+  plain: 'var(--color-panel2)',
 };
 
 /** A role's colour, greyed toward idle by `dim` (0 itself, 1 idle): what is not the subject keeps its shape and loses its colour */
 export const hue = (role: Role, dim = 0) => {
   const d = unit(dim);
-  return d <= 0 ? ROLE[role] : `color-mix(in srgb, ${ROLE[role]} ${Math.round((1 - d) * 100)}%, var(--vt-faint))`;
+  return d <= 0 ? ROLE[role] : `color-mix(in srgb, ${ROLE[role]} ${Math.round((1 - d) * 100)}%, var(--color-faint))`;
 };
 
 /** The three tones of one colour: the top lifted toward the light, the +y face the colour, the +x face dropped toward a cool ink */

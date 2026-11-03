@@ -12,7 +12,7 @@ export const meta = {
     height: {type: 'px', doc: 'the box\'s height'},
     pen: {type: 'ink | red | pencil', default: 'ink', doc: 'which pen: ink draws, red marks the result, pencil is working'},
     weight: {type: 'px', default: 5, doc: 'the stroke'},
-    fill: {type: 'colour', default: 'none', doc: 'a fill that appears once the outline is drawn (a wash): a token, as var(--vt-…)'},
+    fill: {type: 'colour', default: 'none', doc: 'a fill that appears once the outline is drawn (a wash): a token, as var(--color-…)'},
   },
   preview: 3.8,
 };

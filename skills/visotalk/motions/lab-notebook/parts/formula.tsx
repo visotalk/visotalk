@@ -30,7 +30,7 @@ function Box({progress}: {progress: number}) {
 
 export function Formula({lines, write = 99, size = 52, box = 0}: {lines: string[]; write?: number; size?: number; box?: number}) {
   return (
-    <div style={{fontFamily: 'var(--vt-display)', fontSize: size, lineHeight: 1.5, fontWeight: 500}}>
+    <div style={{fontFamily: 'var(--font-display)', fontSize: size, lineHeight: 1.5, fontWeight: 500}}>
       {lines.map((text, i) => {
         const last = i === lines.length - 1, shown = unit(write - i);
         return (

@@ -49,13 +49,13 @@ export function Paper({layer = 'ground', marks = true, slip = 0}: {layer?: 'grou
   }
   const plate = (ink: Ink) => (
     <Plate ink={ink} slip={slip}>
-      <g color={`var(--vt-${ink === 'blue' ? 'data' : 'grad'})`}>
+      <g color={`var(--color-${ink === 'blue' ? 'data' : 'grad'})`}>
         <Target x={64} y={62} /><Target x={W - 64} y={62} />
       </g>
     </Plate>
   );
   return (
-    <div style={{position: 'absolute', inset: 0, background: 'var(--vt-bg)', overflow: 'hidden'}}>
+    <div style={{position: 'absolute', inset: 0, background: 'var(--color-bg)', overflow: 'hidden'}}>
       <div style={{position: 'absolute', inset: 0, backgroundImage: TOOTH, opacity: 0.55}} />
       {/* a faint warmth toward the edges, as a sheet off the stack is never evenly lit */}
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(130% 110% at 50% 42%, transparent 55%, rgba(150, 120, 80, 0.10))'}} />

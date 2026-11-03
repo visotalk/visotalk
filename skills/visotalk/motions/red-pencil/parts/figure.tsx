@@ -17,13 +17,13 @@ export const meta = {
 export function Figure({value, decimals = 0, prefix = '', unit = '', label = '', size = 180}: {value: number; decimals?: number; prefix?: string; unit?: string; label?: string; size?: number}) {
   const shown = value.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
   return (
-    <div style={{fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
+    <div style={{fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
       <div style={{display: 'flex', alignItems: 'baseline', gap: Math.round(size * 0.06), fontVariantNumeric: 'tabular-nums lining-nums', lineHeight: 1}}>
         {prefix && <span style={{fontSize: Math.round(size * 0.5), fontWeight: 500}}>{prefix}</span>}
         <span style={{fontSize: size, fontWeight: 600, letterSpacing: '-0.02em'}}>{shown}</span>
-        {unit && <span style={{fontSize: Math.round(size * 0.24), fontStyle: 'italic', color: 'var(--vt-muted)'}}>{unit}</span>}
+        {unit && <span style={{fontSize: Math.round(size * 0.24), fontStyle: 'italic', color: 'var(--color-muted)'}}>{unit}</span>}
       </div>
-      {label && <div style={{fontSize: 24, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--vt-muted)', marginTop: 18}}>{label}</div>}
+      {label && <div style={{fontSize: 24, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-muted)', marginTop: 18}}>{label}</div>}
     </div>
   );
 }

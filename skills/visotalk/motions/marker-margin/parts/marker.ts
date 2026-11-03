@@ -1,6 +1,6 @@
 // The material of Marker Margin: a felt-tip marker on the glass in front of someone's footage. Every mark is a stroke with a wet core, a faint streak where
 // the felt drags, a slightly ragged edge and a thin dark keyline that keeps it readable on any shot. The same hand writes the words, in white.
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 
 export type Pt = [number, number];
 
@@ -9,14 +9,14 @@ export const unit = (v: number) => Math.max(0, Math.min(1, v));
 export const stage = (p: number, a: number, b: number) => 1 - (1 - unit((p - a) / (b - a))) ** 2.2;
 
 /** The two pens: the marker for every mark, white for every word */
-export const INK = {marker: 'var(--vt-data)', white: 'var(--vt-text)'} as const;
+export const INK = {marker: 'var(--color-data)', white: 'var(--color-text)'} as const;
 export type Ink = keyof typeof INK;
 /** The keyline under a stroke or a word: the footage's own darkest tone, half opaque */
-export const KEY = 'color-mix(in srgb, var(--vt-bg) 62%, transparent)';
+export const KEY = 'color-mix(in srgb, var(--color-bg) 62%, transparent)';
 
 /** Each point pushed off its line by a slow wave whose phases come from `key`, so a mark is the same on every frame */
 export function wobble(points: Pt[], key: string, amount = 3): Pt[] {
-  const r = random(`${key}:wobble`);
+  const r = seededRandom(`${key}:wobble`);
   const a = r() * Math.PI * 2, b = r() * Math.PI * 2;
   return points.map(([x, y], i) => {
     const prev = points[Math.max(0, i - 1)], next = points[Math.min(points.length - 1, i + 1)];
@@ -29,7 +29,7 @@ export function wobble(points: Pt[], key: string, amount = 3): Pt[] {
 
 /** A loop scribbled round a point: it starts high on the left, runs once round and on past its start, the second pass wider, as a hand circles a thing in a hurry */
 export function loop(cx: number, cy: number, rx: number, ry: number, key: string, turns = 1.2, tilt = 0): Pt[] {
-  const r = random(`${key}:loop`);
+  const r = seededRandom(`${key}:loop`);
   const start = -2.5 + r() * 0.5, run = Math.PI * 2 * turns + r() * 0.3, steps = Math.round(64 * turns);
   const c = Math.cos(tilt), s = Math.sin(tilt);
   return Array.from({length: steps + 1}, (_, i) => {
@@ -53,16 +53,16 @@ export const lengthOf = (points: Pt[]) => points.slice(1).reduce((sum, p, i) => 
 
 /** The filter that frays a stroke's edge, one per seed so two marks are never frayed the same */
 export const fray = (key: string) => {
-  const seed = Math.floor(random(`${key}:fray`)() * 900) + 1;
+  const seed = Math.floor(seededRandom(`${key}:fray`)() * 900) + 1;
   return {id: `mm-fray-${seed}`, seed};
 };
 
 /** The handwriting: Shantell Sans with its informal and bouncing axes turned up, so letters sit unevenly, as a quick hand writes */
 export const hand = {
-  fontFamily: 'var(--vt-display)',
+  fontFamily: 'var(--font-display)',
   fontVariationSettings: '"INFM" 100, "BNCE" 45',
   fontWeight: 700,
   lineHeight: 1.05,
   whiteSpace: 'pre',
-  textShadow: `0 0 1px ${KEY}, 0 0 3px ${KEY}, 0 0 6px ${KEY}, 0 2px 0 ${KEY}, 0 0 16px color-mix(in srgb, var(--vt-bg) 55%, transparent)`,
+  textShadow: `0 0 1px ${KEY}, 0 0 3px ${KEY}, 0 0 6px ${KEY}, 0 2px 0 ${KEY}, 0 0 16px color-mix(in srgb, var(--color-bg) 55%, transparent)`,
 } as const;

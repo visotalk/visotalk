@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 import {Sheet, SHEET, hazed, unit, useLight, useLook} from './stage.tsx';
 
 export const meta = {
@@ -24,7 +24,7 @@ const r1 = (v: number) => Math.round(v * 10) / 10;
 
 /** Smooth value noise, the same for the same seed */
 function noise(seed: string) {
-  const g = random(`depth-stage:${seed}`);
+  const g = seededRandom(`depth-stage:${seed}`);
   const knots = Array.from({length: 64}, () => g());
   const at = (x: number) => {
     const i = Math.floor(x), f = x - i, s = (1 - Math.cos(f * Math.PI)) / 2;
@@ -69,7 +69,7 @@ const ellipse = (cx: number, cy: number, rx: number, ry: number) => `M${r1(cx - 
 /** A town on a low rise: houses with low roofs, now and then a temple front, cypresses and umbrella pines between them.
  *  Returns its shapes and its skyline, so light can catch the roofline alone. */
 function town(seed: string, top: number, relief: number, at: number) {
-  const g = random(`depth-stage:town:${seed}`);
+  const g = seededRandom(`depth-stage:town:${seed}`);
   const ground = (x: number) => top + relief - 40 * Math.exp(-(((x - at) / 900) ** 2));
   const STEP = 4, sky: number[] = [];
   for (let x = LEFT; x <= RIGHT; x += STEP) sky.push(ground(x));
@@ -122,7 +122,7 @@ function town(seed: string, top: number, relief: number, at: number) {
 
 /** Near foliage hanging into the frame from one top corner (the side `at` is nearer), on a few tapering boughs */
 function canopy(seed: string, top: number, relief: number, at: number) {
-  const g = random(`depth-stage:canopy:${seed}`);
+  const g = seededRandom(`depth-stage:canopy:${seed}`);
   const side = at < 960 ? -1 : 1, edge = side < 0 ? -40 : 1960;
   const parts: string[] = [];
   for (let b = 0; b < 4; b++) {
@@ -141,7 +141,7 @@ function canopy(seed: string, top: number, relief: number, at: number) {
 
 /** A low near bank across the foot of the frame, with tufts of grass along its crest */
 function bank(seed: string, top: number, relief: number) {
-  const g = random(`depth-stage:bank:${seed}`);
+  const g = seededRandom(`depth-stage:bank:${seed}`);
   const n = noise(`bank:${seed}`);
   const ground = (x: number) => top + relief * (1 - n(x / 900, 2));
   const edge: Array<[number, number]> = [];
@@ -156,7 +156,7 @@ function bank(seed: string, top: number, relief: number) {
 
 /** A forest edge: stacked conifers along a rolling ground */
 function trees(seed: string, top: number, relief: number) {
-  const g = random(`depth-stage:trees:${seed}`);
+  const g = seededRandom(`depth-stage:trees:${seed}`);
   const n = noise(`trees:${seed}`);
   const ground = (x: number) => top + relief * (0.55 + 0.45 * n(x / 700));
   const parts: string[] = [];
@@ -190,13 +190,13 @@ export function Ridge({shape = 'hills', seed = 'a', top = 520, relief = 220, at 
   }, [shape, seed, top, relief, at]);
   // the body darkens toward its top edge and fades into the valley mist at its foot
   const y0 = top - SHEET.y, y1 = top + relief + 260 - SHEET.y;
-  const paint = `linear-gradient(180deg, ${hazed('var(--vt-panel)', fog)} ${y0}px, ${hazed('var(--vt-panel)', fog + unit(mist) * (1 - fog) * 0.55)} ${y1}px)`;
+  const paint = `linear-gradient(180deg, ${hazed('var(--color-panel)', fog)} ${y0}px, ${hazed('var(--color-panel)', fog + unit(mist) * (1 - fog) * 0.55)} ${y1}px)`;
   return (
     <>
       <Sheet d={fill} paint={paint} />
       {/* haze between the eye and a far layer is lit by the low light: warmer on the side the light is on */}
-      <Sheet d={fill} paint={`radial-gradient(1100px 700px at ${Math.round(light.x - SHEET.x)}px ${Math.round(light.y + 160 - SHEET.y)}px, color-mix(in oklab, var(--vt-data), var(--vt-grad) 40%), transparent 100%)`} opacity={fog * light.glow * 0.55} />
-      {rim > 0 && <Sheet d={edge} stroke={3} paint="color-mix(in oklab, var(--vt-data), var(--vt-text) 45%)" opacity={unit(rim) * (1 - 0.7 * fog)} />}
+      <Sheet d={fill} paint={`radial-gradient(1100px 700px at ${Math.round(light.x - SHEET.x)}px ${Math.round(light.y + 160 - SHEET.y)}px, color-mix(in oklab, var(--color-data), var(--color-grad) 40%), transparent 100%)`} opacity={fog * light.glow * 0.55} />
+      {rim > 0 && <Sheet d={edge} stroke={3} paint="color-mix(in oklab, var(--color-data), var(--color-text) 45%)" opacity={unit(rim) * (1 - 0.7 * fog)} />}
     </>
   );
 }

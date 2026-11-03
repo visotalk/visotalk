@@ -43,14 +43,14 @@ export function Place({lon, lat, name, note, kind = 'town', side = 'right', size
   const s = size ?? DEFAULT[kind];
   const spaced = kind === 'country' || kind === 'region';
   const text: React.CSSProperties = {
-    fontFamily: spaced ? 'var(--vt-sans)' : 'var(--vt-display)', fontSize: s, lineHeight: 1.1, whiteSpace: 'nowrap',
+    fontFamily: spaced ? 'var(--font-sans)' : 'var(--font-display)', fontSize: s, lineHeight: 1.1, whiteSpace: 'nowrap',
     fontWeight: spaced ? 600 : kind === 'point' ? 600 : 500, fontStyle: kind === 'water' ? 'italic' : 'normal',
     letterSpacing: spaced ? '0.24em' : kind === 'water' ? '0.12em' : '0.005em', textTransform: spaced ? 'uppercase' : 'none',
-    color: kind === 'water' ? 'var(--vt-op)' : spaced ? 'var(--vt-muted)' : 'var(--vt-text)',
+    color: kind === 'water' ? 'var(--color-op)' : spaced ? 'var(--color-muted)' : 'var(--color-text)',
     // a paper halo, as an atlas knocks the lines out behind a name, so it reads over borders and fills
-    textShadow: kind === 'water' ? 'none' : '0 0 2px var(--vt-panel), 0 0 4px var(--vt-panel), 0 0 7px var(--vt-panel)',
+    textShadow: kind === 'water' ? 'none' : '0 0 2px var(--color-panel), 0 0 4px var(--color-panel), 0 0 7px var(--color-panel)',
   };
-  const small: React.CSSProperties = {fontFamily: 'var(--vt-sans)', fontSize: Math.max(28, Math.round(s * 0.78)), fontStyle: 'normal', fontWeight: 500, letterSpacing: '0.03em', textTransform: 'none', color: 'var(--vt-muted)', marginTop: 4};
+  const small: React.CSSProperties = {fontFamily: 'var(--font-sans)', fontSize: Math.max(28, Math.round(s * 0.78)), fontStyle: 'normal', fontWeight: 500, letterSpacing: '0.03em', textTransform: 'none', color: 'var(--color-muted)', marginTop: 4};
   const label = <div style={text}>{name}{note && <div style={small}>{note}</div>}</div>;
   if (kind === 'country' || kind === 'region' || kind === 'water') {
     return <div style={{position: 'absolute', left: x, top: y, transform: `translate(-50%, -50%) translateY(${(1 - unit(show)) * 6}px)`, opacity: a * room, textAlign: 'center'}}>{label}</div>;
@@ -70,14 +70,14 @@ export function Place({lon, lat, name, note, kind = 'town', side = 'right', size
         <svg width={2} height={2} style={{position: 'absolute', left: x - 1, top: y - 1, overflow: 'visible', opacity: a}}>
           {[0, 0.18, 0.36].map((d) => {
             const p = unit((ripple - d) / 0.64), e = 1 - Math.pow(1 - p, 3);
-            return p > 0 && p < 1 ? <circle key={d} cx={1} cy={1} r={24 + e * 230} fill="none" stroke="var(--vt-data)" strokeWidth={3 * (1 - p) + 0.6} opacity={0.85 * (1 - p)} /> : null;
+            return p > 0 && p < 1 ? <circle key={d} cx={1} cy={1} r={24 + e * 230} fill="none" stroke="var(--color-data)" strokeWidth={3 * (1 - p) + 0.6} opacity={0.85 * (1 - p)} /> : null;
           })}
         </svg>
       )}
       <svg width={mark * 2} height={mark * 2} style={{position: 'absolute', left: x - mark, top: y - mark, overflow: 'visible', opacity: a}}>
         {kind === 'point'
-          ? <g transform={`translate(${mark} ${mark}) scale(${grow})`}><circle r={mark - 6} fill="none" stroke="var(--vt-panel)" strokeWidth={8} /><circle r={mark - 6} fill="none" stroke="var(--vt-data)" strokeWidth={4} /><circle r={4} fill="var(--vt-data)" /></g>
-          : <g transform={`translate(${mark} ${mark})`}><circle r={7.5} fill="var(--vt-panel)" stroke="var(--vt-text)" strokeWidth={2.6} /><circle r={3} fill="var(--vt-text)" /></g>}
+          ? <g transform={`translate(${mark} ${mark}) scale(${grow})`}><circle r={mark - 6} fill="none" stroke="var(--color-panel)" strokeWidth={8} /><circle r={mark - 6} fill="none" stroke="var(--color-data)" strokeWidth={4} /><circle r={4} fill="var(--color-data)" /></g>
+          : <g transform={`translate(${mark} ${mark})`}><circle r={7.5} fill="var(--color-panel)" stroke="var(--color-text)" strokeWidth={2.6} /><circle r={3} fill="var(--color-text)" /></g>}
       </svg>
       <div style={{position: 'absolute', opacity: a, ...pos[side]}}>{label}</div>
     </>

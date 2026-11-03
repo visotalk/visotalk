@@ -27,9 +27,9 @@ export function Lift({lift = 0, children}: {lift?: number; children?: React.Reac
   return (
     <div style={{position: 'relative'}}>
       {/* the slot it left: a faint well in the screen */}
-      <div style={{position: 'absolute', inset: 0, borderRadius: 14, background: 'var(--vt-panel2)', boxShadow: 'inset 0 2px 6px rgba(38, 36, 30, 0.10)', opacity: e}} />
+      <div style={{position: 'absolute', inset: 0, borderRadius: 14, background: 'var(--color-panel2)', boxShadow: 'inset 0 2px 6px rgba(38, 36, 30, 0.10)', opacity: e}} />
       <div style={{position: 'relative', borderRadius: 14,
-        background: e > 0.001 ? `${sheen !== null ? `linear-gradient(105deg, transparent ${sheen - 14}%, rgba(220, 228, 255, 0.9) ${sheen}%, transparent ${sheen + 14}%), ` : ''}var(--vt-panel)` : 'transparent',
+        background: e > 0.001 ? `${sheen !== null ? `linear-gradient(105deg, transparent ${sheen - 14}%, rgba(220, 228, 255, 0.9) ${sheen}%, transparent ${sheen + 14}%), ` : ''}var(--color-panel)` : 'transparent',
         transform: e > 0.001 ? `perspective(${DEPTH}px) translateY(${(-14 * e).toFixed(2)}px) translateZ(${(Z * e).toFixed(2)}px) rotateX(${(-14 * tip).toFixed(2)}deg)` : undefined,
         boxShadow: e > 0.001 ? `0 ${(34 * e).toFixed(1)}px ${(60 * e).toFixed(1)}px -${(22 * e).toFixed(1)}px rgba(38, 36, 30, ${(0.45 * e).toFixed(3)}), 0 0 0 1px rgba(38, 36, 30, ${(0.07 * e).toFixed(3)})` : 'none'}}>
         {children}

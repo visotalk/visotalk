@@ -21,9 +21,9 @@ export const meta = {
 function Side({title, note, open, edge, dim}: {title: string; note: string; open: number; edge: number; dim: boolean}) {
   return (
     <div style={{...tag, ...wipe(open), flex: 1, minWidth: 0, position: 'relative', padding: '20px 28px 24px', boxSizing: 'border-box', opacity: dim ? 0.55 : 1}}>
-      <div style={{position: 'absolute', left: 0, top: 0, height: 6, width: `${(100 * edge).toFixed(1)}%`, background: 'var(--vt-data)', borderRadius: '4px 4px 0 0'}} />
-      {note && <div style={{...eyebrow, color: edge > 0 ? 'var(--vt-data)' : 'var(--vt-muted)', marginBottom: 8}}>{note}</div>}
-      <div style={{fontFamily: 'var(--vt-sans)', fontSize: 48, fontWeight: 700, lineHeight: 1.15, color: dim ? 'var(--vt-muted)' : 'var(--vt-text)'}}>{title}</div>
+      <div style={{position: 'absolute', left: 0, top: 0, height: 6, width: `${(100 * edge).toFixed(1)}%`, background: 'var(--color-data)', borderRadius: '4px 4px 0 0'}} />
+      {note && <div style={{...eyebrow, color: edge > 0 ? 'var(--color-data)' : 'var(--color-muted)', marginBottom: 8}}>{note}</div>}
+      <div style={{fontFamily: 'var(--font-sans)', fontSize: 48, fontWeight: 700, lineHeight: 1.15, color: dim ? 'var(--color-muted)' : 'var(--color-text)'}}>{title}</div>
     </div>
   );
 }
@@ -33,7 +33,7 @@ export function Versus({a, b, aNote = '', bNote = '', winner = '', show = 1, dec
   return (
     <div style={{width, display: 'flex', alignItems: 'stretch', gap: 18}}>
       <Side title={a} note={aNote} open={left} edge={winner === 'a' ? d : 0} dim={winner === 'b' && d > 0.5} />
-      <div style={{alignSelf: 'center', fontFamily: 'var(--vt-mono)', fontSize: 28, fontWeight: 700, color: 'var(--vt-muted)', opacity: vs, letterSpacing: '0.08em'}}>VS</div>
+      <div style={{alignSelf: 'center', fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color: 'var(--color-muted)', opacity: vs, letterSpacing: '0.08em'}}>VS</div>
       <Side title={b} note={bNote} open={right} edge={winner === 'b' ? d : 0} dim={winner === 'a' && d > 0.5} />
     </div>
   );

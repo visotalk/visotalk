@@ -27,12 +27,12 @@ export function Bars({labels, values, unit = '', title = '', grown = 0, focus = 
           const g = stage(grown - i, 0, 1), on = Math.round(focus) === i;
           const shown = amounts[i] * g;
           return [
-            <div key={`l${i}`} style={{fontFamily: 'var(--vt-sans)', fontSize: 38, fontWeight: 700, color: on || focus < 0 ? 'var(--vt-text)' : 'var(--vt-muted)', opacity: g > 0 ? 1 : 0.35, whiteSpace: 'nowrap'}}>{label}</div>,
-            <div key={`b${i}`} style={{height: 22, background: 'color-mix(in srgb, var(--vt-faint) 45%, transparent)', borderRadius: 2}}>
-              <div style={{height: '100%', width: `${((100 * shown) / max).toFixed(2)}%`, background: on ? 'var(--vt-data)' : 'var(--vt-muted)', borderRadius: 2}} />
+            <div key={`l${i}`} style={{fontFamily: 'var(--font-sans)', fontSize: 38, fontWeight: 700, color: on || focus < 0 ? 'var(--color-text)' : 'var(--color-muted)', opacity: g > 0 ? 1 : 0.35, whiteSpace: 'nowrap'}}>{label}</div>,
+            <div key={`b${i}`} style={{height: 22, background: 'color-mix(in srgb, var(--color-faint) 45%, transparent)', borderRadius: 2}}>
+              <div style={{height: '100%', width: `${((100 * shown) / max).toFixed(2)}%`, background: on ? 'var(--color-data)' : 'var(--color-muted)', borderRadius: 2}} />
             </div>,
-            <div key={`v${i}`} style={{fontFamily: 'var(--vt-display)', fontSize: 40, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: on ? 'var(--vt-data)' : 'var(--vt-text)', opacity: g, minWidth: 64, textAlign: 'right', whiteSpace: 'nowrap'}}>
-              {Number.isInteger(amounts[i]) ? Math.round(shown) : shown.toFixed(1)}{unit && <span style={{fontSize: 28, marginLeft: 4, color: 'var(--vt-muted)'}}>{unit}</span>}
+            <div key={`v${i}`} style={{fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: on ? 'var(--color-data)' : 'var(--color-text)', opacity: g, minWidth: 64, textAlign: 'right', whiteSpace: 'nowrap'}}>
+              {Number.isInteger(amounts[i]) ? Math.round(shown) : shown.toFixed(1)}{unit && <span style={{fontSize: 28, marginLeft: 4, color: 'var(--color-muted)'}}>{unit}</span>}
             </div>,
           ];
         })}

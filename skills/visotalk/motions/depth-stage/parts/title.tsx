@@ -26,10 +26,10 @@ export function Title({x = 180, y = 260, kicker = '', title, size = 132, align =
   return (
     <div style={{position: 'absolute', left: centre ? x - 900 : x, top: y, width: 1800, textAlign: centre ? 'center' : 'left',
       opacity: unit(s * 3)}}>
-      {kicker && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 26, fontWeight: 600, letterSpacing: `${(0.34 + (1 - s) * 0.2).toFixed(3)}em`, textTransform: 'uppercase',
-        color: hazed('color-mix(in oklab, var(--vt-text), var(--vt-muted) 35%)', fog * 0.5), marginBottom: 22}}>{kicker}</div>}
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 400, lineHeight: 1.02, letterSpacing: '-0.01em',
-        whiteSpace: 'pre-line', color: hazed('var(--vt-text)', fog * 0.6), textShadow: '0 2px 30px rgba(6, 9, 16, 0.55)'}}>
+      {kicker && <div style={{fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 600, letterSpacing: `${(0.34 + (1 - s) * 0.2).toFixed(3)}em`, textTransform: 'uppercase',
+        color: hazed('color-mix(in oklab, var(--color-text), var(--color-muted) 35%)', fog * 0.5), marginBottom: 22}}>{kicker}</div>}
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 400, lineHeight: 1.02, letterSpacing: '-0.01em',
+        whiteSpace: 'pre-line', color: hazed('var(--color-text)', fog * 0.6), textShadow: '0 2px 30px rgba(6, 9, 16, 0.55)'}}>
         {/* each letter comes into focus a little after the one before it, rising out of the haze */}
         {[...title].map((ch, i, all) => {
           const k = unit(show * 1.7 - (i / Math.max(1, all.length)) * 0.7);

@@ -14,9 +14,9 @@ export type Pt = [number, number];
 /** a full-canvas SVG; it multiplies onto everything beneath it, as ink does on a sheet that already carries the other plate */
 export const CANVAS = {viewBox: `0 0 ${W} ${H}`, width: W, height: H, style: {position: 'absolute', left: 0, top: 0, overflow: 'visible', mixBlendMode: 'multiply'}} as const;
 
-export const INK: Record<Ink, string> = {blue: 'var(--vt-data)', pink: 'var(--vt-grad)'};
+export const INK: Record<Ink, string> = {blue: 'var(--color-data)', pink: 'var(--color-grad)'};
 /** paper: what a knocked-out word or a zero of ink shows */
-export const PAPER = 'var(--vt-bg)';
+export const PAPER = 'var(--color-bg)';
 /** each plate's screen: angles 60° apart so the two screens make a fine rosette, not moiré */
 export const SCREEN: Record<Ink, {angle: number; period: number}> = {blue: {angle: 15, period: 14}, pink: {angle: 75, period: 14}};
 /** where each plate lands when nothing knocks it: the pink a few pixels off, as every run of a duplicator is */
@@ -108,7 +108,7 @@ export function Plate({ink, slip = 0, print = 1, box = [0, 0, W, H], children}: 
 /** A word printed on a plate: SVG text, so it misregisters and grains with its ink */
 export function Print({x, y, size, children, face = 'display', weight, anchor = 'start', fill, spacing}: {x: number; y: number; size: number; children: ReactNode; face?: 'display' | 'sans'; weight?: number; anchor?: 'start' | 'middle' | 'end'; fill?: string; spacing?: string}) {
   const display = face === 'display';
-  return h('text', {x, y, fontSize: size, textAnchor: anchor, fill, style: {fontFamily: display ? 'var(--vt-display)' : 'var(--vt-sans)', fontWeight: weight ?? (display ? 900 : 700),
+  return h('text', {x, y, fontSize: size, textAnchor: anchor, fill, style: {fontFamily: display ? 'var(--font-display)' : 'var(--font-sans)', fontWeight: weight ?? (display ? 900 : 700),
     letterSpacing: spacing ?? (display ? '-0.01em' : '0.01em'), fontVariationSettings: display ? '"SOFT" 100, "WONK" 0' : undefined}}, children);
 }
 

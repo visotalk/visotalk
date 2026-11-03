@@ -18,11 +18,11 @@ export const RESTING = '0 46px 90px -34px rgba(38, 36, 30, 0.38), 0 14px 30px -1
 
 export function AppWindow({title, width = 1320, height = 740, children}: {title: string; width?: number; height?: number; children?: React.ReactNode}) {
   return (
-    <div style={{position: 'relative', width, height, borderRadius: 16, background: 'var(--vt-panel)', boxShadow: RESTING, overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
-      <div style={{flex: '0 0 52px', display: 'flex', alignItems: 'center', position: 'relative', borderBottom: '1px solid var(--vt-border)', background: 'var(--vt-panel2)'}}>
+    <div style={{position: 'relative', width, height, borderRadius: 16, background: 'var(--color-panel)', boxShadow: RESTING, overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
+      <div style={{flex: '0 0 52px', display: 'flex', alignItems: 'center', position: 'relative', borderBottom: '1px solid var(--color-border)', background: 'var(--color-panel2)'}}>
         {/* one grip to hold the window by, no maker's buttons */}
-        <div style={{width: 44, height: 6, marginLeft: 22, borderRadius: 3, background: 'var(--vt-faint)'}} />
-        <div style={{position: 'absolute', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--vt-sans)', fontSize: 19, color: 'var(--vt-muted)', letterSpacing: '0.01em'}}>{title}</div>
+        <div style={{width: 44, height: 6, marginLeft: 22, borderRadius: 3, background: 'var(--color-faint)'}} />
+        <div style={{position: 'absolute', left: 0, right: 0, textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 19, color: 'var(--color-muted)', letterSpacing: '0.01em'}}>{title}</div>
       </div>
       <div style={{flex: '1 1 auto', position: 'relative', minHeight: 0}}>{children}</div>
     </div>

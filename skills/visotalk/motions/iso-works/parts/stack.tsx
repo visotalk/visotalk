@@ -34,7 +34,7 @@ export function StackDrawing({at: [x, y], count = 0, fill = 1, per = 1, unit: wh
   const v: View = {origin, k};
   // the cubes are the count rounded; n runs from 0 to that many as fill goes to 1, and cube i drops while n passes from i to i + 1
   const total = Math.round(Math.max(0, count)), n = total * unit(fill), whole = Math.ceil(n);
-  const tn = tones(hue(role, dim)), pallet = tones('var(--vt-panel2)');
+  const tn = tones(hue(role, dim)), pallet = tones('var(--color-panel2)');
   const cubes = Array.from({length: whole}, (_, i) => {
     const layer = Math.floor(i / (a * b)), j = i % (a * b);
     // each cube falls the last stretch with a quick ease-in and lands; the one in flight is the fraction of the count

@@ -13,7 +13,7 @@ Not a slide of screenshots (the screen is a place the camera moves through), not
 
 ## 2. Ground and material
 
-`desk.tsx`: a warm pale matte (`bg`) lit from the upper left, faint window panes, a fine tooth, a light vignette. Its frame is a camera's (`data-vt-camera`) over screens laid out in desk pixels. Screens are white slabs with one shared shadow (`RESTING`, `window.tsx`).
+`desk.tsx`: a warm pale matte (`bg`) lit from the upper left, faint window panes, a fine tooth, a light vignette. Its frame is a camera's (`data-camera`) over screens laid out in desk pixels. Screens are white slabs with one shared shadow (`RESTING`, `window.tsx`).
 
 ## 3. Colour roles
 
@@ -67,7 +67,7 @@ Optional: key clicks, a whoosh under a flight, a chime. No music.
 ## 10. Pitfalls
 
 - Pushed in so far the control loses its neighbours. Fix: zoom 1.45 at most.
-- The screen under the caption when pushed in. Fix: a larger `camY` or a shorter screen; check with `qa`.
+- The screen under the caption when pushed in. Fix: a larger `camY` or a shorter screen; check the frame.
 - Blue inside the app: the guide stops meaning anything. Fix: the app in ink and greys.
 - A screen entering before the camera leaves, half under the caption. Fix: start it once the flight is under way.
 - An interface like a real product's. Fix: an invented app, plain chrome.

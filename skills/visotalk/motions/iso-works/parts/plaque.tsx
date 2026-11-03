@@ -23,20 +23,20 @@ export function Plaque({at: [x, y], width = 14, height = 3.4, title, kicker = ''
   const v: View = {origin, k}, kk = k ?? 46;
   const r = springOut(rise);
   if (r <= 0) return null;
-  const h = height * r, f = boxFaces({x, y, w: width, d: 1, h}, v), t = tones('var(--vt-panel)');
+  const h = height * r, f = boxFaces({x, y, w: width, d: 1, h}, v), t = tones('var(--color-panel)');
   const band = boxFaces({x, y, z: h, w: width, d: 1, h: 0.2}, v), tb = tones(hue(role));
   const words = unit((rise - 0.7) / 0.3);
   return (
     <svg {...CANVAS}>
-      <polygon points={f.left} style={{fill: t.left, stroke: 'var(--vt-border)', strokeWidth: 1.5}} />
+      <polygon points={f.left} style={{fill: t.left, stroke: 'var(--color-border)', strokeWidth: 1.5}} />
       <polygon points={f.right} style={{fill: t.right}} />
       <polygon points={f.top} style={{fill: t.top}} />
       <polygon points={band.left} style={{fill: tb.left}} /><polygon points={band.right} style={{fill: tb.right}} /><polygon points={band.top} style={{fill: tb.top}} />
       <g opacity={words}>
         {kicker && <text transform={faceText('left', x + 0.6, y + 1, h - 0.95, v)} fontSize={Math.round(kk * 0.62)} letterSpacing="0.08em"
-          style={{fill: hue(role), fontFamily: 'var(--vt-sans)', fontWeight: 700, textTransform: 'uppercase'}}>{kicker}</text>}
+          style={{fill: hue(role), fontFamily: 'var(--font-sans)', fontWeight: 700, textTransform: 'uppercase'}}>{kicker}</text>}
         <text transform={faceText('left', x + 0.55, y + 1, 0.75, v)} fontSize={Math.round(kk * 1.55)}
-          style={{fill: 'var(--vt-text)', fontFamily: 'var(--vt-display)', fontWeight: 800, letterSpacing: '-0.01em'}}>{title}</text>
+          style={{fill: 'var(--color-text)', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.01em'}}>{title}</text>
       </g>
     </svg>
   );

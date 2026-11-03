@@ -34,7 +34,7 @@ export default <Doc spec="0.7.0" id="live-studio-sample" title="Faster than a fl
 <Part id="raegan" x={96} y={606} w={640} h={190}>{() => <Strap name="Raegan Scharfetter" role="Space to Ground" tag="Host" show={useProp('show', 0)} />}</Part>
 <Part id="nilufar" x={1184} y={606} w={640} h={190}>{() => <Strap name="Nilufar Ramji" role="Space to Ground" tag="Host" side="right" show={useProp('show', 0)} />}</Part>
 <Part id="board" x={96} y={240} w={430} h={460}>{() => <Scorebar title="Flight time" labels={LABELS} values={TIMES} notes={['', '', '+']} format="hm" shown={useProp('shown', 0)} ask={2} reveal={useProp('reveal', 0)} focus={useProp('focus', -1)} badge="Fastest" win={useProp('win', 0)} show={useProp('show', 0)} />}</Part>
-<Part id="pip" x={1400} y={180} w={424} h={352}>{() => <Pip asset="kim" start={15.1} name="Jonny Kim" role="NASA" show={useProp('show', 0)} />}</Part>
+<Part id="pip" x={1400} y={180} w={424} h={352}>{() => <Pip src="kim" startAt={15.1} name="Jonny Kim" role="NASA" show={useProp('show', 0)} />}</Part>
 <Part id="headline" x={96} y={722} w={1100} h={74}>{() => <Headline tab="Launch" text="Soyuz MS-27 lifts off" next="Three crew, bound for the station" flip={useProp('flip', 0)} show={useProp('show', 0)} />}</Part>
 <Part id="crew" x={96} y={190} w={700} h={420}>{() => <Roster title="Crew" names={['Kim', 'Ryzhikov', 'Zubritsky']} roles={['NASA', 'Roscosmos', 'Roscosmos']} shown={useProp('shown', 0)} show={useProp('show', 0)} />}</Part>
 <Part id="place" x={96} y={666} w={800} h={130}>{() => <Locator place="Baikonur Cosmodrome" line="Kazakhstan · Apr 8 2025" show={useProp('show', 0)} />}</Part>

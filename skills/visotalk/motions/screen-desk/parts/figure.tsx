@@ -23,14 +23,14 @@ const grouped = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d
 export function Figure({value = 0, unit: suffix = '', label, was = '', show = 1, width = 600}: {value?: number; unit?: string; label: string; was?: string; show?: number; width?: number}) {
   const s = unit(show);
   return (
-    <div style={{width, boxSizing: 'border-box', padding: '34px 40px 38px', borderRadius: 22, background: 'var(--vt-panel)', boxShadow: RESTING, fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)',
+    <div style={{width, boxSizing: 'border-box', padding: '34px 40px 38px', borderRadius: 22, background: 'var(--color-panel)', boxShadow: RESTING, fontFamily: 'var(--font-sans)', color: 'var(--color-text)',
       opacity: unit(s * 4), transformOrigin: '30% 70%', transform: `translateY(${(-60 * (1 - backOut(s))).toFixed(1)}px) scale(${(1 + 0.2 * (1 - backOut(s))).toFixed(4)}) rotate(${(1.6 - 4 * (1 - s)).toFixed(2)}deg)`}}>
-      <div style={{fontFamily: 'var(--vt-mono)', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--vt-data)'}}>{label}</div>
+      <div style={{fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-data)'}}>{label}</div>
       <div style={{display: 'flex', alignItems: 'baseline', gap: 14, marginTop: 14}}>
         <div style={{fontSize: 150, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums'}}>{grouped(value)}</div>
-        {suffix && <div style={{fontSize: 40, fontWeight: 700, color: 'var(--vt-muted)'}}>{suffix}</div>}
+        {suffix && <div style={{fontSize: 40, fontWeight: 700, color: 'var(--color-muted)'}}>{suffix}</div>}
       </div>
-      {was && <div style={{marginTop: 18, fontSize: 30, color: 'var(--vt-muted)'}}><span style={{textDecoration: 'line-through', textDecorationThickness: 3}}>{was.split(' ')[0]}</span> {was.split(' ').slice(1).join(' ')}</div>}
+      {was && <div style={{marginTop: 18, fontSize: 30, color: 'var(--color-muted)'}}><span style={{textDecoration: 'line-through', textDecorationThickness: 3}}>{was.split(' ')[0]}</span> {was.split(' ').slice(1).join(' ')}</div>}
     </div>
   );
 }

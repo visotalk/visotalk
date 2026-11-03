@@ -9,6 +9,7 @@ import {SceneCtx, useDocTime, useTime} from './react';
 import {clamp01} from './motion';
 import {C, F, alpha} from './theme';
 import {Video} from './video';
+import {MotionBridge} from './motion-runtime';
 
 /** What a part's children are: React nodes, or a function that returns them (so a hook can be called in it) */
 export type PartBody = React.ReactNode | (() => React.ReactNode);
@@ -260,7 +261,7 @@ const STAGE_CSS = '.vt-stage img,.vt-stage video,.vt-stage canvas,.vt-stage svg{
 
 /** The scene on screen at the document time: its parts and the document's, then the caption */
 export const Stage: React.FC = () => {
-  const {doc, c, bodies} = useStage();
+  const {doc, c, bodies, theme, preset} = useStage();
   const t = useDocTime();
   const si = Math.max(0, c.scenes.findIndex((s) => t >= s.from && t < s.end));
   const last = c.scenes.length - 1;
@@ -282,7 +283,10 @@ export const Stage: React.FC = () => {
         {recording?.kind === 'video' && !transparent && (
           <div data-vt-recording="" style={{position: 'absolute', inset: 0}}><Video asset={recording.id} fit="fill" /></div>
         )}
-        {parts.map(({part, body, scene: s}) => <PartHost key={`${s ?? ''}:${part.id}`} part={part} body={body} scene={s} />)}
+        {/* a motion's components draw with @motionhub/runtime, given the scene's clock and the theme as tokens */}
+        <MotionBridge theme={theme} fps={c.fps} width={preset.width} height={preset.height}>
+          {parts.map(({part, body, scene: s}) => <PartHost key={`${s ?? ''}:${part.id}`} part={part} body={body} scene={s} />)}
+        </MotionBridge>
         <Captions sceneId={sc.id} />
       </div>
     </SceneCtx.Provider>

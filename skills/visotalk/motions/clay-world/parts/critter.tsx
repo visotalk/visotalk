@@ -2,7 +2,7 @@
 // It flies or hops in along an arc and lands with a squash, so a story can follow it from place to place.
 import * as THREE from 'three';
 import {clay, contactShadow, formGeometry, landing, placeShadow, seedOf, squash, unit, useClay, useClayColor, mix} from './world.tsx';
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 
 export const meta = {
   name: {en: 'Little clay character', 'zh-CN': '黏土小角色'},
@@ -35,7 +35,7 @@ export function Critter({x = 0, y = 0, z = 0, size = 3, color = 'warn', bands = 
   from?: number[]; arrive?: number; loops?: number; turn?: number; look?: number; shadow?: number;
 }) {
   const paint = useClayColor();
-  const t = useDocTime();
+  const t = useCompositionTime();
   const a = unit(arrive);
   useClay(() => {
     const root = new THREE.Group(), body = new THREE.Group();

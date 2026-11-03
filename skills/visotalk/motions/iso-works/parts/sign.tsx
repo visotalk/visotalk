@@ -28,18 +28,18 @@ export function SignBoard({at: [x, y], width = 4, title = '', figure = '', role 
   const s = easeOut(show);
   if (s <= 0) return null;
   const H = (figure ? 2.05 : 1.1) * Math.max(0.01, (s - 0.25) / 0.75), post = lift * Math.min(1, s / 0.25);
-  const board = boxFaces({x, y, z: post, w: width, d: 0.1, h: Math.max(0, H)}, v), tb = tones('var(--vt-panel)');
-  const p = boxFaces({x: x + 0.3, y: y - 0.05, z: 0, w: 0.16, d: 0.16, h: post}, v), tp = tones('var(--vt-muted)');
+  const board = boxFaces({x, y, z: post, w: width, d: 0.1, h: Math.max(0, H)}, v), tb = tones('var(--color-panel)');
+  const p = boxFaces({x: x + 0.3, y: y - 0.05, z: 0, w: 0.16, d: 0.16, h: post}, v), tp = tones('var(--color-muted)');
   const chip = boxFaces({x: x + 0.25, y: y + 0.1, z: post + H - 0.7, w: 0.5, d: 0.01, h: 0.5}, v);
   const textOn = s > 0.85;
   return (
     <g>
       <polygon points={p.left} style={{fill: tp.left}} /><polygon points={p.right} style={{fill: tp.right}} />
-      {H > 0 && <><polygon points={board.left} style={{fill: tb.left, stroke: 'var(--vt-border)', strokeWidth: 1.5}} /><polygon points={board.right} style={{fill: tb.right}} /><polygon points={board.top} style={{fill: tb.top}} /></>}
+      {H > 0 && <><polygon points={board.left} style={{fill: tb.left, stroke: 'var(--color-border)', strokeWidth: 1.5}} /><polygon points={board.right} style={{fill: tb.right}} /><polygon points={board.top} style={{fill: tb.top}} /></>}
       {textOn && <>
         <polygon points={chip.left} style={{fill: hue(role, dim)}} />
-        <text transform={faceText('left', x + 0.95, y + 0.1, post + H - 0.68, v)} fontSize={Math.round(kk * 0.7)} style={{fill: 'var(--vt-text)', fontFamily: 'var(--vt-sans)', fontWeight: 600}}>{title}</text>
-        {figure && <text transform={faceText('left', x + 0.25, y + 0.1, post + 0.28, v)} fontSize={Math.round(kk * 0.98)} style={{fill: 'var(--vt-text)', fontFamily: 'var(--vt-display)', fontWeight: 800, fontVariantNumeric: 'tabular-nums'}}>{figure}</text>}
+        <text transform={faceText('left', x + 0.95, y + 0.1, post + H - 0.68, v)} fontSize={Math.round(kk * 0.7)} style={{fill: 'var(--color-text)', fontFamily: 'var(--font-sans)', fontWeight: 600}}>{title}</text>
+        {figure && <text transform={faceText('left', x + 0.25, y + 0.1, post + 0.28, v)} fontSize={Math.round(kk * 0.98)} style={{fill: 'var(--color-text)', fontFamily: 'var(--font-display)', fontWeight: 800, fontVariantNumeric: 'tabular-nums'}}>{figure}</text>}
       </>}
     </g>
   );

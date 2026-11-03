@@ -17,9 +17,9 @@ const unit = (v: number) => Math.max(0, Math.min(1, v));
 export function CaseTitle({kicker, title, show = 1, width = 1100}: {kicker: string; title: string; show?: number; width?: number}) {
   const k = unit(show / 0.4), t = unit((show - 0.25) / 0.75);
   return (
-    <div style={{width, color: 'var(--vt-text)'}}>
-      <div style={{fontFamily: 'var(--vt-mono)', fontSize: 26, letterSpacing: '0.1em', color: 'var(--vt-muted)', opacity: k, clipPath: `inset(0 ${(100 - 100 * k).toFixed(1)}% 0 0)`}}>{kicker}</div>
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: 104, fontWeight: 500, lineHeight: 1.02, letterSpacing: '-0.015em', marginTop: 18, opacity: t, transform: `translateX(${(-24 * (1 - t)).toFixed(1)}px)`}}>{title}</div>
+    <div style={{width, color: 'var(--color-text)'}}>
+      <div style={{fontFamily: 'var(--font-mono)', fontSize: 26, letterSpacing: '0.1em', color: 'var(--color-muted)', opacity: k, clipPath: `inset(0 ${(100 - 100 * k).toFixed(1)}% 0 0)`}}>{kicker}</div>
+      <div style={{fontFamily: 'var(--font-display)', fontSize: 104, fontWeight: 500, lineHeight: 1.02, letterSpacing: '-0.015em', marginTop: 18, opacity: t, transform: `translateX(${(-24 * (1 - t)).toFixed(1)}px)`}}>{title}</div>
     </div>
   );
 }

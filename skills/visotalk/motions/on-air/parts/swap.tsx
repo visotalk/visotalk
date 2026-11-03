@@ -16,14 +16,14 @@ export const meta = {
 
 export function Swap({from, to, strike = 0, turn = 0}: {from: string; to: string; strike?: number; turn?: number}) {
   const s = stage(strike, 0, 1), t = stage(turn, 0, 1);
-  const word = {fontFamily: 'var(--vt-sans)', fontSize: 48, fontWeight: 700, whiteSpace: 'nowrap'} as const;
+  const word = {fontFamily: 'var(--font-sans)', fontSize: 48, fontWeight: 700, whiteSpace: 'nowrap'} as const;
   return (
     <div style={{...tag, display: 'inline-flex', alignItems: 'center', gap: 22, padding: '16px 28px'}}>
-      <span style={{...word, position: 'relative', color: t > 0 ? 'var(--vt-muted)' : 'var(--vt-text)'}}>
+      <span style={{...word, position: 'relative', color: t > 0 ? 'var(--color-muted)' : 'var(--color-text)'}}>
         {from}
-        <span style={{position: 'absolute', left: -4, top: '52%', height: 5, width: `calc(${(100 * s).toFixed(1)}% + 8px)`, background: 'var(--vt-bad)'}} />
+        <span style={{position: 'absolute', left: -4, top: '52%', height: 5, width: `calc(${(100 * s).toFixed(1)}% + 8px)`, background: 'var(--color-bad)'}} />
       </span>
-      {t > 0 && <span style={{...word, color: 'var(--vt-data)'}}>→ {to.slice(0, Math.ceil(t * to.length))}</span>}
+      {t > 0 && <span style={{...word, color: 'var(--color-data)'}}>→ {to.slice(0, Math.ceil(t * to.length))}</span>}
     </div>
   );
 }

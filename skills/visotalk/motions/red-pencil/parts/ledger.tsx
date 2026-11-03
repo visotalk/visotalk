@@ -21,18 +21,18 @@ export function Ledger({rows, total = null, shown = 99, highlight = -1, swipe = 
   const row = (r: Row, i: number, strong = false) => (
     <div key={i} style={{position: 'relative', display: 'flex', alignItems: 'baseline', gap: 16, padding: '14px 0', opacity: i < visible ? 1 : 0}}>
       {i === highlight && <div style={{position: 'absolute', left: -14, top: 8, bottom: 8, width: `calc(${(Math.max(0, Math.min(1, swipe)) * 100).toFixed(2)}% + 28px)`,
-        background: 'var(--vt-warn)', opacity: 0.55, mixBlendMode: 'multiply', borderRadius: 3, transform: 'skewX(-6deg)'}} />}
+        background: 'var(--color-warn)', opacity: 0.55, mixBlendMode: 'multiply', borderRadius: 3, transform: 'skewX(-6deg)'}} />}
       <span style={{position: 'relative', fontWeight: strong ? 600 : 400}}>{r.label}</span>
-      {r.note && <span style={{position: 'relative', fontStyle: 'italic', fontSize: 30, color: 'var(--vt-muted)'}}>{r.note}</span>}
-      <span style={{flex: 1, borderBottom: '3px dotted var(--vt-faint)', transform: 'translateY(-10px)'}} />
+      {r.note && <span style={{position: 'relative', fontStyle: 'italic', fontSize: 30, color: 'var(--color-muted)'}}>{r.note}</span>}
+      <span style={{flex: 1, borderBottom: '3px dotted var(--color-faint)', transform: 'translateY(-10px)'}} />
       <span style={{position: 'relative', fontVariantNumeric: 'tabular-nums lining-nums', fontWeight: strong ? 600 : 400, minWidth: 160, textAlign: 'right'}}>{r.value}</span>
     </div>
   );
   return (
     // the side padding is the room the highlighter's pass runs past the row
-    <div style={{width, boxSizing: 'border-box', padding: '0 18px', fontFamily: 'var(--vt-sans)', fontSize: 44, color: 'var(--vt-text)'}}>
+    <div style={{width, boxSizing: 'border-box', padding: '0 18px', fontFamily: 'var(--font-sans)', fontSize: 44, color: 'var(--color-text)'}}>
       {rows.map((r, i) => row(r, i))}
-      {total && <div style={{borderTop: '3px double var(--vt-text)', marginTop: 8, opacity: rows.length < visible ? 1 : 0}}>{row(total, rows.length, true)}</div>}
+      {total && <div style={{borderTop: '3px double var(--color-text)', marginTop: 8, opacity: rows.length < visible ? 1 : 0}}>{row(total, rows.length, true)}</div>}
     </div>
   );
 }

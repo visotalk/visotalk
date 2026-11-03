@@ -23,7 +23,7 @@ export default <Doc spec="0.7.0" id="on-air-sample" title="How the planets got t
 <Asset id="take" kind="video" src={"media/take.mp4"} analysis={{"duration":51.6,"width":1920,"height":1080,"fps":30,"frameRate":"30/1","frames":1548}} license={{id: 'public-domain', source: 'https://images.nasa.gov/details/How%20Do%20Planets%20Get%20Their%20Names_%20-%20Horizontal%20Video', obligations: ['credit NASA; implies no endorsement']}}/>
 <Scene id="names">
 <Part id="scrim">{() => <Scrim side="bottom" depth={useProp('depth', 1)} reach={42} />}</Part>
-<Part id="inset" x={0} y={0} w={1920} h={1080}>{() => <Inset asset="take" side="right" size={0.44} focus={0.5} move={useProp('move', 0)} />}</Part>
+<Part id="inset" x={0} y={0} w={1920} h={1080}>{() => <Inset src="take" side="right" size={0.44} focus={0.5} move={useProp('move', 0)} />}</Part>
 <Part id="chapter" x={80} y={56} w={520} h={64}>{() => <Chapter n="Q·01" title="Planet names" show={useProp('show', 0)} />}</Part>
 <Part id="chapter2" x={80} y={56} w={600} h={64}>{() => <Chapter n="Q·02" title="Further out" show={useProp('show', 0)} />}</Part>
 <Part id="planets" x={1460} y={150} w={400} h={520}>{() => <Chips items={['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']} shown={useProp('shown', 0)} focus={useProp('focus', -1)} column />}</Part>

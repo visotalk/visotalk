@@ -30,7 +30,7 @@ export function Pencil({points, width, height, draw = 1, arrow = false, closed =
   const a = Math.atan2(end[1] - back[1], end[0] - back[0]), h = 10 + weight * 4;
   const head = `M${(end[0] - Math.cos(a - 0.45) * h).toFixed(1)} ${(end[1] - Math.sin(a - 0.45) * h).toFixed(1)} L${end[0].toFixed(1)} ${end[1].toFixed(1)} L${(end[0] - Math.cos(a + 0.45) * h).toFixed(1)} ${(end[1] - Math.sin(a + 0.45) * h).toFixed(1)}`;
   const pass = (shift: number, o: number, w: number) => (
-    <path d={d} transform={`translate(${shift} ${shift * -0.6})`} fill="none" stroke="var(--vt-muted)" strokeOpacity={o} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"
+    <path d={d} transform={`translate(${shift} ${shift * -0.6})`} fill="none" stroke="var(--color-muted)" strokeOpacity={o} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round"
       pathLength={1} strokeDasharray={`${dr} 2`} />
   );
   return (
@@ -48,7 +48,7 @@ export function Pencil({points, width, height, draw = 1, arrow = false, closed =
       <g filter={`url(#${id})`}>
         {pass(0, 0.85, weight)}
         {pass(1.4, 0.45, weight * 0.7)}
-        {arrow && dr > 0.97 && <path d={head} fill="none" stroke="var(--vt-muted)" strokeOpacity={0.85 * ease(dr, 0.97, 1)} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />}
+        {arrow && dr > 0.97 && <path d={head} fill="none" stroke="var(--color-muted)" strokeOpacity={0.85 * ease(dr, 0.97, 1)} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />}
       </g>
     </svg>
   );

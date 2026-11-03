@@ -27,11 +27,11 @@ export function Figure({x = 180, y = 240, value = 0, decimals = 0, prefix = '', 
   const text = value.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
   return (
     <div style={{position: 'absolute', left: x, top: y, width: 1200, opacity: s, filter: s < 0.99 ? `blur(${((1 - s) * 14).toFixed(1)}px)` : 'none'}}>
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 300, lineHeight: 0.9, fontVariantNumeric: 'lining-nums tabular-nums',
-        color: hazed('var(--vt-text)', fog * 0.6), whiteSpace: 'nowrap', textShadow: '0 2px 30px rgba(6, 9, 16, 0.5)'}}>
-        {prefix}{text}<span style={{fontSize: size * 0.32, fontWeight: 400, marginLeft: size * 0.08, color: hazed('var(--vt-data)', fog * 0.5)}}>{suffix}</span>
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 300, lineHeight: 0.9, fontVariantNumeric: 'lining-nums tabular-nums',
+        color: hazed('var(--color-text)', fog * 0.6), whiteSpace: 'nowrap', textShadow: '0 2px 30px rgba(6, 9, 16, 0.5)'}}>
+        {prefix}{text}<span style={{fontSize: size * 0.32, fontWeight: 400, marginLeft: size * 0.08, color: hazed('var(--color-data)', fog * 0.5)}}>{suffix}</span>
       </div>
-      {label && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 34, fontWeight: 500, letterSpacing: '0.02em', marginTop: 22, color: hazed('color-mix(in oklab, var(--vt-text), var(--vt-muted) 40%)', fog * 0.5)}}>{label}</div>}
+      {label && <div style={{fontFamily: 'var(--font-sans)', fontSize: 34, fontWeight: 500, letterSpacing: '0.02em', marginTop: 22, color: hazed('color-mix(in oklab, var(--color-text), var(--color-muted) 40%)', fog * 0.5)}}>{label}</div>}
     </div>
   );
 }

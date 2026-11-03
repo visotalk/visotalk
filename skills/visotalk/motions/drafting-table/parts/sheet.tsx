@@ -34,18 +34,18 @@ export function Sheet({title = '', note = ''}: {title?: string; note?: string}) 
   // centring marks: where a drawing's middle is found on any sheet
   const centring = `M${W / 2} ${i}V${i + 22}M${W / 2} ${H - i}V${H - i - 22}M${i} ${H / 2}H${i + 22}M${W - i} ${H / 2}H${W - i - 22}`;
   const frame = `<rect x='${o}' y='${o}' width='${W - 2 * o}' height='${H - 2 * o}' fill='none' stroke='black' stroke-width='1.5'/><rect x='${i}' y='${i}' width='${W - 2 * i}' height='${H - 2 * i}' fill='none' stroke='black' stroke-width='3'/><path d='${ticks}' stroke='black' stroke-width='1.5'/><path d='${centring}' stroke='black' stroke-width='3'/>`;
-  const zone = {position: 'absolute' as const, transform: 'translate(-50%, -50%)', fontFamily: 'var(--vt-mono)', fontSize: 17, color: 'var(--vt-muted)', letterSpacing: '0.05em', lineHeight: 1};
+  const zone = {position: 'absolute' as const, transform: 'translate(-50%, -50%)', fontFamily: 'var(--font-mono)', fontSize: 17, color: 'var(--color-muted)', letterSpacing: '0.05em', lineHeight: 1};
   return (
-    <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(120% 95% at 46% 42%, var(--vt-panel2) 0%, var(--vt-panel) 58%, var(--vt-bg) 140%)'}}>
-      <div style={masked('var(--vt-faint)', `<path d='${crosses.join('')}' stroke='black' stroke-width='1.5'/>`)} />
-      <div style={masked('var(--vt-border)', frame)} />
+    <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(120% 95% at 46% 42%, var(--color-panel2) 0%, var(--color-panel) 58%, var(--color-bg) 140%)'}}>
+      <div style={masked('var(--color-faint)', `<path d='${crosses.join('')}' stroke='black' stroke-width='1.5'/>`)} />
+      <div style={masked('var(--color-border)', frame)} />
       {/* zone references: numbers along the top, letters down the sides; none in the caption's band */}
       {Array.from({length: cols}, (_, k) => <span key={`n${k}`} style={{...zone, left: o + (k + 0.5) * colW, top: (o + i) / 2}}>{k + 1}</span>)}
       {Array.from({length: rows}, (_, k) => [(o + i) / 2, W - (o + i) / 2].map((x) => <span key={`l${k}${x}`} style={{...zone, left: x, top: o + (k + 0.5) * rowH}}>{'ABC'[k]}</span>))}
       {(title || note) && (
-        <div style={{position: 'absolute', left: SHEET.area.left, top: 84, display: 'flex', alignItems: 'baseline', gap: 26, color: 'var(--vt-text)'}}>
-          <span style={{fontFamily: 'var(--vt-display)', fontSize: 40, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase'}}>{title}</span>
-          {note && <span style={{fontFamily: 'var(--vt-mono)', fontSize: 26, fontWeight: 500, letterSpacing: '0.08em', color: 'var(--vt-muted)', textTransform: 'uppercase', borderLeft: '2px solid var(--vt-border)', paddingLeft: 24}}>{note}</span>}
+        <div style={{position: 'absolute', left: SHEET.area.left, top: 84, display: 'flex', alignItems: 'baseline', gap: 26, color: 'var(--color-text)'}}>
+          <span style={{fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase'}}>{title}</span>
+          {note && <span style={{fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 500, letterSpacing: '0.08em', color: 'var(--color-muted)', textTransform: 'uppercase', borderLeft: '2px solid var(--color-border)', paddingLeft: 24}}>{note}</span>}
         </div>
       )}
     </div>

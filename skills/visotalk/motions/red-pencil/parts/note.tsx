@@ -24,11 +24,11 @@ export function MarginNote({text, write = 0, to = null, lead = 0, size = 60, til
     <div style={{position: 'relative', transform: `rotate(${tilt}deg)`, transformOrigin: 'left top'}}>
       {leader && lead > 0 && (
         <svg style={{position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none'}} width={1} height={1}>
-          <path d={pathOf(leader)} fill="none" stroke="var(--vt-grad)" strokeWidth={3.5} strokeLinecap="round" strokeOpacity={0.85}
+          <path d={pathOf(leader)} fill="none" stroke="var(--color-grad)" strokeWidth={3.5} strokeLinecap="round" strokeOpacity={0.85}
             strokeDasharray={len} strokeDashoffset={len * (1 - Math.min(1, lead))} />
         </svg>
       )}
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, lineHeight: 1.2, fontWeight: 600, color: 'var(--vt-grad)', whiteSpace: 'pre-line',
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, lineHeight: 1.2, fontWeight: 600, color: 'var(--color-grad)', whiteSpace: 'pre-line',
         clipPath: `inset(-20% ${((1 - shown) * 100).toFixed(1)}% -20% -4%)`}}>{text}</div>
     </div>
   );

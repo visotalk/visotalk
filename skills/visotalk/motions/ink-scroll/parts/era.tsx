@@ -21,14 +21,14 @@ export function Era({year, unit = '年', place = '', show = 1, size = 64}: {year
   return (
     <div style={{position: 'absolute', left: 0, top: 0, display: 'flex', alignItems: 'flex-start', gap: size * 0.28}}>
       <svg width={24} height={size * 1.6} viewBox={`0 0 24 ${size * 1.6}`} style={{overflow: 'visible', flex: 'none'}}>
-        <path d={strokeOutline([[12, 0], [11, size * 0.8], [12, size * 1.6]], 9, tick, 31)} fill="var(--vt-text)" fillOpacity={TONE.thick} />
+        <path d={strokeOutline([[12, 0], [11, size * 0.8], [12, size * 1.6]], 9, tick, 31)} fill="var(--color-text)" fillOpacity={TONE.thick} />
       </svg>
-      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: size * 0.2, color: 'var(--vt-text)'}}>
+      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: size * 0.2, color: 'var(--color-text)'}}>
         <div style={{display: 'flex', alignItems: 'baseline', gap: size * 0.08, whiteSpace: 'nowrap', ...soak(figures)}}>
-          <span style={{fontFamily: 'var(--vt-sans)', fontSize: size, fontWeight: 500, lineHeight: 1, opacity: TONE.burnt, fontVariantNumeric: 'oldstyle-nums'}}>{year}</span>
-          <span style={{fontFamily: 'var(--vt-display)', fontSize: size * 0.46, opacity: TONE.thick}}>{unit}</span>
+          <span style={{fontFamily: 'var(--font-sans)', fontSize: size, fontWeight: 500, lineHeight: 1, opacity: TONE.burnt, fontVariantNumeric: 'oldstyle-nums'}}>{year}</span>
+          <span style={{fontFamily: 'var(--font-display)', fontSize: size * 0.46, opacity: TONE.thick}}>{unit}</span>
         </div>
-        {place && <div style={{writingMode: 'vertical-rl', fontFamily: 'var(--vt-display)', fontSize: Math.round(size * 0.52), letterSpacing: '0.14em', lineHeight: 1.2, marginLeft: size * 0.06, ...soak(where, TONE.thick)}}>{place}</div>}
+        {place && <div style={{writingMode: 'vertical-rl', fontFamily: 'var(--font-display)', fontSize: Math.round(size * 0.52), letterSpacing: '0.14em', lineHeight: 1.2, marginLeft: size * 0.06, ...soak(where, TONE.thick)}}>{place}</div>}
       </div>
     </div>
   );

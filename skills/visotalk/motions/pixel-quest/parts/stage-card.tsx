@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, Screen, Words, TEXT, steps, twos} from './pixel.ts';
 
 export const meta = {
@@ -21,7 +21,7 @@ export const meta = {
 const FALL = [-48, -34, -22, -12, -4, 0, -8, -10, -8, 0, -3, 0];
 
 export function StageCard({n, name = '', x = 240, y = 96, drop = 0, leave = 0}: {n: string; name?: string; x?: number; y?: number; drop?: number; leave?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (drop <= 0 || leave >= 1 || (leave > 0.3 && twos(t) % 2 === 1)) return null;
   const f = Math.min(FALL.length - 1, Math.floor(steps(drop * 1.6, FALL.length)  * FALL.length));
   const up = -Math.round(steps(Math.min(leave / 0.3, 1), 3) * 6);

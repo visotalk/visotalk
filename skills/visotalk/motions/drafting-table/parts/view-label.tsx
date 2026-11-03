@@ -19,11 +19,11 @@ export function ViewLabel({text, scale = '', write = 1, size = 34}: {text: strin
   return (
     <div style={{position: 'relative', display: 'inline-flex', alignItems: 'baseline', gap: 22}}>
       <div style={{position: 'relative'}}>
-        <div style={{fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--vt-text)', whiteSpace: 'nowrap', lineHeight: 1.3, ...typed(name)}}>{text}</div>
-        <div style={{position: 'absolute', left: 0, top: '100%', marginTop: 8, height: 3, width: `${under * 100}%`, background: 'var(--vt-text)'}} />
-        <div style={{position: 'absolute', left: 0, top: '100%', marginTop: 15, height: 1.5, width: `${under * 100}%`, background: 'var(--vt-text)'}} />
+        <div style={{fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text)', whiteSpace: 'nowrap', lineHeight: 1.3, ...typed(name)}}>{text}</div>
+        <div style={{position: 'absolute', left: 0, top: '100%', marginTop: 8, height: 3, width: `${under * 100}%`, background: 'var(--color-text)'}} />
+        <div style={{position: 'absolute', left: 0, top: '100%', marginTop: 15, height: 1.5, width: `${under * 100}%`, background: 'var(--color-text)'}} />
       </div>
-      {scale && <div style={{...lettering(Math.max(30, size * 0.8)), color: 'var(--vt-muted)', ...typed(under)}}>{scale}</div>}
+      {scale && <div style={{...lettering(Math.max(30, size * 0.8)), color: 'var(--color-muted)', ...typed(under)}}>{scale}</div>}
     </div>
   );
 }

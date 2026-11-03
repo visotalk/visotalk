@@ -21,8 +21,8 @@ export function Chips({items, shown = 0, focus = -1, column = false}: {items: st
         const open = stage(shown - i, 0, 1);
         const on = Math.round(focus) === i;
         return (
-          <div key={item} style={{...tag, padding: '14px 24px', borderLeft: `8px solid ${on ? 'var(--vt-data)' : 'var(--vt-faint)'}`, fontFamily: 'var(--vt-sans)', fontSize: 40, fontWeight: 700,
-            color: on || focus < 0 ? 'var(--vt-text)' : 'var(--vt-muted)', whiteSpace: 'nowrap', opacity: open, transform: `translateY(${(1 - open) * 18}px)`}}>{item}</div>
+          <div key={item} style={{...tag, padding: '14px 24px', borderLeft: `8px solid ${on ? 'var(--color-data)' : 'var(--color-faint)'}`, fontFamily: 'var(--font-sans)', fontSize: 40, fontWeight: 700,
+            color: on || focus < 0 ? 'var(--color-text)' : 'var(--color-muted)', whiteSpace: 'nowrap', opacity: open, transform: `translateY(${(1 - open) * 18}px)`}}>{item}</div>
         );
       })}
     </div>

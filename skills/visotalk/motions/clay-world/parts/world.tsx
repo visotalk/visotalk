@@ -4,7 +4,7 @@
 // The helpers below (the clay material, the thumbprinted bump, the hand-made wobble, squash and landing) are shared by every component.
 import React, {createContext, useContext, useLayoutEffect, useMemo, useRef} from 'react';
 import * as THREE from 'three';
-import {useCanvas, useDocTime, useFrame, useTheme, random} from '@visotalk/runtime';
+import {useVideoConfig, useCompositionTime, useCurrentFrame, useTokens, seededRandom} from '@motionhub/runtime';
 
 export const meta = {
   name: {en: 'Clay world', 'zh-CN': '黏土小世界'},
@@ -56,7 +56,7 @@ function noise3(seed: number) {
       mix(mix(c(0, 0, 1), c(1, 0, 1), u), mix(c(0, 1, 1), c(1, 1, 1), u), v), w);
   };
 }
-export const seedOf = (key: string) => Math.floor(random(key)() * 1e6);
+export const seedOf = (key: string) => Math.floor(seededRandom(key)() * 1e6);
 
 // ── the clay ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ function thumbprints(): THREE.CanvasTexture {
   const N = 1024, c = document.createElement('canvas');
   c.width = c.height = N;
   const g = c.getContext('2d')!;
-  const r = random('clay-world/thumbprints');
+  const r = seededRandom('clay-world/thumbprints');
   g.fillStyle = 'rgb(128,128,128)';
   g.fillRect(0, 0, N, N);
   // draw each mark three times across the seam, so the texture tiles
@@ -117,8 +117,8 @@ function thumbprints(): THREE.CanvasTexture {
 
 /** A colour token (`data`, `good`, `panel` …) or a CSS colour, as a three colour */
 export function useClayColor() {
-  const theme = useTheme() as unknown as {colors: Record<string, string>};
-  return (c: string) => new THREE.Color(theme.colors[c] ?? c);
+  const {color} = useTokens();
+  return (c: string) => new THREE.Color(color?.[c] ?? c);
 }
 
 /** Matte modelling clay: soft broad highlight, a faint velvet at the rim, thumbprinted. One material per form, so each can change colour. */
@@ -161,7 +161,7 @@ function shapePoint(shape: Shape, p: THREE.Vector3): THREE.Vector3 {
  */
 export function deformer(shape: Shape, seed: number, lumpy = 0, boil = 0) {
   const n = noise3(seed), nb = noise3(seed + 991);
-  const r = random(`dents/${seed}`);
+  const r = seededRandom(`dents/${seed}`);
   const dents = Array.from({length: 5}, () => new THREE.Vector3(r() * 2 - 1, r() * 1.6 - 0.5, r() * 2 - 1).normalize());
   return (p: THREE.Vector3) => {
     const u = p.clone().normalize();
@@ -355,9 +355,9 @@ const GRAIN = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://
 export function ClayWorld({yaw = 0, pitch = 22, dist = 40, tx = 0, ty = 4, tz = 0, fov = 26, floor = 'panel', wall = 'bg', sun = 0, shake = 0, island = 0, base = 'good', children}: {
   yaw?: number; pitch?: number; dist?: number; tx?: number; ty?: number; tz?: number; fov?: number; floor?: string; wall?: string; sun?: number; shake?: number; island?: number; base?: string; children?: React.ReactNode;
 }) {
-  const t = useDocTime();
-  const frame = useFrame();
-  const {width, height} = useCanvas();
+  const t = useCompositionTime();
+  const frame = useCurrentFrame();
+  const {width, height} = useVideoConfig();
   const color = useClayColor();
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<THREE.WebGLRenderer | null>(null);
@@ -443,7 +443,7 @@ export function ClayWorld({yaw = 0, pitch = 22, dist = 40, tx = 0, ty = 4, tz = 
   useLayoutEffect(() => () => { renderer.current?.dispose(); renderer.current?.forceContextLoss(); renderer.current = null; }, []);
 
   return (
-    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: 'var(--vt-bg)'}}>
+    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', background: 'var(--color-bg)'}}>
       <canvas ref={canvas} width={width} height={height} style={{position: 'absolute', inset: 0, width: '100%', height: '100%'}} />
       {/* a soft studio falloff at the corners and a fine grain, so the long clay gradients do not band in a compressed video */}
       <div style={{position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(130% 95% at 50% 42%, transparent 55%, rgba(70, 44, 34, 0.22) 100%)'}} />

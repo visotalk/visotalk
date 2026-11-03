@@ -18,10 +18,10 @@ export function NameTag({name, role = '', show = 1, width = 640}: {name: string;
   const edge = stage(show, 0, 0.35), open = stage(show, 0.25, 1);
   return (
     <div style={{position: 'relative', width, display: 'flex', alignItems: 'stretch'}}>
-      <div style={{width: 10, background: 'var(--vt-data)', transform: `scaleY(${edge})`, transformOrigin: 'bottom'}} />
+      <div style={{width: 10, background: 'var(--color-data)', transform: `scaleY(${edge})`, transformOrigin: 'bottom'}} />
       <div style={{...tag, ...wipe(open), borderRadius: '0 4px 4px 0', padding: '18px 28px 20px', flex: 1, boxSizing: 'border-box'}}>
         {role && <div style={{...eyebrow, marginBottom: 8}}>{role}</div>}
-        <div style={{fontFamily: 'var(--vt-sans)', fontSize: 50, fontWeight: 700, lineHeight: 1.1, color: 'var(--vt-text)'}}>{name}</div>
+        <div style={{fontFamily: 'var(--font-sans)', fontSize: 50, fontWeight: 700, lineHeight: 1.1, color: 'var(--color-text)'}}>{name}</div>
       </div>
     </div>
   );

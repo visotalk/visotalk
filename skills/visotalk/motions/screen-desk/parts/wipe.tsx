@@ -27,8 +27,8 @@ export function Wipe({x, y, w, h, wipe = 0, before = 'Before', after = 'Now', ch
   const at = x + w * e;   // the handle, in desk pixels; the chips sit along the bottom edge, clear of the screen's headings
   const chip = (text: string, side: 'left' | 'right', on: boolean) => (
     <div style={{position: 'absolute', top: y + h - 66 / z, [side]: side === 'left' ? x + 16 / z : 1920 - (x + w) + 16 / z, transform: `scale(${(1 / z).toFixed(4)})`, transformOrigin: side === 'left' ? '0 0' : '100% 0', lineHeight: '34px',
-      padding: '8px 18px', borderRadius: 20, fontFamily: 'var(--vt-sans)', fontSize: 26, fontWeight: 700, whiteSpace: 'nowrap',
-      background: on ? 'var(--vt-data)' : 'var(--vt-text)', color: '#fff', boxShadow: '0 10px 22px -12px rgba(28, 29, 33, 0.6)'}}>{text}</div>
+      padding: '8px 18px', borderRadius: 20, fontFamily: 'var(--font-sans)', fontSize: 26, fontWeight: 700, whiteSpace: 'nowrap',
+      background: on ? 'var(--color-data)' : 'var(--color-text)', color: '#fff', boxShadow: '0 10px 22px -12px rgba(28, 29, 33, 0.6)'}}>{text}</div>
   );
   return (
     <>
@@ -39,10 +39,10 @@ export function Wipe({x, y, w, h, wipe = 0, before = 'Before', after = 'Now', ch
       )}
       {e > 0.01 && e < 0.999 && (
         <div style={{position: 'absolute', left: at, top: y, width: 0, height: h}}>
-          <div style={{position: 'absolute', left: -2 / z, top: 0, width: 4 / z, height: h, background: 'var(--vt-data)', boxShadow: `0 0 ${18 / z}px rgba(47, 91, 255, 0.55)`}} />
+          <div style={{position: 'absolute', left: -2 / z, top: 0, width: 4 / z, height: h, background: 'var(--color-data)', boxShadow: `0 0 ${18 / z}px rgba(47, 91, 255, 0.55)`}} />
           <div style={{position: 'absolute', left: 0, top: h / 2, width: 0, height: 0, transform: `scale(${(1 / z).toFixed(4)})`}}>
-            <div style={{position: 'absolute', left: -28, top: -28, width: 56, height: 56, borderRadius: 28, background: 'var(--vt-data)', boxShadow: '0 0 0 4px #fff, 0 12px 24px -10px rgba(47, 91, 255, 0.8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#fff', fontFamily: 'var(--vt-sans)', fontSize: 24, fontWeight: 700}}>‹ ›</div>
+            <div style={{position: 'absolute', left: -28, top: -28, width: 56, height: 56, borderRadius: 28, background: 'var(--color-data)', boxShadow: '0 0 0 4px #fff, 0 12px 24px -10px rgba(47, 91, 255, 0.8)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#fff', fontFamily: 'var(--font-sans)', fontSize: 24, fontWeight: 700}}>‹ ›</div>
           </div>
         </div>
       )}

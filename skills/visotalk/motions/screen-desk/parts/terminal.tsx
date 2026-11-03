@@ -1,4 +1,4 @@
-import {useTime, random} from '@visotalk/runtime';
+import {useTime, seededRandom} from '@motionhub/runtime';
 import {AppWindow} from './window.tsx';
 
 export const meta = {
@@ -24,7 +24,7 @@ const LINE = 46;
 
 /** How many characters are typed at `typed`: a hand's rhythm (uneven keys, a beat longer after a space), the same every time */
 function typedChars(command: string, typed: number) {
-  const g = random(`screen-desk:typing:${command}`);
+  const g = seededRandom(`screen-desk:typing:${command}`);
   const weights = Array.from(command, (ch) => 0.6 + 0.9 * g() + (ch === ' ' ? 0.7 : 0));
   const total = weights.reduce((a, b) => a + b, 0);
   let at = unit(typed) * total, n = 0;
@@ -43,12 +43,12 @@ export function Terminal({title = 'Terminal', prompt = '~ $', command, typed = 1
   const scroll = Math.max(0, lines - room) * LINE;
   return (
     <AppWindow title={title} width={width} height={height}>
-      <div style={{position: 'absolute', inset: 0, padding: '26px 34px', overflow: 'hidden', fontFamily: 'var(--vt-mono)', fontSize: 27, lineHeight: `${LINE}px`, color: 'var(--vt-text)', background: '#FCFCFB'}}>
+      <div style={{position: 'absolute', inset: 0, padding: '26px 34px', overflow: 'hidden', fontFamily: 'var(--font-mono)', fontSize: 27, lineHeight: `${LINE}px`, color: 'var(--color-text)', background: '#FCFCFB'}}>
         <div style={{transform: `translateY(${-scroll.toFixed(1)}px)`}}>
           <div style={{whiteSpace: 'pre'}}>
-            <span style={{color: 'var(--vt-muted)'}}>{prompt} </span>
+            <span style={{color: 'var(--color-muted)'}}>{prompt} </span>
             <span style={{fontWeight: 700}}>{command.slice(0, chars)}</span>
-            {shown <= 0.01 && <span style={{display: 'inline-block', width: 15, height: 32, marginLeft: 2, verticalAlign: -6, background: 'var(--vt-text)', opacity: caret ? 1 : 0}} />}
+            {shown <= 0.01 && <span style={{display: 'inline-block', width: 15, height: 32, marginLeft: 2, verticalAlign: -6, background: 'var(--color-text)', opacity: caret ? 1 : 0}} />}
           </div>
           {output.map((line, i) => {
             const k = unit(lines - i);
@@ -60,14 +60,14 @@ export function Terminal({title = 'Terminal', prompt = '~ $', command, typed = 1
               <div key={i} style={{whiteSpace: 'pre', display: 'flex', alignItems: 'center', margin: ok ? '12px -12px 0' : 0, padding: ok ? '0 12px' : 0, borderRadius: 8,
                 opacity: ok ? 1 : k, transform: `translateY(${(10 * (1 - k)).toFixed(1)}px)`,
                 background: ok ? `linear-gradient(90deg, rgba(30, 154, 91, 0.10) 0%, rgba(30, 154, 91, 0.10) ${Math.max(0, lit - 8)}%, rgba(30, 154, 91, ${(0.38 * (1 - k)).toFixed(3)}) ${lit}%, transparent ${lit}%)` : undefined,
-                color: ok ? 'var(--vt-good)' : bad ? 'var(--vt-bad)' : 'var(--vt-muted)', fontWeight: ok || bad ? 700 : 400}}>
+                color: ok ? 'var(--color-good)' : bad ? 'var(--color-bad)' : 'var(--color-muted)', fontWeight: ok || bad ? 700 : 400}}>
                 {ok && (
                   <svg width={26} height={26} viewBox="0 0 26 26" style={{flex: 'none', marginRight: 12}}>
-                    <path d="M4 14 L10.5 20 L22 6" fill="none" stroke="var(--vt-good)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="30" strokeDashoffset={30 * (1 - unit(k * 1.6))} />
+                    <path d="M4 14 L10.5 20 L22 6" fill="none" stroke="var(--color-good)" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="30" strokeDashoffset={30 * (1 - unit(k * 1.6))} />
                   </svg>
                 )}
                 <span style={{opacity: ok ? unit(k * 1.4 - 0.2) : 1}}>
-                  {text.split(/( {2,})/).map((cell, j) => (j % 2 ? <span key={j} style={{display: 'inline-block', width: 24}} /> : <span key={j} style={{display: 'inline-block', minWidth: j === 0 && output.some((l) => / {2,}/.test(l)) && / {2,}/.test(line) ? 210 : 0, color: j > 0 && !ok && !bad ? 'var(--vt-text)' : undefined}}>{cell}</span>))}
+                  {text.split(/( {2,})/).map((cell, j) => (j % 2 ? <span key={j} style={{display: 'inline-block', width: 24}} /> : <span key={j} style={{display: 'inline-block', minWidth: j === 0 && output.some((l) => / {2,}/.test(l)) && / {2,}/.test(line) ? 210 : 0, color: j > 0 && !ok && !bad ? 'var(--color-text)' : undefined}}>{cell}</span>))}
                 </span>
               </div>
             );

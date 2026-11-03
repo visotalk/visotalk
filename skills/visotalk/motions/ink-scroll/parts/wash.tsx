@@ -57,14 +57,14 @@ export function Wash({d, width, height, tone = 'light', bloom = 1, settle = 0, f
           <circle cx={cx} cy={cy} r={reach * b} fill={b >= 1 ? '#fff' : `url(#${id}-front)`} filter={b >= 1 ? undefined : `url(#${id}-ragged)`} />
         </mask>
         <linearGradient id={`${id}-down`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="var(--vt-text)" />
-          <stop offset="0.5" stopColor="var(--vt-text)" stopOpacity={mist ? 0.62 : 0.92} />
-          <stop offset="1" stopColor="var(--vt-text)" stopOpacity={mist ? 0 : 0.85} />
+          <stop offset="0" stopColor="var(--color-text)" />
+          <stop offset="0.5" stopColor="var(--color-text)" stopOpacity={mist ? 0.62 : 0.92} />
+          <stop offset="1" stopColor="var(--color-text)" stopOpacity={mist ? 0 : 0.85} />
         </linearGradient>
         <linearGradient id={`${id}-top`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="var(--vt-text)" />
-          <stop offset="0.3" stopColor="var(--vt-text)" stopOpacity="0.55" />
-          <stop offset="0.62" stopColor="var(--vt-text)" stopOpacity="0" />
+          <stop offset="0" stopColor="var(--color-text)" />
+          <stop offset="0.3" stopColor="var(--color-text)" stopOpacity="0.55" />
+          <stop offset="0.62" stopColor="var(--color-text)" stopOpacity="0" />
         </linearGradient>
       </defs>
       <g mask={`url(#${id}-bloom)`}>

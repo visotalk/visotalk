@@ -125,6 +125,7 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 
 ## 最近更新
 
+- **0.8.2** · 分享你自己的风格：`visotalk motion share` 把它整理成 [motionhub.dev](https://motionhub.dev) 的格式，加 `--pr` 会直接开 pull request。风格的组件现在用 `@motionhub/runtime` 绘制。
 - **0.8.1** · 查找并使用别人做的风格：`visotalk motion search [关键词]` 搜索 [motionhub.dev](https://motionhub.dev) 上的目录，`motion show` 和 `motion use` 可以直接用目录里的 slug。
 - **0.8** · 风格改称 *motion*：`visotalk motion list | show | use | check`，风格包在 `skills/visotalk/motions/`，含 `motion.json` 和 `MOTION.md`，作品里的副本在 `motion/`。动画标签改称 *action*（`visotalk schema actions`，校验码 `action.*`），spec 0.8 把动作的类型字段改名为 `kind`；为 0.7 写的文档无需改动。
 - **0.7.1** · 新增七种内置风格，共十七种：[Field Atlas](skills/visotalk/motions/field-atlas/MOTION.md)、[Evidence Board](skills/visotalk/motions/evidence-board/MOTION.md)、[Clay World](skills/visotalk/motions/clay-world/MOTION.md)、[Watercolor Tale](skills/visotalk/motions/watercolor-tale/MOTION.md)、[Pixel Quest](skills/visotalk/motions/pixel-quest/MOTION.md)、[Riso Pop](skills/visotalk/motions/riso-pop/MOTION.md) 和 [Live Studio](skills/visotalk/motions/live-studio/MOTION.md)。

@@ -21,7 +21,7 @@ const lead = (p: number) => p < 0.4 ? -LEAN + (1960 + LEAN) * easeOut(p / 0.4) :
 /** A band between two x positions at the frame's foot, leaning forward by LEAN at the top */
 const band = (a: number, b: number) => `polygon(${a + LEAN}px 0, ${b + LEAN}px 0, ${b}px ${H}px, ${a}px ${H}px)`;
 
-/** Full frame: <Part x={0} y={0} w={1920} h={1080}>. Tween `pass` 0 to 1 over about 2 s (linear), centred on the cut. */
+/** Full frame, in a box at 0, 0, 1920 × 1080. Tween `pass` 0 to 1 over about 2 s (linear), centred on the cut. */
 export function Sting({word, line = '', pass = 0}: {word: string; line?: string; pass?: number}) {
   if (pass <= 0 || pass >= 1) return null;
   const L = lead(pass);
@@ -30,15 +30,15 @@ export function Sting({word, line = '', pass = 0}: {word: string; line?: string;
   const drift = (L - 2030) * 0.3;
   return (
     <div style={{position: 'absolute', inset: 0}}>
-      <div style={{position: 'absolute', inset: 0, background: 'var(--vt-bg)', clipPath: ink}} />
-      <div style={{position: 'absolute', inset: 0, background: 'var(--vt-text)', clipPath: tail}} />
-      <div data-vt-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden', background: RED, clipPath: red}}>
+      <div style={{position: 'absolute', inset: 0, background: 'var(--color-bg)', clipPath: ink}} />
+      <div style={{position: 'absolute', inset: 0, background: 'var(--color-text)', clipPath: tail}} />
+      <div data-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden', background: RED, clipPath: red}}>
         <div style={{position: 'absolute', left: 0, right: 0, top: 330, display: 'flex', flexDirection: 'column', alignItems: 'center', transform: `translateX(${drift.toFixed(1)}px)`}}>
           <div style={{...label, fontSize: 300, fontWeight: 900, letterSpacing: '0.02em', color: '#FFFFFF', lineHeight: 0.9, whiteSpace: 'nowrap'}}>{word}</div>
-          {line && <div style={{...label, fontSize: 48, fontWeight: 800, letterSpacing: '0.24em', color: 'var(--vt-bg)', marginTop: 26, whiteSpace: 'nowrap'}}>{line}</div>}
+          {line && <div style={{...label, fontSize: 48, fontWeight: 800, letterSpacing: '0.24em', color: 'var(--color-bg)', marginTop: 26, whiteSpace: 'nowrap'}}>{line}</div>}
         </div>
       </div>
-      <div style={{position: 'absolute', inset: 0, background: 'var(--vt-text)', clipPath: white}} />
+      <div style={{position: 'absolute', inset: 0, background: 'var(--color-text)', clipPath: white}} />
     </div>
   );
 }

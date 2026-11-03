@@ -27,11 +27,11 @@ export function Roster({title = '', names, roles = [], shown = 0, show = 1}: {ti
           const type = stage(p, 0.3, 0.8);
           return [
             <div key={`n${i}`} style={{...slide(p, 0, 0.35, 'top'), background: RED, zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', ...label, fontSize: 48, fontWeight: 900, color: '#FFFFFF'}}>{i + 1}</div>,
-            <div key={`p${i}`} data-vt-camera="" style={slot}><div data-vt-camera="" style={{overflow: 'hidden', ...plate, ...slide(p, 0.1, 0.6), padding: '6px 24px 4px', height: '100%', boxSizing: 'border-box'}}>
+            <div key={`p${i}`} data-camera="" style={slot}><div data-camera="" style={{overflow: 'hidden', ...plate, ...slide(p, 0.1, 0.6), padding: '6px 24px 4px', height: '100%', boxSizing: 'border-box'}}>
               <div style={{...label, fontSize: 64, fontWeight: 800, lineHeight: '72px', letterSpacing: '0.02em', whiteSpace: 'nowrap', ...rise(type)}}>{n}</div>
             </div></div>,
-            <div key={`r${i}`} data-vt-camera="" style={slot}><div style={{...ink, ...slide(p, 0.3, 0.8), padding: '0 22px', height: '100%', display: 'flex', alignItems: 'center', opacity: roles[i] ? 1 : 0}}>
-              <span style={{fontFamily: 'var(--vt-sans)', fontWeight: 600, fontSize: 30, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>{roles[i] ?? ''}</span>
+            <div key={`r${i}`} data-camera="" style={slot}><div style={{...ink, ...slide(p, 0.3, 0.8), padding: '0 22px', height: '100%', display: 'flex', alignItems: 'center', opacity: roles[i] ? 1 : 0}}>
+              <span style={{fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 30, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>{roles[i] ?? ''}</span>
             </div></div>,
           ];
         })}

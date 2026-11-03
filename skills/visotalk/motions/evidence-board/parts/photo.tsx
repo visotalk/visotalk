@@ -1,4 +1,3 @@
-import {useAsset} from '@visotalk/runtime';
 import {useZoom} from './board.tsx';
 
 export const meta = {
@@ -7,7 +6,7 @@ export const meta = {
   line: 'A real photograph as a print with its holder\'s caption; crop corners close in on the detail named.',
   fits: 'the damage, the place, the sign: licensed and credited',
   params: {
-    asset: {type: 'text', doc: 'the id of the image asset declared in <Doc>'},
+    src: {type: 'text', doc: 'the image\'s URL'},
     w: {type: 'px', doc: 'the print\'s width inside its mount, in board pixels'},
     h: {type: 'px', doc: 'the print\'s height: the image\'s own aspect, never stretched'},
     caption: {type: 'text', default: '', doc: 'what the photograph shows, as its holder\'s caption says it, one or two lines'},
@@ -20,8 +19,7 @@ export const meta = {
 const unit = (v: number) => Math.max(0, Math.min(1, v));
 const ease = (v: number) => { const u = unit(v); return u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2; };
 
-export function Photo({asset, w, h, caption = '', area = null, crop = 0}: {asset: string; w: number; h: number; caption?: string; area?: {x: number; y: number; w: number; h: number} | null; crop?: number}) {
-  const src = useAsset(asset);
+export function Photo({src, w, h, caption = '', area = null, crop = 0}: {src: string; w: number; h: number; caption?: string; area?: {x: number; y: number; w: number; h: number} | null; crop?: number}) {
   const z = useZoom();
   const c = ease(crop);
   // the corners travel from the print's own corners to the detail's, so the eye is led in rather than shown a box
@@ -36,12 +34,12 @@ export function Photo({asset, w, h, caption = '', area = null, crop = 0}: {asset
         {box && crop > 0.001 && (
           <svg width={w} height={h} style={{position: 'absolute', left: 0, top: 0, opacity: unit(crop * 4)}}>
             {[[box.x, box.y, 1, 1], [box.x + box.w, box.y, -1, 1], [box.x, box.y + box.h, 1, -1], [box.x + box.w, box.y + box.h, -1, -1]].map(([x, y, dx, dy], i) => (
-              <path key={i} d={`M${x + dx * arm} ${y} H${x} V${y + dy * arm}`} fill="none" stroke="var(--vt-data)" strokeWidth={sw} strokeLinecap="square" />
+              <path key={i} d={`M${x + dx * arm} ${y} H${x} V${y + dy * arm}`} fill="none" stroke="var(--color-data)" strokeWidth={sw} strokeLinecap="square" />
             ))}
           </svg>
         )}
       </div>
-      <div style={{minHeight: 30, padding: '16px 4px 26px', fontFamily: 'var(--vt-display)', fontStyle: 'italic', fontSize: 25, lineHeight: 1.3, color: 'var(--vt-bg)', width: w}}>{caption}</div>
+      <div style={{minHeight: 30, padding: '16px 4px 26px', fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 25, lineHeight: 1.3, color: 'var(--color-bg)', width: w}}>{caption}</div>
     </div>
   );
 }

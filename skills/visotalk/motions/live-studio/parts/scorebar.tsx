@@ -48,23 +48,23 @@ export function Scorebar({title, labels, values, notes = [], format = 'number', 
           const v = Number(values[i] ?? 0) * grow;
           const lit = i === focus;
           return (
-            <div key={i} data-vt-camera="" style={{...slot, overflow: open >= 1 ? 'visible' : 'hidden', borderTop: i ? '1px solid var(--vt-border)' : 'none'}}>
+            <div key={i} data-camera="" style={{...slot, overflow: open >= 1 ? 'visible' : 'hidden', borderTop: i ? '1px solid var(--color-border)' : 'none'}}>
             <div style={{padding: '12px 0 12px 20px', position: 'relative', ...slide(open, 0, 0.55)}}>
-              {lit && flash > 0 && <div style={{position: 'absolute', inset: 0, background: 'var(--vt-text)', opacity: flash}} />}
+              {lit && flash > 0 && <div style={{position: 'absolute', inset: 0, background: 'var(--color-text)', opacity: flash}} />}
               <div style={{display: 'flex', alignItems: 'center', gap: 12, position: 'relative'}}>
-              <div style={{fontFamily: 'var(--vt-sans)', fontWeight: 700, fontSize: 30, letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap', marginBottom: 6, color: lit ? 'var(--vt-text)' : 'var(--vt-muted)'}}>{name}</div>
+              <div style={{fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 30, letterSpacing: '0.05em', textTransform: 'uppercase', whiteSpace: 'nowrap', marginBottom: 6, color: lit ? 'var(--color-text)' : 'var(--color-muted)'}}>{name}</div>
               {lit && badge && slam > 0 && <div style={{...label, fontSize: 32, fontWeight: 900, color: '#FFFFFF', background: RED, padding: '4px 8px 2px', marginBottom: 6, whiteSpace: 'nowrap', flex: 'none', opacity: unit(slam * 3), transform: `scale(${(1 + (1 - slam) * 0.8).toFixed(3)}) rotate(-5deg)`, transformOrigin: 'left center'}}>{badge}</div>}
               </div>
               <div style={{display: 'flex', alignItems: 'center', gap: 16, position: 'relative'}}>
-                <div style={{flex: 1, height: 18, background: 'var(--vt-panel2)', position: 'relative'}}>
-                  <div style={{position: 'absolute', left: 0, top: 0, bottom: 0, width: `${((v / max) * 100).toFixed(2)}%`, background: lit ? RED : 'var(--vt-muted)'}}>
-                    {grow > 0.01 && grow < 0.99 && <div style={{position: 'absolute', right: 0, top: -4, bottom: -4, width: 6, background: 'var(--vt-text)'}} />}
+                <div style={{flex: 1, height: 18, background: 'var(--color-panel2)', position: 'relative'}}>
+                  <div style={{position: 'absolute', left: 0, top: 0, bottom: 0, width: `${((v / max) * 100).toFixed(2)}%`, background: lit ? RED : 'var(--color-muted)'}}>
+                    {grow > 0.01 && grow < 0.99 && <div style={{position: 'absolute', right: 0, top: -4, bottom: -4, width: 6, background: 'var(--color-text)'}} />}
                   </div>
                 </div>
                 <div style={{...(lit ? plate : {}), width: 170, flex: 'none', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 18px', boxSizing: 'border-box'}}>
-                  <span style={{fontFamily: 'var(--vt-display)', fontWeight: 800, fontSize: 62, lineHeight: 1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: lit ? 'var(--vt-bg)' : 'var(--vt-text)'}}>
+                  <span style={{fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 62, lineHeight: 1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: lit ? 'var(--color-bg)' : 'var(--color-text)'}}>
                     {asked && reveal <= 0 ? '?' : fmt(v, format)}
-                    {notes[i] && (!asked || reveal >= 1) && <span style={{color: lit ? RED : 'var(--vt-muted)', marginLeft: 2}}>{notes[i]}</span>}
+                    {notes[i] && (!asked || reveal >= 1) && <span style={{color: lit ? RED : 'var(--color-muted)', marginLeft: 2}}>{notes[i]}</span>}
                   </span>
                 </div>
               </div>

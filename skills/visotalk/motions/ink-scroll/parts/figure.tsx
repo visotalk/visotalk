@@ -58,16 +58,16 @@ export function Figure({pose = 'stand', facing = 'left', carry = false, size = 1
       </defs>
       <g transform={facing === 'left' ? 'translate(100 0) scale(-1 1)' : undefined}>
         <g opacity={TONE.light * robe} filter={`url(#${id}-soak)`}>
-          <path d={ROBE[pose]} fill="var(--vt-text)" />
-          {carry && <ellipse cx={24} cy={74} rx={17} ry={22} fill="var(--vt-text)" />}
+          <path d={ROBE[pose]} fill="var(--color-text)" />
+          {carry && <ellipse cx={24} cy={74} rx={17} ry={22} fill="var(--color-text)" />}
         </g>
         <g filter={`url(#${id}-wet)`}>
-          {LINES[pose].map((l, i) => <path key={i} d={strokeOutline(l.pts, l.w, line * 1.6 - i * 0.3, 40 + i)} fill="var(--vt-text)" fillOpacity={l.tone} />)}
-          {carry && <path d={strokeOutline([[48, 54], [32, 62], [22, 90]], 3.5, line * 1.4 - 0.4, 77)} fill="var(--vt-text)" fillOpacity={TONE.heavy} />}
+          {LINES[pose].map((l, i) => <path key={i} d={strokeOutline(l.pts, l.w, line * 1.6 - i * 0.3, 40 + i)} fill="var(--color-text)" fillOpacity={l.tone} />)}
+          {carry && <path d={strokeOutline([[48, 54], [32, 62], [22, 90]], 3.5, line * 1.4 - 0.4, 77)} fill="var(--color-text)" fillOpacity={TONE.heavy} />}
           <g opacity={head}>
-            <ellipse cx={55} cy={35} rx={10} ry={11} fill="var(--vt-text)" fillOpacity={TONE.thick} />
-            <path d={strokeOutline([[50, 25], [56, 21], [61, 26]], 6, 1, 9)} fill="var(--vt-text)" fillOpacity={TONE.burnt} />
-            {FEET[pose].map((f, i) => <path key={i} d={strokeOutline(f, 5, 1, 60 + i)} fill="var(--vt-text)" fillOpacity={TONE.burnt} />)}
+            <ellipse cx={55} cy={35} rx={10} ry={11} fill="var(--color-text)" fillOpacity={TONE.thick} />
+            <path d={strokeOutline([[50, 25], [56, 21], [61, 26]], 6, 1, 9)} fill="var(--color-text)" fillOpacity={TONE.burnt} />
+            {FEET[pose].map((f, i) => <path key={i} d={strokeOutline(f, 5, 1, 60 + i)} fill="var(--color-text)" fillOpacity={TONE.burnt} />)}
           </g>
         </g>
       </g>

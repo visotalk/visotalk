@@ -17,8 +17,8 @@ export const meta = {
 export function Kicker({eyebrow = '', title, size = 150, lit = 1}: {eyebrow?: string; title: string; size?: number; lit?: number}) {
   return (
     <div style={litStyle(lit)}>
-      {eyebrow && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 26, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--vt-data)', marginBottom: 18}}>{eyebrow}</div>}
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 800, lineHeight: 0.92, textTransform: 'uppercase', color: 'var(--vt-text)'}}>{title}</div>
+      {eyebrow && <div style={{fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--color-data)', marginBottom: 18}}>{eyebrow}</div>}
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 800, lineHeight: 0.92, textTransform: 'uppercase', color: 'var(--color-text)'}}>{title}</div>
     </div>
   );
 }

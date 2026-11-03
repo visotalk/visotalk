@@ -41,13 +41,13 @@ function Marked({word, fill, first, last}: {word: string; fill: number; first: b
     <span style={{position: 'relative'}}>
       {f > 0.001 && (
         <span style={{position: 'absolute', left: first ? '-0.1em' : '-3px', top: '0.1em', height: '1.02em', width: `calc(${(f * 100).toFixed(1)}% + ${last ? (0.12 * f).toFixed(3) + 'em' : '3px'})`,
-          background: 'var(--vt-data)', borderRadius: `${first ? '0.14em' : '0'} ${last && f > 0.99 ? '0.2em' : '0'} ${last && f > 0.99 ? '0.12em' : '0'} ${first ? '0.1em' : '0'}`}} />
+          background: 'var(--color-data)', borderRadius: `${first ? '0.14em' : '0'} ${last && f > 0.99 ? '0.2em' : '0'} ${last && f > 0.99 ? '0.12em' : '0'} ${first ? '0.1em' : '0'}`}} />
       )}
       <span style={{position: 'relative'}}>{word}</span>
       {/* the highlighter itself, its chisel tip on the stroke's front edge while it moves */}
       {f > 0.001 && f < 0.999 && (
         <span style={{position: 'absolute', left: `calc(${(f * 100).toFixed(1)}% - 0.08em)`, top: '-1.35em', width: '0.62em', height: '2.5em', transformOrigin: '50% 100%', transform: 'rotate(28deg)',
-          background: 'linear-gradient(180deg, #3A3936 0%, #2A2927 72%, var(--vt-data) 72%, var(--vt-data) 100%)', borderRadius: '0.12em 0.12em 0.02em 0.22em', boxShadow: '0.12em 0.18em 0.3em rgba(0, 0, 0, 0.35)'}} />
+          background: 'linear-gradient(180deg, #3A3936 0%, #2A2927 72%, var(--color-data) 72%, var(--color-data) 100%)', borderRadius: '0.12em 0.12em 0.02em 0.22em', boxShadow: '0.12em 0.18em 0.3em rgba(0, 0, 0, 0.35)'}} />
       )}
     </span>
   );
@@ -61,15 +61,15 @@ export function Document({issuer, title, rows, mark = 0, size = 30}: {issuer: st
   for (const ps of parsed) for (const p of ps) if (p.pass >= 0) total[p.pass] += (p.text.match(/\S+\s*/g) ?? []).length;
   const hasTimes = rows.some((r) => r.at);
   return (
-    <div style={{padding: '46px 48px 54px', fontFamily: 'var(--vt-display)', color: 'var(--vt-bg)'}}>
-      <div style={{fontFamily: 'var(--vt-sans)', fontSize: 17, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.62}}>{issuer}</div>
+    <div style={{padding: '46px 48px 54px', fontFamily: 'var(--font-display)', color: 'var(--color-bg)'}}>
+      <div style={{fontFamily: 'var(--font-sans)', fontSize: 17, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.62}}>{issuer}</div>
       <div style={{fontSize: size * 1.35, fontWeight: 600, lineHeight: 1.12, marginTop: 10, letterSpacing: '-0.01em'}}>{title}</div>
-      <div style={{height: 2, background: 'var(--vt-bg)', opacity: 0.8, margin: '20px 0 24px'}} />
+      <div style={{height: 2, background: 'var(--color-bg)', opacity: 0.8, margin: '20px 0 24px'}} />
       <div style={{display: 'grid', gridTemplateColumns: hasTimes ? 'max-content max-content 1fr' : '1fr', columnGap: 18, rowGap: size * 0.55, alignItems: 'baseline'}}>
         {rows.map((r, i) => (
           <React.Fragment key={i}>
-            {hasTimes && (r.at || r.by) && <span style={{fontFamily: 'var(--vt-mono)', fontSize: size * 0.68, opacity: 0.6}}>{r.at ?? ''}</span>}
-            {hasTimes && (r.at || r.by) && <span style={{fontFamily: 'var(--vt-sans)', fontSize: size * 0.62, fontWeight: 700, letterSpacing: '0.08em', opacity: 0.7}}>{r.by ?? ''}</span>}
+            {hasTimes && (r.at || r.by) && <span style={{fontFamily: 'var(--font-mono)', fontSize: size * 0.68, opacity: 0.6}}>{r.at ?? ''}</span>}
+            {hasTimes && (r.at || r.by) && <span style={{fontFamily: 'var(--font-sans)', fontSize: size * 0.62, fontWeight: 700, letterSpacing: '0.08em', opacity: 0.7}}>{r.by ?? ''}</span>}
             <span style={{fontSize: size, lineHeight: 1.42, gridColumn: hasTimes && !(r.at || r.by) ? '1 / -1' : undefined}}>
               {parsed[i].map((p, j) => p.pass < 0 ? <React.Fragment key={j}>{p.text}</React.Fragment> : (
                 <React.Fragment key={j}>

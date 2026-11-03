@@ -28,14 +28,14 @@ export function Title({x = 960, y = 150, kicker = '', title, size = 128, color =
   const centre = align !== 'left';
   const letters = [...title];
   const n = Math.max(1, letters.filter((c) => c.trim()).length);
-  const ink = `var(--vt-${color})`;
+  const ink = `var(--color-${color})`;
   const side = `color-mix(in oklab, ${ink}, #2a140c 32%)`;
   let i = 0;
   return (
     <div style={{position: 'absolute', left: centre ? x - 900 : x, top: y, width: 1800, textAlign: centre ? 'center' : 'left'}}>
-      {kicker && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 34, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--vt-muted)',
+      {kicker && <div style={{fontFamily: 'var(--font-sans)', fontSize: 34, fontWeight: 600, letterSpacing: '0.04em', color: 'var(--color-muted)',
         marginBottom: 14, opacity: unit(s * 3), transform: `translateY(${((1 - unit(s * 2)) * -20).toFixed(1)}px)`}}>{kicker}</div>}
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 700, lineHeight: 1.05, whiteSpace: 'pre-line', color: ink}}>
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 700, lineHeight: 1.05, whiteSpace: 'pre-line', color: ink}}>
         {letters.map((ch, k) => {
           if (ch === '\n') return <br key={k} />;
           if (!ch.trim()) return <span key={k} style={{whiteSpace: 'pre'}}>{ch}</span>;

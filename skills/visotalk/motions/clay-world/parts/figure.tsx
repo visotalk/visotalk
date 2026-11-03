@@ -27,7 +27,7 @@ export function Figure({x = 160, y = 180, value = 0, decimals = 0, unit: suffix 
   const s = unit(show);
   if (s <= 0) return null;
   const text = value.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
-  const ink = `var(--vt-${color})`;
+  const ink = `var(--color-${color})`;
   const side = `color-mix(in oklab, ${ink}, #2a140c 32%)`;
   const fall = Math.min(1, s / 0.45), q = Math.max(0, (s - 0.45) / 0.55);
   const yy = (1 - fall * fall) * -size * 0.8;
@@ -35,11 +35,11 @@ export function Figure({x = 160, y = 180, value = 0, decimals = 0, unit: suffix 
   return (
     <div style={{position: 'absolute', left: x, top: y, width: 1200}}>
       <div style={{display: 'inline-block', transform: `translateY(${yy.toFixed(1)}px) scale(${(1 / Math.sqrt(sq)).toFixed(3)}, ${sq.toFixed(3)})`, transformOrigin: '30% 90%',
-        opacity: unit(s * 6), fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 700, lineHeight: 0.95, color: ink, whiteSpace: 'nowrap',
+        opacity: unit(s * 6), fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 700, lineHeight: 0.95, color: ink, whiteSpace: 'nowrap',
         fontVariantNumeric: 'tabular-nums', textShadow: `0 ${Math.round(size * 0.045)}px 0 ${side}, 0 ${Math.round(size * 0.1)}px ${Math.round(size * 0.12)}px rgba(70, 40, 30, 0.26)`}}>
-        {text}{suffix && <span style={{fontSize: size * 0.34, fontWeight: 600, marginLeft: size * 0.1, color: 'var(--vt-text)', textShadow: '0 4px 0 color-mix(in oklab, var(--vt-text), #000 30%), 0 8px 14px rgba(70, 40, 30, 0.22)'}}>{suffix}</span>}
+        {text}{suffix && <span style={{fontSize: size * 0.34, fontWeight: 600, marginLeft: size * 0.1, color: 'var(--color-text)', textShadow: '0 4px 0 color-mix(in oklab, var(--color-text), #000 30%), 0 8px 14px rgba(70, 40, 30, 0.22)'}}>{suffix}</span>}
       </div>
-      {label && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 38, fontWeight: 500, marginTop: 18, color: 'var(--vt-text)', opacity: unit((s - 0.5) * 3)}}>{label}</div>}
+      {label && <div style={{fontFamily: 'var(--font-sans)', fontSize: 38, fontWeight: 500, marginTop: 18, color: 'var(--color-text)', opacity: unit((s - 0.5) * 3)}}>{label}</div>}
     </div>
   );
 }

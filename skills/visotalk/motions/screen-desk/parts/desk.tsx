@@ -1,5 +1,5 @@
 import React from 'react';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 
 export const meta = {
   name: {en: 'Desk and camera', 'zh-CN': '桌面与镜头'},
@@ -27,7 +27,7 @@ export const FRAME_Y = 430;
 
 // a fine tooth on the matte surface, so its light does not band in a compressed video
 const GRAIN = (() => {
-  const g = random('screen-desk:grain');
+  const g = seededRandom('screen-desk:grain');
   return Array.from({length: 760}, () => `M${Math.round(g() * 1916)} ${Math.round(g() * 876)}h1.4`).join('');
 })();
 
@@ -44,8 +44,8 @@ export function Desk({camX = 960, camY = 430, zoom = 1, tilt = 0, turn = 0, trav
   const turning = Math.abs(turn) > 0.01;
   const world = `translate(${FRAME_X}px, ${FRAME_Y}px)${leaning ? ` perspective(2600px) rotateX(${tilt.toFixed(2)}deg)` : ''}${turning ? ` rotate(${turn.toFixed(2)}deg)` : ''} scale(${z.toFixed(4)}) translate(${(-camX).toFixed(2)}px, ${(-camY).toFixed(2)}px)`;
   return (
-    // the frame is the camera's: what lies past it is cropped, and qa measures only what it shows (data-vt-camera)
-    <div data-vt-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden', background: 'var(--vt-bg)'}}>
+    // the frame is the camera's: what lies past it is cropped, and a frame's checks measure only what it shows (data-camera)
+    <div data-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden', background: 'var(--color-bg)'}}>
       {/* the room's light: brighter from the upper left, falling off to the right */}
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(120% 110% at 18% 0%, #F3F2EE 0%, rgba(243,242,238,0) 62%), linear-gradient(180deg, rgba(255,255,255,0.0) 55%, rgba(60,58,52,0.07) 100%)'}} />
       {/* a window's panes thrown across the desk, soft and faint */}

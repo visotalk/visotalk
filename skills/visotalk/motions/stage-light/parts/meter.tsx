@@ -22,7 +22,7 @@ export function Meter({items, grow = 1, focus = -1, log = false, width = 1500}: 
   const top = Math.max(...items.map((i) => scale(i.value)));
   const g = unit(grow), track = width - 360;
   return (
-    <div style={{width, fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
+    <div style={{width, fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
       {items.map((it, i) => {
         const on = focus < 0 || focus === i;
         return (
@@ -30,14 +30,14 @@ export function Meter({items, grow = 1, focus = -1, log = false, width = 1500}: 
             <div style={{width: 300, fontSize: 32, fontWeight: 600, textAlign: 'right'}}>{it.label}</div>
             <div style={{position: 'relative', width: track, height: 44}}>
               <div style={{position: 'absolute', left: 0, top: 0, height: 44, width: Math.max(4, Math.round((track - 220) * (scale(it.value) / top) * g)), borderRadius: 3,
-                background: on && focus >= 0 ? 'var(--vt-data)' : 'var(--vt-muted)'}} />
-              <div style={{position: 'absolute', top: 2, left: Math.max(4, Math.round((track - 220) * (scale(it.value) / top) * g)) + 16, fontFamily: 'var(--vt-display)', fontSize: 40, fontWeight: 800,
+                background: on && focus >= 0 ? 'var(--color-data)' : 'var(--color-muted)'}} />
+              <div style={{position: 'absolute', top: 2, left: Math.max(4, Math.round((track - 220) * (scale(it.value) / top) * g)) + 16, fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 800,
                 whiteSpace: 'nowrap', opacity: g}}>{it.text ?? it.value.toLocaleString('en-US')}</div>
             </div>
           </div>
         );
       })}
-      {log && <div style={{marginLeft: 324, fontSize: 24, color: 'var(--vt-muted)', letterSpacing: '0.06em'}}>log scale · each equal step is ten times more</div>}
+      {log && <div style={{marginLeft: 324, fontSize: 24, color: 'var(--color-muted)', letterSpacing: '0.06em'}}>log scale · each equal step is ten times more</div>}
     </div>
   );
 }

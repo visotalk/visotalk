@@ -34,7 +34,7 @@ export function Tag({x = 0, y = 0, z = 0, dx = 120, dy = -110, text, note = '', 
   const sx = 1 / Math.sqrt(Math.max(0.3, sy));
   const ex = p.x + dx * reach, ey = p.y + dy * reach;
   const right = dx >= 0;
-  const ink = `var(--vt-${dot}, ${dot})`;
+  const ink = `var(--color-${dot}, ${dot})`;
   return (
     <div style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
       <svg width="1920" height="1080" viewBox="0 0 1920 1080" style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
@@ -42,15 +42,15 @@ export function Tag({x = 0, y = 0, z = 0, dx = 120, dy = -110, text, note = '', 
           fill="none" stroke="rgba(70, 40, 30, 0.18)" strokeWidth="9" strokeLinecap="round" transform="translate(3 6)" />
         <path d={`M ${p.x.toFixed(1)} ${p.y.toFixed(1)} Q ${(p.x + dx * reach * 0.15).toFixed(1)} ${(p.y + dy * reach * 0.75).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`}
           fill="none" stroke={ink} strokeWidth="7" strokeLinecap="round" />
-        <circle cx={p.x} cy={p.y} r={11 * unit(s * 4)} fill={ink} stroke="var(--vt-panel2)" strokeWidth="4" />
+        <circle cx={p.x} cy={p.y} r={11 * unit(s * 4)} fill={ink} stroke="var(--color-panel2)" strokeWidth="4" />
       </svg>
       {pop > 0 && (
         <div style={{position: 'absolute', left: right ? ex - 14 : undefined, right: right ? undefined : 1920 - ex - 14, top: ey - 38,
           transform: `scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`, transformOrigin: right ? '0% 100%' : '100% 100%',
-          background: 'var(--vt-panel2)', borderRadius: 24, padding: note ? '10px 26px 12px' : '12px 26px 14px', whiteSpace: 'nowrap',
-          boxShadow: '0 6px 0 var(--vt-border), 0 16px 26px rgba(70, 40, 30, 0.22)', opacity: unit(pop * 4)}}>
-          <div style={{fontFamily: 'var(--vt-display)', fontSize: 40, fontWeight: 600, lineHeight: 1.1, color: 'var(--vt-text)'}}>{text}</div>
-          {note && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 32, fontWeight: 500, lineHeight: 1.2, color: 'var(--vt-muted)', marginTop: 2}}>{note}</div>}
+          background: 'var(--color-panel2)', borderRadius: 24, padding: note ? '10px 26px 12px' : '12px 26px 14px', whiteSpace: 'nowrap',
+          boxShadow: '0 6px 0 var(--color-border), 0 16px 26px rgba(70, 40, 30, 0.22)', opacity: unit(pop * 4)}}>
+          <div style={{fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 600, lineHeight: 1.1, color: 'var(--color-text)'}}>{text}</div>
+          {note && <div style={{fontFamily: 'var(--font-sans)', fontSize: 32, fontWeight: 500, lineHeight: 1.2, color: 'var(--color-muted)', marginTop: 2}}>{note}</div>}
         </div>
       )}
     </div>

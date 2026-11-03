@@ -70,11 +70,11 @@ const union = (a: Rect | null, b: Rect): Rect => {
 const clips = (cs: CSSStyleDeclaration) => cs.overflowX !== 'visible' || cs.overflowY !== 'visible' || cs.clipPath !== 'none';
 
 /**
- * A camera's frame (`data-vt-camera` on an element that clips its overflow): its content is a larger picture the camera moves over, so what lies
+ * A camera's frame (`data-camera` on an element that clips its overflow): its content is a larger picture the camera moves over, so what lies
  * past the frame is the camera's crop. Everything drawn inside it, SVG included, counts only where the frame shows it, and the frame is never
  * reported as content cut off.
  */
-const CAMERA = '[data-vt-camera]';
+const CAMERA = '[data-camera]';
 const inCamera = (r: Rect, el: Element, stop: Element): Rect | null => {
   const cam = el.parentElement?.closest(CAMERA);
   return cam && stop.contains(cam) ? intersect(r, toRect(cam.getBoundingClientRect())) : r;

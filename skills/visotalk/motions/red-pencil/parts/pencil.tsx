@@ -46,7 +46,7 @@ export function PencilMark({kind = 'circle', draw = 0, width, height, x = 0, y =
         if (shown <= 0) return null;
         const d = pathOf(pts);
         return (
-          <g key={i} fill="none" stroke="var(--vt-grad)" strokeLinecap="round" strokeLinejoin="round">
+          <g key={i} fill="none" stroke="var(--color-grad)" strokeLinecap="round" strokeLinejoin="round">
             {/* the pencil's body and the lighter grain beside it */}
             <path d={d} strokeWidth={5.5} strokeOpacity={0.9} strokeDasharray={len} strokeDashoffset={len - shown} />
             <path d={d} strokeWidth={2} strokeOpacity={0.45} strokeDasharray={len} strokeDashoffset={len - shown} transform="translate(1.6 -1.2)" />

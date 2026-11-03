@@ -23,18 +23,18 @@ export function Pin({x = 960, y = 600, label, note = '', rise = 150, side = 'rig
   const {fog} = useLook();
   const d = unit(draw), stroke = unit(d * 2), words = unit(d * 2 - 1);
   const left = side === 'left';
-  const ink = hazed('var(--vt-text)', fog * 0.5);
+  const ink = hazed('var(--color-text)', fog * 0.5);
   return (
     <>
       <svg width={40} height={rise + 30} viewBox={`-20 ${-rise - 10} 40 ${rise + 30}`} style={{position: 'absolute', left: x - 20, top: y - rise - 10, overflow: 'visible'}}>
-        <circle r={9} fill="none" stroke={hazed('var(--vt-data)', fog * 0.4)} strokeWidth={2.5} pathLength={1} strokeDasharray="1 1" strokeDashoffset={1 - stroke} />
-        <circle r={3} fill={hazed('var(--vt-data)', fog * 0.4)} opacity={stroke} />
+        <circle r={9} fill="none" stroke={hazed('var(--color-data)', fog * 0.4)} strokeWidth={2.5} pathLength={1} strokeDasharray="1 1" strokeDashoffset={1 - stroke} />
+        <circle r={3} fill={hazed('var(--color-data)', fog * 0.4)} opacity={stroke} />
         <line x1={0} y1={-14} x2={0} y2={-14 - (rise - 14) * stroke} stroke={ink} strokeWidth={1.5} opacity={0.85} />
       </svg>
       <div style={{position: 'absolute', top: y - rise - 6, width: 560, opacity: words, textAlign: left ? 'right' : 'left',
         ...(left ? {left: x - 14 - 560} : {left: x + 14}), filter: words < 0.99 ? `blur(${((1 - words) * 8).toFixed(1)}px)` : 'none'}}>
-        <div style={{fontFamily: 'var(--vt-sans)', fontSize: 30, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: ink, lineHeight: 1.1}}>{label}</div>
-        {note && <div style={{fontFamily: 'var(--vt-display)', fontStyle: 'italic', fontSize: 34, color: hazed('color-mix(in oklab, var(--vt-text), var(--vt-muted) 40%)', fog * 0.5), marginTop: 6, lineHeight: 1.15}}>{note}</div>}
+        <div style={{fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: ink, lineHeight: 1.1}}>{label}</div>
+        {note && <div style={{fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 34, color: hazed('color-mix(in oklab, var(--color-text), var(--color-muted) 40%)', fog * 0.5), marginTop: 6, lineHeight: 1.15}}>{note}</div>}
       </div>
     </>
   );

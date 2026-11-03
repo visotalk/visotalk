@@ -2,14 +2,14 @@
 // town (geo.ts), land and water in quiet tones, coasts lined with water as an engraved atlas lines them, a graticule, borders, lakes and
 // rivers, and two instruments in the frame's corners that come from the same camera: the scale bar and the credit.
 import React, {useLayoutEffect, useMemo, useRef} from 'react';
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {WORLD, ViewContext, makeView, along, band, unit, W, H, type Feature, type LonLat, type View} from './geo.ts';
 
 export const meta = {
   name: {en: 'Atlas', 'zh-CN': '地图'},
   purpose: 'ground',
   line: 'An editorial map under one camera that turns the globe and zooms in log space from the Earth to a town, its scale bar following; everything else is drawn on it.',
-  fits: 'the whole film, as a part of <Doc>, so the camera never cuts; tween lon, lat and zoom, or follow a route',
+  fits: 'the whole film, one map behind every scene, so the camera never cuts; tween lon, lat and zoom, or follow a route',
   params: {
     lon: {type: 'degrees', default: -30, doc: 'the longitude at the centre of the frame'},
     lat: {type: 'degrees', default: 25, doc: 'the latitude at the centre of the frame'},
@@ -76,14 +76,14 @@ function ScaleBar({view, alpha}: {view: View; alpha: number}) {
   const label = km >= 1 ? km.toLocaleString('en-US') : String(km);
   const seg = w / 4;
   return (
-    <div data-vt-instrument="scale" style={{position: 'absolute', left: 96, top: 792, opacity: alpha, fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
+    <div data-instrument="scale" style={{position: 'absolute', left: 96, top: 792, opacity: alpha, fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
       <svg width={w + 2} height={14} style={{display: 'block', overflow: 'visible'}}>
-        {[0, 1, 2, 3].map((i) => <rect key={i} x={1 + i * seg} y={1} width={seg} height={10} fill={i % 2 ? 'var(--vt-panel)' : 'var(--vt-text)'} />)}
-        <rect x={1} y={1} width={w} height={10} fill="none" stroke="var(--vt-text)" strokeWidth={1.4} />
+        {[0, 1, 2, 3].map((i) => <rect key={i} x={1 + i * seg} y={1} width={seg} height={10} fill={i % 2 ? 'var(--color-panel)' : 'var(--color-text)'} />)}
+        <rect x={1} y={1} width={w} height={10} fill="none" stroke="var(--color-text)" strokeWidth={1.4} />
       </svg>
       <div style={{position: 'relative', height: 36, width: w + 140, fontSize: 26, fontWeight: 500, letterSpacing: '0.04em', fontVariantNumeric: 'tabular-nums'}}>
         <span style={{position: 'absolute', left: 0, top: 4}}>0</span>
-        <span style={{position: 'absolute', left: w, top: 4, transform: 'translateX(-50%)', whiteSpace: 'nowrap'}}>{label}<span style={{marginLeft: 6, color: 'var(--vt-muted)'}}>km</span></span>
+        <span style={{position: 'absolute', left: w, top: 4, transform: 'translateX(-50%)', whiteSpace: 'nowrap'}}>{label}<span style={{marginLeft: 6, color: 'var(--color-muted)'}}>km</span></span>
       </div>
     </div>
   );
@@ -93,7 +93,7 @@ export function Atlas({lon = -30, lat = 25, zoom = 0, follow, followAt = 0, foll
   lon?: number; lat?: number; zoom?: number; follow?: LonLat[]; followAt?: number; followMix?: number; detail?: number; grid?: number; scale?: number;
   under?: React.ReactNode; children?: React.ReactNode;
 }) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   // the camera is never locked off: the frame drifts a few pixels, slowly, so a held map is still alive
   const cx = W / 2 + Math.sin(t * 0.21) * 5, cy = H / 2 + Math.cos(t * 0.17) * 3;
   let clon = lon, clat = lat;
@@ -119,29 +119,29 @@ export function Atlas({lon = -30, lat = 25, zoom = 0, follow, followAt = 0, foll
   const shadow = `M${X + 10 - R} ${Y + 16}a${R} ${R} 0 1 0 ${2 * R} 0a${R} ${R} 0 1 0 ${-2 * R} 0Z`;
   return (
     <ViewContext.Provider value={view}>
-      <div data-vt-camera="" style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: 'var(--vt-bg)'}}>
+      <div data-camera="" style={{position: 'absolute', left: 0, top: 0, width: W, height: H, overflow: 'hidden', background: 'var(--color-bg)'}}>
         <Paint ops={[
-          globe > 0.01 && {d: shadow, fill: 'var(--vt-text)', alpha: 0.07 * globe},
-          {d: sphere, fill: 'var(--vt-panel2)'},
-          {d: lines, stroke: 'var(--vt-op)', width: 1, alpha: 0.32 * unit(grid)},
+          globe > 0.01 && {d: shadow, fill: 'var(--color-text)', alpha: 0.07 * globe},
+          {d: sphere, fill: 'var(--color-panel2)'},
+          {d: lines, stroke: 'var(--color-op)', width: 1, alpha: 0.32 * unit(grid)},
           // water lining: the coast drawn twice in wide pale strokes under the land, as an engraved atlas rules the sea along the shore
-          {d: land, stroke: 'var(--vt-op)', width: 18, alpha: 0.1},
-          {d: land, stroke: 'var(--vt-op)', width: 7, alpha: 0.16},
-          {d: land, fill: 'var(--vt-panel)'},
+          {d: land, stroke: 'var(--color-op)', width: 18, alpha: 0.1},
+          {d: land, stroke: 'var(--color-op)', width: 7, alpha: 0.16},
+          {d: land, fill: 'var(--color-panel)'},
         ]} />
         {under && <div style={{position: 'absolute', inset: 0}}>{under}</div>}
         <Paint ops={[
-          {d: land, stroke: 'var(--vt-op)', width: 1.1, alpha: 0.75},
-          {d: lakes, fill: 'var(--vt-panel2)', stroke: 'var(--vt-op)', width: 0.9},
-          rivers !== '' && {d: rivers, stroke: 'var(--vt-op)', width: 1.3, alpha: 0.7 * fine},
-          provinces !== '' && {d: provinces, stroke: 'var(--vt-border)', width: 1, dash: [5, 4], alpha: 0.85 * fine},
-          {d: borders, stroke: 'var(--vt-border)', width: 1.6},
+          {d: land, stroke: 'var(--color-op)', width: 1.1, alpha: 0.75},
+          {d: lakes, fill: 'var(--color-panel2)', stroke: 'var(--color-op)', width: 0.9},
+          rivers !== '' && {d: rivers, stroke: 'var(--color-op)', width: 1.3, alpha: 0.7 * fine},
+          provinces !== '' && {d: provinces, stroke: 'var(--color-border)', width: 1, dash: [5, 4], alpha: 0.85 * fine},
+          {d: borders, stroke: 'var(--color-border)', width: 1.6},
           globe > 0.01 && {d: sphere, shade: [X - 0.24 * R, Y - 0.36 * R, 1.5 * R], alpha: globe},
-          globe > 0.01 && {d: sphere, stroke: 'var(--vt-text)', width: 1.4, alpha: 0.55 * globe},
+          globe > 0.01 && {d: sphere, stroke: 'var(--color-text)', width: 1.4, alpha: 0.55 * globe},
         ]} />
         <div style={{position: 'absolute', inset: 0}}>{children}</div>
         <ScaleBar view={view} alpha={unit(scale) * band(zoom, 1.1, 1.6)} />
-        <div style={{position: 'absolute', right: 84, top: 794, padding: '4px 12px', background: 'color-mix(in srgb, var(--vt-panel) 92%, transparent)', fontFamily: 'var(--vt-sans)', fontSize: 25, letterSpacing: '0.06em', color: 'var(--vt-muted)'}}>Map data: Natural Earth</div>
+        <div style={{position: 'absolute', right: 84, top: 794, padding: '4px 12px', background: 'color-mix(in srgb, var(--color-panel) 92%, transparent)', fontFamily: 'var(--font-sans)', fontSize: 25, letterSpacing: '0.06em', color: 'var(--color-muted)'}}>Map data: Natural Earth</div>
       </div>
     </ViewContext.Provider>
   );
@@ -158,7 +158,7 @@ export type PaintOp = {
 
 /**
  * The map's vector layers are painted on a canvas the size of the frame, so the land is the picture's backdrop (it runs under the caption,
- * as a map must) while names and figures stay in HTML above it, where qa reads them. Colours resolve once through the page's own CSS.
+ * as a map must) while names and figures stay in HTML above it, where checks can read them. Colours resolve once through the page's own CSS.
  */
 export function Paint({ops, opacity = 1, blend}: {ops: Array<PaintOp | false>; opacity?: number; blend?: 'multiply' | 'screen'}) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -206,11 +206,11 @@ export function Layer({data, kind, opacity = 1}: {data: Feature[]; kind: 'river'
   if (opacity <= 0.01) return null;
   const d = join(view, data);
   const look: Record<string, Omit<PaintOp, 'd'>> = {
-    river: {stroke: 'var(--vt-op)', width: 3.4},
-    border: {stroke: 'var(--vt-border)', width: 2},
-    province: {stroke: 'var(--vt-border)', width: 1.6, dash: [7, 5]},
-    lake: {fill: 'var(--vt-panel2)', stroke: 'var(--vt-op)', width: 1},
-    land: {fill: 'var(--vt-panel)', stroke: 'var(--vt-op)', width: 1},
+    river: {stroke: 'var(--color-op)', width: 3.4},
+    border: {stroke: 'var(--color-border)', width: 2},
+    province: {stroke: 'var(--color-border)', width: 1.6, dash: [7, 5]},
+    lake: {fill: 'var(--color-panel2)', stroke: 'var(--color-op)', width: 1},
+    land: {fill: 'var(--color-panel)', stroke: 'var(--color-op)', width: 1},
   };
   return <Paint ops={[{d, ...look[kind]}]} opacity={opacity} />;
 }

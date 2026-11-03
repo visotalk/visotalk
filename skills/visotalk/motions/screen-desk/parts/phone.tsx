@@ -33,24 +33,24 @@ export function Phone({time = '7:30', date = '', app = '', icon = '', title = ''
     // a plain slab with an even bezel: a phone, not any maker's phone
     <div style={{position: 'relative', width: PHONE_W, height: PHONE_H, borderRadius: 46, background: '#1C1D21', padding: 18, boxSizing: 'border-box', boxShadow: RESTING,
       transform: buzz ? `rotate(${buzz.toFixed(3)}deg)` : undefined}}>
-      <div style={{position: 'relative', width: '100%', height: '100%', borderRadius: 30, overflow: 'hidden', background: 'linear-gradient(180deg, var(--vt-panel2) 0%, #E6E8EC 100%)'}}>
+      <div style={{position: 'relative', width: '100%', height: '100%', borderRadius: 30, overflow: 'hidden', background: 'linear-gradient(180deg, var(--color-panel2) 0%, #E6E8EC 100%)'}}>
         {children ?? (
-          <div style={{position: 'absolute', left: 30, right: 30, top: 44, color: 'var(--vt-text)', fontFamily: 'var(--vt-sans)', borderBottom: '1px solid var(--vt-border)', paddingBottom: 22}}>
+          <div style={{position: 'absolute', left: 30, right: 30, top: 44, color: 'var(--color-text)', fontFamily: 'var(--font-sans)', borderBottom: '1px solid var(--color-border)', paddingBottom: 22}}>
             <div style={{fontSize: 64, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.02em'}}>{time}</div>
-            {date && <div style={{fontSize: 22, color: 'var(--vt-muted)', marginTop: 10}}>{date}</div>}
+            {date && <div style={{fontSize: 22, color: 'var(--color-muted)', marginTop: 10}}>{date}</div>}
           </div>
         )}
         {(title || body) && (
-          <div style={{position: 'absolute', left: 16, right: 16, top: 200, padding: '20px 22px', borderRadius: 16, background: 'var(--vt-panel)',
-            boxShadow: RESTING, fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)',
+          <div style={{position: 'absolute', left: 16, right: 16, top: 200, padding: '20px 22px', borderRadius: 16, background: 'var(--color-panel)',
+            boxShadow: RESTING, fontFamily: 'var(--font-sans)', color: 'var(--color-text)',
             opacity: unit(n * 3), transform: `translateY(${(-150 * (1 - drop)).toFixed(1)}px)`}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10}}>
-              <div style={{width: 38, height: 38, borderRadius: 10, background: 'var(--vt-text)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700}}>{icon}</div>
-              <div style={{fontSize: 21, fontWeight: 700, color: 'var(--vt-text)', flex: 1}}>{app}</div>
-              <div style={{fontSize: 18, color: 'var(--vt-muted)'}}>now</div>
+              <div style={{width: 38, height: 38, borderRadius: 10, background: 'var(--color-text)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700}}>{icon}</div>
+              <div style={{fontSize: 21, fontWeight: 700, color: 'var(--color-text)', flex: 1}}>{app}</div>
+              <div style={{fontSize: 18, color: 'var(--color-muted)'}}>now</div>
             </div>
             <div style={{fontSize: 29, fontWeight: 700, lineHeight: 1.2}}>{title}</div>
-            <div style={{fontSize: 26, lineHeight: 1.3, color: 'var(--vt-text)', marginTop: 6}}>{body}</div>
+            <div style={{fontSize: 26, lineHeight: 1.3, color: 'var(--color-text)', marginTop: 6}}>{body}</div>
           </div>
         )}
       </div>

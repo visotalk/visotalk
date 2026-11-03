@@ -22,12 +22,12 @@ export function Readout({value = 0, places = 1, unit = '', tab = '', note = '', 
   return (
     <div style={{position: 'absolute', left: 0, top: 0, display: 'flex', flexDirection: 'column', alignItems: 'stretch', filter: 'drop-shadow(0 12px 22px rgba(0, 0, 0, 0.6))'}}>
       {tab && <div style={{...wipe(t1, 'bottom'), position: 'relative', alignSelf: 'flex-start', background: RED, padding: '8px 18px 6px', ...label, fontSize: 38, fontWeight: 900, color: '#FFFFFF'}}>{tab}<Sheen p={(show - 0.7) / 0.3} /></div>}
-      <div data-vt-camera="" style={slot}><div style={{...plate, ...slide(show, 0.15, 0.5), display: 'flex', alignItems: 'flex-end', gap: 16, padding: '14px 30px 16px 22px', borderLeft: `12px solid ${RED}`}}>
-        <Digits value={value} places={places} style={{fontFamily: 'var(--vt-display)', fontWeight: 900, fontSize: 160, lineHeight: 1}} />
+      <div data-camera="" style={slot}><div style={{...plate, ...slide(show, 0.15, 0.5), display: 'flex', alignItems: 'flex-end', gap: 16, padding: '14px 30px 16px 22px', borderLeft: `12px solid ${RED}`}}>
+        <Digits value={value} places={places} style={{fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 160, lineHeight: 1}} />
         {unit && <span style={{...label, fontSize: 64, fontWeight: 800, paddingBottom: 10}}>{unit}</span>}
       </div></div>
-      {note && <div data-vt-camera="" style={slot}><div style={{...ink, ...slide(show, 0.35, 0.7, 'top'), padding: '10px 24px 11px 34px'}}>
-        <div style={{fontFamily: 'var(--vt-sans)', fontWeight: 600, fontSize: 30, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>{note}</div>
+      {note && <div data-camera="" style={slot}><div style={{...ink, ...slide(show, 0.35, 0.7, 'top'), padding: '10px 24px 11px 34px'}}>
+        <div style={{fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 30, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>{note}</div>
       </div></div>}
     </div>
   );

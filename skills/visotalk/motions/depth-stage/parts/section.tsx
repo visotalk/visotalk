@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 import {Sheet, SHEET, hazed, unit, useLook} from './stage.tsx';
 
 export const meta = {
@@ -25,7 +25,7 @@ export function Section({bands, base = 830, built = 0, walls = 0, labelX = 1440}
   const {fog} = useLook();
   // a surface that is not quite level, the same for every frame
   const ripple = useMemo(() => {
-    const g = random('depth-stage:section');
+    const g = seededRandom('depth-stage:section');
     const p = [g() * 6, g() * 6, g() * 6];
     return (x: number, k: number) => 5 * Math.sin(x / 210 + p[k % 3] + k) + 3 * Math.sin(x / 77 + p[(k + 1) % 3]);
   }, []);
@@ -37,7 +37,7 @@ export function Section({bands, base = 830, built = 0, walls = 0, labelX = 1440}
     return `M${x} ${base}V${base - h}L${x + w / 2} ${base - h - 26}L${x + w} ${base - h}V${base}`;
   }).join('');
   // stones of pumice scattered through a layer, at fractions of its height
-  const grains = useMemo(() => { const g = random('depth-stage:section:grains'); return Array.from({length: 160}, () => [g() * 1920, 0.06 + g() * 0.88, 1.5 + Math.round(g() * 3)]); }, []);
+  const grains = useMemo(() => { const g = seededRandom('depth-stage:section:grains'); return Array.from({length: 160}, () => [g() * 1920, 0.06 + g() * 0.88, 1.5 + Math.round(g() * 3)]); }, []);
   let top = base;
   const layers = bands.map((b, i) => {
     const grown = unit(built - i);
@@ -45,22 +45,22 @@ export function Section({bands, base = 830, built = 0, walls = 0, labelX = 1440}
     top = top - b.depth * grown;
     return {b, i, grown, y0, y1};
   });
-  const tone = (i: number) => i % 2 ? 'color-mix(in oklab, var(--vt-panel), var(--vt-grad) 22%)' : 'color-mix(in oklab, var(--vt-panel), color-mix(in oklab, var(--vt-text), var(--vt-data) 25%) 38%)';
+  const tone = (i: number) => i % 2 ? 'color-mix(in oklab, var(--color-panel), var(--color-grad) 22%)' : 'color-mix(in oklab, var(--color-panel), color-mix(in oklab, var(--color-text), var(--color-data) 25%) 38%)';
   return (
     <>
-      <Sheet d={ground} paint={hazed('var(--vt-panel)', fog * 0.5)} />
+      <Sheet d={ground} paint={hazed('var(--color-panel)', fog * 0.5)} />
       {layers.map(({b, i, grown, y0, y1}) => grown > 0.01 && (
         <Sheet key={`band${i}`} d={`M${edge(y1, i + 1).join('L')}L${[...edge(y0, i)].reverse().join('L')}Z`} paint={hazed(tone(i), fog * 0.6)} />
       ))}
       {layers.map(({i, grown, y0, y1}) => grown > 0.01 && i % 2 === 0 && (
-        <Sheet key={`grain${i}`} d={grains.filter(([x, f]) => x >= 0 && f < 1).map(([x, f, r]) => `M${r1(x - r)} ${r1(y0 + (y1 - y0) * f)}a${r} ${r} 0 1 1 ${2 * r} 0a${r} ${r} 0 1 1 ${-2 * r} 0Z`).join('')} paint={hazed('color-mix(in oklab, var(--vt-text), var(--vt-grad) 30%)', fog * 0.6)} opacity={0.35} />
+        <Sheet key={`grain${i}`} d={grains.filter(([x, f]) => x >= 0 && f < 1).map(([x, f, r]) => `M${r1(x - r)} ${r1(y0 + (y1 - y0) * f)}a${r} ${r} 0 1 1 ${2 * r} 0a${r} ${r} 0 1 1 ${-2 * r} 0Z`).join('')} paint={hazed('color-mix(in oklab, var(--color-text), var(--color-grad) 30%)', fog * 0.6)} opacity={0.35} />
       ))}
-      {wallPath && <Sheet d={wallPath} stroke={4} paint={hazed('color-mix(in oklab, var(--vt-text), var(--vt-grad) 40%)', fog * 0.5)} opacity={0.8} />}
+      {wallPath && <Sheet d={wallPath} stroke={4} paint={hazed('color-mix(in oklab, var(--color-text), var(--color-grad) 40%)', fog * 0.5)} opacity={0.8} />}
       {layers.map(({b, i, grown, y0, y1}) => (
         <div key={`label${i}`} style={{position: 'absolute', left: labelX, top: Math.round((y0 + y1) / 2 - 30), width: 420, opacity: unit(grown * 2.5),
-          borderLeft: `2px solid ${hazed('var(--vt-text)', fog * 0.5)}`, paddingLeft: 18}}>
-          <div style={{fontFamily: 'var(--vt-sans)', fontSize: 30, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: hazed('var(--vt-text)', fog * 0.5), lineHeight: 1.1}}>{b.label}</div>
-          {b.note && <div style={{fontFamily: 'var(--vt-display)', fontStyle: 'italic', fontSize: 34, color: hazed('color-mix(in oklab, var(--vt-text), var(--vt-muted) 40%)', fog * 0.5), lineHeight: 1.15, marginTop: 4}}>{b.note}</div>}
+          borderLeft: `2px solid ${hazed('var(--color-text)', fog * 0.5)}`, paddingLeft: 18}}>
+          <div style={{fontFamily: 'var(--font-sans)', fontSize: 30, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: hazed('var(--color-text)', fog * 0.5), lineHeight: 1.1}}>{b.label}</div>
+          {b.note && <div style={{fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 34, color: hazed('color-mix(in oklab, var(--color-text), var(--color-muted) 40%)', fog * 0.5), lineHeight: 1.15, marginTop: 4}}>{b.note}</div>}
         </div>
       ))}
     </>

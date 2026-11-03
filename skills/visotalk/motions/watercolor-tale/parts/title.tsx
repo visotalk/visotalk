@@ -28,7 +28,7 @@ export function Title({text, by = '', width = 760, size = 104, pigment = 'warn',
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width, height: h + 90}}>
       <Wash d={band} width={width} height={h + 40} pigment={pigment} strength={0.55} paint={swash} dry={ease(swash, 0.5, 1)} from="left" granulate={0.2} wobble={10} />
-      <div style={{position: 'relative', fontFamily: 'var(--vt-sans)', fontSize: size, lineHeight: 1.02, fontWeight: 620, color: 'var(--vt-text)', letterSpacing: '-0.01em',
+      <div style={{position: 'relative', fontFamily: 'var(--font-sans)', fontSize: size, lineHeight: 1.02, fontWeight: 620, color: 'var(--color-text)', letterSpacing: '-0.01em',
         fontVariationSettings: '"SOFT" 100, "WONK" 1, "opsz" 144'}}>
         {lines.map((line, i) => (
           <div key={i} style={{whiteSpace: 'pre'}}>
@@ -40,7 +40,7 @@ export function Title({text, by = '', width = 760, size = 104, pigment = 'warn',
           </div>
         ))}
       </div>
-      {by && <div style={{position: 'absolute', left: 6, top: h + 26, fontFamily: 'var(--vt-display)', fontSize: Math.round(size * 0.42), color: 'var(--vt-muted)', mixBlendMode: 'multiply',
+      {by && <div style={{position: 'absolute', left: 6, top: h + 26, fontFamily: 'var(--font-display)', fontSize: Math.round(size * 0.42), color: 'var(--color-muted)', mixBlendMode: 'multiply',
         clipPath: `inset(-20% ${((1 - ease(write, 0.8, 1)) * 100).toFixed(1)}% -20% -2%)`}}>{by}</div>}
     </div>
   );

@@ -40,11 +40,11 @@ export function Floor({origin, k, reveal = 1}: {origin?: [number, number]; k?: n
   const R = Math.round(1500 * Math.max(0, Math.min(1, reveal)));
   const mask = `linear-gradient(180deg, #000 0%, #000 72%, transparent 84%)${reveal < 1 ? `, radial-gradient(circle at 960px 430px, #000 ${Math.max(0, R - 260)}px, transparent ${R}px)` : ''}`;
   return (
-    <div style={{position: 'absolute', inset: 0, background: 'var(--vt-bg)', overflow: 'hidden'}}>
+    <div style={{position: 'absolute', inset: 0, background: 'var(--color-bg)', overflow: 'hidden'}}>
       {/* the grid fades out before the caption band, where nothing is drawn */}
       <svg {...CANVAS} style={{...CANVAS.style, WebkitMaskImage: mask, maskImage: mask, WebkitMaskComposite: 'source-in', maskComposite: 'intersect'}}>
-        <path d={lines.join('')} stroke="var(--vt-border)" strokeWidth={1.4} fill="none" />
-        <path d={slabs.join('')} stroke="var(--vt-border)" strokeWidth={2.8} fill="none" />
+        <path d={lines.join('')} stroke="var(--color-border)" strokeWidth={1.4} fill="none" />
+        <path d={slabs.join('')} stroke="var(--color-border)" strokeWidth={2.8} fill="none" />
       </svg>
       {/* a soft light from the upper left, so the floor is not a flat sheet */}
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(120% 90% at 30% 20%, rgba(255,255,255,0.55), transparent 60%)'}} />

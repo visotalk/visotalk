@@ -2,7 +2,7 @@
 // skidding a little and settling where it stops. Every pellet's size, direction and speed come from the seed, so a frame is the same twice.
 import * as THREE from 'three';
 import {clay, formGeometry, seedOf, squash, unit, useClay, useClayColor} from './world.tsx';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 
 export const meta = {
   name: {en: 'Splash of crumbs', 'zh-CN': '泥屑飞溅'},
@@ -28,7 +28,7 @@ export function Crumbs({x = 0, z = 0, count = 12, reach = 6, size = 0.6, color =
   const paint = useClayColor();
   const b = unit(burst);
   useClay(() => {
-    const r = random(`crumbs/${seed || `${x}/${z}`}`);
+    const r = seededRandom(`crumbs/${seed || `${x}/${z}`}`);
     const colours = color.split(',').map((c) => c.trim());
     const group = new THREE.Group();
     for (let i = 0; i < count; i++) {

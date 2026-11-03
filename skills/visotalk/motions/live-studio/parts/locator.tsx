@@ -20,14 +20,14 @@ export function Locator({place, line = '', show = 1}: {place: string; line?: str
     <div style={{position: 'absolute', left: 0, top: 0, display: 'flex', alignItems: 'stretch', filter: 'drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55))'}}>
       <div style={{width: 12, background: RED, transform: `scaleY(${sq.toFixed(3)})`, transformOrigin: 'top', zIndex: 1}} />
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'stretch'}}>
-        <div data-vt-camera="" style={slot}>
-          <div data-vt-camera="" style={{overflow: 'hidden', ...plate, ...slide(show, 0.1, 0.48), padding: '8px 22px 6px'}}>
+        <div data-camera="" style={slot}>
+          <div data-camera="" style={{overflow: 'hidden', ...plate, ...slide(show, 0.1, 0.48), padding: '8px 22px 6px'}}>
             <div style={{...label, fontSize: 50, fontWeight: 800, lineHeight: '56px', whiteSpace: 'nowrap', ...rise(type)}}>{place}</div>
           </div>
         </div>
-        {line && <div data-vt-camera="" style={slot}>
+        {line && <div data-camera="" style={slot}>
           <div style={{...ink, ...slide(show, 0.3, 0.7, 'top'), padding: '8px 22px 9px'}}>
-            <div style={{fontFamily: 'var(--vt-sans)', fontWeight: 600, fontSize: 30, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>{line}</div>
+            <div style={{fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 30, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap'}}>{line}</div>
           </div>
         </div>}
       </div>

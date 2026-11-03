@@ -16,9 +16,9 @@ const TEAR = Array.from({length: 25}, (_, i) => `${(100 - (i * 100) / 24).toFixe
 
 export function Claim({claim, who = 'As usually quoted', width = 700}: {claim: string; who?: string; width?: number}) {
   return (
-    <div style={{width, padding: '30px 38px 52px', background: 'var(--vt-panel2)', clipPath: `polygon(0 0, 100% 0, ${TEAR})`, color: 'var(--vt-bg)'}}>
-      <div style={{fontFamily: 'var(--vt-sans)', fontSize: 19, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.6}}>{who}</div>
-      <div style={{fontFamily: 'var(--vt-display)', fontStyle: 'italic', fontSize: 54, lineHeight: 1.12, marginTop: 12, letterSpacing: '-0.01em'}}>“{claim}”</div>
+    <div style={{width, padding: '30px 38px 52px', background: 'var(--color-panel2)', clipPath: `polygon(0 0, 100% 0, ${TEAR})`, color: 'var(--color-bg)'}}>
+      <div style={{fontFamily: 'var(--font-sans)', fontSize: 19, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.6}}>{who}</div>
+      <div style={{fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 54, lineHeight: 1.12, marginTop: 12, letterSpacing: '-0.01em'}}>“{claim}”</div>
     </div>
   );
 }

@@ -66,11 +66,11 @@ export function Belt({path, kind = 'belt', z, draw = 1, travel = 0, gap = 1.3, c
     .sort((p, q) => p.at[0] + p.at[1] - (q.at[0] + q.at[1]));
 
   // a belt is a dark rubber band on a light frame; a rail is the idle grey
-  const surface = kind === 'rail' ? hue('idle', 0) : 'color-mix(in srgb, var(--vt-muted) 70%, var(--vt-panel2))';
+  const surface = kind === 'rail' ? hue('idle', 0) : 'color-mix(in srgb, var(--color-muted) 70%, var(--color-panel2))';
   return (
     <svg {...CANVAS}>
       {posts.map(([px, py], i) => {
-        const f = boxFaces({x: px - 0.12, y: py - 0.12, z: 0, w: 0.24, d: 0.24, h: zz}, v), t = tones('var(--vt-muted)');
+        const f = boxFaces({x: px - 0.12, y: py - 0.12, z: 0, w: 0.24, d: 0.24, h: zz}, v), t = tones('var(--color-muted)');
         return <g key={i}><polygon points={f.left} style={{fill: t.left}} /><polygon points={f.right} style={{fill: t.right}} /></g>;
       })}
       {boxes.map((b, i) => {

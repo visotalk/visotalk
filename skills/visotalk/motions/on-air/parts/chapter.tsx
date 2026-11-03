@@ -17,8 +17,8 @@ export function Chapter({n, title, show = 1}: {n: string; title: string; show?: 
   const s = stage(show, 0, 1);
   return (
     <div style={{...tag, ...wipe(s), display: 'inline-flex', alignItems: 'baseline', gap: 14, padding: '10px 20px'}}>
-      <span style={{fontFamily: 'var(--vt-mono)', fontSize: 26, fontWeight: 700, color: 'var(--vt-data)'}}>{n}</span>
-      <span style={{fontFamily: 'var(--vt-sans)', fontSize: 28, fontWeight: 700, color: 'var(--vt-text)', whiteSpace: 'nowrap'}}>{title}</span>
+      <span style={{fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 700, color: 'var(--color-data)'}}>{n}</span>
+      <span style={{fontFamily: 'var(--font-sans)', fontSize: 28, fontWeight: 700, color: 'var(--color-text)', whiteSpace: 'nowrap'}}>{title}</span>
     </div>
   );
 }

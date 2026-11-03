@@ -1,5 +1,5 @@
 import {MarkerStroke} from './loop.tsx';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 import {curve, wobble, type Pt} from './marker.ts';
 
 export const meta = {
@@ -19,7 +19,7 @@ export const meta = {
 };
 
 export function Box({x, y, w, h, draw = 0, seed = 'box'}: {x: number; y: number; w: number; h: number; draw?: number; seed?: string}) {
-  const r = random(`${seed}:box`), o = () => 10 + r() * 14, j = () => (r() - 0.5) * 10, pad = 14;
+  const r = seededRandom(`${seed}:box`), o = () => 10 + r() * 14, j = () => (r() - 0.5) * 10, pad = 14;
   const L = x - pad, T = y - pad, R = x + w + pad, B = y + h + pad;
   const sides: [Pt, Pt][] = [[[L - o(), T + j()], [R + o(), T + j()]], [[R + j(), T - o()], [R + j(), B + o()]], [[R + o(), B + j()], [L - o(), B + j()]], [[L + j(), B + o()], [L + j(), T - o()]]];
   const strokes = sides.map(([a, b], i) => wobble(curve(a, b, (r() - 0.5) * 0.03, 20), `${seed}:${i}`, 2));

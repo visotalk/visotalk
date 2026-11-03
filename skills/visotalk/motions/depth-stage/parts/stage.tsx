@@ -2,7 +2,7 @@
 // the stage's CSS perspective places it, and the same numbers give its defocus (a thin-lens circle of confusion) and its haze (aerial
 // perspective), so what is far is small, soft and pale, and only the depth in focus is sharp.
 import React, {createContext, useContext, useMemo} from 'react';
-import {useDocTime, useFrame} from '@visotalk/runtime';
+import {useCompositionTime, useCurrentFrame} from '@motionhub/runtime';
 
 export const meta = {
   name: {en: 'Depth stage', 'zh-CN': '景深舞台'},
@@ -62,7 +62,7 @@ function look(near: number, rest: number, c: Camera): Look {
 export const useLook = () => useContext(LookContext);
 
 /** A colour seen through `fog` of haze. */
-export const hazed = (color: string, fog: number) => `color-mix(in oklab, ${color}, var(--vt-grad) ${Math.round(unit(fog) * 100)}%)`;
+export const hazed = (color: string, fog: number) => `color-mix(in oklab, ${color}, var(--color-grad) ${Math.round(unit(fog) * 100)}%)`;
 
 /**
  * A flat layer of the world at depth `z`. `x` and `y` place it as it shows at rest; the camera's pan gives it parallax, its dolly its growth.
@@ -128,7 +128,7 @@ function Rays({x, y, alpha}: {x: number; y: number; alpha: number}) {
   const at = `${Math.round(x - SHEET.x)}px ${Math.round(y - SHEET.y)}px`;
   const stops = [94, 101, 110, 117, 128, 139, 146, 158, 171, 182, 197, 206, 221, 233, 248, 262].map((a, i) => {
     const w = 2.2 + (i % 3) * 1.6, o = 14 + ((i * 7) % 5) * 5;
-    return `transparent ${a - w}deg, color-mix(in srgb, var(--vt-data) ${o}%, transparent) ${a}deg, transparent ${a + w}deg`;
+    return `transparent ${a - w}deg, color-mix(in srgb, var(--color-data) ${o}%, transparent) ${a}deg, transparent ${a + w}deg`;
   }).join(', ');
   const fade = `radial-gradient(1500px 1100px at ${at}, #000 0%, rgba(0,0,0,0.55) 35%, transparent 80%)`;
   return (
@@ -143,8 +143,8 @@ const GRAIN = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://
 export function Stage({cam = 0, focus = 0, aperture = 22, panX = 0, panY = 0, lightX = 1320, lightY = 470, glow = 0.6, veil = 0, haze = 1, rays = 0, quake = 0, flash = 0, children}: {
   cam?: number; focus?: number; aperture?: number; panX?: number; panY?: number; lightX?: number; lightY?: number; glow?: number; veil?: number; haze?: number; rays?: number; quake?: number; flash?: number; children?: React.ReactNode;
 }) {
-  const t = useDocTime();
-  const frame = useFrame();
+  const t = useCompositionTime();
+  const frame = useCurrentFrame();
   // the camera is never locked off: it breathes a few pixels, slowly, so a held frame is still alive
   const q = unit(quake);
   const driftX = Math.sin(t * 0.23) * 7 + q * 14 * (Math.sin(t * 43) + 0.5 * Math.sin(t * 71 + 2));
@@ -154,10 +154,10 @@ export function Stage({cam = 0, focus = 0, aperture = 22, panX = 0, panY = 0, li
   const light = useMemo(() => ({x: lightX, y: lightY, glow: g}), [lightX, lightY, g]);
   return (
     <div style={{position: 'absolute', inset: 0, contain: 'paint', perspective: `${LENS}px`, perspectiveOrigin: '960px 540px',
-      background: 'linear-gradient(180deg, var(--vt-bg) 0%, color-mix(in oklab, var(--vt-bg), var(--vt-grad) 50%) 36%, var(--vt-grad) 56%, color-mix(in oklab, var(--vt-grad), var(--vt-bg) 35%) 100%)'}}>
+      background: 'linear-gradient(180deg, var(--color-bg) 0%, color-mix(in oklab, var(--color-bg), var(--color-grad) 50%) 36%, var(--color-grad) 56%, color-mix(in oklab, var(--color-grad), var(--color-bg) 35%) 100%)'}}>
       {/* the low light in the sky: a wide warm bloom in the haze, and its disc */}
-      <div style={{position: 'absolute', inset: 0, opacity: g, background: `radial-gradient(1300px 520px at ${Math.round(lightX - panX * 0.05)}px ${Math.round(lightY + 60)}px, color-mix(in srgb, var(--vt-data) 42%, transparent), color-mix(in srgb, var(--vt-data) 13%, transparent) 45%, transparent 100%)`}} />
-      <div style={{position: 'absolute', inset: 0, opacity: g, background: `radial-gradient(64px 64px at ${Math.round(lightX - panX * 0.05)}px ${Math.round(lightY)}px, color-mix(in srgb, var(--vt-text) 92%, var(--vt-data)) 0%, color-mix(in srgb, var(--vt-text) 80%, var(--vt-data)) 45%, color-mix(in srgb, var(--vt-data) 30%, transparent) 75%, transparent 100%)`}} />
+      <div style={{position: 'absolute', inset: 0, opacity: g, background: `radial-gradient(1300px 520px at ${Math.round(lightX - panX * 0.05)}px ${Math.round(lightY + 60)}px, color-mix(in srgb, var(--color-data) 42%, transparent), color-mix(in srgb, var(--color-data) 13%, transparent) 45%, transparent 100%)`}} />
+      <div style={{position: 'absolute', inset: 0, opacity: g, background: `radial-gradient(64px 64px at ${Math.round(lightX - panX * 0.05)}px ${Math.round(lightY)}px, color-mix(in srgb, var(--color-text) 92%, var(--color-data)) 0%, color-mix(in srgb, var(--color-text) 80%, var(--color-data)) 45%, color-mix(in srgb, var(--color-data) 30%, transparent) 75%, transparent 100%)`}} />
       <div style={{position: 'absolute', inset: 0, transformStyle: 'preserve-3d', transform: `translate3d(${(-panX - driftX).toFixed(2)}px, ${(-panY - driftY).toFixed(2)}px, 0px)`}}>
         <CameraContext.Provider value={camera}><LightContext.Provider value={light}>
           {rays > 0.01 && <Plane z={1800}><Rays x={lightX} y={lightY} alpha={unit(rays) * g} /></Plane>}
@@ -165,8 +165,8 @@ export function Stage({cam = 0, focus = 0, aperture = 22, panX = 0, panY = 0, li
         </LightContext.Provider></CameraContext.Provider>
       </div>
       {/* the fog bank the camera passes through between two sets */}
-      {veil > 0.01 && <div style={{position: 'absolute', inset: 0, opacity: unit(veil), background: 'radial-gradient(120% 120% at 50% 55%, color-mix(in oklab, var(--vt-grad), var(--vt-text) 18%), var(--vt-grad) 70%)'}} />}
-      {flash > 0.01 && <div style={{position: 'absolute', inset: 0, opacity: unit(flash), mixBlendMode: 'screen', background: `radial-gradient(140% 120% at ${Math.round(lightX)}px ${Math.round(lightY)}px, color-mix(in oklab, var(--vt-text), var(--vt-data) 35%), color-mix(in srgb, var(--vt-data) 30%, transparent) 55%, transparent 100%)`}} />}
+      {veil > 0.01 && <div style={{position: 'absolute', inset: 0, opacity: unit(veil), background: 'radial-gradient(120% 120% at 50% 55%, color-mix(in oklab, var(--color-grad), var(--color-text) 18%), var(--color-grad) 70%)'}} />}
+      {flash > 0.01 && <div style={{position: 'absolute', inset: 0, opacity: unit(flash), mixBlendMode: 'screen', background: `radial-gradient(140% 120% at ${Math.round(lightX)}px ${Math.round(lightY)}px, color-mix(in oklab, var(--color-text), var(--color-data) 35%), color-mix(in srgb, var(--color-data) 30%, transparent) 55%, transparent 100%)`}} />}
       <div style={{position: 'absolute', inset: 0, background: 'radial-gradient(125% 115% at 50% 46%, transparent 52%, rgba(4, 6, 12, 0.62) 100%)'}} />
       <div style={{position: 'absolute', inset: 0, opacity: 0.07, mixBlendMode: 'overlay', backgroundImage: GRAIN, backgroundPosition: `${(frame * 97) % 360}px ${(frame * 61) % 360}px`}} />
     </div>

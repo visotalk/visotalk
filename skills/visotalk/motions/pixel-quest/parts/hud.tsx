@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, ICONS, Screen, Sprite, W, Words, px, steps, twos} from './pixel.ts';
 
 export const meta = {
@@ -24,7 +24,7 @@ export const slotAt = (i: number, slots: number) => ({x: W - 22 - (slots - i) * 
 const BAR_X = 162, BAR_W = 168, BAR_Y = 16, BAR_H = 8;
 
 export function Hud({stage = '1', xp = 0, segments = 4, boss = false, items = [], got = 0, show = 1}: {stage?: string; xp?: number; segments?: number; boss?: boolean; items?: string[]; got?: number; show?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const tall = Math.round(steps(show, 4) * 31);
   if (show <= 0) return null;
   const n = Math.max(1, Math.round(segments));

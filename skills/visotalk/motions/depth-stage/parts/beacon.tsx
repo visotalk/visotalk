@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {Glow, unit, useLook} from './stage.tsx';
 
 export const meta = {
@@ -17,7 +17,7 @@ export const meta = {
 };
 
 export function Beacon({x = 960, y = 500, on = 1, size = 1, flicker = 0.4}: {x?: number; y?: number; on?: number; size?: number; flicker?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const {fog} = useLook();
   const o = unit(on);
   // a light kindles: the core first, its halo after it, with a small overshoot as it catches
@@ -26,10 +26,10 @@ export function Beacon({x = 960, y = 500, on = 1, size = 1, flicker = 0.4}: {x?:
   const r = 7 * Math.sqrt(size);
   return (
     <>
-      <Glow x={x} y={y} r={260 * size * tremble} color="var(--vt-data)" alpha={halo * 0.55 * (1 - 0.3 * fog)} />
-      <Glow x={x} y={y} r={60 * Math.sqrt(size) * tremble} color="color-mix(in oklab, var(--vt-data), var(--vt-text) 40%)" alpha={halo * 0.9} />
+      <Glow x={x} y={y} r={260 * size * tremble} color="var(--color-data)" alpha={halo * 0.55 * (1 - 0.3 * fog)} />
+      <Glow x={x} y={y} r={60 * Math.sqrt(size) * tremble} color="color-mix(in oklab, var(--color-data), var(--color-text) 40%)" alpha={halo * 0.9} />
       <div style={{position: 'absolute', left: x - r, top: y - r, width: 2 * r, height: 2 * r, borderRadius: '50%', opacity: core,
-        background: 'radial-gradient(circle, var(--vt-text) 0%, color-mix(in oklab, var(--vt-text), var(--vt-data) 45%) 55%, color-mix(in srgb, var(--vt-data) 0%, transparent) 100%)'}} />
+        background: 'radial-gradient(circle, var(--color-text) 0%, color-mix(in oklab, var(--color-text), var(--color-data) 45%) 55%, color-mix(in srgb, var(--color-data) 0%, transparent) 100%)'}} />
     </>
   );
 }

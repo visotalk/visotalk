@@ -1,5 +1,5 @@
 import React from 'react';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 
 export const meta = {
   name: {en: 'Board and camera', 'zh-CN': '证据墙与镜头'},
@@ -35,7 +35,7 @@ const FELT = 2400;
 // the felt's weave: two faint families of short strokes on a 640 px tile, so the dark ground has a tooth and does not band in a compressed video;
 // a CSS background (not an svg) so it reads as the ground behind the cards, not as something drawn under the captions
 const tile = (key: string, size: number, draw: (g: () => number) => string) =>
-  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'>${draw(random(key))}</svg>`)}")`;
+  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'>${draw(seededRandom(key))}</svg>`)}")`;
 const WEAVE = tile('evidence-board:weave', 640, (g) => {
   let a = '', b = '';
   for (let i = 0; i < 640; i++) {
@@ -62,14 +62,14 @@ export function Board({camX = 960, camY = 430, zoom = 1, drift = 0, tilt = 0, tu
   // a raking light across a leaning board: brighter at its top edge, falling into shadow towards the lens
   const rake = Math.min(1, Math.abs(tilt) / 35);
   return (
-    // the frame is the camera's: what lies past it is cropped, and qa measures only what it shows (data-vt-camera)
-    <div data-vt-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden', background: 'var(--vt-bg)'}}>
+    // the frame is the camera's: what lies past it is cropped, and a frame's checks measure only what it shows (data-camera)
+    <div data-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden', background: 'var(--color-bg)'}}>
       <div style={{position: 'absolute', left: 0, top: 0, width: BOARD.w, height: BOARD.h, transformOrigin: '0 0', transform: world, filter: moving}}>
         {/* the felt and its weave, under everything pinned to it; it runs under the caption slip */}
         <div style={{position: 'absolute', left: -FELT, top: -FELT, width: BOARD.w + 2 * FELT, height: BOARD.h + 2 * FELT, backgroundImage: `${HOLES}, ${WEAVE}`, backgroundSize: '1130px 1130px, 640px 640px'}} />
       </div>
       {/* what is pinned to the board, under the same camera, fades into the felt above the caption slip: nothing pinned is ever read under it */}
-      <div data-vt-camera="" style={{position: 'absolute', left: 0, top: 0, width: 1920, height: PINNED_BOTTOM, overflow: 'hidden',
+      <div data-camera="" style={{position: 'absolute', left: 0, top: 0, width: 1920, height: PINNED_BOTTOM, overflow: 'hidden',
         maskImage: `linear-gradient(180deg, #000 ${PINNED_BOTTOM - 35}px, transparent ${PINNED_BOTTOM}px)`, WebkitMaskImage: `linear-gradient(180deg, #000 ${PINNED_BOTTOM - 35}px, transparent ${PINNED_BOTTOM}px)`}}>
         <div style={{position: 'absolute', left: 0, top: 0, width: BOARD.w, height: BOARD.h, transformOrigin: '0 0', transform: world, filter: moving}}>
           <ZoomContext.Provider value={z}>{children}</ZoomContext.Provider>

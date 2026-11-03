@@ -54,7 +54,7 @@ export default <Doc
       <>
         <Ink d={GLASS} width={560} height={600} draw={useProp('glass', 0)} />
         <Ink d={WATER} width={560} height={600} pen="pencil" weight={3} draw={useProp('water', 0)} />
-        <Ink d={CUBE} width={560} height={600} draw={useProp('cube', 0)} fill="var(--vt-data)" />
+        <Ink d={CUBE} width={560} height={600} draw={useProp('cube', 0)} fill="var(--color-data)" />
       </>
     )}</Part>
     <Part id="floats" x={830} y={300} w={420} h={110}>{() => <HandLabel text="ice floats!" pen="red" underline write={useProp('write', 0)} />}</Part>

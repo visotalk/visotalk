@@ -56,11 +56,11 @@ export function Scroll({length = 1920, view = 0, unroll = 1, whole = 0, marks = 
   // the paper and its bands are one backdrop drawn only where the strip is in the frame, its texture held to the strip
   const strip = inFrame(Math.max(x, left), y, x + length * s - Math.max(x, left), H * s);
   const anchor = (r: {x: number; y: number}) => `${(x - r.x).toFixed(1)}px ${(y - r.y).toFixed(1)}px`;
-  const band = (from: number, to: number) => `linear-gradient(to bottom, transparent ${(from * s).toFixed(1)}px, var(--vt-border) ${(from * s).toFixed(1)}px, var(--vt-border) ${(to * s).toFixed(1)}px, transparent ${(to * s).toFixed(1)}px)`;
+  const band = (from: number, to: number) => `linear-gradient(to bottom, transparent ${(from * s).toFixed(1)}px, var(--color-border) ${(from * s).toFixed(1)}px, var(--color-border) ${(to * s).toFixed(1)}px, transparent ${(to * s).toFixed(1)}px)`;
   const line = (at: number) => `linear-gradient(to bottom, transparent ${(at * s).toFixed(1)}px, rgba(28, 26, 23, 0.55) ${(at * s).toFixed(1)}px, rgba(28, 26, 23, 0.55) ${((at + 4) * s).toFixed(1)}px, transparent ${((at + 4) * s).toFixed(1)}px)`;
   return (
-    <div style={{position: 'absolute', inset: 0, background: 'var(--vt-bg)'}}>
-      {strip && <div style={{position: 'absolute', left: strip.x, top: strip.y, width: strip.w, height: strip.h, backgroundColor: 'var(--vt-panel)',
+    <div style={{position: 'absolute', inset: 0, background: 'var(--color-bg)'}}>
+      {strip && <div style={{position: 'absolute', left: strip.x, top: strip.y, width: strip.w, height: strip.h, backgroundColor: 'var(--color-panel)',
         backgroundImage: [line(PAPER.top - 4), line(PAPER.bottom), band(0, PAPER.top), band(PAPER.bottom, H), MOTTLE, TILE].join(', '),
         backgroundSize: `100% ${(H * s).toFixed(1)}px, 100% ${(H * s).toFixed(1)}px, 100% ${(H * s).toFixed(1)}px, 100% ${(H * s).toFixed(1)}px, ${(1600 * s).toFixed(1)}px ${(1000 * s).toFixed(1)}px, ${(480 * s).toFixed(1)}px ${(480 * s).toFixed(1)}px`,
         backgroundPosition: `0 ${(y - strip.y).toFixed(1)}px, 0 ${(y - strip.y).toFixed(1)}px, 0 ${(y - strip.y).toFixed(1)}px, 0 ${(y - strip.y).toFixed(1)}px, ${anchor(strip)}, ${anchor(strip)}`,
@@ -70,10 +70,10 @@ export function Scroll({length = 1920, view = 0, unroll = 1, whole = 0, marks = 
       {unroll < 1 && <Roller x={roller} />}
       {/* seen whole, the dates are written large on the table under the strip, so a lesson's line of time can be read at a glance */}
       {w > 0.6 && marks.length > 0 && (
-        <div style={{position: 'absolute', left: 0, top: y + H * s + 26, width: W, height: 90, opacity: ease(whole, 0.7, 1), fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
+        <div style={{position: 'absolute', left: 0, top: y + H * s + 26, width: W, height: 90, opacity: ease(whole, 0.7, 1), fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
           {marks.map((m) => (
             <div key={m.label} style={{position: 'absolute', left: Math.round(x + m.x * s) - 4, top: 0, display: 'flex', alignItems: 'flex-start', gap: 10}}>
-              <div style={{width: 4, height: 54, background: 'var(--vt-text)', opacity: TONE.thick, borderRadius: 2}} />
+              <div style={{width: 4, height: 54, background: 'var(--color-text)', opacity: TONE.thick, borderRadius: 2}} />
               <div style={{fontSize: 46, fontWeight: 500, lineHeight: 1, opacity: TONE.burnt, fontVariantNumeric: 'oldstyle-nums', whiteSpace: 'nowrap'}}>{m.label}</div>
             </div>
           ))}
@@ -116,8 +116,8 @@ function Roller({x}: {x: number}) {
       </defs>
       <rect x={x - r} y={22} width={r * 2} height={H - 44} rx={r * 0.5} fill="url(#ink-wound)" />
       {[0.25, 0.5, 0.75].map((t) => <line key={t} x1={x - r + r * 2 * t} y1={PAPER.top} x2={x - r + r * 2 * t} y2={PAPER.bottom} stroke="#9c8f72" strokeOpacity={0.35} strokeWidth={1} />)}
-      <rect x={x - r} y={22} width={r * 2} height={PAPER.top - 22} fill="var(--vt-border)" style={{filter: 'brightness(0.85)'}} />
-      <rect x={x - r} y={PAPER.bottom} width={r * 2} height={H - PAPER.bottom - 22} fill="var(--vt-border)" style={{filter: 'brightness(0.85)'}} />
+      <rect x={x - r} y={22} width={r * 2} height={PAPER.top - 22} fill="var(--color-border)" style={{filter: 'brightness(0.85)'}} />
+      <rect x={x - r} y={PAPER.bottom} width={r * 2} height={H - PAPER.bottom - 22} fill="var(--color-border)" style={{filter: 'brightness(0.85)'}} />
       <rect x={x - r * 0.6} y={4} width={r * 1.2} height={20} rx={6} fill="url(#ink-roller)" />
       <rect x={x - r * 0.6} y={H - 24} width={r * 1.2} height={20} rx={6} fill="url(#ink-roller)" />
     </svg>

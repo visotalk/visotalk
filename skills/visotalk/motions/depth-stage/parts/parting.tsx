@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 import {SHEET, hazed, unit, useLook} from './stage.tsx';
 
 export const meta = {
@@ -27,7 +27,7 @@ type Band = {d: string; paint: string};
 
 /** Bands of buried ground in section, alternately ash, pumice and soil, the pumice bands flecked with stones */
 function strata(seed: string, top: number): Band[] {
-  const g = random(`depth-stage:strata:${seed}`);
+  const g = seededRandom(`depth-stage:strata:${seed}`);
   const tones = [30, 14, 22, 38, 10, 26, 18];
   const wave = (y0: number, a: number, f: number, p: number) => { const pts: string[] = []; for (let x = L; x <= R; x += 24) pts.push(`${x} ${r1(y0 + a * Math.sin(x / f + p) + a * 0.4 * Math.sin(x / (f * 0.37) + p * 2))}`); return pts; };
   const bands: Band[] = [];
@@ -36,11 +36,11 @@ function strata(seed: string, top: number): Band[] {
     const thick = k % 2 ? 18 + g() * 40 : 50 + g() * 110, lower = wave(y + thick, 3 + g() * 6, 180 + g() * 220, g() * 6);
     const tone = tones[k % tones.length];
     // ash is a warm grey: the haze's grey with a little of the light in it
-    bands.push({d: `M${upper.join('L')}L${[...lower].reverse().join('L')}Z`, paint: `color-mix(in oklab, var(--vt-panel), color-mix(in oklab, ${k % 3 === 1 ? 'var(--vt-text)' : 'var(--vt-grad)'}, var(--vt-data) 18%) ${tone}%)`});
+    bands.push({d: `M${upper.join('L')}L${[...lower].reverse().join('L')}Z`, paint: `color-mix(in oklab, var(--color-panel), color-mix(in oklab, ${k % 3 === 1 ? 'var(--color-text)' : 'var(--color-grad)'}, var(--color-data) 18%) ${tone}%)`});
     if (k % 3 === 1) {
       const stones: string[] = [];
       for (let i = 0; i < 90; i++) stones.push(circle(L + g() * SHEET.w, y + 10 + g() * (thick - 20), 1.5 + g() * 4));
-      bands.push({d: stones.join(''), paint: 'color-mix(in oklab, var(--vt-panel), var(--vt-text) 38%)'});
+      bands.push({d: stones.join(''), paint: 'color-mix(in oklab, var(--color-panel), var(--color-text) 38%)'});
     }
     upper = lower; y += thick; k++;
   }
@@ -49,13 +49,13 @@ function strata(seed: string, top: number): Band[] {
 
 /** A billowing bank of cloud, paler toward its foot */
 function cloud(seed: string, top: number): Band[] {
-  const g = random(`depth-stage:cloud:${seed}`);
+  const g = seededRandom(`depth-stage:cloud:${seed}`);
   const layers = [0, 1, 2].map(() => [] as string[]);
   for (let i = 0; i < 120; i++) {
     const f = Math.pow(g(), 0.7), r = 60 + g() * 150;
     layers[Math.min(2, Math.floor(f * 3))].push(circle(L + g() * SHEET.w, top + 60 + f * (B - top), r));
   }
-  return layers.map((d, i) => ({d: d.join(''), paint: `color-mix(in oklab, var(--vt-panel), var(--vt-grad) ${40 + i * 15}%)`}));
+  return layers.map((d, i) => ({d: d.join(''), paint: `color-mix(in oklab, var(--color-panel), var(--color-grad) ${40 + i * 15}%)`}));
 }
 
 /** A shape on the whole sheet, cut to one half of the crack, whose picture slides by `dx` while the element stays put */
@@ -73,7 +73,7 @@ export function Parting({shape = 'strata', seed = 'a', top = 140, seam = 960, op
 }) {
   const {fog} = useLook();
   const {bands, left, right, face} = useMemo(() => {
-    const g = random(`depth-stage:seam:${seed}`);
+    const g = seededRandom(`depth-stage:seam:${seed}`);
     const crack: string[] = [];
     for (let y = SHEET.y; y <= B; y += 34) crack.push(`${r1(seam + (g() - 0.5) * 70)} ${y}`);
     const edge = crack.map((p) => p.split(' ').map(Number));
@@ -96,13 +96,13 @@ export function Parting({shape = 'strata', seed = 'a', top = 140, seam = 960, op
   const half = (mask: string, lip: string, dx: number) => (
     <>
       {bands.map((b, i) => <Slid key={i} shape={b.mask} half={mask} dx={dx} paint={hazed(b.paint, fog)} />)}
-      <Slid shape={lip} half={mask} dx={dx} paint="color-mix(in srgb, var(--vt-panel) 75%, transparent)" />
+      <Slid shape={lip} half={mask} dx={dx} paint="color-mix(in srgb, var(--color-panel) 75%, transparent)" />
     </>
   );
   return (
     <>
       {leak > 0.01 && <div style={{position: 'absolute', left: SHEET.x, top: SHEET.y, width: SHEET.w, height: SHEET.h, opacity: leak, mixBlendMode: 'screen',
-        background: `linear-gradient(90deg, transparent ${seam - SHEET.x - 70 - shift}px, color-mix(in oklab, var(--vt-text), var(--vt-data) 30%) ${seam - SHEET.x}px, transparent ${seam - SHEET.x + 70 + shift}px)`}} />}
+        background: `linear-gradient(90deg, transparent ${seam - SHEET.x - 70 - shift}px, color-mix(in oklab, var(--color-text), var(--color-data) 30%) ${seam - SHEET.x}px, transparent ${seam - SHEET.x + 70 + shift}px)`}} />}
       <div style={swing(-1)}>{half(left, face[0], -shift)}</div>
       <div style={swing(1)}>{half(right, face[1], shift)}</div>
     </>

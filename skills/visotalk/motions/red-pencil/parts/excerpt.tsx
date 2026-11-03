@@ -20,15 +20,15 @@ export function Excerpt({text, mark = '', draw = 0, source = '', size = 52}: {te
     <>
       {text.slice(0, at)}
       {/* the underline grows under the phrase, across a line break if it wraps */}
-      <span style={{backgroundImage: 'linear-gradient(var(--vt-grad), var(--vt-grad))', backgroundRepeat: 'no-repeat', backgroundPosition: '0 100%',
+      <span style={{backgroundImage: 'linear-gradient(var(--color-grad), var(--color-grad))', backgroundRepeat: 'no-repeat', backgroundPosition: '0 100%',
         backgroundSize: `${(d * 100).toFixed(1)}% 5px`, paddingBottom: 4, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone'}}>{mark}</span>
       {text.slice(at + mark.length)}
     </>
   );
   return (
-    <figure style={{margin: 0, paddingLeft: 36, borderLeft: '3px solid var(--vt-text)', fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
+    <figure style={{margin: 0, paddingLeft: 36, borderLeft: '3px solid var(--color-text)', fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
       <blockquote style={{margin: 0, fontSize: size, lineHeight: 1.4, fontStyle: 'italic'}}>{marked}</blockquote>
-      {source && <figcaption style={{marginTop: 22, fontSize: 24, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--vt-muted)'}}>{source}</figcaption>}
+      {source && <figcaption style={{marginTop: 22, fontSize: 24, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-muted)'}}>{source}</figcaption>}
     </figure>
   );
 }

@@ -27,7 +27,7 @@ export function Inscription({text, sub = '', write = 1, size = 72, vertical = tr
   };
   const columns = text.split('\n').map((col, i) => <div key={i}>{[...col].map((c, j) => glyph(c, `${i}.${j}`))}</div>);
   return (
-    <div style={{position: 'absolute', left: vertical ? undefined : 0, right: vertical ? 0 : undefined, top: 0, writingMode: vertical ? 'vertical-rl' : 'horizontal-tb', fontFamily: 'var(--vt-display)', color: 'var(--vt-text)', filter: `url(#${id})`}}>
+    <div style={{position: 'absolute', left: vertical ? undefined : 0, right: vertical ? 0 : undefined, top: 0, writingMode: vertical ? 'vertical-rl' : 'horizontal-tb', fontFamily: 'var(--font-display)', color: 'var(--color-text)', filter: `url(#${id})`}}>
       <svg width={0} height={0} style={{position: 'absolute'}}>
         <filter id={id} x="-5%" y="-5%" width="110%" height="110%">
           <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="21" result="n" />

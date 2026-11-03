@@ -1,11 +1,11 @@
 // The red pencil's hand: points along a mark, pushed off their line by a slow deterministic wobble, written as an SVG path with its length.
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 
 export type Pt = [number, number];
 
 /** Each point nudged along the line's normal by a smooth wave whose phases come from `key`, so the same mark is the same every frame */
 export function wobble(points: Pt[], key: string, amount = 3): Pt[] {
-  const r = random(key);
+  const r = seededRandom(key);
   const a = r() * Math.PI * 2, b = r() * Math.PI * 2;
   return points.map(([x, y], i) => {
     const prev = points[Math.max(0, i - 1)], next = points[Math.min(points.length - 1, i + 1)];
@@ -18,7 +18,7 @@ export function wobble(points: Pt[], key: string, amount = 3): Pt[] {
 
 /** An oval that starts at an angle and runs past where it began, as a pencil circling a figure does */
 export function oval(cx: number, cy: number, rx: number, ry: number, key: string): Pt[] {
-  const r = random(`${key}:oval`);
+  const r = seededRandom(`${key}:oval`);
   const start = -2.4 + r() * 0.6, run = Math.PI * 2 + 0.35 + r() * 0.25, steps = 72;
   return Array.from({length: steps + 1}, (_, i) => {
     const t = start + (run * i) / steps;
@@ -29,7 +29,7 @@ export function oval(cx: number, cy: number, rx: number, ry: number, key: string
 
 /** A stroke from a to b with a slight bow */
 export function stroke(a: Pt, b: Pt, key: string, bow = 0.03): Pt[] {
-  const bend = (random(`${key}:bow`)() - 0.5) * 2 * bow;
+  const bend = (seededRandom(`${key}:bow`)() - 0.5) * 2 * bow;
   const dx = b[0] - a[0], dy = b[1] - a[1];
   return Array.from({length: 25}, (_, i) => {
     const t = i / 24, lift = Math.sin(Math.PI * t) * bend;

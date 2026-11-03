@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {CANVAS, boxFaces, easeOut, faceText, hue, plotPath, project, ringPoints, springOut, tones, unit, type Box, type Role, type View} from './iso.ts';
 
 export const meta = {
@@ -30,7 +30,7 @@ const Faces = ({b, base, v, only}: {b: Box; base: string; v: View; only?: Array<
 };
 
 // Text painted on a wall stays light on a strong colour and turns ink on mustard and grey.
-const paint = (role: Role, dim: number) => (role === 'store' || role === 'idle' || dim > 0.5 ? 'var(--vt-text)' : 'var(--vt-panel)');
+const paint = (role: Role, dim: number) => (role === 'store' || role === 'idle' || dim > 0.5 ? 'var(--color-text)' : 'var(--color-panel)');
 
 // The goods inside a working machine ride a short belt along x and take the second colour as they pass its middle.
 function Goods({x, w, cy, z, goods, dim, v, t, side}: {x: number; w: number; cy: number; z: number; goods: [Role, Role]; dim: number; v: View; t: number; side: 'near' | 'far'}) {
@@ -42,19 +42,19 @@ function Goods({x, w, cy, z, goods, dim, v, t, side}: {x: number; w: number; cy:
 }
 
 function Machine({kind, x, y, w, d, role, goods, dim, v, t}: {kind: 'press' | 'arch' | 'racks'; x: number; y: number; w: number; d: number; role: Role; goods?: [Role, Role]; dim: number; v: View; t: number}) {
-  const base = hue(role, dim), ink = 'var(--vt-muted)';
+  const base = hue(role, dim), ink = 'var(--color-muted)';
   const cx = x + w / 2, cy = y + d / 2;
   if (kind === 'racks') {
     // three rows of shelves, each holding cubes of the store's colour
     return <>{[0, 1, 2].map((r) => {
       const ry = y + 0.4 + r * (d - 0.8) / 3;
       return <g key={r}>
-        <Faces b={{x: x + 0.4, y: ry, z: 0.2, w: w - 0.8, d: 0.5, h: 1.3}} base="var(--vt-panel2)" v={v} />
+        <Faces b={{x: x + 0.4, y: ry, z: 0.2, w: w - 0.8, d: 0.5, h: 1.3}} base="var(--color-panel2)" v={v} />
         {[0, 1, 2, 3].map((c) => <Faces key={c} b={{x: x + 0.55 + c * (w - 1.1) / 4, y: ry + 0.08, z: 1.5, w: 0.42, d: 0.36, h: 0.42}} base={base} v={v} />)}
       </g>;
     })}</>;
   }
-  const belt = <Faces b={{x: x + 0.2, y: cy - 0.4, z: 0.15, w: w - 0.4, d: 0.8, h: 0.3}} base="var(--vt-panel2)" v={v} />;
+  const belt = <Faces b={{x: x + 0.2, y: cy - 0.4, z: 0.15, w: w - 0.4, d: 0.8, h: 0.3}} base="var(--color-panel2)" v={v} />;
   const far = goods && <Goods x={x} w={w} cy={cy} z={0.45} goods={goods} dim={dim} v={v} t={t} side="far" />;
   const near = goods && <Goods x={x} w={w} cy={cy} z={0.45} goods={goods} dim={dim} v={v} t={t} side="near" />;
   if (kind === 'arch') {
@@ -82,7 +82,7 @@ function Machine({kind, x, y, w, d, role, goods, dim, v, t}: {kind: 'press' | 'a
 
 /** A flat roof slab carrying a row of sawtooth lights, each a slope rising toward +x and a glazed face dropping back */
 function Roof({x, y, w, d, z, base, v}: {x: number; y: number; w: number; d: number; z: number; base: string; v: View}) {
-  const slab = `color-mix(in srgb, ${base} 50%, var(--vt-panel2))`, ts = tones(slab);
+  const slab = `color-mix(in srgb, ${base} 50%, var(--color-panel2))`, ts = tones(slab);
   const teeth = Math.max(2, Math.round(w / 1.4)), p = (w - 0.4) / teeth, rise = 0.55, z0 = z + 0.28;
   const P = (a: number, b: number, c: number) => project(a, b, c, v);
   const poly = (list: Array<[number, number]>) => list.map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ');
@@ -93,7 +93,7 @@ function Roof({x, y, w, d, z, base, v}: {x: number; y: number; w: number; d: num
       return <g key={i}>
         <polygon points={poly([P(a, y0, z0), P(b, y0, z0 + rise), P(b, y1, z0 + rise), P(a, y1, z0)])} style={{fill: ts.top}} />
         <polygon points={poly([P(a, y1, z0), P(b, y1, z0), P(b, y1, z0 + rise)])} style={{fill: ts.left}} />
-        <polygon points={poly([P(b, y0, z0), P(b, y1, z0), P(b, y1, z0 + rise), P(b, y0, z0 + rise)])} style={{fill: 'var(--vt-panel)'}} opacity={0.92} />
+        <polygon points={poly([P(b, y0, z0), P(b, y1, z0), P(b, y1, z0 + rise), P(b, y0, z0 + rise)])} style={{fill: 'var(--color-panel)'}} opacity={0.92} />
       </g>;
     })}
   </>;
@@ -101,7 +101,7 @@ function Roof({x, y, w, d, z, base, v}: {x: number; y: number; w: number; d: num
 
 export function Building({at, size = [4, 3, 2.4], kind = 'hall', role = 'process', name = '', machine = 'press', goods, rise = 1, ping = 0, lift = 0, dim = 0, origin, k}: Props) {
   const v: View = {origin, k};
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (rise <= 0) return null;
   const r = springOut((rise - 0.3) / 0.7);
   const [x, y] = at, [w, d, H] = size, h = H * r, kk = k ?? 46;
@@ -117,7 +117,7 @@ export function Building({at, size = [4, 3, 2.4], kind = 'hall', role = 'process
   if (r <= 0) return <svg {...CANVAS}>{under}</svg>;
   const textColor = paint(role, dim);
   const label = name && r > 0.6 && unit(lift) < 0.45 && (
-    <text transform={faceText('left', x + 0.35, y + d, Math.min(h * 0.32, 0.9), v)} style={{fill: textColor, fontFamily: 'var(--vt-sans)', fontWeight: 700}}
+    <text transform={faceText('left', x + 0.35, y + d, Math.min(h * 0.32, 0.9), v)} style={{fill: textColor, fontFamily: 'var(--font-sans)', fontWeight: 700}}
       fontSize={Math.round(kk * Math.min(0.78, h * 0.34))} opacity={unit((r - 0.6) / 0.3)}>{name}</text>
   );
 
@@ -133,7 +133,7 @@ export function Building({at, size = [4, 3, 2.4], kind = 'hall', role = 'process
         {bands.map((b, i) => <path key={i} d={`M${cx - rx} ${b}A${rx} ${ry} 0 0 0 ${cx + rx} ${b}`} fill="none" style={{stroke: tn.right}} strokeWidth={2} />)}
         <ellipse cx={cx} cy={ty} rx={rx} ry={ry} style={{fill: tn.top}} />
         <ellipse cx={cx} cy={ty} rx={rx * 0.62} ry={ry * 0.62} fill="none" style={{stroke: tn.left}} strokeWidth={2} opacity={0.5} />
-        {name && r > 0.6 && <text x={cx - rx * 0.7} y={cy - (cy - ty) * 0.18} style={{fill: textColor, fontFamily: 'var(--vt-sans)', fontWeight: 700}} fontSize={Math.round(kk * 0.7)}>{name}</text>}
+        {name && r > 0.6 && <text x={cx - rx * 0.7} y={cy - (cy - ty) * 0.18} style={{fill: textColor, fontFamily: 'var(--font-sans)', fontWeight: 700}} fontSize={Math.round(kk * 0.7)}>{name}</text>}
       </svg>
     );
   }
@@ -163,7 +163,7 @@ export function Building({at, size = [4, 3, 2.4], kind = 'hall', role = 'process
   const down = easeOut((L - 0.7) / 0.3), roofZ = (h + 1.0 * easeOut(L / 0.35)) * (1 - down), aside = easeOut((L - 0.3) / 0.45) * (d + 0.8);
   // with the roof aside, the two near walls are cut down so the machine is seen whole
   const near = h - (h - 0.7) * easeOut((L - 0.45) / 0.55);
-  const inner = 'var(--vt-panel2)';
+  const inner = 'var(--color-panel2)';
   return (
     <svg {...CANVAS}>
       {under}

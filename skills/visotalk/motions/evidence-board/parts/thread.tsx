@@ -40,9 +40,9 @@ export function Thread({from, to, draw = 1, slack = 60, pulse = 0, tacks = true}
     <svg width={W} height={H} style={{position: 'absolute', left: minX, top: minY, overflow: 'visible', pointerEvents: 'none'}}>
       {/* the thread's shadow on the felt, a little below and soft */}
       <path d={path} transform="translate(3 7)" fill="none" stroke="#000" strokeOpacity={0.45} strokeWidth={sw * 1.4} strokeLinecap="round" strokeDasharray={`${len} ${len}`} strokeDashoffset={len * (1 - run)} style={{filter: 'blur(2px)'}} />
-      <path d={path} fill="none" stroke="var(--vt-op)" strokeWidth={sw} strokeLinecap="round" strokeDasharray={`${len} ${len}`} strokeDashoffset={len * (1 - run)} />
+      <path d={path} fill="none" stroke="var(--color-op)" strokeWidth={sw} strokeLinecap="round" strokeDasharray={`${len} ${len}`} strokeDashoffset={len * (1 - run)} />
       {/* its twist: a fine lighter strand along it, short dashes */}
-      <path d={path} fill="none" stroke="var(--vt-grad)" strokeOpacity={0.35} strokeWidth={sw * 0.35} strokeDasharray={`${4 / z} ${7 / z}`} strokeLinecap="round" opacity={run > 0.999 ? 1 : 0} />
+      <path d={path} fill="none" stroke="var(--color-grad)" strokeOpacity={0.35} strokeWidth={sw * 0.35} strokeDasharray={`${4 / z} ${7 / z}`} strokeLinecap="round" opacity={run > 0.999 ? 1 : 0} />
       {/* a glint running along it: the eye led from one source to the next */}
       {pulse > 0.001 && pulse < 0.999 && (
         <path d={path} fill="none" stroke="#FFF1D6" strokeWidth={sw * 1.15} strokeLinecap="round" strokeDasharray={`${(len * 0.12).toFixed(1)} ${(len * 2).toFixed(1)}`} strokeDashoffset={(-len * (pulse * 1.12 - 0.12)).toFixed(1)}
@@ -52,8 +52,8 @@ export function Thread({from, to, draw = 1, slack = 60, pulse = 0, tacks = true}
       {tacks && [[x0, y0, 1], [x1, y1, unit((run - 0.97) / 0.03)]].map(([x, y, o], i) => o > 0.01 && (
         <g key={i} opacity={o}>
           <circle cx={x - minX + 1.5} cy={y - minY + 2.5} r={8} fill="#000" fillOpacity={0.45} />
-          <circle cx={x - minX} cy={y - minY} r={8} fill="var(--vt-muted)" />
-          <circle cx={x - minX - 2} cy={y - minY - 2.5} r={3} fill="var(--vt-text)" />
+          <circle cx={x - minX} cy={y - minY} r={8} fill="var(--color-muted)" />
+          <circle cx={x - minX - 2} cy={y - minY - 2.5} r={3} fill="var(--color-text)" />
         </g>
       ))}
     </svg>

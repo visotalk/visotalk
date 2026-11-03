@@ -50,9 +50,9 @@ export function Seal({text, stamp = 1, size = 150, carve = 'white'}: {text: stri
           </g>
         </mask>
       </defs>
-      <rect x={-6} y={-6} width={w + 12} height={h + 12} rx={size * 0.1} fill="var(--vt-grad)" opacity={0.1 * bleed} style={{filter: `blur(${(size * 0.05).toFixed(1)}px)`}} />
+      <rect x={-6} y={-6} width={w + 12} height={h + 12} rx={size * 0.1} fill="var(--color-grad)" opacity={0.1 * bleed} style={{filter: `blur(${(size * 0.05).toFixed(1)}px)`}} />
       <g filter={`url(#${id}-paste)`}>
-        <rect x={-4} y={-4} width={w + 8} height={h + 8} fill="var(--vt-grad)" mask={`url(#${id}-cut)`} opacity={0.94} />
+        <rect x={-4} y={-4} width={w + 8} height={h + 8} fill="var(--color-grad)" mask={`url(#${id}-cut)`} opacity={0.94} />
       </g>
     </svg>
   );

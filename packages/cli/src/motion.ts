@@ -2,7 +2,7 @@
 import {existsSync,lstatSync,mkdirSync,readFileSync,readdirSync,renameSync,rmSync,writeFileSync,mkdtempSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {parseMarkup,validate} from '@visotalk/ir';
-import {MOTIONHUB,hubIndex,hubMotion,searchHub} from './motionhub.ts';
+import {MOTIONHUB,hubIndex,hubMotion,searchHub,shareMotion} from './motionhub.ts';
 import {BUILTIN_MOTIONS,MOTION_SCENARIOS,MOTION_TAGS,applyMotion,builtinMotion,builtinMotionList,inspectMotion as inspectPack,motionIndex,motionPath,motionSectionIssues} from '@visotalk/ir/motions';
 
 export function readMotion(dir: string): Map<string,Uint8Array> {
@@ -49,8 +49,8 @@ export async function motionCmd(args: string[]): Promise<void> {
   }
   if(command==='search') {
     const rows=searchHub(await hubIndex(),args.slice(1));
-    // one line per motion, like list; a motion without a VisoTalk pack is followed by hand from its page
-    for(const m of rows)console.log(`${m.slug}  ${m.version}  ${m.line.en??Object.values(m.line)[0]}  (looks: ${m.tags.join(', ')}; by ${m.authors.map((a)=>a.github).join(', ')}; ${m.license.text}${m.tools.includes('visotalk')?'':`; no VisoTalk pack: follow ${MOTIONHUB}/m/${m.slug}/`})`);
+    // one line per motion, like list; one without components brings its theme and guidance only
+    for(const m of rows)console.log(`${m.slug}  ${m.version}  ${m.line.en??Object.values(m.line)[0]}  (looks: ${m.tags.join(', ')}; by ${m.authors.map((a)=>a.github).join(', ')}; ${m.license.text}${m.tools.includes('react')?'':'; theme and guidance, no components'})`);
     console.log(rows.length?`${rows.length} on ${MOTIONHUB}; use one with visotalk motion use <slug> doc.tsx, only when the person chose it`:`No motion on ${MOTIONHUB} has every one of those words`);
     return;
   }
@@ -62,7 +62,7 @@ export async function motionCmd(args: string[]): Promise<void> {
     // a progress parameter moves only when a document drives it: say how, with this pack's first such component
     const moving=pack.components.find((c)=>Object.values(c.params).some((v)=>v.type==='progress'));
     if(moving){const [name]=Object.entries(moving.params).find(([,v])=>v.type==='progress')!,fn=(/export function (\w+)/.exec(Buffer.from(files.get(moving.file)!).toString('utf8'))??[])[1]??'Component';
-     console.log(`Progress parameters move when the document drives them through the part: <Part id="x">{() => <${fn} ${name}={useProp('${name}', 0)} …/>}</Part>, then <Tween target="x" to={{${name}: 1}} …/>; demo/doc.tsx does it for each component.`);}
+     console.log(`Progress parameters move when the document drives them through the part: <Part id="x">{() => <${fn} ${name}={useProp('${name}', 0)} …/>}</Part>, then <Tween target="x" to={{${name}: 1}} …/>${files.has('motion/demo/doc.tsx')?'; demo/doc.tsx does it for each component':''}.`);}
     console.log(`MOTION.md: ${files.get('motion/MOTION.md')!.length} bytes`);
     if(pack.issues.length){for(const i of pack.issues)console.error(`${i.code}: ${i.at}: ${i.message}`);process.exitCode=1;}
     return;
@@ -70,11 +70,19 @@ export async function motionCmd(args: string[]): Promise<void> {
   if(command==='check'&&input) {
     const path=resolve(input), directory=join(dirname(path),'motion'), files=readMotion(directory);
     const pack=inspectMotion(files,parseMarkup(readFileSync(path,'utf8')).doc);
-    if(!pack.issues.some((i)=>i.code==='motion.component')){
+    // a catalogue motion's MOTION.md may have the format's five headings and no section 8 to index the components in
+    if(!pack.issues.some((i)=>i.code==='motion.component')&&/^## 8\./m.test(readFileSync(join(directory,'MOTION.md'),'utf8'))){
       const guide=join(directory,'MOTION.md'),before=readFileSync(guide,'utf8'),after=motionIndex(before,pack.components);
       if(after!==before)writeFileSync(guide,after);
     }
     console.log(JSON.stringify({ok:!pack.issues.length,...pack},null,2));if(pack.issues.length)process.exitCode=1;return;
+  }
+  if(command==='share'&&input) {
+    // a work's document names its motion/ beside it; the pack must pass VisoTalk's own checks before the catalogue's
+    const dir=/\.tsx$/.test(input)?join(dirname(resolve(input)),'motion'):resolve(input), files=readMotion(dir), pack=inspectMotion(files);
+    if(pack.issues.length)throw new Error(pack.issues.map((i)=>`${i.code}: ${i.at}: ${i.message}`).join('\n'));
+    const flag=(name: string)=>{const i=args.indexOf(`--${name}`);return i>=0?args[i+1]:undefined;};
+    console.log(await shareMotion(files,{slug:flag('slug'),github:flag('github'),license:flag('license'),out:flag('out'),pr:args.includes('--pr')}));return;
   }
   if(command==='use'&&input&&file) {
     const path=resolve(file), target=join(dirname(path),'motion');
@@ -95,5 +103,5 @@ export async function motionCmd(args: string[]): Promise<void> {
     } finally {rmSync(temp,{recursive:true,force:true});rmSync(`${temp}.tsx`,{force:true});}
     console.log(`Copied ${files.size} motion files; check with visotalk motion check ${file}`);return;
   }
-  throw new Error('motion list | search [words] | show <slug-or-directory> | use <slug-or-directory> doc.tsx | check doc.tsx');
+  throw new Error('motion list | search [words] | show <slug-or-directory> | use <slug-or-directory> doc.tsx | check doc.tsx | share <motion-dir-or-doc.tsx> [--slug s] [--github login] [--license TEXT,CODE] [--out dir] [--pr]');
 }

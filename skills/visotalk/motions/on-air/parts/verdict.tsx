@@ -25,16 +25,16 @@ export function Verdict({title = '', items, shown = 0, result = '', settle = 0, 
         const plus = raw.trim().startsWith('+'), text = raw.trim().replace(/^[+\-\u2212]\s*/, ''), o = stage(shown - i, 0, 1);
         return (
           <div key={raw} style={{display: 'flex', alignItems: 'center', gap: 18, padding: '7px 0', opacity: o, transform: `translateX(${(1 - o) * -16}px)`}}>
-            <span style={{width: 40, height: 40, flex: 'none', borderRadius: 4, display: 'grid', placeItems: 'center', fontFamily: 'var(--vt-display)', fontSize: plus ? 36 : 44, fontWeight: 800, lineHeight: 1,
-              background: plus ? 'var(--vt-data)' : 'transparent', color: plus ? 'var(--vt-panel)' : 'var(--vt-muted)'}}>{plus ? '+' : '\u2212'}</span>
-            <span style={{fontFamily: 'var(--vt-sans)', fontSize: 40, fontWeight: 700, lineHeight: 1.15, color: plus ? 'var(--vt-text)' : 'var(--vt-muted)'}}>{text}</span>
+            <span style={{width: 40, height: 40, flex: 'none', borderRadius: 4, display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontSize: plus ? 36 : 44, fontWeight: 800, lineHeight: 1,
+              background: plus ? 'var(--color-data)' : 'transparent', color: plus ? 'var(--color-panel)' : 'var(--color-muted)'}}>{plus ? '+' : '\u2212'}</span>
+            <span style={{fontFamily: 'var(--font-sans)', fontSize: 40, fontWeight: 700, lineHeight: 1.15, color: plus ? 'var(--color-text)' : 'var(--color-muted)'}}>{text}</span>
           </div>
         );
       })}
       {result && (
         <>
-          <div style={{height: 3, margin: '16px 0 14px', width: `${(100 * s).toFixed(1)}%`, background: 'var(--vt-data)'}} />
-          <div style={{fontFamily: 'var(--vt-display)', fontSize: 50, fontWeight: 800, lineHeight: 1.1, color: 'var(--vt-text)', opacity: s, transform: `translateY(${(1 - s) * 12}px)`}}>{result}</div>
+          <div style={{height: 3, margin: '16px 0 14px', width: `${(100 * s).toFixed(1)}%`, background: 'var(--color-data)'}} />
+          <div style={{fontFamily: 'var(--font-display)', fontSize: 50, fontWeight: 800, lineHeight: 1.1, color: 'var(--color-text)', opacity: s, transform: `translateY(${(1 - s) * 12}px)`}}>{result}</div>
         </>
       )}
     </div>

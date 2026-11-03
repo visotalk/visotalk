@@ -40,15 +40,15 @@ export function Step({x, y, n, label = '', side = 'right', show = 1}: {x: number
   return (
     <div style={{position: 'absolute', left: x, top: y, width: 0, height: 0, transform: `scale(${(1 / z).toFixed(4)})`, transformOrigin: '0 0', pointerEvents: 'none'}}>
       <svg width={1} height={1} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}}>
-        <circle cx={0} cy={0} r={6} fill="var(--vt-data)" stroke="#fff" strokeWidth={2.5} opacity={lead} />
-        <line x1={0} y1={0} x2={end[0] * lead} y2={end[1] * lead} stroke="var(--vt-data)" strokeWidth={3} strokeLinecap="round" />
+        <circle cx={0} cy={0} r={6} fill="var(--color-data)" stroke="#fff" strokeWidth={2.5} opacity={lead} />
+        <line x1={0} y1={0} x2={end[0] * lead} y2={end[1] * lead} stroke="var(--color-data)" strokeWidth={3} strokeLinecap="round" />
       </svg>
       <div style={{position: 'absolute', ...place, height: H, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', boxSizing: 'border-box',
-        padding: label ? `0 24px 0 ${(H - DISC) / 2}px` : (H - DISC) / 2, borderRadius: H / 2, background: 'var(--vt-data)',
+        padding: label ? `0 24px 0 ${(H - DISC) / 2}px` : (H - DISC) / 2, borderRadius: H / 2, background: 'var(--color-data)',
         boxShadow: '0 14px 28px -12px rgba(47, 91, 255, 0.65), 0 0 0 3px rgba(255, 255, 255, 0.9)', transform: `scale(${pop.toFixed(3)})`}}>
-        <div style={{width: DISC, height: DISC, borderRadius: DISC / 2, background: '#fff', color: 'var(--vt-data)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--vt-sans)', fontWeight: 700, fontSize: 32, lineHeight: 1}}>{n}</div>
-        {label && <div style={{marginLeft: 14, fontFamily: 'var(--vt-sans)', fontSize: 34, fontWeight: 700, color: '#fff', opacity: text, transform: `translateX(${(-10 * (1 - text)).toFixed(1)}px)`}}>{label}</div>}
+        <div style={{width: DISC, height: DISC, borderRadius: DISC / 2, background: '#fff', color: 'var(--color-data)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 32, lineHeight: 1}}>{n}</div>
+        {label && <div style={{marginLeft: 14, fontFamily: 'var(--font-sans)', fontSize: 34, fontWeight: 700, color: '#fff', opacity: text, transform: `translateX(${(-10 * (1 - text)).toFixed(1)}px)`}}>{label}</div>}
       </div>
     </div>
   );

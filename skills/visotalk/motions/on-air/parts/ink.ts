@@ -7,11 +7,11 @@ export const stage = (p: number, a: number, b: number) => {
 };
 /** A tag's ground: ink, nearly opaque, with a short shadow so it sits on the footage rather than in it */
 export const tag = {
-  background: 'color-mix(in srgb, var(--vt-panel) 90%, transparent)',
+  background: 'color-mix(in srgb, var(--color-panel) 90%, transparent)',
   borderRadius: 4,
   boxShadow: '0 12px 28px -14px rgba(0, 0, 0, 0.85)',
 } as const;
 /** The small spaced label over a tag's main line */
-export const eyebrow = {fontFamily: 'var(--vt-mono)', fontSize: 26, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--vt-data)'} as const;
+export const eyebrow = {fontFamily: 'var(--font-mono)', fontSize: 26, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--color-data)'} as const;
 /** A wipe that uncovers its content from the left as `p` goes from 0 to 1 */
 export const wipe = (p: number) => ({clipPath: `inset(-40px ${(100 * (1 - unit(p))).toFixed(2)}% -40px -40px)`});

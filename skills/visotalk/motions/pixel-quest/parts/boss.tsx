@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import type {ReactNode} from 'react';
 import {C, FLOOR, Screen, Sprite, Window, Words, clamp, kept, px, ringPixels, steps, twos, type Art} from './pixel.ts';
 
@@ -64,7 +64,7 @@ function blast(x: number, y: number, life: number, key: string): ReactNode[] {
 }
 
 export function Boss({x = 340, name = 'BOSS', enter = 0, hp = 1, hit = 0, defeat = 0}: {x?: number; name?: string; enter?: number; hp?: number; hit?: number; defeat?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (enter <= 0 || defeat >= 1) return null;
   const X = px(x);
   const e = steps(enter, 20);

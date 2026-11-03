@@ -30,11 +30,11 @@ function Post({x, foot, label, note, rise, k}: {x: number; foot: number; label: 
   // drawn at its true size for its depth, so the row of posts converges on the horizon
   return (
     <div style={{position: 'absolute', inset: 0, transform: `scale(${k.toFixed(4)})`, transformOrigin: '960px 540px'}}>
-      <div style={{position: 'absolute', left: x - 3, top, width: 6, height: Math.max(0, foot + 6 - top), opacity: 0.9 * stand, background: hazed('var(--vt-text)', 0.25 + fog * 0.6)}} />
-      <div style={{position: 'absolute', left: x - 9, top: top - 3, width: 18, height: 3, opacity: stand, background: hazed('var(--vt-data)', fog * 0.5)}} />
+      <div style={{position: 'absolute', left: x - 3, top, width: 6, height: Math.max(0, foot + 6 - top), opacity: 0.9 * stand, background: hazed('var(--color-text)', 0.25 + fog * 0.6)}} />
+      <div style={{position: 'absolute', left: x - 9, top: top - 3, width: 18, height: 3, opacity: stand, background: hazed('var(--color-data)', fog * 0.5)}} />
       <div style={{position: 'absolute', left: x - 400, top: top - 150, width: 800, textAlign: 'center', opacity: read}}>
-        <div style={{fontFamily: 'var(--vt-display)', fontSize: 76, fontWeight: 400, lineHeight: 1, color: hazed('var(--vt-text)', fog * 0.6), whiteSpace: 'nowrap'}}>{label}</div>
-        {note && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 40, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 12, opacity: unit((grow * k - 0.62) / 0.2), color: hazed('var(--vt-muted)', fog * 0.6), whiteSpace: 'nowrap'}}>{note}</div>}
+        <div style={{fontFamily: 'var(--font-display)', fontSize: 76, fontWeight: 400, lineHeight: 1, color: hazed('var(--color-text)', fog * 0.6), whiteSpace: 'nowrap'}}>{label}</div>
+        {note && <div style={{fontFamily: 'var(--font-sans)', fontSize: 40, fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 12, opacity: unit((grow * k - 0.62) / 0.2), color: hazed('var(--color-muted)', fog * 0.6), whiteSpace: 'nowrap'}}>{note}</div>}
       </div>
     </div>
   );

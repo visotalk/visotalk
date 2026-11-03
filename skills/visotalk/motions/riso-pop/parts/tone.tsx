@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {CANVAS, Plate, Print, Screens, dotsPath, unit, type Ink, type Pt} from './riso.ts';
 
 export const meta = {
@@ -25,7 +25,7 @@ export const meta = {
 type Props = {from: Pt; to: Pt; bend?: number; width?: [number, number]; ink?: Ink; density?: number; grow?: number; label?: string; rise?: number; view?: [number, number, number]; slip?: number};
 
 export function Tone({from, to, bend = 120, width = [60, 260], ink = 'pink', density = 0.75, grow = 1, rise = 36, label = '', view = [1, 0, 0], slip = 0}: Props) {
-  const now = useDocTime();
+  const now = useCompositionTime();
   if (grow <= 0) return null;
   const [x0, y0] = from, [x1, y1] = to, len = Math.hypot(x1 - x0, y1 - y0), nx = (y1 - y0) / len, ny = -(x1 - x0) / len;
   const cx = (x0 + x1) / 2 - nx * bend, cy = (y0 + y1) / 2 - ny * bend;

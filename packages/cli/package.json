@@ -1,29 +1,47 @@
 {
   "name": "visotalk",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "VisoTalk: explainer videos whose timeline is the narration. Write one, then validate, play and render it to video",
   "license": "MIT",
-  "repository": {"type": "git", "url": "git+https://github.com/visotalk/visotalk.git", "directory": "packages/cli"},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/visotalk/visotalk.git",
+    "directory": "packages/cli"
+  },
   "homepage": "https://github.com/visotalk/visotalk#readme",
-  "bugs": {"url": "https://github.com/visotalk/visotalk/issues"},
+  "bugs": {
+    "url": "https://github.com/visotalk/visotalk/issues"
+  },
   "type": "module",
-  "bin": {"visotalk": "./dist/packages/cli/src/main.js"},
-  "files": ["dist", "README.md", "LICENSE"],
-  "engines": {"node": ">=22.12.0"},
-  "scripts": {"prepack": "node scripts/bundle.mjs"},
+  "bin": {
+    "visotalk": "./dist/packages/cli/src/main.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "prepack": "node scripts/bundle.mjs"
+  },
   "dependencies": {
+    "@fontsource/inter": "5.1.0",
+    "@fontsource/jetbrains-mono": "5.1.1",
+    "@motionhub/cli": "0.1.0",
+    "@motionhub/runtime": "0.1.0",
     "@puppeteer/browsers": "3.2.6",
     "esbuild": "0.28.2",
     "puppeteer-core": "25.16.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "three": "0.187.0",
-    "@fontsource/inter": "5.1.0",
-    "@fontsource/jetbrains-mono": "5.1.1"
+    "three": "0.187.0"
   },
   "devDependencies": {
+    "@visotalk/exporter": "workspace:*",
     "@visotalk/ir": "workspace:*",
-    "@visotalk/runtime": "workspace:*",
-    "@visotalk/exporter": "workspace:*"
+    "@visotalk/runtime": "workspace:*"
   }
 }

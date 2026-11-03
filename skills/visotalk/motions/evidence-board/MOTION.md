@@ -13,7 +13,7 @@ Not a detective cork board (no fingerprints, tape, mugshots, stamps or handwriti
 
 ## 2. Ground and material
 
-`board.tsx`: warm charcoal felt (`bg`) with a weave and old pin holes, one soft light from above, a vignette; a camera (`data-vt-camera`) over board pixels. `card.tsx`: paper (`panel`), a photo's whiter mount or an aged slip (`panel2`), a shadow that tightens as it lands, one steel pin (threads end on small tacks), a tag. A claim with no source is a torn slip. Photographs are real, licensed prints.
+`board.tsx`: warm charcoal felt (`bg`) with a weave and old pin holes, one soft light from above, a vignette; a camera (`data-camera`) over board pixels. `card.tsx`: paper (`panel`), a photo's whiter mount or an aged slip (`panel2`), a shadow that tightens as it lands, one steel pin (threads end on small tacks), a tag. A claim with no source is a torn slip. Photographs are real, licensed prints.
 
 ## 3. Colour roles
 

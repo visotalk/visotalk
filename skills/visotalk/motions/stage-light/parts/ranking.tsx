@@ -23,10 +23,10 @@ export function Ranking({rows, shown = 99, focus = -1, width = 1200}: {rows: Row
         const on = focus < 0 || focus === i;
         return (
           <div key={i} style={{...litStyle(on ? 1 : 0.2), visibility: i < Math.floor(shown) ? 'visible' : 'hidden', display: 'flex', alignItems: 'baseline', gap: 28,
-            padding: '16px 0', borderBottom: '1px solid var(--vt-border)'}}>
-            <div style={{width: 110, fontFamily: 'var(--vt-sans)', fontSize: 30, color: 'var(--vt-muted)', fontVariantNumeric: 'tabular-nums'}}>{r.note ?? ''}</div>
-            <div style={{flex: 1, minWidth: 0, fontFamily: 'var(--vt-display)', fontSize: 58, fontWeight: 800, textTransform: 'uppercase', color: 'var(--vt-text)', lineHeight: 1}}>{r.label}</div>
-            <div style={{fontFamily: 'var(--vt-display)', fontSize: 64, fontWeight: 800, lineHeight: 1, color: on && focus >= 0 ? 'var(--vt-data)' : 'var(--vt-text)', whiteSpace: 'nowrap'}}>{r.value}</div>
+            padding: '16px 0', borderBottom: '1px solid var(--color-border)'}}>
+            <div style={{width: 110, fontFamily: 'var(--font-sans)', fontSize: 30, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums'}}>{r.note ?? ''}</div>
+            <div style={{flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 58, fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-text)', lineHeight: 1}}>{r.label}</div>
+            <div style={{fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 800, lineHeight: 1, color: on && focus >= 0 ? 'var(--color-data)' : 'var(--color-text)', whiteSpace: 'nowrap'}}>{r.value}</div>
           </div>
         );
       })}

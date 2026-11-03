@@ -21,7 +21,7 @@ type P = [number, number];
 export function CutLine({from, to, letter = 'A', look = 1, draw = 1, accent = false}: {from: P; to: P; letter?: string; look?: number; draw?: number; accent?: boolean}) {
   const dx = to[0] - from[0], dy = to[1] - from[1], len = Math.hypot(dx, dy) || 1;
   const u = [dx / len, dy / len], n = [-u[1] * look, u[0] * look];
-  const color = accent ? ACCENT : 'var(--vt-text)';
+  const color = accent ? ACCENT : 'var(--color-text)';
   const end = (p: P, dir: number) => `M${p[0]} ${p[1]} L${p[0] + u[0] * 34 * dir} ${p[1] + u[1] * 34 * dir}`;
   const marks = phase(draw, 0.7, 1);
   const arrow = (p: P) => {

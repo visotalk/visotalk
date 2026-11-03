@@ -32,7 +32,7 @@ export const pinAt = (x: number, w: number, y: number, pinX = 0.5, rot = 0): [nu
   return [x + w / 2 + dx * Math.cos(a) - 16 * Math.sin(a), y + dx * Math.sin(a) + 16 * Math.cos(a)];
 };
 
-const SURFACE: Record<string, string> = {paper: 'var(--vt-panel)', print: 'color-mix(in srgb, var(--vt-panel) 45%, white)', slip: 'var(--vt-panel2)'};
+const SURFACE: Record<string, string> = {paper: 'var(--color-panel)', print: 'color-mix(in srgb, var(--color-panel) 45%, white)', slip: 'var(--color-panel2)'};
 
 export function Card({x, y, w, rot = 0, pin = 1, pinX = 0.5, focus = 0, hang = 0, tag = '', date = '', paper = 'paper', children}: {x: number; y: number; w: number; rot?: number; pin?: number; pinX?: number; focus?: number; hang?: number; tag?: string; date?: string; paper?: string; children?: React.ReactNode}) {
   const p = unit(pin);
@@ -58,17 +58,17 @@ export function Card({x, y, w, rot = 0, pin = 1, pinX = 0.5, focus = 0, hang = 0
       {/* the source tag: a dark printed label tucked under the card's bottom edge, slid out to the left */}
       {out > 0.001 && tag && (
         <div style={{position: 'absolute', left: 22, bottom: 0, transform: `translateY(${(56 * out - 4).toFixed(1)}px)`, display: 'flex', alignItems: 'center', gap: 14,
-          padding: '9px 16px 9px 14px', background: 'color-mix(in srgb, var(--vt-bg) 45%, black)', color: 'var(--vt-text)', boxShadow: '0 6px 10px -4px rgba(0, 0, 0, 0.7)', whiteSpace: 'nowrap'}}>
-          <span style={{width: 7, height: 7, borderRadius: 4, background: 'var(--vt-text)', opacity: 0.85}} />
-          <span style={{fontFamily: 'var(--vt-sans)', fontSize: 23, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase'}}>{tag}</span>
-          {date && <span style={{fontFamily: 'var(--vt-mono)', fontSize: 22, color: 'var(--vt-muted)', letterSpacing: '0.04em'}}>{date}</span>}
+          padding: '9px 16px 9px 14px', background: 'color-mix(in srgb, var(--color-bg) 45%, black)', color: 'var(--color-text)', boxShadow: '0 6px 10px -4px rgba(0, 0, 0, 0.7)', whiteSpace: 'nowrap'}}>
+          <span style={{width: 7, height: 7, borderRadius: 4, background: 'var(--color-text)', opacity: 0.85}} />
+          <span style={{fontFamily: 'var(--font-sans)', fontSize: 23, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase'}}>{tag}</span>
+          {date && <span style={{fontFamily: 'var(--font-mono)', fontSize: 22, color: 'var(--color-muted)', letterSpacing: '0.04em'}}>{date}</span>}
         </div>
       )}
       {paper === 'none' ? (
         // content with its own surface (a torn slip) casts the same shadow from its own outline
         <div style={{position: 'relative', filter: `drop-shadow(0 ${(5 + 30 * lift).toFixed(1)}px ${(5 + 18 * lift).toFixed(1)}px rgba(0, 0, 0, 0.6))`}}>{children}</div>
       ) : (
-        <div style={{position: 'relative', background: SURFACE[paper] ?? SURFACE.paper, boxShadow: shadow, color: 'var(--vt-bg)'}}>
+        <div style={{position: 'relative', background: SURFACE[paper] ?? SURFACE.paper, boxShadow: shadow, color: 'var(--color-bg)'}}>
           {/* the paper's own light: a little brighter where the overhead lamp falls */}
           <div style={{position: 'absolute', inset: 0, background: 'linear-gradient(172deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 40%, rgba(60, 45, 20, 0.07) 100%)', pointerEvents: 'none'}} />
           {children}

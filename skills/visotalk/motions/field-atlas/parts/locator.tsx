@@ -44,15 +44,15 @@ export function Locator({x = 1660, y = 250, r = 120, zoom = 0, show = 1}: {x?: n
     <div style={{position: 'absolute', left: x - r - 14, top: y - r - 14, width: 2 * r + 28, height: 2 * r + 28, opacity: a}}>
       <svg width={2 * r + 28} height={2 * r + 28} viewBox={`${960 - (r + 14) / scale} ${540 - (r + 14) / scale} ${(2 * r + 28) / scale} ${(2 * r + 28) / scale}`}>
         <defs><clipPath id="fa-locator"><circle cx={960} cy={540} r={r / scale} /></clipPath></defs>
-        <circle cx={960} cy={540} r={(r + 8) / scale} fill="var(--vt-panel)" stroke="var(--vt-border)" strokeWidth={1 / scale} />
+        <circle cx={960} cy={540} r={(r + 8) / scale} fill="var(--color-panel)" stroke="var(--color-border)" strokeWidth={1 / scale} />
         <g clipPath="url(#fa-locator)">
-        <circle cx={960} cy={540} r={R} fill="var(--vt-panel2)" />
-        <path d={land} fill="var(--vt-panel)" stroke="var(--vt-op)" strokeWidth={1.4 / scale} strokeLinejoin="round" />
-        <circle cx={960} cy={540} r={R} fill="none" stroke="var(--vt-text)" strokeWidth={2 / scale} />
+        <circle cx={960} cy={540} r={R} fill="var(--color-panel2)" />
+        <path d={land} fill="var(--color-panel)" stroke="var(--color-op)" strokeWidth={1.4 / scale} strokeLinejoin="round" />
+        <circle cx={960} cy={540} r={R} fill="none" stroke="var(--color-text)" strokeWidth={2 / scale} />
         </g>
-        <circle cx={960} cy={540} r={r / scale} fill="none" stroke="var(--vt-text)" strokeWidth={1.6 / scale} />
-        {edge.length > 2 && <path d={edge.join('') + 'Z'} fill="color-mix(in srgb, var(--vt-data) 20%, transparent)" stroke="var(--vt-data)" strokeWidth={3.5 / scale} strokeLinejoin="round" />}
-        {edge.length > 2 && <circle cx={960} cy={540} r={5 / scale} fill="var(--vt-data)" />}
+        <circle cx={960} cy={540} r={r / scale} fill="none" stroke="var(--color-text)" strokeWidth={1.6 / scale} />
+        {edge.length > 2 && <path d={edge.join('') + 'Z'} fill="color-mix(in srgb, var(--color-data) 20%, transparent)" stroke="var(--color-data)" strokeWidth={3.5 / scale} strokeLinejoin="round" />}
+        {edge.length > 2 && <circle cx={960} cy={540} r={5 / scale} fill="var(--color-data)" />}
       </svg>
     </div>
   );

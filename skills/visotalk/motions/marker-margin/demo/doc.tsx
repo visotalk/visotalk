@@ -34,7 +34,7 @@ export default <Doc spec="0.7.0" id="marker-margin-sample" title="How a school c
 <Part id="steps" x={100} y={110} w={480} h={300}>{() => <Steps items={['float in', 'set channel', 'call school']} shown={useProp('shown', 0)} done={useProp('done', 0)} size={48} />}</Part>
 <Part id="channel" x={0} y={0} w={1920} h={1080}>{() => <Arrow text="channel" at={[1150, 560]} from={[1210, 570]} to={[1085, 425]} bow={0.2} draw={useProp('draw', 0)} seed="channel" />}</Part>
 <Part id="planner" x={0} y={0} w={1920} h={1080}>{() => (
-  <Screen asset="screen" start={42.98} show={useProp('show', 0)}>
+  <Screen src="screen" startAt={42.98} show={useProp('show', 0)}>
     <Box x={1150} y={214} w={485} h={72} draw={useProp('box', 0)} seed="window" />
     <Click at={[1263, 772]} r={86} draw={useProp('click', 0)} seed="call" />
   </Screen>

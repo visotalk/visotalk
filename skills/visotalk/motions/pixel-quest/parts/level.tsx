@@ -1,5 +1,5 @@
 import React from 'react';
-import {useProp, useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, FLOOR, H, W, Screen, Sprite, Words, px, steps, twos, type Art} from './pixel.ts';
 
 export const meta = {
@@ -93,7 +93,7 @@ const ridge = (x: number) => Math.round((Math.sin(x * 0.007 + 2.1) * 20 + Math.s
 const hill = (x: number) => Math.round((Math.sin(x * 0.011) * 16 + Math.sin(x * 0.031 + 1.7) * 7 + Math.sin(x * 0.005 + 0.4) * 10) / 2) * 2;
 
 export function Level({scroll = 0, stages = 3, boss = 0, dusk = 0, shake = 0}: {scroll?: number; stages?: number; boss?: number; dusk?: number; shake?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const pal = SKIES[Math.round(steps(dusk, 2) * 2)];
   const s = px(scroll);
   const jolt = shake > 0 && shake < 1 ? [0, 3, -3, 2, -2, 1, -1, 0][Math.min(7, Math.floor(shake * 8))] : 0;
@@ -108,7 +108,7 @@ export function Level({scroll = 0, stages = 3, boss = 0, dusk = 0, shake = 0}: {
   const dither = (a: string, b: string, top: number) => [0, 2].map((d) => `repeating-conic-gradient(${a} 0 25%, ${b} 0 50%) 0 ${(top + d) * 4}px / 8px 8px repeat-x`).join(', ');
   const deep = [solid(C.dirt, 220, 2), dither(C.dirt, C.dirtDark, 222), solid(C.dirtDark, 226, 12), dither(C.dirtDark, C.deep, 238), solid(C.deep, 242, 12), dither(C.deep, C.ink, 254), C.ink].join(', ');
   return (
-    <div data-vt-camera="" style={{position: 'absolute', left: 0, top: 0, width: W * 4, height: H * 4, overflow: 'hidden', background: C.ink}}>
+    <div data-camera="" style={{position: 'absolute', left: 0, top: 0, width: W * 4, height: H * 4, overflow: 'hidden', background: C.ink}}>
     <div style={{position: 'absolute', left: 0, top: 0, width: W * 4, height: H * 4, background: deep}} />
     <Screen style={{height: 220 * 4}}>
       <defs>

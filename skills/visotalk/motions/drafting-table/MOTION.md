@@ -66,7 +66,7 @@ Optional: a faint pen tick, a soft click as a part settles. No music is part of 
 - The whole drawing appearing at once. Fix: tween the line work in drafting order over the words that describe it.
 - Labels inside a busy section. Fix: a leader out to clear sheet, the shelf away from the drawing.
 - Measuring a turned view. Fix: turn back to a flat elevation before a dimension.
-- Lines far past a part (hatching a whole box, a magnified drawing hidden by its circle): `qa` measures every line where it runs. Fix: hatch the material's box; magnify only what lies in the small circle.
+- Lines far past a part (hatching a whole box, a magnified drawing hidden by its circle): a line counts where it runs, not where it is hidden. Fix: hatch the material's box; magnify only what lies in the small circle.
 
 ## 11. Freedom in each work
 

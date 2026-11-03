@@ -1,6 +1,6 @@
 // The notebook's three pens, by what they mean: ink for what is drawn and said, red for the result that matters, pencil for working and asides.
 export type Pen = 'ink' | 'red' | 'pencil';
-export const PEN: Record<Pen, string> = {ink: 'var(--vt-text)', red: 'var(--vt-grad)', pencil: 'var(--vt-muted)'};
+export const PEN: Record<Pen, string> = {ink: 'var(--color-text)', red: 'var(--color-grad)', pencil: 'var(--color-muted)'};
 
 /** 0 to 1, whatever is passed */
 export const unit = (v: number) => Math.max(0, Math.min(1, v));

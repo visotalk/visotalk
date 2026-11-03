@@ -28,8 +28,8 @@ export function Keys({keys, press = 0, show = 1}: {keys: string[]; press?: numbe
             <div style={{position: 'absolute', inset: 0, top: 8, borderRadius: 18, background: '#CFCDC6'}} />
             <div style={{position: 'absolute', left: 0, right: 0, top: 6 * down, height: 86, borderRadius: 18, background: '#FFFFFF',
               boxShadow: `0 ${(2 + 8 * (1 - down)).toFixed(1)}px ${(6 + 10 * (1 - down)).toFixed(1)}px -4px rgba(38, 36, 30, 0.35), inset 0 -3px 0 rgba(38, 36, 30, 0.06)`,
-              outline: down > 0.5 ? '3px solid var(--vt-data)' : 'none', outlineOffset: 3,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--vt-sans)', fontSize: wide ? 30 : 42, fontWeight: 700, color: 'var(--vt-text)'}}>{k}</div>
+              outline: down > 0.5 ? '3px solid var(--color-data)' : 'none', outlineOffset: 3,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sans)', fontSize: wide ? 30 : 42, fontWeight: 700, color: 'var(--color-text)'}}>{k}</div>
           </div>
         );
       })}

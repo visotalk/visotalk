@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, FLOOR, Screen, Sprite, px, steps, twos, type Art} from './pixel.ts';
 
 export const meta = {
@@ -99,7 +99,7 @@ const STRIDE: Art = ['...knnk.knnk....', '..knnk...knnk...', '.kNNNk...kNNNk..',
 const PASS: Art = ['....knnnk.......', '....knnnk.......', '....kNNNNk......', '....kkkkkk......'];
 
 export function Hero({x = 120, pose = 'idle', hop = 0, face = 'front'}: {x?: number; pose?: string; hop?: number; face?: string}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const f = twos(t);
   // a hop is six drawings up and six down, a parabola in whole pixels
   const h = hop > 0 && hop < 1 ? Math.round(Math.sin(steps(hop, 12) * Math.PI) * 14) : 0;

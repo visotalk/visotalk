@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, FLOOR, ICONS, Screen, Sprite, Words, px, steps, twos, type Art} from './pixel.ts';
 import {slotAt} from './hud.tsx';
 
@@ -47,7 +47,7 @@ const LID_OPEN: Art = [
 ];
 
 export function Loot({x = 300, icon = 'star', label = '', open = 0, fly = 0, chest = true, slot = 0, slots = 3}: {x?: number; icon?: string; label?: string; open?: number; fly?: number; chest?: boolean; slot?: number; slots?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (open <= 0) return null;
   const o = steps(open, 12);
   const X = px(x) - 8;

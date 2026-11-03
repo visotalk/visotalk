@@ -114,7 +114,7 @@ export function codeIssues(p: Project): Issue[] {
 }
 
 /** What the player's build gives a document to import, besides its own files and packages installed beside it. */
-const PROVIDED = ['@visotalk/*', 'react', 'react/*', 'react-dom', 'react-dom/*', 'three', 'three/*'];
+const PROVIDED = ['@visotalk/*', '@motionhub/runtime', 'react', 'react/*', 'react-dom', 'react-dom/*', 'three', 'three/*'];
 
 /**
  * What the player's build would refuse in the document's code, found the way it finds it (esbuild, over the document and every file it imports), so
@@ -134,7 +134,7 @@ function unbuildable(p: Project): Issue[] {
       fix: /^Could not resolve "visotalk(\/|")/.test(error.text)
         ? "the markup's components are imported from '@visotalk/jsx', and the hooks (useProp, useTime, Obj…) from '@visotalk/runtime'"
         : /^Could not resolve/.test(error.text)
-          ? "a document imports '@visotalk/jsx', '@visotalk/runtime', react, three, its own files by a relative path, or a package installed beside it"
+          ? "a document imports '@visotalk/jsx', '@visotalk/runtime', '@motionhub/runtime' (a motion's components), react, three, its own files by a relative path, or a package installed beside it"
           : undefined,
     }));
   }
@@ -543,6 +543,7 @@ const THREE = {
 const SHARED = [
   {key: 'runtime', spec: '@visotalk/runtime', cjs: false},
   {key: 'jsx', spec: '@visotalk/jsx', cjs: false},
+  {key: 'motion', spec: '@motionhub/runtime', cjs: false},
   {key: 'react', spec: 'react', cjs: true},
   {key: 'jsxRuntime', spec: 'react/jsx-runtime', cjs: true},
   {key: 'reactDom', spec: 'react-dom', cjs: true},
@@ -557,7 +558,7 @@ const SHARED = [
 async function runtimeShims(work: string): Promise<{entry: string; alias: Record<string, string>; shimmed: Record<string, string>}> {
   const req = createRequire(RUNTIME);
   // one copy of React for the runtime and for the parts, wherever the document lives
-  const alias = {'@visotalk/runtime': RUNTIME, '@visotalk/ir': IR, '@visotalk/jsx': JSX, ...Object.fromEntries(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'].map((n) => [n, req.resolve(n)]))};
+  const alias = {'@visotalk/runtime': RUNTIME, '@visotalk/ir': IR, '@visotalk/jsx': JSX, '@motionhub/runtime': req.resolve('@motionhub/runtime'), ...Object.fromEntries(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'].map((n) => [n, req.resolve(n)]))};
   const dir = join(work, 'shims');
   mkdirSync(dir, {recursive: true});
   const entry = join(dir, 'runtime.ts');

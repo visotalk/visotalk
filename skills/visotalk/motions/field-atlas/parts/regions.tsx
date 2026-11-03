@@ -22,7 +22,7 @@ export const meta = {
 };
 
 /** The colour of a value on the ochre scale: the land's paper at 0, the full ochre at `max` */
-export const ochre = (v: number, max: number) => `color-mix(in oklab, var(--vt-grad) ${Math.round(18 + 82 * unit(v / max))}%, var(--vt-panel))`;
+export const ochre = (v: number, max: number) => `color-mix(in oklab, var(--color-grad) ${Math.round(18 + 82 * unit(v / max))}%, var(--color-panel))`;
 
 /** Where along a route, 0 to 1 by distance, a feature is nearest */
 function nearest(route: LonLat[], f: Feature): number {
@@ -53,10 +53,10 @@ export function Regions({values, max = 1, fill = 0, reach, extra, lift = 0, dim 
     const a = unit((fill - when) / (reach ? 0.06 : 1.4 / n));
     if (a <= 0) continue;
     const d = view.path(f), top = values[id] >= max && up > 0;
-    if (!top) { ops.push({d, fill: ochre(values[id], max), stroke: 'var(--vt-panel)', width: 1.4, alpha: a}); continue; }
-    ops.push({d, fill: 'var(--vt-panel)', alpha: a});
+    if (!top) { ops.push({d, fill: ochre(values[id], max), stroke: 'var(--color-panel)', width: 1.4, alpha: a}); continue; }
+    ops.push({d, fill: 'var(--color-panel)', alpha: a});
     raised.push({d, fill: 'rgb(34, 38, 43)', alpha: a * 0.38 * up, blur: 5 + h * 0.5, dy: h * 0.3});
-    raised.push({d, fill: ochre(values[id], max), stroke: 'var(--vt-panel)', width: 1.6, alpha: a, dy: -h});
+    raised.push({d, fill: ochre(values[id], max), stroke: 'var(--color-panel)', width: 1.6, alpha: a, dy: -h});
   }
   ops.push(...raised);
   return <Paint ops={ops} opacity={1 - unit(dim)} />;

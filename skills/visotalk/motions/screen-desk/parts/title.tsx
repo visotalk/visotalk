@@ -16,10 +16,10 @@ export const meta = {
 
 export function TitleCard({title, eyebrow = '', icon = '', width = 720}: {title: string; eyebrow?: string; icon?: string; width?: number}) {
   return (
-    <div style={{width, boxSizing: 'border-box', padding: '40px 46px 46px', borderRadius: 22, background: 'var(--vt-panel)', boxShadow: RESTING, fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
+    <div style={{width, boxSizing: 'border-box', padding: '40px 46px 46px', borderRadius: 22, background: 'var(--color-panel)', boxShadow: RESTING, fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
       <div style={{display: 'flex', alignItems: 'center', gap: 18, marginBottom: 30}}>
-        {icon && <div style={{width: 64, height: 64, borderRadius: 16, background: 'var(--vt-text)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700}}>{icon}</div>}
-        {eyebrow && <div style={{fontFamily: 'var(--vt-mono)', fontSize: 22, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--vt-data)', fontWeight: 700}}>{eyebrow}</div>}
+        {icon && <div style={{width: 64, height: 64, borderRadius: 16, background: 'var(--color-text)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700}}>{icon}</div>}
+        {eyebrow && <div style={{fontFamily: 'var(--font-mono)', fontSize: 22, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-data)', fontWeight: 700}}>{eyebrow}</div>}
       </div>
       <div style={{fontSize: 68, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.02em', whiteSpace: 'pre-line'}}>{title}</div>
     </div>

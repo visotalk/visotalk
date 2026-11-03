@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {RED, ink, label, stage, wipe} from './package.ts';
 
 export const meta = {
@@ -15,9 +15,9 @@ export const meta = {
   preview: 9,
 };
 
-/** A full-width band: <Part x={96} y={964} w={1728} h={62}>. It crawls by the film's clock, so it never jumps between scenes. */
+/** A full-width band, in a box at x 96, y 964, 1728 × 62. It crawls by the film's clock, so it never jumps between scenes. */
 export function Ticker({label: word, items, speed = 110, show = 1}: {label: string; items: string[]; speed?: number; show?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const block = stage(show, 0, 0.45), band = stage(show, 0.3, 1);
   // enough copies to cover the crawl of a long film (an estimate of the text's width, generous on purpose)
   const chars = items.join('').length + items.length * 4;
@@ -28,11 +28,11 @@ export function Ticker({label: word, items, speed = 110, show = 1}: {label: stri
       <div style={{...wipe(block, 'bottom'), background: RED, padding: '0 22px', display: 'flex', alignItems: 'center', zIndex: 1}}>
         <span style={{...label, fontSize: 38, fontWeight: 900, color: '#FFFFFF', whiteSpace: 'nowrap'}}>{word}</span>
       </div>
-      <div data-vt-camera="" style={{...ink, ...wipe(band), flex: 1, position: 'relative', overflow: 'hidden', borderTop: '2px solid var(--vt-border)'}}>
+      <div data-camera="" style={{...ink, ...wipe(band), flex: 1, position: 'relative', overflow: 'hidden', borderTop: '2px solid var(--color-border)'}}>
         <div style={{position: 'absolute', left: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', transform: `translateX(${Math.round(28 - speed * Math.max(0, t))}px)`}}>
           {run.map((it, i) => (
             <span key={i} style={{display: 'inline-flex', alignItems: 'center'}}>
-              <span style={{fontFamily: 'var(--vt-sans)', fontWeight: 700, fontSize: 33, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--vt-text)'}}>{it}</span>
+              <span style={{fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 33, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--color-text)'}}>{it}</span>
               <span style={{width: 10, height: 10, background: RED, margin: '0 28px'}} />
             </span>
           ))}

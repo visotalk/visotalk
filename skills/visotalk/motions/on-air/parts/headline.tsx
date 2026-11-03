@@ -21,9 +21,9 @@ export function Headline({text, mark = '', under = 0, show = 1, width = 900}: {t
   const parts = at < 0 ? [text] : [text.slice(0, at), mark, text.slice(at + mark.length)];
   return (
     <div style={{...tag, display: 'inline-block', maxWidth: width, padding: '22px 32px 26px', opacity: open, transform: `translateY(${(1 - open) * 20}px)`,
-      fontFamily: 'var(--vt-display)', fontSize: 58, fontWeight: 800, lineHeight: 1.18, color: 'var(--vt-text)'}}>
+      fontFamily: 'var(--font-display)', fontSize: 58, fontWeight: 800, lineHeight: 1.18, color: 'var(--color-text)'}}>
       {parts.map((p, i) => i === 1 ? (
-        <span key={i} style={{backgroundImage: 'linear-gradient(var(--vt-data), var(--vt-data))', backgroundRepeat: 'no-repeat', backgroundPosition: '0 92%', backgroundSize: `${(100 * line).toFixed(1)}% 8px`}}>{p}</span>
+        <span key={i} style={{backgroundImage: 'linear-gradient(var(--color-data), var(--color-data))', backgroundRepeat: 'no-repeat', backgroundPosition: '0 92%', backgroundSize: `${(100 * line).toFixed(1)}% 8px`}}>{p}</span>
       ) : <span key={i}>{p}</span>)}
     </div>
   );

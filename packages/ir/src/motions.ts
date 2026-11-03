@@ -25,9 +25,12 @@ export function builtinMotionList(): {slug: string; version: string; name: Recor
   });
 }
 
-/** MOTION.md's eleven sections, by their fixed numbers.Checked by the CLI's `motion` commands, not by a build: guidance an agent adapted in a work still builds */
+/** MOTION.md's eleven sections, by their fixed numbers, or a catalogue motion's five headings. Checked by the CLI's `motion` commands, not by a build: guidance an agent adapted in a work still builds */
 export const MOTION_SECTIONS = ['Essence, and what it is not','Ground and material','Colour roles','Type and captions','Motion','Composition and framing','Sound','Components','Native moves','Pitfalls','Freedom in each work'] as const;
+/** The headings of the public motion format (motionhub.dev): a motion taken from the catalogue may have only these */
+const FORMAT_HEADINGS = [['Essence'],['Colour','Color'],['Type'],['Motion'],['Avoid']];
 export function motionSectionIssues(markdown: string): MotionIssue[] {
+  if (!/^## \d+\. /m.test(markdown) && FORMAT_HEADINGS.every((names)=>names.some((n)=>new RegExp(`^## ${n}\\b`,'m').test(markdown)))) return [];
   const missing = MOTION_SECTIONS.map((name,i)=>[i+1,name] as const).filter(([n])=>!new RegExp(`^## ${n}\\. `,'m').test(markdown));
   return missing.length ? [{code:'motion.sections',at:'motion/MOTION.md',message:`MOTION.md needs its numbered sections; missing ${missing.map(([n,name])=>`## ${n}. ${name}`).join(', ')}`}] : [];
 }

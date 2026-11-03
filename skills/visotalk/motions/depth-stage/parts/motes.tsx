@@ -1,5 +1,5 @@
 import {useMemo} from 'react';
-import {random, useDocTime} from '@visotalk/runtime';
+import {seededRandom, useCompositionTime} from '@motionhub/runtime';
 import {Plane, SHEET, unit} from './stage.tsx';
 
 export const meta = {
@@ -22,9 +22,9 @@ const DEPTHS = 4;
 
 /** One depth's motes as one painted sheet of soft discs, so the whole cloud is ground the picture stands on, not ink on it */
 function Layer({kind, seed, count, amount, size}: {kind: string; seed: string; count: number; amount: number; size: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const motes = useMemo(() => {
-    const g = random(`depth-stage:motes:${kind}:${seed}`);
+    const g = seededRandom(`depth-stage:motes:${kind}:${seed}`);
     return Array.from({length: count}, () => ({x: g() * SHEET.w, y: g() * SHEET.h, r: 0.5 + g(), speed: 0.5 + g(), phase: g() * 6.28, warm: g()}));
   }, [kind, seed, count]);
   const fall = kind === 'ash' ? 1 : kind === 'embers' ? -1.6 : 0.08;
@@ -35,10 +35,10 @@ function Layer({kind, seed, count, amount, size}: {kind: string; seed: string; c
     const flick = kind === 'embers' ? 0.55 + 0.45 * Math.sin(t * 9 * m.speed + m.phase) : 1;
     const r = Math.max(1.2, size * m.r * (kind === 'embers' ? 1.4 : 1));
     const color = kind === 'embers'
-      ? `color-mix(in srgb, color-mix(in oklab, var(--vt-data), var(--vt-text) ${Math.round(m.warm * 50)}%) ${Math.round(85 * flick)}%, transparent)`
+      ? `color-mix(in srgb, color-mix(in oklab, var(--color-data), var(--color-text) ${Math.round(m.warm * 50)}%) ${Math.round(85 * flick)}%, transparent)`
       : kind === 'ash'
-        ? 'color-mix(in srgb, color-mix(in oklab, var(--vt-grad), var(--vt-text) 30%) 60%, transparent)'
-        : `color-mix(in srgb, color-mix(in oklab, var(--vt-text), var(--vt-data) ${Math.round(m.warm * 40)}%) 55%, transparent)`;
+        ? 'color-mix(in srgb, color-mix(in oklab, var(--color-grad), var(--color-text) 30%) 60%, transparent)'
+        : `color-mix(in srgb, color-mix(in oklab, var(--color-text), var(--color-data) ${Math.round(m.warm * 40)}%) 55%, transparent)`;
     return `radial-gradient(circle ${r.toFixed(1)}px at ${x.toFixed(0)}px ${y.toFixed(0)}px, ${color}, transparent)`;
   });
   return <div style={{position: 'absolute', left: SHEET.x, top: SHEET.y, width: SHEET.w, height: SHEET.h, opacity: unit(amount), background: discs.join(', ')}} />;

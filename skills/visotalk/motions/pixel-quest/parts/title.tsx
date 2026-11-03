@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, Screen, Words, TEXT, steps, twos} from './pixel.ts';
 
 export const meta = {
@@ -18,7 +18,7 @@ export const meta = {
 };
 
 export function Title({title, sub = '', y = 76, drop = 0, shine = 0, leave = 0}: {title: string; sub?: string; y?: number; drop?: number; shine?: number; leave?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (drop <= 0 || leave >= 1) return null;
   const rows = title.split('|');
   const count = rows.reduce((a, r) => a + r.length, 0);

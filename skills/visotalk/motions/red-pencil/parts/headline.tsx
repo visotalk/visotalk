@@ -14,10 +14,10 @@ export const meta = {
 
 export function Headline({kicker = '', title, deck = '', size = 88}: {kicker?: string; title: string; deck?: string; size?: number}) {
   return (
-    <div style={{fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
-      {kicker && <div style={{fontSize: 24, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--vt-muted)', marginBottom: 18}}>{kicker}</div>}
+    <div style={{fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
+      {kicker && <div style={{fontSize: 24, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: 18}}>{kicker}</div>}
       <div style={{fontSize: size, lineHeight: 1.05, fontWeight: 600, letterSpacing: '-0.01em'}}>{title}</div>
-      {deck && <div style={{fontSize: Math.round(size * 0.4), lineHeight: 1.3, fontStyle: 'italic', color: 'var(--vt-muted)', marginTop: 22}}>{deck}</div>}
+      {deck && <div style={{fontSize: Math.round(size * 0.4), lineHeight: 1.3, fontStyle: 'italic', color: 'var(--color-muted)', marginTop: 22}}>{deck}</div>}
     </div>
   );
 }

@@ -21,11 +21,11 @@ export function Quote({text, source = '', show = 1, width = 820}: {text: string;
   const mark = stage(show, 0, 0.2), words = unit((show - 0.15) / 0.7), from = stage(show, 0.85, 1);
   return (
     <div style={{...tag, display: 'inline-block', maxWidth: width, boxSizing: 'border-box', padding: '26px 34px 28px 104px', position: 'relative', opacity: unit(mark * 2)}}>
-      <div style={{position: 'absolute', left: 26, top: 6, fontFamily: 'var(--vt-display)', fontSize: 132, fontWeight: 800, lineHeight: 1, color: 'var(--vt-data)', transform: `translateY(${(1 - mark) * -18}px)`}}>{'\u201c'}</div>
-      <div style={{fontFamily: 'var(--vt-sans)', fontSize: 46, fontWeight: 700, lineHeight: 1.25, color: 'var(--vt-text)'}}>
+      <div style={{position: 'absolute', left: 26, top: 6, fontFamily: 'var(--font-display)', fontSize: 132, fontWeight: 800, lineHeight: 1, color: 'var(--color-data)', transform: `translateY(${(1 - mark) * -18}px)`}}>{'\u201c'}</div>
+      <div style={{fontFamily: 'var(--font-sans)', fontSize: 46, fontWeight: 700, lineHeight: 1.25, color: 'var(--color-text)'}}>
         {pieces.map((p, i) => <span key={i} style={{opacity: unit(words * pieces.length - i)}}>{p}</span>)}
       </div>
-      {source && <div style={{marginTop: 14, fontFamily: 'var(--vt-mono)', fontSize: 26, letterSpacing: '0.04em', color: 'var(--vt-muted)', opacity: from}}>{'\u2014'} {source}</div>}
+      {source && <div style={{marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 26, letterSpacing: '0.04em', color: 'var(--color-muted)', opacity: from}}>{'\u2014'} {source}</div>}
     </div>
   );
 }

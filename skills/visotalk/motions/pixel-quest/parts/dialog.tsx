@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, Screen, Window, Words, TEXT, px, steps, twos} from './pixel.ts';
 
 export const meta = {
@@ -20,7 +20,7 @@ export const meta = {
 };
 
 export function Dialog({text, name = 'TIP', x = 120, y = 48, w = 240, open = 0, typed = 0, mark = ''}: {text: string; name?: string; x?: number; y?: number; w?: number; open?: number; typed?: number; mark?: string}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   const rows = text.split('|');
   const h = 14 + rows.length * 16;
   const o = steps(open, 4);

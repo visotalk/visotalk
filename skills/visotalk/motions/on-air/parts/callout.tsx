@@ -27,11 +27,11 @@ export function Callout({at, to, r = 70, label, draw = 1}: {at: [number, number]
     <div style={{position: 'absolute', inset: 0}}>
       <svg width="100%" height="100%" style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
         <circle cx={at[0]} cy={at[1]} r={r} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={11} strokeDasharray={circ} strokeDashoffset={circ * (1 - ring)} transform={`rotate(-90 ${at[0]} ${at[1]})`} />
-        <circle cx={at[0]} cy={at[1]} r={r} fill="none" stroke="var(--vt-data)" strokeWidth={5} strokeDasharray={circ} strokeDashoffset={circ * (1 - ring)} transform={`rotate(-90 ${at[0]} ${at[1]})`} />
-        {lead > 0 && <line x1={sx} y1={sy} x2={ex} y2={ey} stroke="var(--vt-data)" strokeWidth={4} strokeLinecap="round" />}
+        <circle cx={at[0]} cy={at[1]} r={r} fill="none" stroke="var(--color-data)" strokeWidth={5} strokeDasharray={circ} strokeDashoffset={circ * (1 - ring)} transform={`rotate(-90 ${at[0]} ${at[1]})`} />
+        {lead > 0 && <line x1={sx} y1={sy} x2={ex} y2={ey} stroke="var(--color-data)" strokeWidth={4} strokeLinecap="round" />}
       </svg>
       <div style={{...tag, position: 'absolute', top: to[1] - 34, ...(right ? {left: to[0]} : {right: `calc(100% - ${to[0]}px)`}), padding: '12px 22px', whiteSpace: 'nowrap',
-        fontFamily: 'var(--vt-sans)', fontSize: 38, fontWeight: 700, color: 'var(--vt-text)', opacity: unit(open * 1.5), transform: `scale(${0.92 + 0.08 * open})`, transformOrigin: right ? 'left center' : 'right center'}}>{label}</div>
+        fontFamily: 'var(--font-sans)', fontSize: 38, fontWeight: 700, color: 'var(--color-text)', opacity: unit(open * 1.5), transform: `scale(${0.92 + 0.08 * open})`, transformOrigin: right ? 'left center' : 'right center'}}>{label}</div>
     </div>
   );
 }

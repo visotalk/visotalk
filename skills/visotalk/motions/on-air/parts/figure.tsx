@@ -20,12 +20,12 @@ export function Figure({value = 0, decimals = 0, prefix = '', unit: suffix = '',
   const rise = stage(show, 0, 1);
   const text = value.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
   return (
-    <div style={{...tag, display: 'inline-block', padding: '20px 30px 22px', borderTop: '6px solid var(--vt-data)', opacity: unit(rise * 1.4), transform: `translateY(${(1 - rise) * 24}px)`}}>
+    <div style={{...tag, display: 'inline-block', padding: '20px 30px 22px', borderTop: '6px solid var(--color-data)', opacity: unit(rise * 1.4), transform: `translateY(${(1 - rise) * 24}px)`}}>
       {label && <div style={{...eyebrow, marginBottom: 6}}>{label}</div>}
-      <div style={{fontFamily: 'var(--vt-display)', fontWeight: 800, fontSize: 112, lineHeight: 1, color: 'var(--vt-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
-        {prefix && <span style={{fontSize: 64, marginRight: 6, color: 'var(--vt-muted)'}}>{prefix}</span>}
+      <div style={{fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 112, lineHeight: 1, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
+        {prefix && <span style={{fontSize: 64, marginRight: 6, color: 'var(--color-muted)'}}>{prefix}</span>}
         {text}
-        {suffix && <span style={{fontSize: 60, marginLeft: 10, color: 'var(--vt-data)'}}>{suffix}</span>}
+        {suffix && <span style={{fontSize: 60, marginLeft: 10, color: 'var(--color-data)'}}>{suffix}</span>}
       </div>
     </div>
   );

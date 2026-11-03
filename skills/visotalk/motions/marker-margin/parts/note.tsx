@@ -1,4 +1,4 @@
-import {random} from '@visotalk/runtime';
+import {seededRandom} from '@motionhub/runtime';
 import {INK, KEY, hand, stage, unit, type Ink} from './marker.ts';
 
 export const meta = {
@@ -22,7 +22,7 @@ export const meta = {
 export function Writing({text, write, ink = 'white', size = 64, mark = '', under = 0, seed = 'note'}: {text: string; write: number; ink?: Ink; size?: number; mark?: string; under?: number; seed?: string}) {
   const chars = [...text].filter((c) => c !== '\n').length || 1;
   const at = mark ? text.indexOf(mark) : -1;
-  const r = random(`${seed}:hand`);
+  const r = seededRandom(`${seed}:hand`);
   let n = 0;
   const letter = (c: string, key: string) => {
     if (c === '\n') return <br key={key} />;
@@ -47,7 +47,7 @@ export function Writing({text, write, ink = 'white', size = 64, mark = '', under
 /** A marker line under whatever box it sits in, rising a little to the right as a quick underline does */
 export function Underline({draw, weight = 9, double = false, seed = 'under'}: {draw: number; weight?: number; double?: boolean; seed?: string}) {
   if (draw <= 0) return null;
-  const r = random(`${seed}:under`), y0 = weight * 1.4 + r() * 4, y1 = y0 - 5 - r() * 4, sag = 3 + r() * 3, gap = weight * 1.6, h = weight * 5;
+  const r = seededRandom(`${seed}:under`), y0 = weight * 1.4 + r() * 4, y1 = y0 - 5 - r() * 4, sag = 3 + r() * 3, gap = weight * 1.6, h = weight * 5;
   const lines = [`M-3 ${y0.toFixed(1)} Q 50 ${(y0 + sag).toFixed(1)} 104 ${y1.toFixed(1)}`];
   if (double) lines.push(`M6 ${(y0 + gap).toFixed(1)} Q 52 ${(y0 + gap + sag).toFixed(1)} 98 ${(y1 + gap - 1).toFixed(1)}`);
   const parts = lines.length;

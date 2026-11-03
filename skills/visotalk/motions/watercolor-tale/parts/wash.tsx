@@ -1,5 +1,5 @@
 import React from 'react';
-import {useTheme} from '@visotalk/runtime';
+import {useTokens} from '@motionhub/runtime';
 import {dilute, ease, fid, hash, hex, noise1, rgb, type Rgb} from './paint.ts';
 
 export const meta = {
@@ -29,8 +29,8 @@ export const meta = {
 const PAPER = '#F7F1E4';
 /** A pigment named by a theme token or written as a hex */
 export function usePigment(pigment: string): Rgb {
-  const {colors} = useTheme() as {colors: Record<string, string>};
-  return rgb(pigment.startsWith('#') ? pigment : colors[pigment] ?? colors.data ?? '#3E5FA8');
+  const {color = {}} = useTokens();
+  return rgb(pigment.startsWith('#') ? pigment : color[pigment] ?? color.data ?? '#3E5FA8');
 }
 
 type From = [number, number] | 'left' | 'top';

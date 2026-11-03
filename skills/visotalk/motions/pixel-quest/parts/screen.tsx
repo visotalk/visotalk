@@ -1,4 +1,4 @@
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {C, Screen as Px, Sprite, Words, LABEL, TEXT, px, steps, twos, type Art} from './pixel.ts';
 
 export const meta = {
@@ -38,7 +38,7 @@ const HAND: Art = [
 ];
 
 export function DeviceScreen({device = 'phone', x = 320, y = 44, app = '', big = '', rows = [], step = 0, n = 1, press = 0, show = 0}: {device?: string; x?: number; y?: number; app?: string; big?: string; rows?: string[]; step?: number; n?: number; press?: number; show?: number}) {
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (show <= 0) return null;
   const phone = device !== 'monitor';
   const W = phone ? 112 : 200, sx = 8, top = phone ? 14 : 8;

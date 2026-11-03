@@ -25,13 +25,13 @@ export function Plate({kicker, title, sub, x = 96, y = 96, size = 92, show = 0}:
   if (s <= 0.01) return null;
   const rule = unit(s / 0.5), words = unit((s - 0.15) / 0.6);
   return (
-    <div style={{position: 'absolute', left: x, top: y, padding: '30px 40px 32px', background: 'color-mix(in srgb, var(--vt-panel) 93%, transparent)', boxShadow: '0 1px 2px rgba(34, 38, 43, 0.16)', opacity: unit(s / 0.4), fontFamily: 'var(--vt-sans)', color: 'var(--vt-text)'}}>
-      <div style={{height: 1.5, background: 'var(--vt-text)', width: `${rule * 100}%`}} />
+    <div style={{position: 'absolute', left: x, top: y, padding: '30px 40px 32px', background: 'color-mix(in srgb, var(--color-panel) 93%, transparent)', boxShadow: '0 1px 2px rgba(34, 38, 43, 0.16)', opacity: unit(s / 0.4), fontFamily: 'var(--font-sans)', color: 'var(--color-text)'}}>
+      <div style={{height: 1.5, background: 'var(--color-text)', width: `${rule * 100}%`}} />
       <div style={{fontSize: 25, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase', padding: '12px 0', opacity: words}}>{kicker}</div>
-      <div style={{height: 1.5, background: 'var(--vt-text)', width: `${rule * 100}%`, marginLeft: 'auto'}} />
-      <div style={{fontFamily: 'var(--vt-display)', fontSize: size, fontWeight: 500, lineHeight: 1.02, marginTop: 22, letterSpacing: '-0.01em', opacity: words, transform: `translateY(${(1 - words) * 8}px)`, whiteSpace: 'nowrap'}}>{title}</div>
-      {sub && <div style={{fontSize: 30, marginTop: 16, color: 'var(--vt-muted)', opacity: words}}>{sub}</div>}
-      <div style={{height: 4, width: 72, background: 'var(--vt-data)', marginTop: 24, transform: `scaleX(${words})`, transformOrigin: 'left'}} />
+      <div style={{height: 1.5, background: 'var(--color-text)', width: `${rule * 100}%`, marginLeft: 'auto'}} />
+      <div style={{fontFamily: 'var(--font-display)', fontSize: size, fontWeight: 500, lineHeight: 1.02, marginTop: 22, letterSpacing: '-0.01em', opacity: words, transform: `translateY(${(1 - words) * 8}px)`, whiteSpace: 'nowrap'}}>{title}</div>
+      {sub && <div style={{fontSize: 30, marginTop: 16, color: 'var(--color-muted)', opacity: words}}>{sub}</div>}
+      <div style={{height: 4, width: 72, background: 'var(--color-data)', marginTop: 24, transform: `scaleX(${words})`, transformOrigin: 'left'}} />
     </div>
   );
 }

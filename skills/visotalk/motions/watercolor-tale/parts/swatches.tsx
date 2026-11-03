@@ -32,7 +32,7 @@ export function Swatches({items, shown = 0, columns = 2, cell = 300, card = fals
   const rows = Math.ceil(items.length / columns), pad = card ? Math.round(cell * 0.18) : 0;
   return (
     <div style={{position: 'absolute', left: 0, top: 0}}>
-      {card && <div style={{position: 'absolute', left: 0, top: 0, width: columns * cell + (columns - 1) * gapX + pad * 2, height: rows * rowH + pad * 1.4, background: 'var(--vt-panel)',
+      {card && <div style={{position: 'absolute', left: 0, top: 0, width: columns * cell + (columns - 1) * gapX + pad * 2, height: rows * rowH + pad * 1.4, background: 'var(--color-panel)',
         borderRadius: 3, boxShadow: '0 1px 2px rgba(60,45,30,0.25), 0 10px 22px -8px rgba(60,45,30,0.4)'}} />}
       {items.map((it, i) => {
         const p = ease(shown - i, 0, 1);
@@ -41,7 +41,7 @@ export function Swatches({items, shown = 0, columns = 2, cell = 300, card = fals
         return (
           <div key={i} style={{position: 'absolute', left: x, top: y, width: cell, height: rowH}}>
             <Wash d={patch(cell, h, 11 + i * 7)} width={cell} height={h} pigment={it.pigment} strength={it.strength ?? 0.75} paint={ease(p, 0, 0.6)} dry={ease(p, 0.4, 1)} from="left" granulate={0.6} wobble={6} />
-            <div style={{position: 'absolute', left: 4, top: h + 12, fontFamily: 'var(--vt-display)', fontSize: label, lineHeight: 1.25, color: 'var(--vt-muted)', mixBlendMode: 'multiply',
+            <div style={{position: 'absolute', left: 4, top: h + 12, fontFamily: 'var(--font-display)', fontSize: label, lineHeight: 1.25, color: 'var(--color-muted)', mixBlendMode: 'multiply',
               clipPath: `inset(-20% ${((1 - ease(p, 0.45, 1)) * 100).toFixed(1)}% -20% -2%)`}}>{it.label}</div>
           </div>
         );

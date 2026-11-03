@@ -22,16 +22,16 @@ export function DateRail({x, y, w, stops, draw = 1}: {x: number; y: number; w: n
     <div style={{position: 'absolute', left: 0, top: 0}}>
       {/* the wire: a bright edge over a dark one, with its shadow on the felt */}
       <div style={{position: 'absolute', left: x, top: y + 6, width: w * d, height: 4, background: 'rgba(0, 0, 0, 0.5)', filter: 'blur(2px)'}} />
-      <div style={{position: 'absolute', left: x, top: y, width: w * d, height: 4, borderRadius: 2, background: 'linear-gradient(180deg, var(--vt-text) 0%, var(--vt-muted) 100%)'}} />
+      <div style={{position: 'absolute', left: x, top: y, width: w * d, height: 4, borderRadius: 2, background: 'linear-gradient(180deg, var(--color-text) 0%, var(--color-muted) 100%)'}} />
       {stops.map((s, i) => {
         const on = unit((reach - s.at) / 80);
         if (on <= 0.001) return null;
         return (
           <div key={i} style={{position: 'absolute', left: s.at - 250, top: y - 14, width: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: on, transform: `translateY(${(8 * (1 - on)).toFixed(1)}px)`}}>
             {/* a small black clip on the wire */}
-            <div style={{width: 20, height: 32, background: 'color-mix(in srgb, var(--vt-bg) 45%, black)', borderRadius: 3, boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)', borderTop: '2px solid var(--vt-faint)'}} />
-            <div style={{fontFamily: 'var(--vt-mono)', fontSize: 58, color: 'var(--vt-text)', marginTop: 16, letterSpacing: '0.04em', whiteSpace: 'nowrap'}}>{s.date}</div>
-            <div style={{fontFamily: 'var(--vt-sans)', fontSize: 42, color: 'var(--vt-text)', opacity: 0.75, marginTop: 4, whiteSpace: 'nowrap'}}>{s.label}</div>
+            <div style={{width: 20, height: 32, background: 'color-mix(in srgb, var(--color-bg) 45%, black)', borderRadius: 3, boxShadow: '0 4px 6px rgba(0, 0, 0, 0.6)', borderTop: '2px solid var(--color-faint)'}} />
+            <div style={{fontFamily: 'var(--font-mono)', fontSize: 58, color: 'var(--color-text)', marginTop: 16, letterSpacing: '0.04em', whiteSpace: 'nowrap'}}>{s.date}</div>
+            <div style={{fontFamily: 'var(--font-sans)', fontSize: 42, color: 'var(--color-text)', opacity: 0.75, marginTop: 4, whiteSpace: 'nowrap'}}>{s.label}</div>
           </div>
         );
       })}

@@ -35,8 +35,8 @@ export function Brush({points, width, height, weight = 18, draw = 1, dry = 0.3, 
         </filter>
       </defs>
       <g filter={`url(#${id}-wet)`}>
-        {body && <path d={body} fill="var(--vt-text)" fillOpacity={ink} />}
-        {tracks.tracks.map((t, i) => <path key={i} d={t.d} fill="none" stroke="var(--vt-text)" strokeOpacity={ink * t.ink} strokeWidth={tracks.weight} strokeLinecap="round" strokeLinejoin="round" />)}
+        {body && <path d={body} fill="var(--color-text)" fillOpacity={ink} />}
+        {tracks.tracks.map((t, i) => <path key={i} d={t.d} fill="none" stroke="var(--color-text)" strokeOpacity={ink * t.ink} strokeWidth={tracks.weight} strokeLinecap="round" strokeLinejoin="round" />)}
       </g>
     </svg>
   );

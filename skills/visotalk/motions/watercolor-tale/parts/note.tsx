@@ -32,7 +32,7 @@ export function Note({text, write = 1, to = null, size = 46, align = 'left'}: {t
   const span = arrow ? Math.max(boxW, Math.abs(arrow[2][0]) + 40) : boxW;
   return (
     <div style={{position: 'absolute', left: 0, top: 0, width: boxW, height: boxH}}>
-      <div style={{position: 'absolute', left: 0, top: 0, width: boxW, fontFamily: 'var(--vt-display)', fontSize: size, lineHeight: 1.25, color: 'var(--vt-muted)',
+      <div style={{position: 'absolute', left: 0, top: 0, width: boxW, fontFamily: 'var(--font-display)', fontSize: size, lineHeight: 1.25, color: 'var(--color-muted)',
         textAlign: align, whiteSpace: 'pre', paddingBottom: 8, mixBlendMode: 'multiply', clipPath: `inset(-20% ${((1 - ease(w, 0, 0.8)) * 100).toFixed(1)}% -20% -4%)`}}>{text}</div>
       {arrow && <Pencil points={arrow} width={span} height={boxH} draw={ease(w, 0.7, 1)} arrow weight={2.4} />}
     </div>

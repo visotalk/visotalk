@@ -28,14 +28,14 @@ export function Chart({rows, unit: u = '', max = 0, ticks = 0, show = 1, accent 
   const x = (v: number) => (v / top) * W;
   const grid = ticks > 0 ? Array.from({length: Math.floor(top / ticks) + 1}, (_, i) => i * ticks) : [];
   return (
-    <div style={{padding: '40px 44px 64px', color: 'var(--vt-bg)'}}>
+    <div style={{padding: '40px 44px 64px', color: 'var(--color-bg)'}}>
       <div style={{position: 'relative', display: 'grid', gridTemplateColumns: `${LABEL}px ${W}px 1fr`, rowGap: 34, alignItems: 'center'}}>
         {/* the scale's gridlines and their figures, under the bars */}
         {grid.map((g) => (
           <React.Fragment key={g}>
-            <div style={{position: 'absolute', left: LABEL + x(g), top: -10, bottom: -14, width: 0, borderLeft: `${g === 0 ? 2 : 1}px ${g === 0 ? 'solid' : 'dashed'} var(--vt-bg)`, opacity: g === 0 ? 0.7 : 0.25}} />
+            <div style={{position: 'absolute', left: LABEL + x(g), top: -10, bottom: -14, width: 0, borderLeft: `${g === 0 ? 2 : 1}px ${g === 0 ? 'solid' : 'dashed'} var(--color-bg)`, opacity: g === 0 ? 0.7 : 0.25}} />
             {/* the scale's figure, under the line's end, clear of it */}
-            <span style={{position: 'absolute', left: LABEL + x(g) - 30, bottom: -44, width: 60, textAlign: 'center', fontFamily: 'var(--vt-mono)', fontSize: 19, opacity: 0.7}}>{g}</span>
+            <span style={{position: 'absolute', left: LABEL + x(g) - 30, bottom: -44, width: 60, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 19, opacity: 0.7}}>{g}</span>
           </React.Fragment>
         ))}
         {rows.map((r, i) => {
@@ -43,14 +43,14 @@ export function Chart({rows, unit: u = '', max = 0, ticks = 0, show = 1, accent 
           const mark = i === accent ? unit((show - i - 0.5) / 0.5) : 0;
           return [
             <div key={`l${i}`} style={{opacity: on}}>
-              <div style={{fontFamily: 'var(--vt-sans)', fontSize: 22, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.7}}>{r.label}</div>
-              {r.note && <div style={{fontFamily: 'var(--vt-mono)', fontSize: 18, marginTop: 6, opacity: 0.6}}>{r.note}</div>}
+              <div style={{fontFamily: 'var(--font-sans)', fontSize: 22, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.7}}>{r.label}</div>
+              {r.note && <div style={{fontFamily: 'var(--font-mono)', fontSize: 18, marginTop: 6, opacity: 0.6}}>{r.note}</div>}
             </div>,
-            <div key={`b${i}`} style={{height: BAR, width: x(r.value) * g, background: 'var(--vt-bg)', opacity: 0.88}} />,
+            <div key={`b${i}`} style={{height: BAR, width: x(r.value) * g, background: 'var(--color-bg)', opacity: 0.88}} />,
             <div key={`v${i}`} style={{position: 'relative', justifySelf: 'start', marginLeft: x(r.value) * g - W + 18, opacity: unit((show - i - 0.6) / 0.4), whiteSpace: 'nowrap'}}>
-              {mark > 0.001 && <div style={{position: 'absolute', left: -8, bottom: 8, height: 30, width: `calc(${(mark * 100).toFixed(1)}% + 16px)`, background: 'var(--vt-data)', transform: 'rotate(-0.8deg)'}} />}
-              <span style={{position: 'relative', fontFamily: 'var(--vt-display)', fontSize: 76, fontWeight: 600, lineHeight: 1}}>{r.value}</span>
-              {u && <span style={{position: 'relative', fontFamily: 'var(--vt-display)', fontSize: 34, fontWeight: 500, marginLeft: 8}}>{u}</span>}
+              {mark > 0.001 && <div style={{position: 'absolute', left: -8, bottom: 8, height: 30, width: `calc(${(mark * 100).toFixed(1)}% + 16px)`, background: 'var(--color-data)', transform: 'rotate(-0.8deg)'}} />}
+              <span style={{position: 'relative', fontFamily: 'var(--font-display)', fontSize: 76, fontWeight: 600, lineHeight: 1}}>{r.value}</span>
+              {u && <span style={{position: 'relative', fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 500, marginLeft: 8}}>{u}</span>}
             </div>,
           ];
         })}

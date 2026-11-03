@@ -24,7 +24,7 @@ export function Dimension({from, to, offset = 60, value, measure = 1, accent = f
   const u = [dx / len, dy / len], n = [u[1], -u[0]];
   const at = (p: P, k: number): P => [p[0] + n[0] * k, p[1] + n[1] * k];
   const ext = ease(phase(measure, 0, 0.3)), run = ease(phase(measure, 0.25, 0.75)), head = phase(measure, 0.75, 0.85), write = phase(measure, 0.25, 0.75);
-  const color = accent ? ACCENT : 'var(--vt-text)';
+  const color = accent ? ACCENT : 'var(--color-text)';
   const a = at(from, offset), b = at(to, offset), mid: P = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   const half = (len / 2) * run;
   const s: P = [mid[0] - u[0] * half, mid[1] - u[1] * half], e: P = [mid[0] + u[0] * half, mid[1] + u[1] * half];

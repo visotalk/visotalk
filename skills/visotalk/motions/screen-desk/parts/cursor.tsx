@@ -25,17 +25,17 @@ export function Cursor({x, y, click = 0}: {x: number; y: number; click?: number}
     <div style={{position: 'absolute', left: x, top: y, width: 0, height: 0, transform: `scale(${(1 / z).toFixed(4)})`, transformOrigin: '0 0', pointerEvents: 'none'}}>
       {live && (
         <svg width={1} height={1} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}}>
-          <circle cx={0} cy={0} r={ripple} fill="var(--vt-data)" fillOpacity={0.14 * (1 - c)} stroke="var(--vt-data)" strokeWidth={3} strokeOpacity={1 - c} />
+          <circle cx={0} cy={0} r={ripple} fill="var(--color-data)" fillOpacity={0.14 * (1 - c)} stroke="var(--color-data)" strokeWidth={3} strokeOpacity={1 - c} />
           {/* eight short sparks thrown out with the press, gone before the ripple */}
           {c < 0.6 && Array.from({length: 8}, (_, i) => {
             const a = (i / 8) * Math.PI * 2 + 0.3, k = c / 0.6, r0 = 20 + 34 * k, r1 = r0 + 14 * (1 - k);
-            return <line key={i} x1={Math.cos(a) * r0} y1={Math.sin(a) * r0} x2={Math.cos(a) * r1} y2={Math.sin(a) * r1} stroke="var(--vt-data)" strokeWidth={3.5} strokeLinecap="round" opacity={1 - k} />;
+            return <line key={i} x1={Math.cos(a) * r0} y1={Math.sin(a) * r0} x2={Math.cos(a) * r1} y2={Math.sin(a) * r1} stroke="var(--color-data)" strokeWidth={3.5} strokeLinecap="round" opacity={1 - k} />;
           })}
         </svg>
       )}
       <svg width={40} height={48} viewBox="0 0 40 48" style={{position: 'absolute', left: -5, top: -3, overflow: 'visible', transform: `scale(${dip.toFixed(3)})`, transformOrigin: '5px 3px',
         filter: 'drop-shadow(0 6px 8px rgba(28, 29, 33, 0.30))'}}>
-        <path d="M5 3 L5 37 L13.5 29.5 L19.5 43 L25.5 40.4 L19.6 27.2 L31 27 Z" fill="var(--vt-text)" stroke="#fff" strokeWidth={3} strokeLinejoin="round" />
+        <path d="M5 3 L5 37 L13.5 29.5 L19.5 43 L25.5 40.4 L19.6 27.2 L31 27 Z" fill="var(--color-text)" stroke="#fff" strokeWidth={3} strokeLinejoin="round" />
       </svg>
     </div>
   );

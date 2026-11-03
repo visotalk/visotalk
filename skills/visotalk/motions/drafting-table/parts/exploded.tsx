@@ -22,7 +22,7 @@ export type Item = {d: string; w: number; h: number; from: number; to: number; l
 // the isometric turn at tilt 1: the top tips toward the viewer and the right side comes round, so top and side faces show
 const TIP = -22, TURN = -34;
 /** A part's sides, seen when the view turns: the sheet lit a little by the white line work */
-const WALL = 'color-mix(in srgb, var(--vt-panel2) 72%, var(--vt-text))';
+const WALL = 'color-mix(in srgb, var(--color-panel2) 72%, var(--color-text))';
 
 /** One part as a stack of thin slices from its front face to its back: the slices between are the walls a turned view sees */
 function Solid({it}: {it: Item}) {
@@ -30,12 +30,12 @@ function Solid({it}: {it: Item}) {
   const depth = it.depth ?? 36, n = Math.max(2, Math.round(depth / 2.5)), solid = it.solid ?? true;
   const face = (z: number, front: boolean) => (
     <svg key={z} width={it.w} height={it.h} viewBox={`0 0 ${it.w} ${it.h}`} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible', transform: `translateZ(${z.toFixed(2)}px)`}}>
-      {solid && <path d={it.d} fill="var(--vt-panel)" fillRule="evenodd" />}
+      {solid && <path d={it.d} fill="var(--color-panel)" fillRule="evenodd" />}
       {front && it.cut && <>
         <clipPath id={id}><path d={it.d} clipRule="evenodd" /></clipPath>
         <path d={hatchLines(bounds(it.d), 45, 12)} clipPath={`url(#${id})`} stroke={LINE.thin.color} strokeWidth={LINE.thin.width} fill="none" />
       </>}
-      <path d={it.d} fill="none" stroke="var(--vt-text)" strokeWidth={front ? 4 : 2.5} strokeLinejoin="round" strokeOpacity={front ? 1 : 0.7} />
+      <path d={it.d} fill="none" stroke="var(--color-text)" strokeWidth={front ? 4 : 2.5} strokeLinejoin="round" strokeOpacity={front ? 1 : 0.7} />
     </svg>
   );
   const wall = (z: number) => (
@@ -79,8 +79,8 @@ export function Exploded({items, axis = 'y', spread = 1, tilt = 0, labels = 1, w
         const [x, y] = vertical ? project(mid + reach + 40, p.y + it.h / 2) : project(p.x + it.w / 2, mid + reach + 50);
         return (
           <div key={k} style={{position: 'absolute', left: x, top: y, transform: vertical ? 'translate(0, -50%)' : 'translate(-50%, 0)', display: 'flex', alignItems: 'center', gap: 14}}>
-            {vertical && <div style={{width: 40 * write, height: 2, background: 'var(--vt-muted)'}} />}
-            <div style={{...lettering(32), color: 'var(--vt-text)', ...typed(write)}}>{it.label}{it.count && <span style={{color: 'var(--vt-muted)', marginLeft: '0.5em'}}>{it.count}</span>}</div>
+            {vertical && <div style={{width: 40 * write, height: 2, background: 'var(--color-muted)'}} />}
+            <div style={{...lettering(32), color: 'var(--color-text)', ...typed(write)}}>{it.label}{it.count && <span style={{color: 'var(--color-muted)', marginLeft: '0.5em'}}>{it.count}</span>}</div>
           </div>
         );
       })}

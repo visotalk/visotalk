@@ -23,6 +23,12 @@ importers:
       '@fontsource/jetbrains-mono':
         specifier: 5.1.1
         version: 5.1.1
+      '@motionhub/cli':
+        specifier: 0.1.0
+        version: 0.1.0
+      '@motionhub/runtime':
+        specifier: 0.1.0
+        version: 0.1.0(react@18.3.1)
       '@puppeteer/browsers':
         specifier: 3.2.6
         version: 3.2.6
@@ -88,6 +94,9 @@ importers:
       '@fontsource/jetbrains-mono':
         specifier: 5.1.1
         version: 5.1.1
+      '@motionhub/runtime':
+        specifier: 0.1.0
+        version: 0.1.0(react@18.3.1)
       '@visotalk/ir':
         specifier: workspace:*
         version: link:../ir
@@ -280,6 +289,16 @@ packages:
 
   '@fontsource/jetbrains-mono@5.1.1':
     resolution: {integrity: sha512-5rwvmdQQpXev4LlBX1P+7h2dguu6iwW/9Npjde4+DEq+HgpVJI/7QY8DI1NVVFdvLtXZNP+vO2L/5BQED6FUhA==}
+
+  '@motionhub/cli@0.1.0':
+    resolution: {integrity: sha512-hefLBviYhU1p9S5O4qUOSybguiw3c9HNEJw943ExOPJijV8jiRuzNx2pmf4ajlkvivp46iF/j1i+xMEzwfW3/g==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  '@motionhub/runtime@0.1.0':
+    resolution: {integrity: sha512-gACgjzo09a+WVCGPuru4WbNs6xZeN6m/MjGODEwehJ7str/zb/PWtutUXGItAOtiVa+Ap3zR7ERZ1mRkUM8kVQ==}
+    peerDependencies:
+      react: '>=18'
 
   '@puppeteer/browsers@3.2.6':
     resolution: {integrity: sha512-MJP29gVoHznmqmwhH1tlZqzfeQ3aylTpSSa6WKZXtkwYUH02i9imBmWGTyZrbnAou5paX78SE4jMAUqnEPf8ug==}
@@ -543,6 +562,12 @@ snapshots:
   '@fontsource/inter@5.1.0': {}
 
   '@fontsource/jetbrains-mono@5.1.1': {}
+
+  '@motionhub/cli@0.1.0': {}
+
+  '@motionhub/runtime@0.1.0(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
 
   '@puppeteer/browsers@3.2.6':
     dependencies:

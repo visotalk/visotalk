@@ -80,8 +80,8 @@ export function Screen({children, style}: {children?: ReactNode; style?: CSSProp
 }
 
 /** the label face (Silkscreen, a pixel every 8 units: size 8 is one game pixel per font pixel) and the text face (Fusion Pixel, every 12) */
-export const LABEL = 'var(--vt-display)';
-export const TEXT = 'var(--vt-sans)';
+export const LABEL = 'var(--font-display)';
+export const TEXT = 'var(--font-sans)';
 
 /**
  * Pixel words: SVG text in game pixels, with an ink outline drawn as eight copies one pixel away and an optional drop one pixel down, so a
@@ -102,7 +102,7 @@ export function Words({x, y, children, size = 8, font = LABEL, color = C.bone, o
  * A game window: a dark fill, a bone frame one pixel wide with its corners cut, an ink line round that, and an optional tab on its top edge.
  * The corners are cut, never rounded: a radius is not a pixel shape.
  */
-export function Window({x, y, w, h: hh, fill = 'var(--vt-panel)', frame = 'var(--vt-border)', children}: {x: number; y: number; w: number; h: number; fill?: string; frame?: string; children?: ReactNode}) {
+export function Window({x, y, w, h: hh, fill = 'var(--color-panel)', frame = 'var(--color-border)', children}: {x: number; y: number; w: number; h: number; fill?: string; frame?: string; children?: ReactNode}) {
   const X = px(x), Y = px(y), Wd = px(w), Hd = px(hh);
   const r = (k: string, a: number, b: number, c: number, d: number, f: string) => h('rect', {key: k, x: a, y: b, width: c, height: d, fill: f});
   return h('g', null,

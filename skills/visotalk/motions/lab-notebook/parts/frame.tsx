@@ -21,7 +21,7 @@ export function Frame({width, height, draw = 1, label = ''}: {width: number; hei
       <svg width={width} height={height} style={{position: 'absolute', left: 0, top: 0, overflow: 'visible'}}>
         <path d={`M4 6 L${width - 3} 2 L${width - 5} ${height - 3} L2 ${height - 6} Z`} fill="none" stroke={PEN.pencil} strokeWidth={3} strokeLinejoin="round" {...drawn(box)} />
       </svg>
-      {label && <div style={{position: 'absolute', left: 6, top: height + 12, fontFamily: 'var(--vt-display)', fontSize: 34, color: PEN.pencil, whiteSpace: 'nowrap',
+      {label && <div style={{position: 'absolute', left: 6, top: height + 12, fontFamily: 'var(--font-display)', fontSize: 34, color: PEN.pencil, whiteSpace: 'nowrap',
         clipPath: `inset(-25% ${((1 - text) * 100).toFixed(1)}% -25% -4%)`}}>{label}</div>}
     </div>
   );

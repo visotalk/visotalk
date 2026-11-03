@@ -21,13 +21,13 @@ export const meta = {
 export function Numeral({value, decimals = 0, prefix = '', unit = '', label = '', size = 240, lit = 1, accent = false}: {value: number; decimals?: number; prefix?: string; unit?: string; label?: string; size?: number; lit?: number; accent?: boolean}) {
   const shown = value.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
   return (
-    <div style={{...litStyle(lit), color: accent ? 'var(--vt-data)' : 'var(--vt-text)'}}>
-      <div style={{display: 'flex', alignItems: 'baseline', gap: Math.round(size * 0.05), fontFamily: 'var(--vt-display)', fontWeight: 800, lineHeight: 0.9, fontVariantNumeric: 'tabular-nums'}}>
+    <div style={{...litStyle(lit), color: accent ? 'var(--color-data)' : 'var(--color-text)'}}>
+      <div style={{display: 'flex', alignItems: 'baseline', gap: Math.round(size * 0.05), fontFamily: 'var(--font-display)', fontWeight: 800, lineHeight: 0.9, fontVariantNumeric: 'tabular-nums'}}>
         {prefix && <span style={{fontSize: Math.round(size * 0.55)}}>{prefix}</span>}
         <span style={{fontSize: size, letterSpacing: '-0.01em'}}>{shown}</span>
-        {unit && <span style={{fontSize: Math.round(size * 0.3), fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em'}}>{unit}</span>}
+        {unit && <span style={{fontSize: Math.round(size * 0.3), fontWeight: 700, letterSpacing: '0.04em'}}>{unit}</span>}
       </div>
-      {label && <div style={{fontFamily: 'var(--vt-sans)', fontSize: 30, color: 'var(--vt-muted)', marginTop: Math.round(size * 0.1), letterSpacing: '0.02em'}}>{label}</div>}
+      {label && <div style={{fontFamily: 'var(--font-sans)', fontSize: 30, color: 'var(--color-muted)', marginTop: Math.round(size * 0.1), letterSpacing: '0.02em'}}>{label}</div>}
     </div>
   );
 }

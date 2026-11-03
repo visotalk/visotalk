@@ -34,7 +34,7 @@ const LINEN = svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="240" height
 function Sheet({side, style}: {side: 'l' | 'r'; style?: React.CSSProperties}) {
   const towards = side === 'l' ? 'to right' : 'to left';
   return (
-    <div style={{position: 'absolute', top: SPREAD.top, left: side === 'l' ? SPREAD.left : SPREAD.gutter, width: PAGE_W, height: PAGE_H, backgroundColor: 'var(--vt-panel)',
+    <div style={{position: 'absolute', top: SPREAD.top, left: side === 'l' ? SPREAD.left : SPREAD.gutter, width: PAGE_W, height: PAGE_H, backgroundColor: 'var(--color-panel)',
       backgroundImage: [
         // the page bends down into the fold: a soft shadow, a little light where it rises out of it
         `linear-gradient(${towards}, transparent 80%, rgba(255,250,238,0.35) 91%, rgba(70,55,40,0.07) 96%, rgba(60,45,30,0.26) 100%)`,
@@ -62,7 +62,7 @@ export function Book({turn = 0, children}: {turn?: number; children?: ReactNode}
   const page = (side: 'l' | 'r' | 'both') => ({position: 'absolute' as const, inset: 0, clipPath:
     `inset(${SPREAD.top}px ${side === 'l' ? W - SPREAD.gutter : W - SPREAD.right}px ${H - SPREAD.bottom}px ${side === 'r' ? SPREAD.gutter : SPREAD.left}px)`});
   return (
-    <div style={{position: 'absolute', inset: 0, width: W, height: H, backgroundColor: 'var(--vt-bg)', backgroundImage: LINEN}}>
+    <div style={{position: 'absolute', inset: 0, width: W, height: H, backgroundColor: 'var(--color-bg)', backgroundImage: LINEN}}>
       <Block />
       <Sheet side="l" />
       <Sheet side="r" />
@@ -108,8 +108,8 @@ function Strip({i, t, children}: {i: number; t: number; children?: ReactNode}) {
   return (
     <div style={{position: 'absolute', left: i === 0 ? SPREAD.gutter : SW, top: 0, width: SW + 0.6, height: H, transformStyle: 'preserve-3d',
       transformOrigin: `0 ${MID}px`, transform: `rotateY(${rel.toFixed(3)}deg)`}}>
-      {/* each face crops its slice of the page, so it is marked as a frame (data-vt-camera) for the checks */}
-      <div data-vt-camera="" style={face}>
+      {/* each face crops its slice of the page, so it is marked as a frame (data-camera) for the checks */}
+      <div data-camera="" style={face}>
         <div style={{position: 'absolute', left: -x0, top: 0, width: W, height: H}}>
           <Sheet side="r" />
           <div style={{position: 'absolute', inset: 0, clipPath: `inset(${SPREAD.top}px ${W - SPREAD.right}px ${H - SPREAD.bottom}px ${SPREAD.gutter}px)`}}>{children}</div>
@@ -118,7 +118,7 @@ function Strip({i, t, children}: {i: number; t: number; children?: ReactNode}) {
         {sheen > 0.005 && <div style={{position: 'absolute', left: 0, top: SPREAD.top, width: SW + 1, height: PAGE_H, background: `rgba(255,252,244,${sheen.toFixed(3)})`}} />}
       </div>
       {/* the back of the strip is the slice of the next spread's left page it will land on */}
-      <div data-vt-camera="" style={{...face, transform: 'rotateY(180deg)'}}>
+      <div data-camera="" style={{...face, transform: 'rotateY(180deg)'}}>
         <div style={{position: 'absolute', left: -(SPREAD.gutter - (i + 1) * SW), top: 0, width: W, height: H}}><Sheet side="l" /></div>
         <div style={{position: 'absolute', left: 0, top: SPREAD.top, width: SW + 1, height: PAGE_H, background: `rgba(45,34,22,${back.toFixed(3)})`}} />
       </div>

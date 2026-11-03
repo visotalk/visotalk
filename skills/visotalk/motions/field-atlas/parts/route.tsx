@@ -1,6 +1,6 @@
 // A journey drawn on the map as one line: a red line in a paper casing that grows from its first point as it is told, a head that leads
 // it, and, for a path with a width (a shadow, a flyway, a storm track), its corridor drawn with it. A line already told turns to ink.
-import {useDocTime} from '@visotalk/runtime';
+import {useCompositionTime} from '@motionhub/runtime';
 import {useView, lead, along, unit, type LonLat} from './geo.ts';
 import {Paint} from './atlas.tsx';
 
@@ -26,7 +26,7 @@ const mix = (told: number, red: string, ink: string) => `color-mix(in oklab, ${r
 
 export function Route({path, draw = 0, left, right, told = 0, head = 1, corridor = 1, shade = 0}: {path: LonLat[]; draw?: number; left?: LonLat[]; right?: LonLat[]; told?: number; head?: number; corridor?: number; shade?: number}) {
   const view = useView();
-  const t = useDocTime();
+  const t = useCompositionTime();
   if (draw <= 0.0005) return null;
   const px = (pts: LonLat[]) => pts.map(([lo, la]) => view.at(lo, la));
   const line = (pts: [number, number, boolean][]) => {
@@ -35,7 +35,7 @@ export function Route({path, draw = 0, left, right, told = 0, head = 1, corridor
     return d;
   };
   const drawn = px(lead(path, draw));
-  const colour = mix(told, 'var(--vt-data)', 'var(--vt-text)');
+  const colour = mix(told, 'var(--color-data)', 'var(--color-text)');
   let band = '';
   let edges = '';
   if (left && right) {
@@ -56,9 +56,9 @@ export function Route({path, draw = 0, left, right, told = 0, head = 1, corridor
     band !== '' && {d: band, fill: colour, alpha: (0.18 - 0.11 * unit(told)) * unit(corridor)},
     band !== '' && {d: band, stroke: colour, width: 1, alpha: 0.4 * unit(corridor) * (0.18 - 0.11 * unit(told)) / 0.18},
     edges !== '' && {d: edges, stroke: colour, width: 2, dash: [10, 8], alpha: 0.75 * (1 - unit(corridor))},
-    {d: trace, stroke: 'var(--vt-panel)', width: width + 5, alpha: 0.95},
+    {d: trace, stroke: 'var(--color-panel)', width: width + 5, alpha: 0.95},
     {d: trace, stroke: colour, width},
-    on > 0 && {d: ring(10 + pulse * 22), stroke: 'var(--vt-data)', width: 2, alpha: 0.6 * (1 - pulse) * on},
-    on > 0 && {d: ring(9), fill: 'var(--vt-data)', stroke: 'var(--vt-panel)', width: 3, alpha: on},
+    on > 0 && {d: ring(10 + pulse * 22), stroke: 'var(--color-data)', width: 2, alpha: 0.6 * (1 - pulse) * on},
+    on > 0 && {d: ring(9), fill: 'var(--color-data)', stroke: 'var(--color-panel)', width: 3, alpha: on},
   ]} /></>;
 }

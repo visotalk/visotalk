@@ -4,14 +4,14 @@ import {createElement as h, useRef} from 'react';
 /** What a line is, which decides its weight, colour and dash: outlines are the object, detail its edges inside, thin the dimensions, leaders and hatching, centre and hidden the conventions */
 export type Weight = 'outline' | 'detail' | 'thin' | 'centre' | 'hidden';
 export const LINE: Record<Weight, {width: number; color: string; dash?: string}> = {
-  outline: {width: 4, color: 'var(--vt-text)'},
-  detail: {width: 2.5, color: 'var(--vt-text)'},
-  thin: {width: 1.75, color: 'var(--vt-muted)'},
-  centre: {width: 2, color: 'var(--vt-muted)', dash: '34 7 6 7'},
-  hidden: {width: 2, color: 'var(--vt-muted)', dash: '12 8'},
+  outline: {width: 4, color: 'var(--color-text)'},
+  detail: {width: 2.5, color: 'var(--color-text)'},
+  thin: {width: 1.75, color: 'var(--color-muted)'},
+  centre: {width: 2, color: 'var(--color-muted)', dash: '34 7 6 7'},
+  hidden: {width: 2, color: 'var(--color-muted)', dash: '12 8'},
 };
 /** The one warm colour: the size being said, the cut being made */
-export const ACCENT = 'var(--vt-grad)';
+export const ACCENT = 'var(--color-grad)';
 
 /** 0 to 1, whatever is passed */
 export const unit = (v: number) => Math.max(0, Math.min(1, v));
@@ -50,8 +50,8 @@ export function nib(at: [number, number] | null) {
   if (!at) return null;
   const [x, y] = at;
   return h('g', {opacity: 0.95},
-    h('path', {d: `M${x - 14} ${y} H${x - 5} M${x + 5} ${y} H${x + 14} M${x} ${y - 14} V${y - 5} M${x} ${y + 5} V${y + 14}`, stroke: 'var(--vt-text)', strokeWidth: 1.5}),
-    h('circle', {cx: x, cy: y, r: 3.5, fill: 'var(--vt-text)'}));
+    h('path', {d: `M${x - 14} ${y} H${x - 5} M${x + 5} ${y} H${x + 14} M${x} ${y - 14} V${y - 5} M${x} ${y + 5} V${y + 14}`, stroke: 'var(--color-text)', strokeWidth: 1.5}),
+    h('circle', {cx: x, cy: y, r: 3.5, fill: 'var(--color-text)'}));
 }
 
 /** An id safe inside url(#…), unique in the page: every part is its own React root, so useId repeats across parts; a number taken once per mount does not */
@@ -75,7 +75,7 @@ export function Stroke({d, draw = 1, weight = 'outline', accent = false, solid =
   const p = unit(draw);
   if (p <= 0) return null;
   const head = p < 1 ? nib(pointAt(d, p)) : null;
-  const fill = solid ? h('path', {d, fill: 'var(--vt-panel)', stroke: 'none', fillRule: 'evenodd', opacity: unit((p - 0.6) / 0.4)}) : null;
+  const fill = solid ? h('path', {d, fill: 'var(--color-panel)', stroke: 'none', fillRule: 'evenodd', opacity: unit((p - 0.6) / 0.4)}) : null;
   if (!line.dash) return h('g', null, fill, h('path', {d, fill: 'none', stroke: color, strokeWidth: w, strokeLinecap: 'round', strokeLinejoin: 'round', pathLength: 1, strokeDasharray: '1 1', strokeDashoffset: 1 - p}), head);
   return h('g', null, fill,
     h('mask', {id, maskUnits: 'userSpaceOnUse', x: -4000, y: -4000, width: 8000, height: 8000},
@@ -84,7 +84,7 @@ export function Stroke({d, draw = 1, weight = 'outline', accent = false, solid =
 }
 
 /** Lettering, typed left to right as `write` goes from 0 to 1: the drawing's labels are mono capitals, as a draughtsman letters them */
-export const lettering = (size: number) => ({fontFamily: 'var(--vt-mono)', fontSize: size, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const, lineHeight: 1.25});
+export const lettering = (size: number) => ({fontFamily: 'var(--font-mono)', fontSize: size, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const, lineHeight: 1.25});
 export const typed = (write: number) => ({clipPath: `inset(-30% ${((1 - unit(write)) * 100).toFixed(1)}% -30% -2%)`});
 
 /** The box round a path written with absolute M, L, H, V and Z (as hatched regions are): [x0, y0, x1, y1] */

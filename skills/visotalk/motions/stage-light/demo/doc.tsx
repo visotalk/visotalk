@@ -41,7 +41,7 @@ export default <Doc
     <Part id="old-n" x={200} y={420} w={680} h={360}>{() => <Numeral value={useProp('value', 0)} label="transistors" lit={useProp('lit', 1)} />}</Part>
     <Part id="link" x={880} y={260} w={160} h={40}>{() => <Link from={[10, 10]} to={[150, 10]} draw={useProp('draw', 0)} />}</Part>
     <Part id="new" x={1040} y={170} w={680} h={200}>{() => <Plate title="A17 Pro" sub="2023 · Apple, in a phone" lit={useProp('lit', 1)} />}</Part>
-    <Part id="new-n" x={1040} y={420} w={680} h={360}>{() => <Numeral value={useProp('value', 0)} unit="billion" label="transistors" accent lit={useProp('lit', 1)} />}</Part>
+    <Part id="new-n" x={1040} y={420} w={680} h={360}>{() => <Numeral value={useProp('value', 0)} unit="BILLION" label="transistors" accent lit={useProp('lit', 1)} />}</Part>
     <Animation>
       <Appear target="stage" at="start" dur={0} />
       <Appear target="old" line="l1" word="first microprocessor" />
