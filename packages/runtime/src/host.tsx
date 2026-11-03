@@ -35,6 +35,8 @@ export interface MountOptions {
   assetBase?: string;
   /** the film's whole soundtrack as one file (relative to `assetBase`), built with it: played in place of the narration clips and the sounds, and the clock keeps to it */
   mix?: string;
+  /** what the mix's normalising multiplies the narration by, for the clips played one by one once an edit has left `mix` behind */
+  narrationGain?: number;
 }
 
 export interface DrivenApi {
@@ -121,7 +123,7 @@ export function mount(opts: MountOptions) {
     const media = new MediaScheduler(runtime.clock, assetBase);
     runtime.media = media;
     const render = () => {
-      media.set({doc: shown.doc, compiled: shown.compiled, mix: mixed() ? opts.mix : undefined});
+      media.set({doc: shown.doc, compiled: shown.compiled, mix: mixed() ? opts.mix : undefined, narrationGain: opts.narrationGain});
       root.render(
         <RuntimeProvider runtime={runtime}>
           <Player

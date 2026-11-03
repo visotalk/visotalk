@@ -12,7 +12,7 @@ import {localImports} from '@visotalk/ir/bundle';
 import {clipKey, kokoroKey} from './clip_key.ts';
 import {fontPlan, writeFontFaces} from './fonts.ts';
 import {checkOverlay, DEFAULT_THEME, ID_PATTERN, localize, mediaHints, type Overlay, parseMarkup, sayOf, solve, soundGain, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
-import {ENV_HZ, muxAudio} from '@visotalk/exporter';
+import {ENV_HZ, muxAudio, narrationGain} from '@visotalk/exporter';
 
 const HERE = import.meta.dirname;
 const RUNTIME = resolve(HERE, '../../runtime/src/index.ts');
@@ -497,9 +497,9 @@ function ingest(p: Project, dist: string, artifact = false): VisoDoc {
 /**
  * The film's whole soundtrack, as `render` mixes it (`muxAudio`): every narration clip at its line, every sound with its gain envelope from `soundGain`, written as
  * `soundtrack.<hash>.mp3` in `dist`. A page plays it as one track: one file to fetch, every sound already in its place, and the page sounds as the video does. Returns its
- * name, or undefined when the film is silent.
+ * name and what the normalising does to the narration (for the page once an edit has left the soundtrack behind), or undefined when the film is silent.
  */
-async function mixSoundtrack(p: Project, doc: VisoDoc, voice: VoiceManifest, dist: string): Promise<string | undefined> {
+async function mixSoundtrack(p: Project, doc: VisoDoc, voice: VoiceManifest, dist: string): Promise<{name: string; gain?: number} | undefined> {
   const c = solve(doc, voice);
   const narration = c.recording?[{at:0,duration:c.duration,src:resolve(p.dir,p.doc.assets!.find((a)=>a.id===p.doc.voice!.voice.slice(10))!.src)}]:c.scenes.flatMap((s) => s.lines).filter((l) => l.audio).map((l) => ({at: l.from, duration: l.duration, src: join(p.work, l.audio!)}));
   const files = Object.fromEntries((p.doc.assets ?? []).map((a) => [a.id, resolve(p.dir, a.src)]));
@@ -511,7 +511,7 @@ async function mixSoundtrack(p: Project, doc: VisoDoc, voice: VoiceManifest, dis
   await muxAudio(undefined, tmp, 0, c.duration, {narration, sounds, envelopes}, '');
   const name = `soundtrack.${contentName(readFileSync(tmp))}.mp3`;
   renameSync(tmp, join(dist, name));
-  return name;
+  return {name, gain: await narrationGain(narration, '')};
 }
 
 /** Export the same narration, effects and mixed buses used by the player, without drawing frames. */
@@ -613,9 +613,10 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   const entry = join(p.work, 'entry.tsx');
   const voice = JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest;
   // every player plays one track, the film's whole soundtrack mixed as the video's is; the clips and sounds stay beside it for what plays without a build (the web editor's edits)
-  const mix = opts.sound === false ? undefined : await mixSoundtrack(p, doc, voice, dist);
+  const mixed = opts.sound === false ? undefined : await mixSoundtrack(p, doc, voice, dist);
+  const mix = mixed?.name;
   // the document is also a module: its parts' React runs in the player
-  writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './voice.json';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any${mix ? `, mix: '${mix}'` : ''}});\n`);
+  writeFileSync(entry, `${faces.fonts.length && !opts.artifact ? "import './fonts.css';\n" : ''}import {mount} from '@visotalk/runtime';\nimport doc from './doc.built.json';\nimport voice from './voice.json';\nimport * as module from ${JSON.stringify(p.file)};\n// eslint-disable-next-line @typescript-eslint/no-explicit-any\nmount({doc: doc as any, voice, module: module as any${mix ? `, mix: '${mix}'` : ''}${mixed?.gain ? `, narrationGain: ${mixed.gain}` : ''}});\n`);
   const shims = await runtimeShims(p.work);
   // classic scripts, not modules: a module script is refused from file://, so the page would not play when opened from a folder. The runtime file sets
   // `globalThis.__visotalkRuntime` and the document's file reads it, so they run in that order as two plain scripts.

@@ -40,7 +40,7 @@ const KNIFE: Shape[] = [
 ];
 // a camera over the sheet: the world under it is scaled about the frame's middle and moved, and the frame crops it
 const Push = ({s, x, y, children}: {s: number; x: number; y: number; children: React.ReactNode}) => (
-  <div data-vt-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden'}}>
+  <div data-camera="" style={{position: 'absolute', inset: 0, overflow: 'hidden'}}>
     <div style={{position: 'absolute', inset: 0, transformOrigin: '960px 540px', transform: `translate(${x}px, ${y}px) scale(${s})`}}>{children}</div>
   </div>
 );

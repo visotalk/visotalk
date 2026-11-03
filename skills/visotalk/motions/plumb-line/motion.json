@@ -1,0 +1,83 @@
+{
+  "slug": "plumb-line",
+  "version": "1",
+  "name": {
+    "en": "Plumb Line",
+    "zh-CN": "铅垂线"
+  },
+  "line": "A weighted line let down through sheets of cut paper, each at its true depth, beside a card of real measures; the camera follows it all the way, then pulls back to show the whole thing true to scale.",
+  "scenarios": [
+    "science"
+  ],
+  "tags": [
+    "paper-cut",
+    "layered",
+    "light"
+  ],
+  "uses": [
+    "how deep, how high, how far down: the sea, the sky, the Earth",
+    "anything whose true proportions surprise people",
+    "layers named by how far along they are",
+    "a known thing set against a scale it can't reach"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/light",
+    "tokens": {
+      "colors": {
+        "bg": "#BFE7F0",
+        "panel": "#F7EFDD",
+        "panel2": "#E9DFC8",
+        "border": "#C8BFA8",
+        "text": "#1A2A44",
+        "muted": "#4C5A70",
+        "faint": "#C8BFA8",
+        "data": "#1F78A6",
+        "grad": "#C8892E",
+        "op": "#144C79",
+        "good": "#1F78A6",
+        "bad": "#C8892E",
+        "warn": "#F2B33D"
+      },
+      "fonts": {
+        "sans": "\"Atkinson Hyperlegible Next\", \"Noto Sans SC\", sans-serif",
+        "mono": "\"JetBrains Mono\", \"Noto Sans SC\", monospace",
+        "display": "\"Fraunces\", \"Noto Serif SC\", serif"
+      },
+      "caption": {
+        "font": "sans",
+        "size": 36,
+        "weight": 500,
+        "color": "#1A2A44",
+        "background": "rgba(247, 239, 221, 0.94)",
+        "radius": 6,
+        "padding": [
+          8,
+          24
+        ],
+        "bottom": 34
+      }
+    }
+  },
+  "pacing": {
+    "lead": 0.4,
+    "hold": 0.5,
+    "tail": 0.9
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "locked": [
+    "theme.tokens.fonts",
+    "theme.tokens.colors"
+  ]
+}

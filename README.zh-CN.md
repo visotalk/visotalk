@@ -13,7 +13,7 @@
 [English](README.md) · **简体中文**
 
 <a href="https://visotalk.dev/examples/"><img alt="观看示例" src="https://img.shields.io/badge/%E2%96%B6%20%E8%A7%82%E7%9C%8B%E7%A4%BA%E4%BE%8B-0E4F9C?style=for-the-badge"></a>
-<a href="https://visotalk.dev/motions/"><img alt="风格" src="https://img.shields.io/badge/%E9%A3%8E%E6%A0%BC-17%20%E7%A7%8D%E5%86%85%E7%BD%AE-262D38?style=for-the-badge"></a>
+<a href="https://visotalk.dev/motions/"><img alt="风格" src="https://img.shields.io/badge/%E9%A3%8E%E6%A0%BC-21%20%E7%A7%8D%E5%86%85%E7%BD%AE-262D38?style=for-the-badge"></a>
 <a href="https://visotalk.dev/docs"><img alt="文档" src="https://img.shields.io/badge/%E6%96%87%E6%A1%A3-visotalk.dev-262D38?style=for-the-badge"></a>
 <a href="https://discord.gg/zDYMHqZMNy"><img alt="Discord" src="https://img.shields.io/badge/Discord-%E5%8A%A0%E5%85%A5-5865F2?style=for-the-badge&logo=discord&logoColor=white"></a>
 <a href="https://x.com/visotalk"><img alt="在 X 上关注" src="https://img.shields.io/badge/X-@visotalk-000000?style=for-the-badge&logo=x&logoColor=white"></a>
@@ -38,7 +38,7 @@
 
 | | |
 |---|---|
-| **17** 种内置风格 | 从手绘笔记本到叠在你自己录像上的标注 |
+| **21** 种内置风格 | 从手绘笔记本到叠在你自己录像上的标注 |
 | **4** 种旁白语言 | 英语、中文、日语、韩语，每种都对齐到词 |
 | **逐帧一致** | 同一份文档两次渲染完全相同，回归测试逐帧核对 |
 | **在你的电脑上运行** | 语音（Kokoro）、对词和渲染都在本机；四核上每秒视频大约需要 4 到 8 秒 |
@@ -101,6 +101,14 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 </tr>
 <tr>
 <td width="50%" valign="top"><a href="https://visotalk.dev/motions/live-studio/"><img src="https://visotalk.dev/motions/live-studio/poster.jpg" alt="Live Studio" width="100%"></a><br><b>Live Studio · 演播台</b> · <sub>口播、报告</sub><br><sub>叠在你画面上的电视包装：分层字条、台标和滚动字幕，比分条随数字上涨。</sub><br><sub><a href="https://visotalk.dev/motions/live-studio/">▶ 样片</a> · <a href="skills/visotalk/motions/live-studio/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/night-diagram/"><img src="https://visotalk.dev/motions/night-diagram/poster.jpg" alt="Night Diagram" width="100%"></a><br><b>Night Diagram · 夜光图解</b> · <sub>科普</sub><br><sub>夜色中的科学图解：深蓝底上发光的大主体，用细尺度量，用细线标注。</sub><br><sub><a href="https://visotalk.dev/motions/night-diagram/">▶ 样片</a> · <a href="skills/visotalk/motions/night-diagram/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/earth-block/"><img src="https://visotalk.dev/motions/earth-block/poster.jpg" alt="Earth Block" width="100%"></a><br><b>Earth Block · 大地块</b> · <sub>科普</sub><br><sub>教科书般浅色底上的一块等轴测世界，边讲边切开。</sub><br><sub><a href="https://visotalk.dev/motions/earth-block/">▶ 样片</a> · <a href="skills/visotalk/motions/earth-block/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/plumb-line/"><img src="https://visotalk.dev/motions/plumb-line/poster.jpg" alt="Plumb Line" width="100%"></a><br><b>Plumb Line · 铅垂线</b> · <sub>科普</sub><br><sub>一根铅垂线穿过层层剪纸，每层都在真实深度；最后镜头拉远，按真实比例看全貌。</sub><br><sub><a href="https://visotalk.dev/motions/plumb-line/">▶ 样片</a> · <a href="skills/visotalk/motions/plumb-line/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/light-bench/"><img src="https://visotalk.dev/motions/light-bench/poster.jpg" alt="Light Bench" width="100%"></a><br><b>Light Bench · 光学台</b> · <sub>科普</sub><br><sub>真 3D 的黑色光学台：光束按斯涅尔定律穿过玻璃计算，一次一种颜色。</sub><br><sub><a href="https://visotalk.dev/motions/light-bench/">▶ 样片</a> · <a href="skills/visotalk/motions/light-bench/MOTION.md">MOTION.md</a></sub></td>
 <td width="50%" valign="top"></td>
 </tr>
 </table>
@@ -125,6 +133,7 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 
 ## 最近更新
 
+- **0.8.3** · 新增四种内置风格，共二十一种：[Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md)、[Earth Block](skills/visotalk/motions/earth-block/MOTION.md)、[Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) 和 [Light Bench](skills/visotalk/motions/light-bench/MOTION.md)。构建后再编辑页面时，旁白和配乐的音量比例保持不变。
 - **0.8.2** · 分享你自己的风格：`visotalk motion share` 把它整理成 [motionhub.dev](https://motionhub.dev) 的格式，加 `--pr` 会直接开 pull request。风格的组件现在用 `@motionhub/runtime` 绘制。
 - **0.8.1** · 查找并使用别人做的风格：`visotalk motion search [关键词]` 搜索 [motionhub.dev](https://motionhub.dev) 上的目录，`motion show` 和 `motion use` 可以直接用目录里的 slug。
 - **0.8** · 风格改称 *motion*：`visotalk motion list | show | use | check`，风格包在 `skills/visotalk/motions/`，含 `motion.json` 和 `MOTION.md`，作品里的副本在 `motion/`。动画标签改称 *action*（`visotalk schema actions`，校验码 `action.*`），spec 0.8 把动作的类型字段改名为 `kind`；为 0.7 写的文档无需改动。
@@ -142,7 +151,7 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 | [packages/ir](packages/ir) · [jsx](packages/jsx) | 文档格式：解析器、校验器、时间求解器和标签 |
 | [packages/runtime](packages/runtime) · [exporter](packages/exporter) | DOM 渲染器和播放器，以及确定性的逐帧捕获和混音 |
 | [spec/ir/0.8/ir.ts](spec/ir/0.8/ir.ts) | 格式的类型定义：文档能包含什么，以此为准 |
-| [examples](examples) | visotalk.dev 上的每一支影片，都是文档 |
+| [examples](examples) | visotalk.dev 上的每一支影片，都是可以阅读的文档。只有 `uv`、`moon-phases`、`population` 和 `liftoff` 带媒体和旁白，其余的请在网站上播放 |
 | [tests](tests) | 单元测试和回归测试：确定性、基准帧、版面检查 |
 | [docs/brand](docs/brand) | 标志、组合标和颜色 token |
 

@@ -106,6 +106,45 @@ test('muxAudio: narration alone is as long as the picture and sits at -16 LUFS i
   }
 });
 
+test('balance: the voice stands against a mono score in the video and the soundtrack as it does in a page that plays the clips by narrationGain', async () => {
+  const {mkdtempSync, rmSync} = await import('node:fs');
+  const {execFileSync} = await import('node:child_process');
+  const {tmpdir} = await import('node:os');
+  const {join} = await import('node:path');
+  const {muxAudio, narrationGain, ENV_HZ} = await import('../../packages/exporter/src/index.ts');
+  const dir = mkdtempSync(join(tmpdir(), 'visotalk-balance-'));
+  try {
+    const ff = (...a: string[]) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...a]);
+    const VOICE = 0.08, SCORE = 0.05, ENV = 0.5, length = 8;
+    const tone = (f: number, d: number, a: number, name: string) => ff('-f', 'lavfi', '-i', `sine=f=${f}:d=${d}:sample_rate=48000`, '-af', `volume=${a / 0.125}`, '-ac', '1', join(dir, name)); // the source's own amplitude is 1/8
+    tone(300, 3, VOICE, 'a.wav');
+    tone(300, 3, VOICE, 'b.wav');
+    tone(3000, length, SCORE, 'score.wav');
+    ff('-f', 'lavfi', '-i', `color=c=black:s=64x64:d=${length}:r=10`, '-pix_fmt', 'yuv420p', join(dir, 'v.mp4'));
+    const narration = [{at: 0.5, src: 'a.wav'}, {at: 4, src: 'b.wav'}];
+    const meta = {narration, sounds: [{src: 'score.wav', at: 0}], envelopes: [Array.from({length: length * ENV_HZ}, () => ENV)]};
+    await muxAudio(join(dir, 'v.mp4'), join(dir, 'video.mp4'), 0, length, meta as never, dir);
+    await muxAudio(undefined, join(dir, 'soundtrack.mp3'), 0, length, meta as never, dir);
+    /** The level of one frequency in the left channel, while the second line speaks */
+    const level = (file: string, f: number) => {
+      const b = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', file, '-ss', '5', '-t', '1.5', '-af', 'pan=mono|c0=c0', '-f', 'f32le', '-ar', '48000', 'pipe:1'], {maxBuffer: 1 << 26});
+      const x = new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4);
+      let re = 0, im = 0;
+      x.forEach((v, n) => { re += v * Math.cos((2 * Math.PI * f * n) / 48000); im += v * Math.sin((2 * Math.PI * f * n) / 48000); });
+      return (2 * Math.hypot(re, im)) / x.length;
+    };
+    // the page: a mono buffer sounds at its own level in each channel, times the gain of its node
+    const page = ((await narrationGain(meta.narration as never, dir))! * VOICE) / (SCORE * ENV);
+    for (const file of ['video.mp4', 'soundtrack.mp3']) {
+      const mix = level(join(dir, file), 300) / level(join(dir, file), 3000);
+      assert.ok(Math.abs(20 * Math.log10(mix / page)) < 1, `${file}: voice over score ${(20 * Math.log10(mix)).toFixed(2)} dB, the page ${(20 * Math.log10(page)).toFixed(2)} dB`);
+    }
+    assert.equal(await narrationGain([], dir), undefined, 'no narration, nothing to measure');
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
+});
+
 test('muxAudio: a sound plays from its start at its envelope, a loop fills its span, and a piece joins a sound part-way in', async () => {
   const {mkdtempSync, rmSync} = await import('node:fs');
   const {execFileSync} = await import('node:child_process');
@@ -119,7 +158,7 @@ test('muxAudio: a sound plays from its start at its envelope, a loop fills its s
     const env = (from: number, to: number, g: number) => Array.from({length: 4 * ENV_HZ}, (_, k) => (k / ENV_HZ >= from && k / ENV_HZ < to ? g : 0));
     const meta = {narration: [], sounds: [{src: 's.wav', at: 1}, {src: 's.wav', at: 2, loop: true}], envelopes: [env(1, 1.5, 0.5), env(2, 3.5, 1)]};
     const rms = (file: string, from: number, to: number) => {
-      const b = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', file, '-ss', String(from), '-t', String(to - from), '-f', 'f32le', '-ac', '1', '-ar', '48000', 'pipe:1']);
+      const b = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', file, '-ss', String(from), '-t', String(to - from), '-af', 'pan=mono|c0=c0', '-f', 'f32le', '-ar', '48000', 'pipe:1']);
       const x = new Float32Array(b.buffer, b.byteOffset, b.byteLength / 4);
       return Math.sqrt(x.reduce((a, v) => a + v * v, 0) / x.length);
     };

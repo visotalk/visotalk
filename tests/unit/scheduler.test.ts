@@ -51,6 +51,7 @@ class FakeCtx {
   createGain() { const g = new FakeGain(); this.gains.push(g); return g; }
   createBufferSource() { const s = new FakeSource(); this.sources.push(s); return s; }
   createBuffer() { return {duration: 0}; }
+  createDynamicsCompressor() { return Object.assign(new Node_(), {threshold: {value: 0}, knee: {value: 0}, ratio: {value: 0}, attack: {value: 0}, release: {value: 0}}); }
   addEventListener() {}
   resume() { return Promise.resolve(); }
   /** the bytes of a file say how long it is: a thousand to the second */
@@ -142,6 +143,24 @@ test('sounding: each use is a node started on the audio clock at its time, with 
   assert.equal(r.media.stats.starts.length, 1);
   assert.ok(Math.abs(r.media.stats.starts[0].at - r.media.stats.starts[0].due) < 1e-9 && r.media.stats.starts[0].late === 0);
   void l2;
+  r.clock.pause();
+});
+
+test('narrationGain: the clips of a page without its soundtrack play by what the mix normalises them by, and the sounds keep their own gain', async () => {
+  const make = await rig({'l1.m4a': 2, 'l2.m4a': 2, 'tick.wav': 0.5});
+  const doc = FILM();
+  const r = make(doc, voice(doc));
+  const c = solve(doc, voice(doc), 30);
+  r.media.set({doc, compiled: c, narrationGain: 1.7});
+  await r.settle();
+  r.clock.play();
+  for (let i = 0; i < 400 && r.ctx.sources.length < 3; i++) r.frame(0.016);
+  const curves = r.ctx.gains.flatMap((g) => g.curves);
+  const atGain = curves.filter((x) => x.values.every((v) => Math.abs(v - 1.7) < 1e-6));
+  assert.equal(atGain.length, 2, 'both lines at the gain');
+  const sound = curves.filter((x) => !atGain.includes(x));
+  assert.equal(sound.length, 1);
+  assert.ok(Math.abs(Math.max(...sound[0].values) - 10 ** (-3 / 20)) < 1e-4, 'the sound at its own volume');
   r.clock.pause();
 });
 

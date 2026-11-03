@@ -1,0 +1,83 @@
+{
+  "slug": "night-diagram",
+  "version": "1",
+  "name": {
+    "en": "Night Diagram",
+    "zh-CN": "夜光图解"
+  },
+  "line": "A science diagram at night: a big glowing subject in a deep blue field, measured by a thin ruler, named by hairline pins, opened by a magnifying lens, with one reading card for the number that matters.",
+  "scenarios": [
+    "science"
+  ],
+  "tags": [
+    "flat-vector",
+    "modern",
+    "dark"
+  ],
+  "uses": [
+    "weather, space and the physical world",
+    "invisible processes made visible",
+    "how the body and nature work, at their real scale",
+    "big numbers that need something to measure them against"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/dark",
+    "tokens": {
+      "colors": {
+        "bg": "#050A20",
+        "panel": "#101C44",
+        "panel2": "#1E2E5E",
+        "border": "#4B6AA8",
+        "text": "#FFFFFF",
+        "muted": "#C6D6F2",
+        "faint": "#1E2E5E",
+        "data": "#7FE9FF",
+        "grad": "#FFB65C",
+        "op": "#E6FBFF",
+        "good": "#7FE9FF",
+        "bad": "#FFB65C",
+        "warn": "#FFB65C"
+      },
+      "fonts": {
+        "sans": "\"Hanken Grotesk\", \"Noto Sans SC\", sans-serif",
+        "mono": "\"JetBrains Mono\", \"Noto Sans SC\", monospace",
+        "display": "\"Hanken Grotesk\", \"Noto Sans SC\", sans-serif"
+      },
+      "caption": {
+        "font": "sans",
+        "size": 36,
+        "weight": 500,
+        "color": "#FFFFFF",
+        "background": "rgba(5, 10, 32, 0.78)",
+        "radius": 10,
+        "padding": [
+          10,
+          28
+        ],
+        "bottom": 34
+      }
+    }
+  },
+  "pacing": {
+    "lead": 0.4,
+    "hold": 0.5,
+    "tail": 0.9
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "locked": [
+    "theme.tokens.fonts",
+    "theme.tokens.colors"
+  ]
+}

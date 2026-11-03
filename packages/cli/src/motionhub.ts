@@ -177,8 +177,8 @@ export function captionTokens(k: Record<string, any>, fonts: Record<string, stri
 export type HubIdentity = {slug: string; version: string; authors: {name: string; github: string}[]; license: {text: string; code: string}; credit: string};
 
 const TOOL = 'react/';
-/** The pack's paths the catalogue keeps, under react/: the components, the files they import, and their previews */
-const SHARED = /^motion\/(parts|assets|previews)\//;
+/** The pack's paths the catalogue keeps, under react/: the components, the files they import, their previews, the reel the catalogue plays and its sound */
+const SHARED = /^motion\/((parts|assets|previews)\/|reel\.tsx$|sound\.json$)/;
 
 /**
  * A VisoTalk pack (paths under motion/) in the catalogue's format (its SPEC.md, motion/0.1), by path within the motion: motion.json, MOTION.md with
@@ -283,7 +283,7 @@ export function packFromHub(motion: Map<string,Uint8Array>): Map<string,Uint8Arr
   pack.set('motion/motion.json', Buffer.from(JSON.stringify(config, null, 2) + '\n'));
   pack.set('motion/MOTION.md', Buffer.from(packDoc(text('MOTION.md'))));
   if (motion.has('poster.jpg')) pack.set('motion/poster.jpg', motion.get('poster.jpg')!);
-  for (const [path, data] of motion) if (path.startsWith(TOOL) && /^(parts|assets|previews)\//.test(path.slice(TOOL.length))) pack.set(`motion/${path.slice(TOOL.length)}`, data);
+  for (const [path, data] of motion) if (path.startsWith(TOOL) && /^((parts|assets|previews)\/|reel\.tsx$|sound\.json$)/.test(path.slice(TOOL.length))) pack.set(`motion/${path.slice(TOOL.length)}`, data);
   return pack;
 }
 

@@ -1,0 +1,83 @@
+{
+  "slug": "light-bench",
+  "version": "1",
+  "name": {
+    "en": "Light Bench",
+    "zh-CN": "光学台"
+  },
+  "line": "A black optical table in a dark lab, in real 3D: glass on steel posts, and beams of light computed through it by Snell's law, one colour at a time, while the camera moves round the experiment.",
+  "scenarios": [
+    "science"
+  ],
+  "tags": [
+    "3d",
+    "modern",
+    "dark"
+  ],
+  "uses": [
+    "light, lenses, colour and how we see",
+    "cameras, telescopes and the eye: what prisms and lenses do",
+    "a famous experiment rerun in front of you",
+    "anything a prism, a lens or a slit can show"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/dark",
+    "tokens": {
+      "colors": {
+        "bg": "#050608",
+        "panel": "#14171C",
+        "panel2": "#23262C",
+        "border": "#5B6572",
+        "text": "#FFFFFF",
+        "muted": "#B9C2CE",
+        "faint": "#23262C",
+        "data": "#FFFFFF",
+        "grad": "#FF4A3D",
+        "op": "#4A73FF",
+        "good": "#4CE05A",
+        "bad": "#FF4A3D",
+        "warn": "#FFE23D"
+      },
+      "fonts": {
+        "sans": "\"Hanken Grotesk\", \"Noto Sans SC\", sans-serif",
+        "mono": "\"JetBrains Mono\", \"Noto Sans SC\", monospace",
+        "display": "\"Hanken Grotesk\", \"Noto Sans SC\", sans-serif"
+      },
+      "caption": {
+        "font": "sans",
+        "size": 36,
+        "weight": 500,
+        "color": "#FFFFFF",
+        "background": "rgba(5, 6, 8, 0.72)",
+        "radius": 6,
+        "padding": [
+          8,
+          24
+        ],
+        "bottom": 34
+      }
+    }
+  },
+  "pacing": {
+    "lead": 0.4,
+    "hold": 0.5,
+    "tail": 0.9
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "locked": [
+    "theme.tokens.fonts",
+    "theme.tokens.colors"
+  ]
+}

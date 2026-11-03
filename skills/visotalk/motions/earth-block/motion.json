@@ -1,0 +1,83 @@
+{
+  "slug": "earth-block",
+  "version": "1",
+  "name": {
+    "en": "Earth Block",
+    "zh-CN": "大地块"
+  },
+  "line": "One isometric block of the world on a pale textbook plate, cut open as it is explained: layers of material named from the margin, things seeping and filling inside them, a core drawn out to look at, and the camera turning to face the cut.",
+  "scenarios": [
+    "science"
+  ],
+  "tags": [
+    "isometric",
+    "flat-vector",
+    "light"
+  ],
+  "uses": [
+    "geology, water and soil",
+    "what is under a street, inside a wall or a machine",
+    "the body or a material, layer by layer",
+    "processes that go on inside something you can only see the top of"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/light",
+    "tokens": {
+      "colors": {
+        "bg": "#EEF0E9",
+        "panel": "#FFFFFF",
+        "panel2": "#E2E5DC",
+        "border": "#C3CBC5",
+        "text": "#1D2230",
+        "muted": "#4E5866",
+        "faint": "#C3CBC5",
+        "data": "#2F7FC1",
+        "grad": "#D9622B",
+        "op": "#1D5C8C",
+        "good": "#2F7FC1",
+        "bad": "#D9622B",
+        "warn": "#C49A5E"
+      },
+      "fonts": {
+        "sans": "\"Atkinson Hyperlegible Next\", \"Noto Sans SC\", sans-serif",
+        "mono": "\"JetBrains Mono\", \"Noto Sans SC\", monospace",
+        "display": "\"Fraunces\", \"Noto Serif SC\", serif"
+      },
+      "caption": {
+        "font": "sans",
+        "size": 36,
+        "weight": 500,
+        "color": "#1D2230",
+        "background": "rgba(238, 240, 233, 0.86)",
+        "radius": 6,
+        "padding": [
+          8,
+          24
+        ],
+        "bottom": 34
+      }
+    }
+  },
+  "pacing": {
+    "lead": 0.4,
+    "hold": 0.5,
+    "tail": 0.9
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "locked": [
+    "theme.tokens.fonts",
+    "theme.tokens.colors"
+  ]
+}

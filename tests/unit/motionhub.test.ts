@@ -7,7 +7,7 @@ import {createServer} from 'node:http';
 import {mkdirSync,mkdtempSync,readFileSync,symlinkSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join} from 'node:path';
-import {builtinMotion,inspectMotion} from '../../packages/ir/src/motions.ts';
+import {BUILTIN_MOTIONS,builtinMotion,inspectMotion} from '../../packages/ir/src/motions.ts';
 import {captionTokens,cssColor,cssShadow,hubMotion,nextVersion,packFromPackage,searchHub,shareMotion,toHub,untar,type HubMotion} from '../../packages/cli/src/motionhub.ts';
 import {createRequire} from 'node:module';
 import {readFileSync as read,existsSync} from 'node:fs';
@@ -109,6 +109,22 @@ test('every built-in pack converts to a motion the catalogue\'s own checker acce
     assert.ok([...files.keys()].every((p) => !p.includes('/') || p.startsWith('react/')), `${slug}: only react/ beside the format's files`);
   }
   assert.throws(() => toHub(builtinMotion('red-pencil')!, {slug: 'red-pencil', version: '1.0.0', ...ID}), /no poster/);
+});
+
+test('every built-in motion carries a reel the catalogue plays: a default export of 16 to 22 seconds', () => {
+  for (const slug of BUILTIN_MOTIONS) {
+    const reel = builtinMotion(slug)!.get('motion/reel.tsx');
+    assert.ok(reel, `${slug} has no reel.tsx`);
+    const text = Buffer.from(reel).toString('utf8');
+    const seconds = Number(/export\s+const\s+reel\s*=\s*\{[^}]*\bseconds\s*:\s*([\d.]+)/.exec(text)?.[1]);
+    assert.ok(/export\s+default\b/.test(text) && seconds >= 16 && seconds <= 22, `${slug}: reel.tsx needs a default export and 16 to 22 seconds (has ${seconds})`);
+    assert.ok(!/from\s+['"]\.\.?\/(demo|\.\.)\//.test(text), `${slug}: a reel imports only ./parts, never the sample`);
+    assert.ok(toHub(withPoster(slug), {slug, version: '1.0.0', ...ID}).files.has('react/reel.tsx'), `${slug}: the catalogue gets its reel`);
+    // and its sound: the motion's voices (sound.json) on the reel's cues, every cue inside the reel
+    assert.ok(builtinMotion(slug)!.has('motion/sound.json'), `${slug} has no sound.json`);
+    const cues = [...(/export\s+const\s+cues[^=]*=\s*\[([\s\S]*?)\];/.exec(text)?.[1] ?? '').matchAll(/at:\s*([\d.]+)/g)].map((m) => Number(m[1]));
+    assert.ok(cues.length >= 6 && cues.every((at) => at >= 0 && at < seconds), `${slug}: reel.tsx needs \`export const cues\`, at least six, inside its ${seconds} s`);
+  }
 });
 
 test('a caption skin becomes the caption tokens a motion carries for other engines', () => {

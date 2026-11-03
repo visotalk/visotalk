@@ -5,6 +5,7 @@ dist/
 !examples/*/.visotalk/
 examples/*/.visotalk/*
 !examples/*/.visotalk/*/
+examples/*/.visotalk/*-regression/
 examples/*/.visotalk/*/*
 !examples/*/.visotalk/*/voice.json
 !examples/*/.visotalk/*/audio/

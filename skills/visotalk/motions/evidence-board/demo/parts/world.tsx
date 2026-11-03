@@ -1,7 +1,7 @@
 // The sample's one board: the claim, the three sources, the figures, the threads and the date rail, all in board pixels under one camera.
 // The words on the cards are quoted from the sources: NASA's technical air-to-ground voice transcription (13 April 1970),
 // photograph S70-35703 (NASA, 17 April 1970) and the Report of Apollo 13 Review Board (NASA, June 1970), cut with … .
-import {useProp} from '@visotalk/runtime';
+import {useAsset, useProp} from '@visotalk/runtime';
 import {Board} from '../../parts/board.tsx';
 import {Card, pinAt} from '../../parts/card.tsx';
 import {Document} from '../../parts/document.tsx';
@@ -67,7 +67,7 @@ export function World() {
         <Document issuer="NASA · Manned Spacecraft Center" title="Apollo 13 Technical Air-to-Ground Voice Transcription" rows={CALL_ROWS} mark={p('callMark', 0)} size={32} />
       </Card>
       <Card x={PHOTO.x} y={PHOTO.y} w={PHOTO.w} rot={1.3} pin={p('photo', 0)} pinX={PINS.photo} focus={soft(3)} tag="NASA · Photo S70-35703" date="17 APR 1970" paper="print">
-        <Photo asset="service-module" w={PHOTO.img[0]} h={PHOTO.img[1]} caption="“This view of the damaged Apollo 13 Service Module (SM) was photographed … following SM jettisoning. As seen here, an entire SM panel was blown away …”"
+        <Photo src={useAsset('service-module')} w={PHOTO.img[0]} h={PHOTO.img[1]} caption="“This view of the damaged Apollo 13 Service Module (SM) was photographed … following SM jettisoning. As seen here, an entire SM panel was blown away …”"
           area={{x: 0.55, y: 0.24, w: 0.33, h: 0.54}} crop={p('crop', 0)} />
       </Card>
       <Card x={FIG.x} y={FIG.y} w={FIG.w} rot={-0.6} pin={p('fig', 0)} focus={soft(6)} tag="Review Board · Chapter 5" date="15 JUN 1970" paper="slip">

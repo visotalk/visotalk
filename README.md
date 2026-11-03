@@ -13,7 +13,7 @@ An open-source agent skill for explainer videos: a narration-driven motion engin
 **English** · [&#20013;&#25991;](README.zh-CN.md)
 
 <a href="https://visotalk.dev/examples/"><img alt="Watch the examples" src="https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20examples-0E4F9C?style=for-the-badge"></a>
-<a href="https://visotalk.dev/motions/"><img alt="Motions" src="https://img.shields.io/badge/Motions-17%20built%20in-262D38?style=for-the-badge"></a>
+<a href="https://visotalk.dev/motions/"><img alt="Motions" src="https://img.shields.io/badge/Motions-21%20built%20in-262D38?style=for-the-badge"></a>
 <a href="https://visotalk.dev/docs"><img alt="Docs" src="https://img.shields.io/badge/Docs-visotalk.dev-262D38?style=for-the-badge"></a>
 <a href="https://discord.gg/zDYMHqZMNy"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=for-the-badge&logo=discord&logoColor=white"></a>
 <a href="https://x.com/visotalk"><img alt="Follow on X" src="https://img.shields.io/badge/X-@visotalk-000000?style=for-the-badge&logo=x&logoColor=white"></a>
@@ -38,7 +38,7 @@ the narration and the picture follows. It is not a video generator: every frame 
 
 | | |
 |---|---|
-| **17** built-in motions | from a hand-drawn notebook to marks over your own footage |
+| **21** built-in motions | from a hand-drawn notebook to marks over your own footage |
 | **4** narration languages | English, Chinese, Japanese and Korean, with word-level timing in each |
 | **Frame for frame** | two renders of a document are identical, checked frame by frame in the regression suite |
 | **On your machine** | the voice (Kokoro), the word timing and the rendering run locally; roughly 4 to 8 s per second of video on four cores |
@@ -101,6 +101,14 @@ name, or ask the agent to make your own from it. Every sample plays on [visotalk
 </tr>
 <tr>
 <td width="50%" valign="top"><a href="https://visotalk.dev/motions/live-studio/"><img src="https://visotalk.dev/motions/live-studio/poster.jpg" alt="Live Studio" width="100%"></a><br><b>Live Studio</b> · <sub>talking head, report</sub><br><sub>A broadcast package over your footage: layered straps, a channel bug and ticker, a score bar that ticks up.</sub><br><sub><a href="https://visotalk.dev/motions/live-studio/">▶ sample</a> · <a href="skills/visotalk/motions/live-studio/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/night-diagram/"><img src="https://visotalk.dev/motions/night-diagram/poster.jpg" alt="Night Diagram" width="100%"></a><br><b>Night Diagram</b> · <sub>science</sub><br><sub>A science diagram at night: a big glowing subject in a deep blue field, measured by a thin ruler and named by hairline pins.</sub><br><sub><a href="https://visotalk.dev/motions/night-diagram/">▶ sample</a> · <a href="skills/visotalk/motions/night-diagram/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/earth-block/"><img src="https://visotalk.dev/motions/earth-block/poster.jpg" alt="Earth Block" width="100%"></a><br><b>Earth Block</b> · <sub>science</sub><br><sub>One isometric block of the world on a pale textbook plate, cut open as it is explained.</sub><br><sub><a href="https://visotalk.dev/motions/earth-block/">▶ sample</a> · <a href="skills/visotalk/motions/earth-block/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/plumb-line/"><img src="https://visotalk.dev/motions/plumb-line/poster.jpg" alt="Plumb Line" width="100%"></a><br><b>Plumb Line</b> · <sub>science</sub><br><sub>A weighted line let down through sheets of cut paper, each at its true depth; then the camera pulls back to show it to scale.</sub><br><sub><a href="https://visotalk.dev/motions/plumb-line/">▶ sample</a> · <a href="skills/visotalk/motions/plumb-line/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/light-bench/"><img src="https://visotalk.dev/motions/light-bench/poster.jpg" alt="Light Bench" width="100%"></a><br><b>Light Bench</b> · <sub>science</sub><br><sub>A black optical table in real 3D: beams of light computed through glass by Snell's law, one colour at a time.</sub><br><sub><a href="https://visotalk.dev/motions/light-bench/">▶ sample</a> · <a href="skills/visotalk/motions/light-bench/MOTION.md">MOTION.md</a></sub></td>
 <td width="50%" valign="top"></td>
 </tr>
 </table>
@@ -125,6 +133,7 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 
 ## What's new
 
+- **0.8.3** · Four more built-in motions, twenty-one in all: [Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md), [Earth Block](skills/visotalk/motions/earth-block/MOTION.md), [Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) and [Light Bench](skills/visotalk/motions/light-bench/MOTION.md). A page edited after its build keeps the balance of voice and score.
 - **0.8.2** · Share your own motion: `visotalk motion share` prepares it for [motionhub.dev](https://motionhub.dev), and `--pr` opens the pull request. Motion components now draw with `@motionhub/runtime`.
 - **0.8.1** · Find and use motions other people made: `visotalk motion search [words]` searches the catalogue at [motionhub.dev](https://motionhub.dev), and `motion show` and `motion use` take its slugs.
 - **0.8** · Styles are now *motions*: `visotalk motion list | show | use | check`, packs in `skills/visotalk/motions/` with `motion.json` and `MOTION.md`, a work's copy in `motion/`. The animation tags are *actions* (`visotalk schema actions`, `action.*` codes), and spec 0.8 names an action's kind `kind`; documents written for 0.7 need no change.
@@ -142,7 +151,7 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 | [packages/ir](packages/ir) · [jsx](packages/jsx) | The document format: parser, validator, time solver, and the tags |
 | [packages/runtime](packages/runtime) · [exporter](packages/exporter) | The DOM renderer and player, and the deterministic capture and audio mix |
 | [spec/ir/0.8/ir.ts](spec/ir/0.8/ir.ts) | The format's types: the source of truth for what a document may contain |
-| [examples](examples) | Every film on visotalk.dev, as documents |
+| [examples](examples) | Every film on visotalk.dev, as documents to read. Only `uv`, `moon-phases`, `population` and `liftoff` carry their media and narration; the rest play on the site |
 | [tests](tests) | Unit tests and the regression suite: determinism, golden frames, layout checks |
 | [docs/brand](docs/brand) | The mark, the lockup and the colour tokens |
 

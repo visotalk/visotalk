@@ -11,7 +11,7 @@ import {closeSync, existsSync, fstatSync, openSync, readSync, mkdirSync, mkdtemp
 import {writeFile} from 'node:fs/promises';
 import {availableParallelism, tmpdir, totalmem} from 'node:os';
 import {dirname, join, relative, resolve, sep} from 'node:path';
-import {spawn} from 'node:child_process';
+import {execFileSync, spawn} from 'node:child_process';
 import {findChrome, glRenderer, launch, loadPlayer, openDrivenPage, PINNED_CHROME, withChromeLock} from './chrome.ts';
 import {extractMedia} from './extract.ts';
 import {servePlayer} from './server.ts';
@@ -429,12 +429,13 @@ export const renderSegmented = (o: RenderOptions & {segmentFrames?: number}): Pr
   }
 });
 
-function run(cmd: string, args: string[], input?: (stdin: NodeJS.WritableStream) => Promise<void>): Promise<void> {
+/** Runs a command to its end and gives back what it wrote to stderr */
+function run(cmd: string, args: string[], input?: (stdin: NodeJS.WritableStream) => Promise<void>): Promise<string> {
   return new Promise((ok, fail) => {
     const p = spawn(cmd, args, {stdio: [input ? 'pipe' : 'ignore', 'ignore', 'pipe']});
     let err = '';
     p.stderr!.on('data', (d) => (err += d));
-    p.on('close', (code) => (code === 0 ? ok() : fail(new Error(`${cmd} exited ${code}: ${err.slice(-2000)}`))));
+    p.on('close', (code) => (code === 0 ? ok(err) : fail(new Error(`${cmd} exited ${code}: ${err.slice(-2000)}`))));
     if (input) input(p.stdin!).then(() => p.stdin!.end(), fail);
   });
 }
@@ -526,13 +527,32 @@ export function streamEncoder(ext: 'jpg' | 'png', count: number, out: string, fp
 }
 
 const SR = 48000;
+const LOUDNORM = 'loudnorm=I=-16:TP=-1.5:LRA=11';
+/** The narration clips each at their start, as the one stereo bus `LOUDNORM` takes: the filter graph up to its last output, left open */
+const narrationBus = (lines: Array<{at: number; src: string}>) => [
+  ...lines.map((l, k) => `[${k}:a]atrim=start=${Math.max(0, -l.at).toFixed(6)},asetpts=PTS-STARTPTS,adelay=${Math.max(0, Math.round(l.at * 1000))}:all=1[a${k}]`),
+  `${lines.map((_, k) => `[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0`,
+].join(';');
+/**
+ * What normalising multiplies this narration by, for a page that plays the clips as they are (a document edited after its build, `MediaScheduler`): measured on the bus the
+ * mix normalises, so the voice stands against the sounds there as it does in the video. Undefined when there is nothing to measure.
+ */
+export async function narrationGain(narration: Meta['narration'], root: string): Promise<number | undefined> {
+  if (!narration.length) return undefined;
+  const lines = narration.map((l) => ({at: l.at, src: join(root, l.src)}));
+  const report = await run('ffmpeg', ['-hide_banner', '-nostats', ...lines.flatMap((l) => ['-i', l.src]), '-filter_complex', `${narrationBus(lines)},${LOUDNORM}:print_format=json[out]`, '-map', '[out]', '-f', 'null', '-']);
+  const measured = Number(/"input_i"\s*:\s*"(-?[\d.]+)"/.exec(report)?.[1]);
+  return Number.isFinite(measured) ? 10 ** ((-16 - measured) / 20) : undefined;
+}
+/** A mono file stays at its own level in both channels, as a browser plays it; FFmpeg's `-ac 2` would take 3 dB off it, in the mix alone */
+const toStereo = (src: string) => execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=channels', '-of', 'csv=p=0', src], {encoding: 'utf8'}).trim() === '1' ? ['-af', 'pan=stereo|c0=c0|c1=c0'] : ['-ac', '2'];
 /**
  * The soundtrack of a video that starts `offset` seconds into the film and runs `length` seconds. The narration clips each at their start, mixed and loudness-normalised
  * to −16 LUFS, as they are; then each sound of the document: its file (looped if it loops) set at its start, multiplied by its gain envelope (volume, fades, ducking: the
  * curve the player uses), and added to the narration without changing it. With a `video` it is muxed into a copy of it; without one it is written alone as an MP3 (the
  * one track a built player plays, so the page sounds as the video does).
  *
- * The narration goes through ffmpeg (it needs loudnorm); sounds are decoded once to disk at 48 kHz stereo, then mixed in bounded blocks over their active spans. Doing that in an ffmpeg graph meant padding every sound and its envelope to the whole film, which cost as many film lengths as there were sounds
+ * The narration goes through ffmpeg (it needs loudnorm); sounds are decoded once to disk at 48 kHz stereo (`toStereo`), then mixed in bounded blocks over their active spans. Doing that in an ffmpeg graph meant padding every sound and its envelope to the whole film, which cost as many film lengths as there were sounds
  * (a five-minute film with 150 sounds took fifteen minutes to mix).
  */
 export async function muxAudio(video: string | undefined, out: string, offset: number, length: number, meta: Pick<Meta, 'narration' | 'sounds' | 'envelopes'>, root: string) {
@@ -540,7 +560,7 @@ export async function muxAudio(video: string | undefined, out: string, offset: n
   // A continuous recording (or silence) needs no whole-film PCM buffer when there are no effects.
   if(!meta.sounds.length&&lines.length<=1){
     const line=lines[0],input=line?['-i',line.src]:['-f','lavfi','-i',`anullsrc=r=${SR}:cl=stereo`];
-    const filter=line?`atrim=start=${Math.max(0,-line.at)},asetpts=PTS-STARTPTS,adelay=${Math.max(0,Math.round(line.at*1000))}:all=1,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=${SR},apad,atrim=0:${length},alimiter=limit=0.95`:`atrim=0:${length}`;
+    const filter=line?`atrim=start=${Math.max(0,-line.at)},asetpts=PTS-STARTPTS,adelay=${Math.max(0,Math.round(line.at*1000))}:all=1,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,${LOUDNORM},aresample=${SR},apad,atrim=0:${length},alimiter=limit=0.95`:`atrim=0:${length}`;
     const audio=out.endsWith('.webm')?['-c:a','libopus','-b:a','160k']:out.endsWith('.mov')?['-c:a','pcm_s24le']:video?['-c:a','aac','-b:a','160k']:['-c:a','libmp3lame','-b:a','96k'];
     await run('ffmpeg',['-y','-v','error',...(video?['-i',video]:[]),...input,'-filter_complex',`[${video?1:0}:a]${filter}[a]`,...(video?['-map','0:v','-c:v','copy']:[]),'-map','[a]',...audio,'-ar',String(SR),'-t',String(length),...(!out.endsWith('.webm')&&video?['-movflags','+faststart']:[]),out]);return;
   }
@@ -552,7 +572,7 @@ export async function muxAudio(video: string | undefined, out: string, offset: n
     const decode = async (src: string) => {
       if (!decoded.has(src)) {
         const file = join(tmp, `source-${decoded.size}.f32`);
-        await run('ffmpeg', ['-y','-v','error','-i',src,'-f','f32le','-ar',String(SR),'-ac','2',file]);
+        await run('ffmpeg', ['-y','-v','error','-i',src,...toStereo(src),'-f','f32le','-ar',String(SR),file]);
         const fd = openSync(file,'r'); handles.push(fd);
         decoded.set(src,{fd,frames:Math.floor(fstatSync(fd).size/8)});
       }
@@ -560,10 +580,8 @@ export async function muxAudio(video: string | undefined, out: string, offset: n
     };
     let narration: number | undefined;
     if (lines.length) {
-      const graph = [...lines.map((l,k)=>`[${k}:a]atrim=start=${Math.max(0,-l.at).toFixed(6)},asetpts=PTS-STARTPTS,adelay=${Math.max(0,Math.round(l.at*1000))}:all=1[a${k}]`),
-        `${lines.map((_,k)=>`[a${k}]`).join('')}amix=inputs=${lines.length}:normalize=0,aformat=channel_layouts=mono,pan=stereo|c0=c0|c1=c0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=${SR},apad,atrim=0:${length.toFixed(6)}[nar]`];
       const file = join(tmp,'narration.f32');
-      await run('ffmpeg',['-y','-v','error',...lines.flatMap((l)=>['-i',l.src]),'-filter_complex',graph.join(';'),'-map','[nar]','-f','f32le','-ar',String(SR),'-ac','2',file]);
+      await run('ffmpeg',['-y','-v','error',...lines.flatMap((l)=>['-i',l.src]),'-filter_complex',`${narrationBus(lines)},${LOUDNORM},aresample=${SR},apad,atrim=0:${length.toFixed(6)}[nar]`,'-map','[nar]','-f','f32le','-ar',String(SR),'-ac','2',file]);
       narration=openSync(file,'r');handles.push(narration);
     }
     for(const sound of meta.sounds)await decode(join(root,sound.src));

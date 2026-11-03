@@ -105,8 +105,12 @@ test('every built-in motion is a whole pack: its sections, components with previ
   const sample=Buffer.from(pack.get('motion/demo/doc.tsx')!).toString('utf8'),doc=parseMarkup(sample).doc;
   assert.deepEqual(validate(doc),[],`${slug}'s sample validates`);
   assert.deepEqual(inspectMotion(pack,doc).issues,[],`${slug}'s sample keeps the pack's locked values`);
-  // a sample over footage keeps its recording beside the pack in the repository (demo/media), not in the catalogue
-  const footage=(p:string)=>p.startsWith('motion/demo/media/')?readFileSync(join('skills/visotalk/motions',slug,p.slice(7))):undefined;
+  // a sample over footage keeps its recording beside the pack (demo/media), not in the catalogue; the public tree leaves the recording out
+  const footage=(p:string)=>{
+    if(!p.startsWith('motion/demo/media/'))return undefined;
+    const file=join('skills/visotalk/motions',slug,p.slice(7));
+    return existsSync(file)?readFileSync(file):new Uint8Array();
+  };
   for(const path of sourceClosure('motion/demo/doc.tsx',(p)=>pack.get(p)??footage(p)).keys())assert.ok(path.startsWith('motion/'),`${slug}'s sample imports ${path} from its pack`);
  }
 });

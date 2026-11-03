@@ -405,6 +405,7 @@ export default <Doc id="a" title="A <b>" lang="en" theme="visotalk/dark" canvas=
   const length = Number(spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', dist + '/' + list.files[2]], {encoding: 'utf8'}).stdout);
   assert.ok(Math.abs(length - 2.6) < 0.1, `soundtrack of ${length} s for a film of 2.6 s`); // lead 0.4, the line 1, its hold 0.4, the tail 0.8 (an MP3 adds a few ms)
   assert.match(readFileSync(dist + '/' + list.files[0], 'utf8'), /soundtrack\.[0-9a-f]{12}\.mp3/);
+  assert.match(readFileSync(dist + '/' + list.files[0], 'utf8'), /narrationGain:\s*[\d.]+/, 'and what the mix does to the narration, for after an edit');
   // UTF-8 said first: a host that wraps the page may not, and the bundle and the title carry characters past ASCII
   assert.match(readFileSync(dist + '/player.html', 'utf8'), /^<meta charset="utf-8">\n<title>A &lt;b>/);
   assert.doesNotMatch(readFileSync(dist + '/player.html', 'utf8'), /replaceState/, 'no output named: the first one plays');

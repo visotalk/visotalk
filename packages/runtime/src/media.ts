@@ -124,6 +124,8 @@ export interface SchedulerDraw {
   compiled: Compiled;
   /** the film's whole soundtrack as one file, relative to the page: played in place of the clips and the sounds */
   mix?: string;
+  /** what the mix's normalising multiplies the narration by: the clips play by it, so the voice stands against the sounds as it does in the soundtrack and the video */
+  narrationGain?: number;
 }
 
 /** The environment the scheduler needs of a browser, so a test can give it another */
@@ -182,7 +184,14 @@ export class MediaScheduler {
       this.ctx = new this.env.AudioContext();
       this.master = this.ctx.createGain();
       this.master.gain.value = this.muted ? 0 : this.volume;
-      this.master.connect(this.ctx.destination);
+      // the video's mix ends in a limiter, and a normalised voice peaks over full scale without one
+      const limiter = this.ctx.createDynamicsCompressor();
+      limiter.threshold.value = -1;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.003;
+      limiter.release.value = 0.1;
+      this.master.connect(limiter).connect(this.ctx.destination);
       this.ctx.addEventListener('statechange', () => this.evaluate());
     }
     return this.ctx;
@@ -211,8 +220,9 @@ export class MediaScheduler {
     } else {
       this.mix?.el.pause();
       this.mix = undefined;
-      if(c.recording)this.uses.push({kind:'narration',url:this.base+c.recording.audio,from:0,to:c.duration,loop:false,...(c.duration>LONG_AUDIO&&{long:this.longTrack(this.base+c.recording.audio,false)})});
-      for (const sc of c.scenes) for (const l of sc.lines) if (l.audio) this.uses.push({kind: 'narration', url: this.base + l.audio, from: l.from, to: l.from + l.duration, loop: false});
+      const level = draw.narrationGain ? {gain: () => draw.narrationGain!} : {};
+      if(c.recording)this.uses.push({kind:'narration',url:this.base+c.recording.audio,from:0,to:c.duration,loop:false,...level,...(c.duration>LONG_AUDIO&&{long:this.longTrack(this.base+c.recording.audio,false)})});
+      for (const sc of c.scenes) for (const l of sc.lines) if (l.audio) this.uses.push({kind: 'narration', url: this.base + l.audio, from: l.from, to: l.from + l.duration, loop: false, ...level});
       for (const s of c.sounds) {
         const a = assets.get(s.asset);
         this.uses.push({kind: 'sound', url: this.base + (a?.src ?? s.asset), from: s.start, to: s.end ?? c.duration, loop: s.loop, gain: (t) => soundGain(c, s, t), ...((a?.analysis?.duration ?? 0) > LONG_AUDIO && {long: this.longTrack(this.base + (a?.src ?? s.asset), s.loop)})});
