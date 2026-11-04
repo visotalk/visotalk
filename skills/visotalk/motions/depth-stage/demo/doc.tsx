@@ -11,11 +11,20 @@ import {Parting} from '../parts/parting.tsx';
 import {Motes} from '../parts/motes.tsx';
 import {Mileposts} from '../parts/mileposts.tsx';
 import {Section} from '../parts/section.tsx';
+import {Term} from '../parts/term.tsx';
+import {Columns} from '../parts/columns.tsx';
+import {Thread} from '../parts/thread.tsx';
 import {Plume} from './parts/plume.tsx';
 
 const DEPOSIT = [
   {label: 'Pumice', note: 'fell for 18 hours · about 2.8 m', depth: 260},
   {label: 'Hot ash and gas', note: 'surges on the second morning', depth: 150},
+];
+
+const SCALE = [
+  {label: 'The column', value: 30, note: '30 km'},
+  {label: 'Everest', value: 8.8, note: '8.8 km'},
+  {label: 'An airliner', value: 11, note: '11 km'},
 ];
 
 const CENTURIES = [
@@ -42,12 +51,13 @@ export default <Doc
 >
   <Scene id="bay" title="The bay">
     <Line id="l1" text="In AD 79, Pompeii was a busy port town on the Bay of Naples.">In A D seventy-nine, Pompeii was a busy port town on the Bay of Naples.</Line>
-    <Line id="l2" hold={0.6}>Behind it stood a quiet mountain, covered in vineyards.</Line>
+    <Line id="l2" hold={0.6}>About ten kilometres behind it stood a quiet mountain, covered in vineyards.</Line>
 
     <Part id="bay-world">{() => (
       <Stage cam={useProp('cam', 0)} focus={useProp('focus', 420)} panX={useProp('panX', -80)} veil={useProp('veil', 0)} lightX={1420} lightY={430} rays={0.7}>
         <Plane z={5200}><Ridge shape="peaks" seed="apennines" top={560} relief={150} mist={0.8} /></Plane>
         <Plane z={2600}><Ridge shape="cone" seed="vesuvius" top={300} relief={420} at={1180} mist={0.5} rim={0.5} /></Plane>
+        <Plane z={2600}><Obj id="bay-thread"><Thread from={[1180, 312]} to={[560, 500]} bend={130} label="Pompeii, about 10 km away" draw={useProp('bay-thread', 'draw', 0)} /></Obj></Plane>
         <Plane z={1500}><Ridge shape="town" seed="pompeii-upper" top={520} relief={150} at={900} mist={0.4} rim={0.4} /></Plane>
         <Plane z={900}><Ridge shape="town" seed="pompeii" top={570} relief={170} at={700} mist={0.3} rim={0.5} /></Plane>
         <Plane z={420}><Obj id="bay-title"><Title x={290} y={190} kicker="The Bay of Naples · AD 79" title="Pompeii" size={150} show={useProp('bay-title', 'show', 0)} /></Obj></Plane>
@@ -59,7 +69,8 @@ export default <Doc
       <Appear target="bay-world" at="start" dur={0} />
       <Tween target="bay-title" to={{show: 1}} line="l1" word="Pompeii" dur={1.4} easing="easeOutSine" />
       <Tween target="bay-world" to={{cam: 220, panX: 50}} at="start" until={{line: "l2", edge: "end"}} easing="easeInOutSine" />
-      <Tween target="bay-world" to={{focus: 2600}} line="l2" word="quiet mountain" dur={1.6} easing="easeInOutSine" />
+      <Tween target="bay-world" to={{focus: 2600}} line="l2" word="ten kilometres" dur={1.6} easing="easeInOutSine" />
+      <Tween target="bay-thread" to={{draw: 1}} line="l2" word="ten kilometres" offset={0.3} dur={1.6} easing="linear" />
       <Tween target="bay-title" to={{show: 0}} line="l1" edge="end" offset={0.1} dur={0.8} easing="easeInSine" />
       <Tween target="bay-world" to={{cam: 2000}} line="l2" edge="end" offset={-0.2} until="end" easing="easeInQuad" />
       <Tween target="bay-world" to={{veil: 1}} line="l2" edge="end" offset={0.6} until="end" easing="easeInSine" />
@@ -100,14 +111,38 @@ export default <Doc
     </Animation>
   </Scene>
 
+  <Scene id="scale" title="For scale">
+    <Line id="l3b" text="That is more than three times the height of Everest, and far above where airliners fly.">That is more than three times the height of Everest, and far above where airliners fly.</Line>
+
+    <Part id="scale-world">{() => (
+      <Stage cam={useProp('cam', 0)} focus={700} veil={useProp('veil', 0.85)} lightX={1500} lightY={300} glow={0.55} haze={1.1}>
+        <Plane z={4800}><Ridge shape="peaks" seed="apennines-3" top={640} relief={130} mist={0.8} /></Plane>
+        <Plane z={700}><Obj id="scale-columns"><Columns items={SCALE} max={30} x={560} gap={400} base={850} height={560} warm={0} rise={useProp('scale-columns', 'rise', 0)} /></Obj></Plane>
+        <Plane z={160}><Ridge shape="bank" seed="scale" top={900} relief={60} mist={0} /></Plane>
+        <Motes kind="ash" seed="scale" near={-100} far={2400} count={20} amount={0.5} />
+      </Stage>
+    )}</Part>
+    <Animation>
+      <Appear target="scale-world" at="start" dur={0} />
+      <Tween target="scale-world" to={{veil: 0}} at="start" dur={0.8} easing="easeOutSine" />
+      <Tween target="scale-world" to={{cam: 140}} at="start" until="end" easing="easeInOutSine" />
+      <Tween target="scale-columns" to={{rise: 0.34}} line="l3b" word="three times" dur={1.2} easing="easeOutSine" />
+      <Tween target="scale-columns" to={{rise: 0.67}} line="l3b" word="Everest" dur={0.9} easing="easeOutSine" />
+      <Tween target="scale-columns" to={{rise: 1}} line="l3b" word="airliners" dur={0.9} easing="easeOutSine" />
+      <Tween target="scale-world" to={{veil: 0.85}} line="l3b" edge="end" offset={0.9} until="end" easing="easeInSine" />
+    </Animation>
+  </Scene>
+
   <Scene id="buried" title="Buried">
     <Line id="l4" text="Pumice rained down for 18 hours. Then surges of hot ash and gas swept over the town.">Pumice rained down for eighteen hours. Then surges of hot ash and gas swept over the town.</Line>
+    <Line id="l4b" text="A pyroclastic surge is a cloud of hot ash and gas that races along the ground." hold={0.6}>A pyroclastic surge is a cloud of hot ash and gas that races along the ground.</Line>
 
     <Part id="buried-world">{() => (
       <Stage cam={useProp('cam', 0)} focus={400} veil={useProp('veil', 0.85)} lightX={1180} lightY={360} glow={0.5}>
         <Plane z={3200}><Ridge shape="cone" seed="vesuvius" top={330} relief={330} at={1180} mist={0.6} rim={0.3} /></Plane>
         <Plane z={3220}><Plume x={1180} base={338} height={300} rise={1} /></Plane>
         <Plane z={400}><Obj id="deposit"><Section bands={DEPOSIT} walls={4} labelX={1250} built={useProp('deposit', 'built', 0)} /></Obj></Plane>
+        <Plane z={400}><Obj id="surge-term"><Term x={180} y={170} word="Pyroclastic surge" meaning="a cloud of hot ash and gas that races along the ground" size={84} show={useProp('surge-term', 'show', 0)} /></Obj></Plane>
         <Motes kind="ash" seed="rain" near={-100} far={2600} count={36} />
       </Stage>
     )}</Part>
@@ -117,6 +152,8 @@ export default <Doc
       <Tween target="buried-world" to={{cam: 120}} at="start" until="end" easing="easeInOutSine" />
       <Tween target="deposit" to={{built: 1}} line="l4" word="Pumice rained" dur={2.6} easing="easeInOutSine" />
       <Tween target="deposit" to={{built: 2}} line="l4" word="surges of hot ash" dur={1.4} easing="easeOutQuad" />
+      <Tween target="surge-term" to={{show: 0.5}} line="l4b" word="pyroclastic surge" dur={0.9} easing="easeOutSine" />
+      <Tween target="surge-term" to={{show: 1}} line="l4b" word="a cloud" dur={1.0} easing="easeOutSine" />
     </Animation>
   </Scene>
 

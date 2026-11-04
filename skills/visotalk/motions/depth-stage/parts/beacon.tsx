@@ -5,7 +5,7 @@ export const meta = {
   name: {en: 'Distant light', 'zh-CN': '远处的光'},
   purpose: 'mark',
   line: 'A warm point of light kindling far off in the dusk, its halo carried by the haze.',
-  fits: 'a crater waking, a first lamp, a signal fire, a star',
+  fits: 'a crater waking, a first lamp, a star',
   params: {
     x: {type: 'px', default: 960, doc: 'where the light is, across, at rest'},
     y: {type: 'px', default: 500, doc: 'where the light is, down, at rest'},
@@ -13,7 +13,7 @@ export const meta = {
     size: {type: 'px', default: 1, doc: 'how large its halo is; 1 is a lamp, 4 a fire that lights the sky'},
     flicker: {type: 'progress', default: 0.4, doc: 'how much it trembles: 0 a star, 1 a fire'},
   },
-  preview: 12.4,
+  preview: 13.66,
 };
 
 export function Beacon({x = 960, y = 500, on = 1, size = 1, flicker = 0.4}: {x?: number; y?: number; on?: number; size?: number; flicker?: number}) {

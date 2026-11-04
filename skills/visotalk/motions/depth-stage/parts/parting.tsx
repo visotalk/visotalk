@@ -6,7 +6,7 @@ export const meta = {
   name: {en: 'Parting layer', 'zh-CN': '分开的层'},
   purpose: 'transition',
   line: 'A covering layer (buried ground, cloud) cracks and slides apart to reveal what lies behind.',
-  fits: 'ash lifted off a city, rock opened on a fossil, cloud parting on a summit',
+  fits: 'ash lifted off a city, cloud parting on a summit',
   params: {
     shape: {type: 'text', default: 'strata', doc: 'strata (bands of ground in section) or cloud (a billowing bank)'},
     seed: {type: 'text', default: 'a', doc: 'another seed draws other bands and another crack'},
@@ -15,7 +15,7 @@ export const meta = {
     open: {type: 'progress', default: 0, doc: '0 closed, 1 parted'},
     gap: {type: 'px', default: 820, doc: 'how far each half slides when fully open'},
   },
-  preview: 35.5,
+  preview: 49.22,
 };
 
 const L = SHEET.x, R = SHEET.x + SHEET.w, B = SHEET.y + SHEET.h;

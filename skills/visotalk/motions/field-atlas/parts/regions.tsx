@@ -7,8 +7,8 @@ import {Paint, type PaintOp} from './atlas.tsx';
 export const meta = {
   name: {en: 'Regions', 'zh-CN': '分区填色'},
   purpose: 'data',
-  line: 'Countries, states or provinces filled in one ochre by a value, darker for more, filling one after another or as a route reaches each; read with a Legend.',
-  fits: 'a value by country or state (a share, a count, a rate); the places an event touched',
+  line: 'Countries or states filled in one ochre by a value, darker for more, filling as said or as a route reaches each; read with a Legend.',
+  fits: 'a value by country or state; places an event touched',
   params: {
     values: {type: '{[id]: number}', doc: 'each region\'s value, by ISO code (`USA`, `US-IL`) or by name; drawn in the vendored map, or in `extra`'},
     max: {type: 'number', default: 1, doc: 'the value drawn darkest; 0 stays the bare land'},
@@ -18,7 +18,7 @@ export const meta = {
     lift: {type: 'progress', default: 0, doc: '0 to 1: the regions at `max` rise off the map like cut paper, casting a soft shadow; on the word that singles them out'},
     dim: {type: 'progress', default: 0, doc: '0 to 1: the fill fades away while something else is the subject (a close view inside one region)'},
   },
-  preview: 20.9,
+  preview: 9.3,
 };
 
 /** The colour of a value on the ochre scale: the land's paper at 0, the full ochre at `max` */

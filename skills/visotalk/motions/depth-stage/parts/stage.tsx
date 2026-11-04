@@ -7,8 +7,8 @@ import {useCompositionTime, useCurrentFrame} from '@motionhub/runtime';
 export const meta = {
   name: {en: 'Depth stage', 'zh-CN': '景深舞台'},
   purpose: 'ground',
-  line: 'A dusk sky and its haze seen through one camera that dollies, pans and racks focus; every other component stands on a plane in it.',
-  fits: 'every scene: one per scene, holding that scene\'s planes; tween cam to dolly through the layers, focus to rack between them',
+  line: 'A dusk sky and its haze through one camera that dollies, pans and racks focus; every component stands on a plane in it.',
+  fits: 'every scene, holding its planes; tween cam to dolly, focus to rack',
   params: {
     cam: {type: 'px', default: 0, doc: 'how far the camera has dollied forward into the depth'},
     focus: {type: 'px', default: 0, doc: 'the depth that is sharp (a plane\'s z)'},
@@ -24,7 +24,7 @@ export const meta = {
     quake: {type: 'progress', default: 0, doc: 'the ground shaking under the camera: tween it up on the blow and back to 0; once a film'},
     flash: {type: 'progress', default: 0, doc: 'the sky lit at once by a blast or a bolt: tween it up and let it fall'},
   },
-  preview: 41.0,
+  preview: 54.72,
 };
 
 /** The lens: px from the eye to the picture plane. */

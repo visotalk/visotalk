@@ -3,8 +3,8 @@ import {LENS, Plane, hazed, unit, useLook} from './stage.tsx';
 export const meta = {
   name: {en: 'Mileposts into the depth', 'zh-CN': '纵深里程桩'},
   purpose: 'steps',
-  line: 'Slender posts, each a date or a stage, one behind another into the haze; the camera dollies past them as they are counted.',
-  fits: 'centuries passing, the stages of a journey, distances along a route, eras of a history',
+  line: 'Posts, each a date or a stage, one behind another into the haze, passed by the camera as they are counted.',
+  fits: 'centuries passing, the stages of a journey, eras',
   params: {
     items: {type: 'list', doc: 'the posts, nearest first: [{label: \'AD 500\', note: \'…\'}]'},
     z: {type: 'px', default: 600, doc: 'the depth of the nearest post'},
@@ -13,7 +13,7 @@ export const meta = {
     spread: {type: 'px', default: 380, doc: 'how far either side of the middle the posts stand, alternately'},
     shown: {type: 'number', default: 99, doc: 'how many posts stand, nearest first: tween it to raise them one by one'},
   },
-  preview: 26.7,
+  preview: 40.42,
 };
 
 type Item = {label: string; note?: string};

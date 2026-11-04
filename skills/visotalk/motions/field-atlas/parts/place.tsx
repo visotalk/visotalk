@@ -7,8 +7,8 @@ import {useView, band, unit, W, H} from './geo.ts';
 export const meta = {
   name: {en: 'Place', 'zh-CN': '地名'},
   purpose: 'mark',
-  line: 'A name set by kind: a town as a dot and serif name, a country or state in spaced capitals, water in blue italic, the place that matters in a red ring; shown in a range of zoom.',
-  fits: 'every name the narration says, on its word; towns along a route; the point where two things meet',
+  line: 'A name set by kind: a town in serif with a dot, a state in spaced capitals, water in blue italic, the place that matters in a red ring.',
+  fits: 'every name the narration says, on its word',
   params: {
     lon: {type: 'degrees', doc: 'where it is'},
     lat: {type: 'degrees', doc: 'where it is'},
@@ -22,7 +22,7 @@ export const meta = {
     show: {type: 'progress', default: 0, doc: 'its entrance, on the word that names it'},
     ripple: {type: 'progress', default: 0, doc: 'a point only: 0 to 1 sends three red rings out from it, on the word that lands it'},
   },
-  preview: 22.4,
+  preview: 27.4,
 };
 
 const DEFAULT = {town: 36, country: 32, region: 30, water: 36, point: 40} as const;

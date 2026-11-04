@@ -3,7 +3,7 @@ import {C, CANVAS, SANS, clamp, glide, type Pt} from './night.ts';
 export const meta = {
   name: {en: 'Pin label', 'zh-CN': '引线标注'},
   purpose: 'term',
-  line: "A dot on the thing named, a hairline with one elbow out to clear space, the name on the rule and a note under it.",
+  line: 'A dot on the thing named, a hairline with one elbow to clear space, the name on the rule, a note under it.',
   fits: "naming a part on the word it is said",
   params: {
     at: {type: '[x, y]', doc: 'the point on the thing named'},

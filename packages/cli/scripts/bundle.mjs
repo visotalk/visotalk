@@ -18,8 +18,7 @@ const main = join(OUT, 'cli', 'src', 'main.js');
 rmSync(join(CLI, 'dist'), {recursive: true, force: true});
 await build({
   entryPoints: [join(CLI, 'src', 'main.ts')], outfile: main, bundle: true, platform: 'node', format: 'esm', target: 'node20',
-  // @motionhub/cli stays a dependency of its own: its checker runs itself when it is the program started, which a bundle would make it
-  external: ['puppeteer-core', '@puppeteer/browsers', 'esbuild', '@motionhub/cli'], logLevel: 'warning',
+  external: ['puppeteer-core', '@puppeteer/browsers', 'esbuild'], logLevel: 'warning',
 });
 // `prepare` runs the third-party voice script as a process of its own; the package has no TypeScript flag to run it with, so it ships as plain JavaScript beside main.js
 await build({

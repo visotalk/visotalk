@@ -5,8 +5,8 @@ import {Sheet, SHEET, hazed, unit, useLight, useLook} from './stage.tsx';
 export const meta = {
   name: {en: 'Silhouette layer', 'zh-CN': '剪影层'},
   purpose: 'ground',
-  line: 'One flat silhouette of the land (hills, peaks, a volcano, a town, trees, boughs), paled and softened by its depth.',
-  fits: 'the far mountains, the middle town and the near trees of a place; three to five of them, each on its own plane, make the depth',
+  line: 'One flat silhouette of the land (hills, a volcano, a town, trees), paled and softened by its depth.',
+  fits: 'the far, middle and near layers of a place, each on its own plane',
   params: {
     shape: {type: 'text', default: 'hills', doc: 'hills, peaks, cone (a volcano), town, trees, bank (a low near slope) or canopy (near boughs hanging in from a top corner)'},
     seed: {type: 'text', default: 'a', doc: 'another seed draws another outline of the same kind'},

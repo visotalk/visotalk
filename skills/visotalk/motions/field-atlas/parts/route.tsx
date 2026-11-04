@@ -7,8 +7,8 @@ import {Paint} from './atlas.tsx';
 export const meta = {
   name: {en: 'Route', 'zh-CN': '路线'},
   purpose: 'link',
-  line: 'A journey as one red line drawn across the map from its first point, led by its head, with its corridor when the path has a width; it turns to ink once it has been told.',
-  fits: 'a journey or a migration; a shadow, a storm or a flight crossing the land; a trade route; the path the camera rides (Atlas follow)',
+  line: 'A journey as one red line drawn from its first point, led by its head, with a corridor when it has a width; ink once told.',
+  fits: 'a journey or migration; a storm crossing land; the path the camera rides',
   params: {
     path: {type: '[lon, lat][]', doc: 'the points it runs through, in degrees, close enough to draw as straight steps'},
     draw: {type: 'progress', default: 0, doc: '0 to 1: how much of it is drawn, by distance from its first point'},
@@ -19,7 +19,7 @@ export const meta = {
     corridor: {type: 'progress', default: 1, doc: '1 fills the corridor; toward 0 the fill gives way to its two limits as dashed lines, for a close view inside it'},
     shade: {type: 'km', default: 0, doc: 'optional: a soft shadow this many km across the head\'s path, dark at its core, that sweeps the land as the line draws (a moon\'s shadow, a storm, night); it leaves with `head`'},
   },
-  preview: 6.2,
+  preview: 9.3,
 };
 
 const mix = (told: number, red: string, ink: string) => `color-mix(in oklab, ${red}, ${ink} ${Math.round(unit(told) * 100)}%)`;

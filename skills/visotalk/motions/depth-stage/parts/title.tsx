@@ -3,8 +3,8 @@ import {hazed, unit, useLook} from './stage.tsx';
 export const meta = {
   name: {en: 'Title in the haze', 'zh-CN': '雾中标题'},
   purpose: 'title',
-  line: 'A serif title under a small spaced line, on a plane of the world; it comes into focus out of the haze, letter by letter.',
-  fits: 'the place and year a story opens on; a chapter; the question a film asks',
+  line: 'A serif title under a small spaced line, on a plane of the world, coming into focus letter by letter.',
+  fits: 'the place and year a story opens on',
   params: {
     x: {type: 'px', default: 180, doc: 'its left edge (or centre, with align center), at rest'},
     y: {type: 'px', default: 260, doc: 'the top of the small line, at rest'},

@@ -8,8 +8,8 @@ import {WORLD, ViewContext, makeView, along, band, unit, W, H, type Feature, typ
 export const meta = {
   name: {en: 'Atlas', 'zh-CN': '地图'},
   purpose: 'ground',
-  line: 'An editorial map under one camera that turns the globe and zooms in log space from the Earth to a town, its scale bar following; everything else is drawn on it.',
-  fits: 'the whole film, one map behind every scene, so the camera never cuts; tween lon, lat and zoom, or follow a route',
+  line: 'An editorial map under one camera that zooms in log space from the Earth to a town, its scale bar following.',
+  fits: 'the whole film: one map, one camera that never cuts',
   params: {
     lon: {type: 'degrees', default: -30, doc: 'the longitude at the centre of the frame'},
     lat: {type: 'degrees', default: 25, doc: 'the latitude at the centre of the frame'},
@@ -22,7 +22,7 @@ export const meta = {
     scale: {type: 'progress', default: 1, doc: 'the scale bar\'s opacity'},
     under: {type: 'node', doc: 'what is drawn on the land below the borders and rivers: Regions'},
   },
-  preview: 40.6,
+  preview: 4.0,
 };
 
 /** A step of the graticule that keeps about six lines across the frame */

@@ -2,7 +2,7 @@
 import {existsSync,lstatSync,mkdirSync,readFileSync,readdirSync,renameSync,rmSync,writeFileSync,mkdtempSync} from 'node:fs';
 import {dirname,join,resolve} from 'node:path';
 import {parseMarkup,validate} from '@visotalk/ir';
-import {HUB_ID,MOTIONHUB,hubIndex,hubMotion,searchHub,shareMotion} from './motionhub.ts';
+import {HUB_ID,MOTIONHUB,hubIndex,hubMotion,searchHub} from './motionhub.ts';
 import {BUILTIN_MOTIONS,MOTION_SCENARIOS,MOTION_TAGS,applyMotion,builtinMotion,builtinMotionList,inspectMotion as inspectPack,motionIndex,motionPath,motionSectionIssues} from '@visotalk/ir/motions';
 
 export function readMotion(dir: string): Map<string,Uint8Array> {
@@ -77,13 +77,6 @@ export async function motionCmd(args: string[]): Promise<void> {
     }
     console.log(JSON.stringify({ok:!pack.issues.length,...pack},null,2));if(pack.issues.length)process.exitCode=1;return;
   }
-  if(command==='share'&&input) {
-    // a work's document names its motion/ beside it; the pack must pass VisoTalk's own checks before the catalogue's
-    const dir=/\.tsx$/.test(input)?join(dirname(resolve(input)),'motion'):resolve(input), files=readMotion(dir), pack=inspectMotion(files);
-    if(pack.issues.length)throw new Error(pack.issues.map((i)=>`${i.code}: ${i.at}: ${i.message}`).join('\n'));
-    const flag=(name: string)=>{const i=args.indexOf(`--${name}`);return i>=0?args[i+1]:undefined;};
-    console.log(await shareMotion(files,{slug:flag('slug'),github:flag('github'),license:flag('license'),out:flag('out'),pr:args.includes('--pr')}));return;
-  }
   if(command==='use'&&input&&file) {
     const path=resolve(file), target=join(dirname(path),'motion');
     if(existsSync(target))throw new Error('This work already owns motion/. Use explicit synchronization instead of replacing it.');
@@ -103,5 +96,5 @@ export async function motionCmd(args: string[]): Promise<void> {
     } finally {rmSync(temp,{recursive:true,force:true});rmSync(`${temp}.tsx`,{force:true});}
     console.log(`Copied ${files.size} motion files; check with visotalk motion check ${file}`);return;
   }
-  throw new Error('motion list | search [words] | show <slug-or-directory> | use <slug-or-directory> doc.tsx | check doc.tsx | share <motion-dir-or-doc.tsx> [--slug s] [--github login] [--license TEXT,CODE] [--out dir] [--pr]');
+  throw new Error('motion list | search [words] | show <slug-or-directory> | use <slug-or-directory> doc.tsx | check doc.tsx');
 }

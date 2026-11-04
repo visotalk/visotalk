@@ -5,7 +5,7 @@ import {Sheet, SHEET, hazed, unit, useLook} from './stage.tsx';
 export const meta = {
   name: {en: 'Cross-section', 'zh-CN': '剖面'},
   purpose: 'steps',
-  line: 'The ground cut open: layers laid one on another as they are named, each labelled, burying what stood on the old surface.',
+  line: 'The ground cut open: labelled layers laid as they are named, burying the old surface.',
   fits: 'how a city was buried, how strata form, sediment over a fossil',
   params: {
     bands: {type: 'list', doc: 'the layers, oldest first: [{label: \'Pumice\', note: \'18 hours\', depth: 150}], depth in px'},
@@ -14,7 +14,7 @@ export const meta = {
     walls: {type: 'number', default: 0, doc: 'how many walls stand on the old surface, to be buried'},
     labelX: {type: 'px', default: 1440, doc: 'where the labels start, across'},
   },
-  preview: 22.6,
+  preview: 30.53,
 };
 
 type Band = {label: string; note?: string; depth: number};

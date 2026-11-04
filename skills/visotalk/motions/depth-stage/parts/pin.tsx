@@ -3,7 +3,7 @@ import {hazed, unit, useLook} from './stage.tsx';
 export const meta = {
   name: {en: 'Depth pin', 'zh-CN': '景深标注'},
   purpose: 'mark',
-  line: 'A ring on a place and a hairline rising to its name, on that place\'s plane: sharp only while the focus is there.',
+  line: 'A ring on a place and a hairline up to its name, on that place\'s plane: sharp only while in focus.',
   fits: 'a forum, a summit, a crater, a house',
   params: {
     x: {type: 'px', default: 960, doc: 'the place pinned, across, at rest'},
@@ -14,7 +14,7 @@ export const meta = {
     side: {type: 'text', default: 'right', doc: 'which side of the hairline the name reads from: right or left'},
     draw: {type: 'progress', default: 1, doc: '0 nothing, 0.5 the ring and the hairline, 1 the name too'},
   },
-  preview: 13.8,
+  preview: 15.06,
 };
 
 export function Pin({x = 960, y = 600, label, note = '', rise = 150, side = 'right', draw = 1}: {

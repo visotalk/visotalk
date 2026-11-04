@@ -152,7 +152,7 @@ function silence(c: ReturnType<typeof solve>, t: number): string {
 }
 
 function usage(): never {
-  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still|export> <doc.tsx> [options]\n       visotalk recording <audio-or-video> --out doc.tsx [--lang en|zh-CN] [--trim fillers,pauses[=0.8]]\n       visotalk import <file.visotalk> [dir] [--remix] [--allow-voice-module]\n       visotalk asset search "<words>" | get <N> --id NAME\n       visotalk motion list | search [words] | show <slug> | use <slug> <doc.tsx> | check <doc.tsx> | share <motion/> [--pr]\n       visotalk schema [tags | hooks | actions] [--json]\nThe options of each command are in the header of this program and in the skill (skills/visotalk/SKILL.md).');
+  console.error('usage: visotalk <doctor|init|validate|prepare|build|render|play|check|qa|sheet|still|export> <doc.tsx> [options]\n       visotalk recording <audio-or-video> --out doc.tsx [--lang en|zh-CN] [--trim fillers,pauses[=0.8]]\n       visotalk import <file.visotalk> [dir] [--remix] [--allow-voice-module]\n       visotalk asset search "<words>" | get <N> --id NAME\n       visotalk motion list | search [words] | show <slug> | use <slug> <doc.tsx> | check <doc.tsx>\n       visotalk schema [tags | hooks | actions] [--json]\nThe options of each command are in the header of this program and in the skill (skills/visotalk/SKILL.md).');
   process.exit(2);
 }
 

@@ -3,8 +3,8 @@ import {C, CANVAS, MONO, clamp, glide, mix} from './night.ts';
 export const meta = {
   name: {en: 'Instrument ruler', 'zh-CN': '仪器标尺'},
   purpose: 'mark',
-  line: "A thin vertical scale with real units beside the subject, with a level line that can cross the picture.",
-  fits: "height, depth, time, temperature: any picture whose size is the point",
+  line: 'A thin vertical scale in real units beside the subject, with a level line across the picture.',
+  fits: 'height, depth, time, temperature',
   params: {
     x: {type: 'number', doc: 'where it stands on the frame'},
     y0: {type: 'number', doc: 'y of its lowest tick'},

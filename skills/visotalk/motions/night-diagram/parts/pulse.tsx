@@ -3,8 +3,8 @@ import {C, CANVAS, clamp, stagger} from './night.ts';
 export const meta = {
   name: {en: 'Pressure rings', 'zh-CN': '扩散波纹'},
   purpose: 'mark',
-  line: "Thin rings that leave a point one after another and thin out as they spread, cut at the ground if there is one.",
-  fits: "something spreading at a speed: thunder, a heartbeat, a signal",
+  line: 'Thin rings leaving a point one after another, thinning as they spread, cut at the ground.',
+  fits: 'thunder, a heartbeat, a signal',
   params: {
     at: {type: '[x, y]', doc: 'the source'},
     r: {type: 'number', default: 700, doc: 'how far the rings reach, in px'},

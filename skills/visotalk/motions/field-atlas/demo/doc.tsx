@@ -1,87 +1,80 @@
 // Field Atlas's sample: one example among many. Do not reuse its story, scenes, layout or timings; read it for technique, after your own scenes are planned.
-// The paths of totality are NASA GSFC's predictions by Fred Espenak (public domain), in demo/data/eclipses.json; the close view's rivers and
-// borders are Natural Earth 1:10m (public domain), in demo/data/southern-illinois.json. The states each path crossed are NASA's lists
-// (2017: fourteen, Iowa's corner among them; 2024: fifteen, with corners of Tennessee and Michigan); the crossing is where the central lines meet.
-import {Doc, Scene, Line, Part, Animation, Appear, Tween, Set} from '@visotalk/jsx';
+// The Indian Pacific, Sydney to Perth: 4,352 km and 70.5 to 75 hours one way (Wikipedia, "Indian Pacific"). The line is drawn through its towns,
+// which is close enough at a continent's scale; the Adelaide leg runs out from Crystal Brook and back, as the train does. The straight is Guinness
+// World Records' longest railway straight, 478 km between a point near Nurina and Loongana (WA) and one near Ooldea and Watson (SA); its two ends
+// here are placed between those towns. Nullarbor is from Latin nullus arbor, no tree.
+import {Doc, Scene, Line, Part, Animation, Appear, Tween} from '@visotalk/jsx';
 import {useProp} from '@visotalk/runtime';
-import {Atlas, Layer} from '../parts/atlas.tsx';
+import {Atlas} from '../parts/atlas.tsx';
 import {Route} from '../parts/route.tsx';
 import {Regions} from '../parts/regions.tsx';
 import {Legend} from '../parts/legend.tsx';
+import {Stops} from '../parts/stops.tsx';
+import {Gloss} from '../parts/gloss.tsx';
 import {Place} from '../parts/place.tsx';
 import {Plate} from '../parts/plate.tsx';
 import {Note} from '../parts/note.tsx';
 import {Locator} from '../parts/locator.tsx';
-import {features, unit, type LonLat} from '../parts/geo.ts';
-import ECLIPSES from './data/eclipses.json';
-import LOCAL from './data/southern-illinois.json';
+import {type LonLat} from '../parts/geo.ts';
 
-const E17 = ECLIPSES.e2017 as {north: LonLat[]; south: LonLat[]; center: LonLat[]};
-const E24 = ECLIPSES.e2024 as {north: LonLat[]; south: LonLat[]; center: LonLat[]};
+// the straight's two ends, and the sidings on it, set on the one line between them
+const EAST: LonLat = [131.7, -30.48], WEST: LonLat = [126.75, -30.97];
+const on = (lon: number): LonLat => [lon, EAST[1] + ((EAST[0] - lon) / (EAST[0] - WEST[0])) * (WEST[1] - EAST[1])];
+const COOK = on(130.41), FORREST = on(128.11), LOONGANA = on(127.03);
+const STRAIGHT: LonLat[] = [EAST, WEST];
 
-const IN_2017 = ['US-OR', 'US-ID', 'US-MT', 'US-WY', 'US-NE', 'US-KS', 'US-IA', 'US-MO', 'US-IL', 'US-KY', 'US-TN', 'US-GA', 'US-NC', 'US-SC'];
-const IN_2024 = ['US-TX', 'US-OK', 'US-AR', 'US-MO', 'US-IL', 'US-KY', 'US-TN', 'US-IN', 'US-OH', 'US-MI', 'US-PA', 'US-NY', 'US-VT', 'US-NH', 'US-ME'];
-const ONCE = Object.fromEntries(IN_2017.map((id) => [id, 1]));
-const TOTAL = Object.fromEntries(IN_2024.map((id) => [id, IN_2017.includes(id) ? 2 : 1]));
-const BOTH = Object.fromEntries(IN_2024.filter((id) => IN_2017.includes(id)).map((id) => [id, 2]));
+const LINE: LonLat[] = [
+  [151.21, -33.88], [150.69, -33.75], [150.31, -33.71], [150.16, -33.48], [149.58, -33.42], [149.1, -33.28], [148.18, -33.14], [147.15, -33.09],
+  [144.3, -32.9], [142.42, -32.39], [141.47, -31.95], [141.0, -32.08], [138.84, -32.97], [138.21, -33.35],
+  [138.59, -34.92], [138.21, -33.35],                                                 // to Adelaide and back to Crystal Brook
+  [138.01, -33.18], [137.77, -32.49], [136.8, -31.25], [134.57, -30.71], [131.83, -30.45], EAST, COOK, FORREST, LOONGANA, WEST,
+  [125.33, -31.01], [123.57, -31.03], [121.47, -30.75], [119.33, -31.23], [118.28, -31.48], [116.67, -31.65], [115.88, -31.95],
+];
 
-const RIVERS = features(LOCAL.rivers.map((r, i) => ({id: `river-${i}`, name: r.name, coords: [r.coords as LonLat[]], lines: true})));
-const BORDERS = features(LOCAL.borders.map((b, i) => ({id: `border-${i}`, coords: [b.coords as LonLat[]], lines: true})));
-const LAKES = features(LOCAL.lakes.map((l, i) => ({id: `lake-${i}`, name: l.name, coords: l.coords as LonLat[][]})));
-
-const CROSS: LonLat = [-89.271, 37.642];
+const STOPS = [
+  {lon: 151.21, lat: -33.88, name: 'Sydney', note: 'NSW'},
+  {lon: 141.47, lat: -31.95, name: 'Broken Hill', note: 'NSW'},
+  {lon: 138.59, lat: -34.92, name: 'Adelaide', note: 'SA'},
+  {lon: COOK[0], lat: COOK[1], name: 'Cook', note: 'SA'},
+  {lon: 121.47, lat: -30.75, name: 'Kalgoorlie', note: 'WA'},
+  {lon: 115.88, lat: -31.95, name: 'Perth', note: 'WA'},
+];
+/** The states the line crosses */
+const STATES = {'AU-NSW': 1, 'AU-SA': 1, 'AU-WA': 1};
 
 function Map() {
-  const zoom = useProp('zoom', 0), detail = useProp('detail', 0);
-  const d17 = useProp('draw17', 0), d24 = useProp('draw24', 0);
-  const told17 = useProp('told17', 0), told24 = useProp('told24', 0);
-  const follow = useProp('ride', 0), lift = useProp('lift', 0), dim = useProp('dim', 0);
+  const draw = useProp('draw', 0), told = useProp('told', 0);
   return (
-    <Atlas lon={useProp('lon', 8)} lat={useProp('lat', 12)} zoom={zoom} detail={detail}
-      follow={follow < 1 ? E17.center : E24.center} followAt={follow < 1 ? d17 : d24} followMix={useProp('mix', 0)}
-      under={<>
-        <Regions values={ONCE} max={2} reach={E17.center} fill={d17} dim={dim} />
-        <Regions values={TOTAL} max={2} reach={E24.center} fill={d24} dim={dim} />
-      </>}>
-      {lift > 0.001 && <Regions values={BOTH} max={2} reach={E24.center} fill={d24} lift={lift} dim={dim} />}
-      <Layer data={LAKES} kind="lake" opacity={detail} />
-      <Layer data={BORDERS} kind="border" opacity={detail} />
-      <Layer data={RIVERS} kind="river" opacity={detail} />
-      <Place lon={-126} lat={29} name="Pacific Ocean" kind="water" zoomIn={0.6} zoomOut={3.2} show={useProp('pacific', 1)} />
-      <Place lon={-69} lat={30} name="Atlantic Ocean" kind="water" zoomIn={0.6} zoomOut={3.2} show={useProp('atlantic', 1)} />
-      <Place lon={-90.2} lat={26.9} name="Gulf of Mexico" kind="water" size={34} zoomIn={1.3} zoomOut={1.85} show={useProp('gulf', 1)} />
-      <Route path={E17.center} left={E17.north} right={E17.south} draw={d17} told={told17} head={useProp('head17', 1)} corridor={1 - detail} shade={7000} />
-      <Route path={E24.center} left={E24.north} right={E24.south} draw={d24} told={told24} head={useProp('head24', 1)} corridor={1 - detail} shade={7000} />
-      <Place lon={-120.5} lat={42.95} name="Oregon" kind="region" zoomIn={1.2} zoomOut={4} show={useProp('oregon', 0)} />
-      <Place lon={-80.85} lat={32.95} name="South Carolina" kind="region" zoomIn={1.2} zoomOut={4} show={useProp('carolina', 0)} />
-      <Place lon={-107.2} lat={30.1} name="Mexico" kind="country" zoomIn={1} zoomOut={4} show={useProp('mexico', 0)} />
-      <Place lon={-87.65} lat={41.85} name="Chicago" zoomIn={2.6} zoomOut={4.3} show={useProp('cities', 0)} />
-      <Place lon={-90.24} lat={38.63} name="St. Louis" side="left" zoomIn={3.0} zoomOut={5.6} show={useProp('cities', 0)} />
-      <Place lon={-90.05} lat={35.15} name="Memphis" side="left" zoomIn={3.0} zoomOut={5.0} show={useProp('cities', 0)} />
-      <Place lon={-86.78} lat={36.16} name="Nashville" zoomIn={3.0} zoomOut={5.0} show={useProp('cities', 0)} />
-      <Place lon={-87.56} lat={37.97} name="Evansville" zoomIn={4.4} zoomOut={6.4} show={useProp('cities', 0)} />
-      <Place lon={-88.6} lat={37.08} name="Paducah" zoomIn={4.8} zoomOut={6.8} show={useProp('cities', 0)} />
-      <Place lon={-89.52} lat={37.31} name="Cape Girardeau" zoomIn={6.6} side="left" size={36} show={useProp('towns', 0)} />
-      <Place lon={-89.9} lat={37.84} name="Mississippi" kind="water" size={34} zoomIn={6.8} show={useProp('towns', 0) * (1 - useProp('avgShow', 0))} />
-      <Place lon={-89.83} lat={37.52} name="Missouri" kind="region" zoomIn={6.6} show={useProp('towns', 0) * (1 - useProp('avgShow', 0))} />
-      <Place lon={-88.95} lat={37.56} name="Illinois" kind="region" zoomIn={6.6} show={useProp('towns', 0)} />
-      <Place lon={-89.217} lat={37.727} name="Carbondale" note="Illinois" side="left" size={40} zoomIn={5.5} show={useProp('carbondale', 0)} />
-      <Place lon={CROSS[0]} lat={CROSS[1]} name="The paths cross" kind="point" side="left" size={36} zoomIn={6.5} show={useProp('cross', 0)} ripple={useProp('ripple', 0)} />
-      <Place lon={CROSS[0]} lat={CROSS[1]} name="Carbondale" kind="point" side="right" size={34} zoomOut={3.2} show={useProp('meet', 0)} ripple={useProp('ripple2', 0)} />
-      <Note value={useProp('avg', 0)} unit="years" label="the average wait for totality at one spot" x={120} y={150} show={useProp('avgShow', 0)} />
-      <Note value={useProp('gap', 0)} digits={1} unit="years" label="Carbondale's wait between the two" x={120} y={430} accent show={useProp('gapShow', 0)} />
-      <Legend title="States in the path of totality" steps={[{value: 1, label: 'in one path'}, {value: 2, label: 'in both'}]} max={2} shown={useProp('keys', 0)}
-        paths={[{label: 'path of 2017', told: told17, show: 1}, {label: 'path of 2024', told: told24, show: unit(d24 * 4)}]} source="NASA eclipse predictions" show={useProp('legend', 0)} />
+    <Atlas lon={useProp('lon', 70)} lat={useProp('lat', -8)} zoom={useProp('zoom', 0)} follow={LINE} followAt={draw} followMix={useProp('mix', 0)}
+      under={<Regions values={STATES} max={2} reach={LINE} fill={draw} dim={useProp('dim', 0)} />}>
+      <Place lon={130} lat={-34.9} name="Great Australian Bight" kind="water" size={32} zoomIn={1.6} zoomOut={3.4} show={useProp('bight', 0)} />
+      <Place lon={146.4} lat={-30.2} name="New South Wales" kind="region" zoomIn={1.6} zoomOut={3.6} show={useProp('nsw', 0)} />
+      <Place lon={135.6} lat={-27.6} name="South Australia" kind="region" zoomIn={1.6} zoomOut={3.6} show={useProp('sa', 0)} />
+      <Place lon={120} lat={-25} name="Western Australia" kind="region" zoomIn={1.6} zoomOut={3.6} show={useProp('wa', 0)} />
+      <Route path={LINE} draw={draw} told={told} head={useProp('head', 1)} />
+      <Route path={STRAIGHT} draw={useProp('straight', 0)} head={useProp('headS', 1)} />
+      <Legend title="States on the line" steps={[{value: 1, label: 'crossed'}]} max={2} shown={useProp('keys', 0)} paths={[{label: 'Indian Pacific', told}]} source="Natural Earth" x={96} y={96} show={useProp('legend', 0)} />
+      <Stops stops={STOPS} reach={LINE} reached={draw} title="Indian Pacific" x={1404} y={96} show={useProp('stops', 0)} />
+      <Place lon={130.9} lat={-29.55} name="South Australia" kind="region" zoomIn={4.2} show={useProp('close', 0)} />
+      <Place lon={128.3} lat={-29.55} name="Western Australia" kind="region" zoomIn={4.2} show={useProp('close', 0)} />
+      <Place lon={131.83} lat={-30.45} name="Ooldea" side="above" zoomIn={4.2} zoomOut={6} show={useProp('close', 0)} />
+      <Place lon={COOK[0]} lat={COOK[1]} name="Cook" side="above" zoomIn={4.2} zoomOut={6} show={useProp('close', 0)} />
+      <Place lon={FORREST[0]} lat={FORREST[1]} name="Forrest" side="above" zoomIn={4.2} zoomOut={6} show={useProp('close', 0)} />
+      <Place lon={LOONGANA[0]} lat={LOONGANA[1]} name="Loongana" side="above" zoomIn={4.2} zoomOut={6} show={useProp('close', 0)} />
+      <Gloss word="Nullarbor" origin="from Latin · nullus arbor" meaning="no tree" x={600} y={640} show={useProp('gloss', 0)} />
+      <Note value={useProp('km', 0)} unit="km" label="Sydney to Perth by rail" x={120} y={130} show={useProp('kmShow', 0)} />
+      <Note value={useProp('flat', 0)} unit="km" label="without a bend: the longest railway straight on Earth" x={96} y={130} accent show={useProp('flatShow', 0)} />
       <Locator x={1680} y={250} r={112} show={useProp('locator', 1)} />
-      <Plate kicker="United States · 2017 and 2024" title="Two shadows, one town" x={1010} y={110} size={78} show={useProp('title', 0)} />
-      <Plate kicker="37.6° N · 89.3° W" title="Where two shadows met" size={80} show={useProp('end', 0)} />
+      <Place lon={129.2} lat={-30.73} name="The long straight" kind="point" side="right" size={34} zoomOut={3.2} show={useProp('point', 0)} ripple={useProp('ripple', 0)} />
+      <Plate kicker="Australia · the Indian Pacific" title="Ocean to ocean by rail" x={1010} y={110} size={78} show={useProp('title', 0)} />
+      <Plate kicker="The Nullarbor · 30.7° S, 129.2° E" title="478 km without a bend" size={80} show={useProp('end', 0)} />
     </Atlas>
   );
 }
 
 export default <Doc
   id="field-atlas-sample"
-  title="Two shadows, one town"
+  title="Ocean to ocean by rail"
   lang="en"
   canvas="16x9"
   theme="visotalk/light"
@@ -95,66 +88,54 @@ export default <Doc
 >
   <Part id="map">{() => <Map />}</Part>
 
-  <Scene id="first" title="The first shadow">
-    <Line id="l1" text="On August 21, 2017, the Moon's shadow crossed the United States, from Oregon to South Carolina.">On August twenty-first, twenty seventeen, the Moon's shadow crossed the United States, from Oregon to South Carolina.</Line>
-    <Line id="l2" text="In fourteen states, day turned to night for up to two and a half minutes.">In fourteen states, day turned to night for up to two and a half minutes.</Line>
+  <Scene id="across" title="Coast to coast">
+    <Line id="l1" text="The Indian Pacific runs from Sydney to Perth, from one ocean to the other.">The Indian Pacific runs from Sydney to Perth, from one ocean to the other.</Line>
+    <Line id="l2" text="On the way it stops at Broken Hill, Adelaide, Cook and Kalgoorlie, across three states.">On the way it stops at Broken Hill, Adelaide, Cook and Kalgoorlie, across three states.</Line>
+    <Line id="l3" text="4,352 kilometres, in about three days." hold={0.6}>Four thousand, three hundred and fifty-two kilometres, in about three days.</Line>
     <Animation>
       <Appear target="map" at="start" dur={0.6} />
       <Tween target="map" to={{title: 1}} at="start" offset={0.3} dur={1.4} easing="easeOutSine" />
-      <Tween target="map" to={{lon: -97, lat: 38.5, zoom: 1.75}} at="start" until={{line: "l1", word: "crossed"}} easing="easeInOutSine" />
-      <Tween target="map" to={{title: 0}} line="l1" word="Moon's shadow" dur={0.8} easing="easeInSine" />
-      <Tween target="map" to={{draw17: 1}} line="l1" word="crossed" until={{line: "l1", edge: "end"}} easing="easeInOutSine" />
-      <Tween target="map" to={{mix: 0.55, zoom: 2.2, atlantic: 0}} line="l1" word="crossed" dur={1.4} easing="easeInOutSine" />
-      <Tween target="map" to={{oregon: 1}} line="l1" word="Oregon" dur={0.6} easing="easeOutSine" />
-      <Tween target="map" to={{carolina: 1}} line="l1" word="South Carolina" dur={0.6} easing="easeOutSine" />
-      <Tween target="map" to={{mix: 0, zoom: 1.75}} line="l1" edge="end" offset={-0.3} dur={1.6} easing="easeInOutSine" />
-      <Tween target="map" to={{head17: 0}} line="l1" edge="end" offset={0.4} dur={0.6} />
-      <Tween target="map" to={{legend: 1, keys: 1, atlantic: 1}} line="l2" word="fourteen states" dur={0.8} easing="easeOutSine" />
+      <Tween target="map" to={{lon: 133.5, lat: -28.2, zoom: 1.95}} at="start" until={{line: "l1", word: "Sydney"}} easing="easeInOutSine" />
+      <Tween target="map" to={{title: 0}} line="l1" word="Sydney" dur={0.8} easing="easeInSine" />
+      <Tween target="map" to={{stops: 1, nsw: 1}} line="l1" word="Sydney" dur={0.6} easing="easeOutSine" />
+      <Tween target="map" to={{legend: 1, keys: 1}} line="l1" word="Perth" dur={0.8} easing="easeOutSine" />
+      <Tween target="map" to={{draw: 1}} line="l1" word="runs" until={{line: "l2", edge: "end"}} easing="easeInOutSine" />
+      <Tween target="map" to={{mix: 0.3}} line="l1" word="runs" dur={1.2} easing="easeInOutSine" />
+      <Tween target="map" to={{sa: 1, bight: 1}} line="l2" word="Adelaide" dur={0.6} easing="easeOutSine" />
+      <Tween target="map" to={{wa: 1}} line="l2" word="three states" dur={0.6} easing="easeOutSine" />
+      <Tween target="map" to={{mix: 0, head: 0}} line="l2" edge="end" dur={1.2} easing="easeInOutSine" />
+      <Tween target="map" to={{legend: 0}} line="l3" dur={0.6} easing="easeInSine" />
+      <Tween target="map" to={{kmShow: 1}} line="l3" dur={0.6} easing="easeOutSine" />
+      <Tween target="map" to={{km: 4352}} line="l3" dur={1.4} easing="easeOutQuart" />
     </Animation>
   </Scene>
 
-  <Scene id="second" title="The second shadow">
-    <Line id="l3" text="Seven years later, a second shadow came up from Mexico, and crossed the first.">Seven years later, a second shadow came up from Mexico, and crossed the first.</Line>
-    <Line id="l4" text="Four states saw both, and the two paths cross just south of Carbondale, Illinois." hold={0.8}>Four states saw both, and the two paths cross just south of Carbondale, Illinois.</Line>
+  <Scene id="plain" title="The plain with no trees">
+    <Line id="l4" text="Halfway across, it reaches the Nullarbor.">Halfway across, it reaches the Nullarbor.</Line>
+    <Line id="l5" text="The name is Latin for no tree.">The name is Latin for no tree.</Line>
+    <Line id="l6" text="And here the track runs dead straight for 478 kilometres, the longest railway straight on Earth." hold={0.8}>And here the track runs dead straight for four hundred and seventy-eight kilometres, the longest railway straight on Earth.</Line>
     <Animation>
-      <Tween target="map" to={{told17: 1, oregon: 0, carolina: 0, gulf: 0, atlantic: 0}} line="l3" dur={1} easing="easeInOutSine" />
-      <Set target="map" to={{ride: 1}} line="l3" />
-      <Tween target="map" to={{mexico: 1}} line="l3" word="Mexico" dur={0.6} easing="easeOutSine" />
-      <Tween target="map" to={{mexico: 0}} line="l3" word="crossed the first" dur={0.5} easing="easeInSine" />
-      <Tween target="map" to={{keys: 2}} line="l3" word="Mexico" offset={0.5} dur={0.8} easing="easeOutSine" />
-      <Tween target="map" to={{draw24: 1}} line="l3" word="second shadow" until={{line: "l3", edge: "end"}} offset={0} easing="easeInOutSine" />
-      <Tween target="map" to={{mix: 0.85, zoom: 2.05}} line="l3" dur={1.2} easing="easeInOutSine" />
-      <Tween target="map" to={{head24: 0}} line="l3" edge="end" offset={0.4} dur={0.6} />
-      <Tween target="map" to={{mix: 0, zoom: 1.75}} line="l3" edge="end" offset={-0.2} dur={1.4} easing="easeInOutSine" />
-      <Tween target="map" to={{atlantic: 1}} line="l4" word="saw both" dur={0.8} easing="easeOutSine" />
-      <Tween target="map" to={{lift: 1}} line="l4" word="Four states" dur={0.9} easing="easeOutSine" />
-      <Tween target="map" to={{cities: 1}} line="l4" word="the two paths" dur={0.4} />
-      <Tween target="map" to={{legend: 0, told17: 0}} line="l4" word="the two paths" dur={0.8} easing="easeInSine" />
-      <Tween target="map" to={{lon: -89.36, lat: 37.5}} line="l4" word="the two paths" dur={1.1} easing="easeInOutSine" />
-      <Tween target="map" to={{zoom: 7.3}} line="l4" word="the two paths" offset={0.5} until={{line: "l4", edge: "end", offset: 0.6}} easing="easeInOut" />
-      <Tween target="map" to={{detail: 1, dim: 1}} line="l4" word="the two paths" offset={0.4} dur={1.3} easing="easeInOutSine" />
-      <Tween target="map" to={{carbondale: 1}} line="l4" word="Carbondale" dur={0.6} easing="easeOutSine" />
-      <Tween target="map" to={{cross: 1, towns: 1}} line="l4" word="Illinois" dur={0.8} easing="easeOutBack(1.6)" />
-      <Tween target="map" to={{ripple: 1}} line="l4" word="Illinois" offset={0.2} dur={2.2} easing="linear" />
+      <Tween target="map" to={{kmShow: 0, stops: 0, nsw: 0, sa: 0, wa: 0, bight: 0, told: 1}} line="l4" dur={0.8} easing="easeInSine" />
+      <Tween target="map" to={{lon: 129.2, lat: -30.75}} line="l4" until={{line: "l4", edge: "end", offset: 0.4}} easing="easeInOutSine" />
+      <Tween target="map" to={{zoom: 5.0, dim: 1}} line="l4" offset={0.3} until={{line: "l4", edge: "end", offset: 0.8}} easing="easeInOut" />
+      <Tween target="map" to={{close: 1}} line="l4" word="Nullarbor" dur={0.8} easing="easeOutSine" />
+      <Tween target="map" to={{gloss: 0.5}} line="l4" word="Nullarbor" dur={0.8} easing="easeOutSine" />
+      <Tween target="map" to={{gloss: 1}} line="l5" word="no tree" dur={0.7} easing="easeOutSine" />
+      <Tween target="map" to={{straight: 1}} line="l6" word="dead straight" dur={1.6} easing="easeInOutSine" />
+      <Tween target="map" to={{headS: 0}} line="l6" word="kilometres" dur={0.6} />
+      <Tween target="map" to={{flatShow: 1}} line="l6" word="four hundred" dur={0.6} easing="easeOutSine" />
+      <Tween target="map" to={{flat: 478}} line="l6" word="four hundred" dur={1.2} easing="easeOutQuart" />
     </Animation>
   </Scene>
 
-  <Scene id="wait" title="The wait">
-    <Line id="l5" text="On average, a total eclipse returns to the same spot about once every 375 years.">On average, a total eclipse returns to the same spot about once every three hundred and seventy-five years.</Line>
-    <Line id="l6" text="Carbondale waited less than seven." hold={0.6}>Carbondale waited less than seven.</Line>
-    <Line id="l7" text="From far enough away, the two shadows meet at a single point." hold={1.4}>From far enough away, the two shadows meet at a single point.</Line>
+  <Scene id="out" title="One line">
+    <Line id="l7" text="From far enough away, it is one straight line across a continent." hold={1.4}>From far enough away, it is one straight line across a continent.</Line>
     <Animation>
-      <Tween target="map" to={{lon: -89.38, lat: 37.48, zoom: 7.15}} line="l5" until={{line: "l6", edge: "end"}} easing="easeInOutSine" />
-      <Tween target="map" to={{avgShow: 1}} line="l5" word="once every" dur={0.8} easing="easeOutSine" />
-      <Tween target="map" to={{avg: 375}} line="l5" word="once every" dur={1.6} easing="easeOutQuart" />
-      <Tween target="map" to={{gapShow: 1}} line="l6" word="Carbondale" dur={0.8} easing="easeOutSine" />
-      <Tween target="map" to={{gap: 6.6}} line="l6" word="waited" dur={1.2} easing="easeOutQuart" />
-      <Tween target="map" to={{avgShow: 0, gapShow: 0, towns: 0}} line="l7" dur={0.8} easing="easeInSine" />
-      <Tween target="map" to={{locator: 0, pacific: 0, atlantic: 0}} line="l7" dur={0.5} easing="easeInSine" />
-      <Tween target="map" to={{lon: -92, lat: 33, zoom: 0.25, detail: 0, dim: 0.4, cross: 0, told17: 1, told24: 1}} line="l7" until={{line: "l7", edge: "end"}} easing="easeInOutSine" />
-      <Tween target="map" to={{meet: 1}} line="l7" word="single point" dur={0.8} easing="easeOutBack(1.6)" />
-      <Tween target="map" to={{ripple2: 1}} line="l7" word="single point" offset={0.2} dur={2.2} easing="linear" />
-      <Tween target="map" to={{lon: -78}} line="l7" edge="end" until="end" easing="linear" />
+      <Tween target="map" to={{flatShow: 0, gloss: 0, close: 0, locator: 0}} line="l7" dur={0.6} easing="easeInSine" />
+      <Tween target="map" to={{lon: 131.5, lat: -24, zoom: 0.35, dim: 0}} line="l7" until={{line: "l7", edge: "end"}} easing="easeInOutSine" />
+      <Tween target="map" to={{point: 1}} line="l7" word="one straight line" dur={0.8} easing="easeOutBack(1.6)" />
+      <Tween target="map" to={{ripple: 1}} line="l7" word="one straight line" offset={0.2} dur={2.2} easing="linear" />
+      <Tween target="map" to={{lon: 140}} line="l7" edge="end" until="end" easing="linear" />
       <Tween target="map" to={{end: 1}} line="l7" edge="end" offset={-0.2} dur={1.2} easing="easeOutSine" />
     </Animation>
   </Scene>

@@ -3,8 +3,8 @@ import {C, CANVAS, glide, mix, stagger, type Pt} from './night.ts';
 export const meta = {
   name: {en: 'Glowing mass', 'zh-CN': '发光团块'},
   purpose: 'open',
-  line: "A big body of soft overlapping rounds, lit on top, that swells from its base and can light from within.",
-  fits: "a storm cloud, a nebula, a lung: the large subject whose inside the film explains",
+  line: 'A big body of soft rounds, lit on top, that swells from its base and can light from within.',
+  fits: 'a storm cloud, a nebula, a lung',
   params: {
     puffs: {type: 'Array<[x, y, r, tone]>', doc: 'its rounds on the frame, back to front; tone 0 is darkest, 1 lightest'},
     from: {type: '[x, y]', doc: 'where it grows from'},

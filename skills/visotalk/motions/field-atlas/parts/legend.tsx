@@ -7,8 +7,8 @@ import {ochre} from './regions.tsx';
 export const meta = {
   name: {en: 'Legend', 'zh-CN': '图例'},
   purpose: 'data',
-  line: 'The key to a Regions fill: a small-capitals title, swatches on the same ochre scale with their meaning, and the source; each step arrives when it is said.',
-  fits: 'beside every filled map; a count or a share in a few steps',
+  line: 'The key to a Regions fill: a small-capitals title, ochre swatches with their meaning, and the source.',
+  fits: 'beside every filled map',
   params: {
     title: {type: 'text', doc: 'what is counted, in a few words'},
     steps: {type: '{value, label}[]', doc: 'the steps of the scale, lightest first, on the same `max` as the Regions'},
@@ -20,7 +20,7 @@ export const meta = {
     y: {type: 'px', default: 96, doc: 'its top'},
     show: {type: 'progress', default: 0, doc: 'the whole key\'s entrance'},
   },
-  preview: 20.4,
+  preview: 4.5,
 };
 
 export function Legend({title, steps, max = 1, shown = 0, paths = [], source, x = 1440, y = 96, show = 0}: {title: string; steps: Array<{value: number; label: string}>; max?: number; shown?: number; paths?: Array<{label: string; told?: number; show?: number}>; source?: string; x?: number; y?: number; show?: number}) {

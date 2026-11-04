@@ -6,8 +6,8 @@ import {useView, unit} from './geo.ts';
 export const meta = {
   name: {en: 'Margin note', 'zh-CN': '边注数字'},
   purpose: 'data',
-  line: 'A figure in the margin: a large serif number counting up, its unit and what it measures, with a leader to its place.',
-  fits: 'a distance, a duration, a population or a date about a place; a pair that contrasts (usual against this one)',
+  line: 'A figure in the margin: a large serif number counting up, its unit, what it measures, and a leader to its place.',
+  fits: 'a distance, duration or count about a place; a contrasting pair',
   params: {
     value: {type: 'number', doc: 'the figure now: tween it from 0 to count up'},
     digits: {type: 'number', default: 0, doc: 'decimal places shown'},
@@ -20,7 +20,7 @@ export const meta = {
     accent: {type: 'boolean', default: false, doc: 'the figure that matters, in red; the other stays ink'},
     show: {type: 'progress', default: 0, doc: 'its entrance'},
   },
-  preview: 34.5,
+  preview: 14.3,
 };
 
 export function Note({value, digits = 0, unit: u, label, x = 120, y = 420, lon, lat, accent = false, show = 0}: {

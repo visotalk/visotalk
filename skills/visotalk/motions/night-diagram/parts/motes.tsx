@@ -4,8 +4,8 @@ import {C, CANVAS, glide, hash, mix, stagger} from './night.ts';
 export const meta = {
   name: {en: 'Moving motes', 'zh-CN': '流动粒子'},
   purpose: 'data',
-  line: "Small marks that travel between regions, each on its own path and time, so a process can be watched happening.",
-  fits: "charge separating, ions crossing, gas spreading; flashes all over a region",
+  line: 'Small marks that travel between regions, each on its own path and time, so a process can be watched.',
+  fits: 'charge separating, ions crossing',
   params: {
     n: {type: 'number', default: 24, doc: 'how many'},
     from: {type: '[x, y, w, h]', doc: 'the region they start in'},

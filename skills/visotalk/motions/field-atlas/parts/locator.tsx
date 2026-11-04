@@ -6,7 +6,7 @@ import {useView, makeView, WORLD, band, unit, type View} from './geo.ts';
 export const meta = {
   name: {en: 'Locator', 'zh-CN': '位置小图'},
   purpose: 'mark',
-  line: 'A small globe in a corner, turned to where the camera is, with the frame\'s footprint in red; it shows once the camera is close.',
+  line: 'A small globe in a corner, turned to where the camera is, the frame\'s footprint in red; it shows once the camera is close.',
   fits: 'every close view (a town, a valley, a coast); the moment a zoom lands',
   params: {
     x: {type: 'px', default: 1660, doc: 'its centre, across'},
@@ -15,7 +15,7 @@ export const meta = {
     zoom: {type: 'number', default: 0, doc: 'how close the small globe is: 0 is the whole hemisphere filling the disc; more crops closer'},
     show: {type: 'progress', default: 1, doc: 'its opacity; it also waits for the main camera to be close'},
   },
-  preview: 27.0,
+  preview: 21.3,
 };
 
 export function Locator({x = 1660, y = 250, r = 120, zoom = 0, show = 1}: {x?: number; y?: number; r?: number; zoom?: number; show?: number}) {

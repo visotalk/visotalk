@@ -5,8 +5,8 @@ import {Plane, SHEET, unit} from './stage.tsx';
 export const meta = {
   name: {en: 'Motes in the air', 'zh-CN': '空气里的微粒'},
   purpose: 'ground',
-  line: 'Dust, falling ash or rising embers on several depths: near ones soft discs of light, far ones fine specks, so the air shows the depth.',
-  fits: 'dust in a low sun, ash after an eruption, sparks over a fire, snow',
+  line: 'Dust, ash or embers on several depths, near ones soft discs and far ones specks, so the air shows depth.',
+  fits: 'dust in a low sun, falling ash, sparks over a fire, snow',
   params: {
     kind: {type: 'text', default: 'dust', doc: 'dust (drifts), ash (falls) or embers (rise, warm, flickering)'},
     seed: {type: 'text', default: 'a', doc: 'another seed scatters them differently'},
@@ -15,7 +15,7 @@ export const meta = {
     count: {type: 'number', default: 26, doc: 'motes on each of the four depths'},
     amount: {type: 'progress', default: 1, doc: '0 clear air, 1 all of them'},
   },
-  preview: 14.6,
+  preview: 15.86,
 };
 
 const DEPTHS = 4;

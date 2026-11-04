@@ -1,7 +1,8 @@
 // Night Diagram's sample: one example among many. Do not reuse its story, scenes, layout or timings; read it for technique, after your own scenes are planned.
 // The science: thunderstorm electrification by collisions of ice crystals and graupel in the mixed-phase region near -15 C, with positive charge carried up and the main negative
 // charge left at mid levels (NOAA National Severe Storms Laboratory, Severe Weather 101); the channel can reach 50,000 F, about 28,000 C, five times the surface of the Sun, and sound takes about 3 s to cover a km
-// (US National Weather Service, "The Science of Thunder"); about 44 flashes a second worldwide (Christian et al., J. Geophys. Res. 2003).
+// (US National Weather Service, "The Science of Thunder"); about 44 flashes a second worldwide (Christian et al., J. Geophys. Res. 2003). The prism is dense flint
+// SF11, its index by Schott's Sellmeier formula, and the light through it is traced by Snell's law (parts/optics.ts).
 import {Doc, Scene, Line, Part, Animation, Appear, Tween} from '@visotalk/jsx';
 import {useProp} from '@visotalk/runtime';
 import {C, smooth} from '../parts/night.ts';
@@ -16,6 +17,7 @@ import {Lens} from '../parts/lens.tsx';
 import {Heading} from '../parts/heading.tsx';
 import {Pulse} from '../parts/pulse.tsx';
 import {Dive} from '../parts/dive.tsx';
+import {Refraction} from '../parts/refraction.tsx';
 
 const CLOUD: Array<[number, number, number, number]> = [
   [610, 310, 110, 0.15], [1470, 290, 130, 0.2], [800, 290, 130, 0.35], [1250, 265, 145, 0.45], [1020, 250, 150, 0.6],
@@ -74,7 +76,7 @@ export default <Doc
   pacing={{lead: 0.4, hold: 0.5, tail: 0.9}}
   exports={{captions: 'burned'}}
 >
-  <Part id="sky">{() => <Sky land={FLOOR} fade={useProp('fade', 1)} stars={110} glow={[1030, 700, 700]} light={useProp('light', 0)} />}</Part>
+  <Part id="sky">{() => <Sky land={useProp('land', 1) > 0.5 ? FLOOR : null} fade={useProp('fade', 1)} stars={110} glow={[1030, 700, 700]} light={useProp('light', 0)} />}</Part>
 
   <Scene id="storm" title="Charging up, then the strike">
     <Line id="a1" text="Inside a storm cloud, at about −15 °C, ice crystals and soft hail collide.">Inside a storm cloud, at about minus fifteen degrees, ice crystals and soft hail collide.</Line>
@@ -187,6 +189,32 @@ export default <Doc
       <Appear target="card3" line="c2" word="forty-four" dur={0} />
       <Tween target="card3" to={{show: 1}} line="c2" word="forty-four" dur={0.5} easing="linear" />
       <Tween target="card3" to={{roll: 1}} line="c2" word="forty-four" dur={0.8} easing="linear" />
+    </Animation>
+  </Scene>
+
+  <Scene id="glass" title="White light, opened">
+    <Line id="d1">A flash looks white, but white light holds every colour.</Line>
+    <Line id="d2" hold={1.4}>Through glass, each colour bends by its own angle: red the least, violet the most.</Line>
+    <Part id="prism" z={1}>{() => <Refraction from={[400, 800]} aim={-33}
+      glass={[{kind: 'prism', at: [960, 520], side: 340, in: useProp('prism', 0)}, {kind: 'card', at: [1440, 720], rot: 0, w: 320, in: useProp('card', 0)}]}
+      reach={useProp('reach', 0)} power={useProp('power', 0)} />}</Part>
+    <Part id="p-red" z={2}>{() => <Pin at={[1440, 712]} elbow={[1560, 600]} to={1840} text="Red bends least" note="690 nm" color={C.ember} t={useProp('t', 0)} />}</Part>
+    <Part id="p-violet" z={2}>{() => <Pin at={[1440, 792]} elbow={[1560, 860]} to={1840} text="Violet bends most" note="410 nm" color={C.ice} t={useProp('t', 0)} />}</Part>
+    <Part id="q4" z={3}>{() => <Heading text="What is in white light?" size={64} show={useProp('show', 0)} />}</Part>
+    <Animation>
+      <Tween target="sky" to={{land: 0}} at="start" dur={0.01} />
+      <Tween target="sky" to={{fade: 1}} at="start" dur={1.0} />
+      <Appear target="prism" at="start" dur={0} />
+      <Appear target="q4" at="start" dur={0} />
+      <Tween target="q4" to={{show: 1}} at="start" dur={0.6} easing="linear" />
+      <Tween target="prism" to={{prism: 1}} line="d1" word="white light" dur={0.6} easing="easeOutQuart" />
+      <Tween target="prism" to={{card: 1}} line="d1" word="every colour" dur={0.6} easing="easeOutQuart" />
+      <Tween target="prism" to={{power: 1}} line="d2" word="Through glass" dur={0.2} easing="linear" />
+      <Tween target="prism" to={{reach: 1500}} line="d2" word="Through glass" dur={1.4} easing="linear" />
+      <Appear target="p-red" line="d2" word="red" dur={0} />
+      <Tween target="p-red" to={{t: 1}} line="d2" word="red" dur={0.6} easing="linear" />
+      <Appear target="p-violet" line="d2" word="violet" dur={0} />
+      <Tween target="p-violet" to={{t: 1}} line="d2" word="violet" dur={0.6} easing="linear" />
     </Animation>
   </Scene>
 </Doc>;

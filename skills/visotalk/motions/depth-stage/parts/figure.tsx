@@ -3,8 +3,8 @@ import {hazed, unit, useLook} from './stage.tsx';
 export const meta = {
   name: {en: 'Figure in depth', 'zh-CN': '景深数字'},
   purpose: 'data',
-  line: 'A large light serif figure with its unit and label, on the plane of what it measures, counting up as it is said.',
-  fits: 'the height of a column, a depth, a distance, a span of years',
+  line: 'A large light serif figure with its unit and label, on the plane of what it measures, counting up.',
+  fits: 'a height, a depth, a distance, a span of years',
   params: {
     x: {type: 'px', default: 180, doc: 'its left edge, at rest'},
     y: {type: 'px', default: 240, doc: 'the top of the figure, at rest'},
@@ -16,7 +16,7 @@ export const meta = {
     size: {type: 'px', default: 210, doc: 'the figure\'s height'},
     show: {type: 'progress', default: 1, doc: '0 lost in the haze, 1 in focus'},
   },
-  preview: 15.0,
+  preview: 16.26,
 };
 
 export function Figure({x = 180, y = 240, value = 0, decimals = 0, prefix = '', unit: suffix = '', label = '', size = 210, show = 1}: {

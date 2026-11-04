@@ -4,8 +4,8 @@ import {C, CANVAS, SANS, glide, smooth, type Pt} from './night.ts';
 export const meta = {
   name: {en: 'Magnifying lens', 'zh-CN': '放大镜头'},
   purpose: 'term',
-  line: "A round window tied to one spot in the picture, showing the small process that explains the large one.",
-  fits: "the invisible step inside a big picture: a collision, a cell, a wingtip",
+  line: 'A round window tied to one spot, showing the small process that explains the large one.',
+  fits: 'the invisible step in a big picture',
   params: {
     at: {type: '[x, y]', doc: 'the middle of the lens'},
     r: {type: 'number', default: 214, doc: 'its radius'},

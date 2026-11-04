@@ -133,9 +133,10 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 
 ## What's new
 
-- **0.8.4** · Catalogue motions go by their author's name: `visotalk motion use @creator/slug doc.tsx`, as `motion search` prints it, and `motion share` publishes under your own.
+- **0.8.5** · The built-in motions are listed most used and most general first; Field Atlas has a new sample, and Field Atlas, Depth Stage and Night Diagram have new components. `motion share` is gone: a motion reaches [motionhub.dev](https://motionhub.dev) as a pull request to its repository.
+- **0.8.4** · Catalogue motions go by their author's name: `visotalk motion use @creator/slug doc.tsx`, as `motion search` prints it.
 - **0.8.3** · Four more built-in motions, twenty-one in all: [Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md), [Earth Block](skills/visotalk/motions/earth-block/MOTION.md), [Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) and [Light Bench](skills/visotalk/motions/light-bench/MOTION.md). A page edited after its build keeps the balance of voice and score.
-- **0.8.2** · Share your own motion: `visotalk motion share` prepares it for [motionhub.dev](https://motionhub.dev), and `--pr` opens the pull request. Motion components now draw with `@motionhub/runtime`.
+- **0.8.2** · Motion components now draw with `@motionhub/runtime`.
 - **0.8.1** · Find and use motions other people made: `visotalk motion search [words]` searches the catalogue at [motionhub.dev](https://motionhub.dev), and `motion show` and `motion use` take its slugs.
 - **0.8** · Styles are now *motions*: `visotalk motion list | show | use | check`, packs in `skills/visotalk/motions/` with `motion.json` and `MOTION.md`, a work's copy in `motion/`. The animation tags are *actions* (`visotalk schema actions`, `action.*` codes), and spec 0.8 names an action's kind `kind`; documents written for 0.7 need no change.
 - **0.7.1** · Seven more built-in motions, seventeen in all: [Field Atlas](skills/visotalk/motions/field-atlas/MOTION.md), [Evidence Board](skills/visotalk/motions/evidence-board/MOTION.md), [Clay World](skills/visotalk/motions/clay-world/MOTION.md), [Watercolor Tale](skills/visotalk/motions/watercolor-tale/MOTION.md), [Pixel Quest](skills/visotalk/motions/pixel-quest/MOTION.md), [Riso Pop](skills/visotalk/motions/riso-pop/MOTION.md) and [Live Studio](skills/visotalk/motions/live-studio/MOTION.md).
