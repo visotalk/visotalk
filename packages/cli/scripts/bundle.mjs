@@ -28,7 +28,8 @@ await build({
 writeFileSync(main, readFileSync(main, 'utf8').replace(/^#!.*\n/, '#!/usr/bin/env node\n'));
 chmodSync(main, 0o755);
 
-for (const f of readdirSync(join(CLI, 'src')).filter((n) => n.endsWith('.py'))) copyFileSync(join(CLI, 'src', f), join(OUT, 'cli', 'src', f));
+// the Python helpers the CLI runs, and the licence texts it copies beside what it embeds (ARPHICPL.txt, with Chinese stroke data)
+for (const f of readdirSync(join(CLI, 'src')).filter((n) => /\.(py|txt)$/.test(n))) copyFileSync(join(CLI, 'src', f), join(OUT, 'cli', 'src', f));
 for (const pkg of ['ir', 'runtime']) cpSync(join(CLI, '..', pkg, 'src'), join(OUT, pkg, 'src'), {recursive: true});
 // the tags a document imports (and the runtime reads the parts' children with) are one source file
 mkdirSync(join(OUT, 'jsx'), {recursive: true});

@@ -109,6 +109,14 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 </tr>
 <tr>
 <td width="50%" valign="top"><a href="https://visotalk.dev/motions/light-bench/"><img src="https://visotalk.dev/motions/light-bench/poster.jpg" alt="Light Bench" width="100%"></a><br><b>Light Bench · 光学台</b> · <sub>科普</sub><br><sub>真 3D 的黑色光学台：光束按斯涅尔定律穿过玻璃计算，一次一种颜色。</sub><br><sub><a href="https://visotalk.dev/motions/light-bench/">▶ 样片</a> · <a href="skills/visotalk/motions/light-bench/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/data-brief/"><img src="https://visotalk.dev/motions/data-brief/poster.jpg" alt="Data Brief" width="100%"></a><br><b>Data Brief · 数据简报</b> · <sub>报告、课程</sub><br><sub>统计简报，一个场景一张图：坐标轴、单位和来源齐全，钴蓝读数尺停在正在说的那个数上。</sub><br><sub><a href="https://visotalk.dev/motions/data-brief/">▶ 样片</a> · <a href="skills/visotalk/motions/data-brief/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/signal-grid/"><img src="https://visotalk.dev/motions/signal-grid/poster.jpg" alt="Signal Grid" width="100%"></a><br><b>Signal Grid · 栅格讲板</b> · <sub>课程、报告</sub><br><sub>冷灰纸上的 12 栏栅格：每个想法一块模块，正在说的标成信号黄，换内容时重排而不切镜头。</sub><br><sub><a href="https://visotalk.dev/motions/signal-grid/">▶ 样片</a> · <a href="skills/visotalk/motions/signal-grid/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/chalk-hall/"><img src="https://visotalk.dev/motions/chalk-hall/poster.jpg" alt="Chalk Hall" width="100%"></a><br><b>Chalk Hall · 黑板课</b> · <sub>课程、科普</sub><br><sub>边讲边写的黑板：公式一行行推导，坐标图在手画的坐标轴上描出，写满了就擦掉换下一块。</sub><br><sub><a href="https://visotalk.dev/motions/chalk-hall/">▶ 样片</a> · <a href="skills/visotalk/motions/chalk-hall/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/idea-map/"><img src="https://visotalk.dev/motions/idea-map/poster.jpg" alt="Idea Map" width="100%"></a><br><b>Idea Map · 概念图</b> · <sub>课程、报告</sub><br><sub>排版文字画的概念图：词站在自己的下划线上，下划线延伸成连线，线的画法就是关系。</sub><br><sub><a href="https://visotalk.dev/motions/idea-map/">▶ 样片</a> · <a href="skills/visotalk/motions/idea-map/MOTION.md">MOTION.md</a></sub></td>
 <td width="50%" valign="top"></td>
 </tr>
 </table>
@@ -133,6 +141,7 @@ npx visotalk@latest doctor --fix           # 每台机器一次：Chrome、旁�
 
 ## 最近更新
 
+- **0.8.6** · 新增 Data Brief、Signal Grid、Chalk Hall 和 Idea Map 四种教学与报告风格，共二十五种。中文手写按需获取笔顺数据并附许可证与署名；重复素材署名只列一次。
 - **0.8.5** · 内置风格按常用程度和通用程度排序；Field Atlas 换了新样片，Field Atlas、Depth Stage 和 Night Diagram 增加了新组件。`motion share` 已移除：要把风格发布到 [motionhub.dev](https://motionhub.dev)，请向它的仓库提交 pull request。
 - **0.8.4** · 目录里的风格改用作者名命名：`visotalk motion use @creator/slug doc.tsx`，名字以 `motion search` 列出的为准。
 - **0.8.3** · 新增四种内置风格，共二十一种：[Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md)、[Earth Block](skills/visotalk/motions/earth-block/MOTION.md)、[Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) 和 [Light Bench](skills/visotalk/motions/light-bench/MOTION.md)。构建后再编辑页面时，旁白和配乐的音量比例保持不变。

@@ -2,7 +2,7 @@
 /**
  * visotalk — validate, prepare, build, render, play, check.
  *
- *   visotalk doctor   [--fix] [--json]   what rendering needs and where it stands; --fix installs the pinned Chrome, the Kokoro model, the Python packages and the aligner weights into ~/.visotalk
+ *   visotalk doctor   [--fix [--strokes]] [--json]   what rendering needs and where it stands; --fix installs the pinned Chrome, the Kokoro model, the Python packages and the aligner weights into ~/.visotalk; --strokes also every Chinese character's stroke order, for building offline
  *   visotalk init     <doc.tsx> [--lines lines.json] [--id ID] [--tts-models DIR]   a valid skeleton of the narration, nothing drawn; starts the narration in the background
  *   visotalk validate <doc.tsx> [--json] [--limit 30] [--anchors]   issues carry a `fix` where there is a standard answer; --anchors lists each word anchor with the words it finds marked in the line
  *   visotalk recording <audio-or-video> --out doc.tsx [--lang en|zh-CN] [--trim fillers,pauses[=0.8]]   measured words with original speech and pauses, in the language spoken; --trim, only when the person asks: hesitations cut and long pauses shortened, into a new file
@@ -22,7 +22,7 @@
  *
  * Every command that reads a document but export takes --lang LANG: the document in the language of the overlay doc.<lang>.json beside it.
  */
-import {existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
+import {copyFileSync, existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, mkdtempSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {basename, dirname, join, resolve} from 'node:path';
 import {alignmentIssues, captionsSrt, creditsMarkdown, locate, markPhrase, MarkupError, sayOf, type Compiled, type Loc, sampleFrames, solve, staticQa, wordAt, type VoiceManifest} from '@visotalk/ir';
@@ -35,6 +35,7 @@ import {exportBundle, importBundle} from './bundle.ts';
 import {SCHEMA} from './schema.ts';
 import {recordingCmd, videoCuts} from './recording.ts';
 import {fontWarning, unavailableFonts} from './fonts.ts';
+import {ARPHIC_LICENCE} from './strokes.ts';
 import {motionCmd} from './motion.ts';
 import {assetCmd} from './asset.ts';
 import {Looks} from './looks.ts';
@@ -378,7 +379,10 @@ async function main() {
     // a video is rendered in segments, so the same command run again after an interruption picks up where it stopped; kept frames or no video, in one pass
     const r = options.encode && !options.saveFrames && !options.layer && !options.over && !recording ? await renderSegmented(options) : await renderBuilt(options);
     endProgress();
-    writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc));
+    // a build that embedded Chinese stroke data credits it, with its licence beside the video
+    const strokes = existsSync(join(p.work, 'strokes.json')) && Object.keys(JSON.parse(readFileSync(join(p.work, 'strokes.json'), 'utf8'))).length > 0;
+    writeFileSync(join(out, 'credits.md'), creditsMarkdown(p.doc, {strokes}));
+    if (strokes) copyFileSync(ARPHIC_LICENCE, join(out, 'ARPHICPL.txt'));
     if (p.doc.exports?.captions === 'sidecar') writeFileSync(join(out, 'captions.srt'), captionsSrt(solve(p.doc, JSON.parse(readFileSync(join(p.work, 'voice.json'), 'utf8')) as VoiceManifest, Number(opt('fps', '30')))));
     console.log(JSON.stringify({...r, hashes: undefined}, null, 1));
     const mixed=!flag('no-audio')&&(!layer||solve(p.doc,JSON.parse(readFileSync(join(p.work,'voice.json'),'utf8')) as VoiceManifest).sounds.length>0);

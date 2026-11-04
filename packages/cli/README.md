@@ -41,6 +41,11 @@ set `VISOTALK_CHROME` (a chrome-headless-shell binary), `KOKORO_DIR` (a folder w
 `VISOTALK_PYTHON` (a Python with `kokoro-onnx`, `soundfile`, `torch` and `torchaudio`). `VISOTALK_HOME` moves `~/.visotalk`; keep that path
 short, because narration fails under one longer than about 90 characters.
 
+A document whose parts write Chinese stroke by stroke (Chalk Hall) has the stroke order of the characters it draws fetched at `build`, once each, from
+cdn.jsdelivr.net (Make Me a Hanzi's data in `hanzi-writer-data`, under the Arphic Public License, whose text goes beside the player as `ARPHICPL.txt`), and
+kept under `~/.visotalk/hanzi/`; only those characters are sent. Offline, a character is drawn whole. `visotalk doctor --fix --strokes` installs every
+character (about 6 MB) for a machine that builds without the network.
+
 ## License
 
 MIT.

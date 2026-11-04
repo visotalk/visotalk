@@ -5,7 +5,7 @@
  */
 import {unzipSync, zipSync, type Zippable} from 'fflate';
 import {captionsSrt} from './captions.ts';
-import {creditsMarkdown} from './credits.ts';
+import {ARPHIC_FILE, creditsMarkdown} from './credits.ts';
 import {parseMarkup} from './markup.ts';
 import {SPEC_VERSION, type VisoDoc} from './spec.ts';
 import {solve, type VoiceManifest} from './timeline.ts';
@@ -387,7 +387,8 @@ export async function packPlayerBundle(input: PlayerPackInput): Promise<{manifes
   const files = new Map<string, Uint8Array>();
   for (const [path, data] of input.player) files.set(`player/${path}`, data);
   if (made.captions) files.set(`captions/${doc.meta.lang}.srt`, enc.encode(made.captions));
-  files.set('credits.md', enc.encode(creditsMarkdown(doc)));
+  // a player that embeds the stroke-order data carries its licence, and its credits name the data
+  files.set('credits.md', enc.encode(creditsMarkdown(doc, {strokes: input.player.has(ARPHIC_FILE)})));
   if (input.cover) files.set(`cover/cover.${input.cover.ext}`, input.cover.data);
   return seal('player', files, doc, input, {
     ...(input.cover && {cover: `cover/cover.${input.cover.ext}`}),

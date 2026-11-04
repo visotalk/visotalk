@@ -1,9 +1,10 @@
 /**
- * `visotalk doctor [--fix] [--json]`: what rendering needs, and where it stands on this machine.
+ * `visotalk doctor [--fix [--strokes]] [--json]`: what rendering needs, and where it stands on this machine.
  *
  * Without `--fix` it only reports. With `--fix` it installs what is missing into ~/.visotalk (VISOTALK_HOME): the pinned
  * chrome-headless-shell, the Kokoro model, a Python venv with its packages, the word-alignment weights and the fonts a document can embed, each download
- * checked against a size and a SHA-256 and written whole or not at all. `ffmpeg` and Python itself are the user's to install.
+ * checked against a size and a SHA-256 and written whole or not at all. `ffmpeg` and Python itself are the user's to install. `--strokes` also installs every
+ * Chinese character's stroke order (9,565 characters, about 6 MB, strokes.ts), for a machine that builds offline; a plain build fetches the characters it needs.
  * Every command then finds those files through `applyDefaults`, unless the variable it replaces (VISOTALK_CHROME, KOKORO_DIR,
  * VISOTALK_PYTHON, TORCH_HOME, VISOTALK_FONTS) is already set.
  */
@@ -166,6 +167,11 @@ export async function doctor(args: string[]) {
     await Promise.all(todo.map((i) => fixers[i.id](h).then(() => log(`installed ${i.id}`), (e) => void failed.set(i.id, e instanceof Error ? e.message : String(e)))));
     applyDefaults();
     items = check().map((i) => (failed.has(i.id) ? {...i, detail: `${i.detail}; ${failed.get(i.id)}`} : i));
+  }
+  // every Chinese character's stroke order at once, only when asked: a plain build fetches the characters it needs (strokes.ts)
+  if (args.includes('--fix') && args.includes('--strokes')) {
+    const {installAllStrokes, strokesDir} = await import('./strokes.ts');
+    log(`installed strokes: ${await installAllStrokes()} characters in ${strokesDir()}`);
   }
   const ok = items.every((i) => i.ok);
   if (json) console.log(JSON.stringify({ok, home: home(), items}, null, 1));

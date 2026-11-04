@@ -11,7 +11,8 @@ import {build as esbuild, buildSync, type BuildFailure, type PluginBuild} from '
 import {localImports} from '@visotalk/ir/bundle';
 import {clipKey, kokoroKey} from './clip_key.ts';
 import {fontPlan, writeFontFaces} from './fonts.ts';
-import {checkOverlay, DEFAULT_THEME, ID_PATTERN, localize, mediaHints, type Overlay, parseMarkup, sayOf, solve, soundGain, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
+import {ARPHIC_LICENCE, hanziOf, strokesFor, strokesScript, strokesWarning, wantsStrokes} from './strokes.ts';
+import {ARPHIC_FILE, checkOverlay, DEFAULT_THEME, ID_PATTERN, localize, mediaHints, type Overlay, parseMarkup, sayOf, solve, soundGain, speechTokens, themeTokens, validate, type Issue, type Line, type Loc, type Scene, type VisoDoc, type VoiceManifest} from '@visotalk/ir';
 import {ENV_HZ, muxAudio, narrationGain} from '@visotalk/exporter';
 
 const HERE = import.meta.dirname;
@@ -587,6 +588,11 @@ async function runtimeShims(work: string): Promise<{entry: string; alias: Record
  */
 /** Everything the document's text is drawn from: the document, its language's overlay and its own imported files */
 const documentText = (p: Project) => [readFileSync(p.file, 'utf8'), p.overlay?.text ?? '', ...localSources(p).map((x) => x.text)].join('\n');
+/**
+ * The text whose Han characters are fetched for stroke order: in a language's overlay, the document's own words are replaced (its lines and the `texts` parts
+ * draw), so the overlay and the imported parts are read and the document's source is not, or a Chinese document built in English would fetch its Chinese.
+ */
+export const strokesText = (p: Project) => p.overlay ? [p.overlay.text, ...localSources(p).map((x) => x.text)].join('\n') : documentText(p);
 
 /** The faces a build embeds for this document (`fontPlan` over its own text) */
 export const facesOf = (p: Project) => fontPlan(p.doc, documentText(p));
@@ -600,7 +606,7 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
   mkdirSync(dist, {recursive: true});
   // what an earlier build left under names of its own would be published with this one
   for (const dir of ['assets', 'audio', 'fonts']) rmSync(join(dist, dir), {recursive: true, force: true});
-  for (const f of readdirSync(dist)) if (/^(app|runtime|soundtrack)\.[0-9a-f]{12}\.(js|css|mp3)$/.test(f)) rmSync(join(dist, f));
+  for (const f of readdirSync(dist)) if (/^(app|runtime|soundtrack|strokes)\.[0-9a-f]{12}\.(js|css|mp3)$/.test(f)) rmSync(join(dist, f));
   const doc = ingest(p, dist, opts.artifact);
   // the embedded faces: the families the document names (in its theme or its parts' code), or its language's default, cut to the document's characters and embedded (an artifact page loads no stylesheet: its rules go inline in player.html)
   const faces = facesOf(p);
@@ -610,6 +616,15 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
     doc.theme = {id: doc.theme?.id ?? DEFAULT_THEME, tokens: {...doc.theme?.tokens, fonts: {...themeTokens(doc.theme).fonts, sans: faces.sans, ...(faces.display && {display: faces.display})}}};
   }
   writeFileSync(join(p.work, 'doc.built.json'), JSON.stringify(doc));
+  // Chinese stroke order, only for a document whose code reads it (strokes.ts) and only for its own characters, fetched once and kept
+  const strokes = wantsStrokes(documentText(p)) ? await strokesFor(hanziOf(strokesText(p))) : undefined;
+  const embedded = !!strokes && Object.keys(strokes.strokes).length > 0;
+  const said = strokes && strokesWarning(strokes);
+  if (said) console.warn(said);
+  writeFileSync(join(p.work, 'strokes.json'), JSON.stringify(strokes?.strokes ?? {}));
+  // the data is a script of its own beside the code, carrying its licence notice, and runs before the film's code (strokesScript)
+  if (embedded) { copyFileSync(ARPHIC_LICENCE, join(dist, ARPHIC_FILE)); writeFileSync(join(dist, 'strokes.js'), strokesScript(strokes.strokes)); }
+  else rmSync(join(dist, ARPHIC_FILE), {force: true});
   const entry = join(p.work, 'entry.tsx');
   const voice = JSON.parse(readFileSync(voicePath, 'utf8')) as VoiceManifest;
   // every player plays one track, the film's whole soundtrack mixed as the video's is; the clips and sounds stay beside it for what plays without a build (the web editor's edits)
@@ -634,7 +649,8 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
     rmSync(join(dist, file));
     return out;
   };
-  const runtimeJs = named('runtime.js')!, runtimeCss = named('runtime.css')!, appJs = named('app.js')!, appCss = named('app.css');
+  const runtimeJs = named('runtime.js')!, runtimeCss = named('runtime.css')!, appJs = named('app.js')!, appCss = named('app.css'), strokesJs = named('strokes.js');
+  const strokesTag = strokesJs ? `<script src="${strokesJs}"></script>` : '';
   // only the clips this document's voice manifest names: the work directory also holds those of earlier versions of the lines
   if (!opts.artifact) for (const v of Object.values(voice)) {
     if (!v.audio) continue;
@@ -656,11 +672,11 @@ export async function buildPlayer(p: Project, opts: {out?: string; minify?: bool
       faceFiles.push(face);
     }
     for (const sheet of [runtimeCss, appCss]) if (sheet) rmSync(join(dist, sheet));
-    writeFileSync(join(dist, 'player.html'), `<meta charset="utf-8">\n<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n<script src="${runtimeJs}"></script>\n<script src="${appJs}"></script>\n`);
-    const files = [appJs, runtimeJs, ...faceFiles, ...(mix ? [mix] : []), ...(existsSync(join(dist, 'assets')) ? readdirSync(join(dist, 'assets')).map((f) => `assets/${f}`) : [])];
+    writeFileSync(join(dist, 'player.html'), `<meta charset="utf-8">\n<title>${title}</title>\n<style>html,body,#root{height:100%}body{margin:0;background:#05070a}\n${faceRules}</style>\n${artifactQuery(opts)}<div id="root"></div>\n${strokesTag && `${strokesTag}\n`}<script src="${runtimeJs}"></script>\n<script src="${appJs}"></script>\n`);
+    const files = [appJs, runtimeJs, ...faceFiles, ...(mix ? [mix] : []), ...(strokesJs ? [strokesJs, ARPHIC_FILE] : []), ...(existsSync(join(dist, 'assets')) ? readdirSync(join(dist, 'assets')).map((f) => `assets/${f}`) : [])];
     writeFileSync(join(dist, 'artifact.json'), JSON.stringify({page: 'player.html', title: p.doc.meta.title, files}, null, 1));
     return dist;
   }
-  writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="${runtimeCss}" />\n${appCss ? `<link rel="stylesheet" href="${appCss}" />\n` : ''}<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div><script src="${runtimeJs}"></script><script src="${appJs}"></script></body>\n</html>\n`);
+  writeFileSync(join(dist, 'index.html'), `<!doctype html>\n<html lang="${p.doc.meta.lang}">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>${title}</title>\n<link rel="stylesheet" href="${runtimeCss}" />\n${appCss ? `<link rel="stylesheet" href="${appCss}" />\n` : ''}<style>html,body,#root{height:100%}body{margin:0;background:#05070a}</style>\n</head>\n<body><div id="root"></div>${strokesTag}<script src="${runtimeJs}"></script><script src="${appJs}"></script></body>\n</html>\n`);
   return dist;
 }

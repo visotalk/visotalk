@@ -109,6 +109,14 @@ name, or ask the agent to make your own from it. Every sample plays on [visotalk
 </tr>
 <tr>
 <td width="50%" valign="top"><a href="https://visotalk.dev/motions/light-bench/"><img src="https://visotalk.dev/motions/light-bench/poster.jpg" alt="Light Bench" width="100%"></a><br><b>Light Bench</b> · <sub>science</sub><br><sub>A black optical table in real 3D: beams of light computed through glass by Snell's law, one colour at a time.</sub><br><sub><a href="https://visotalk.dev/motions/light-bench/">▶ sample</a> · <a href="skills/visotalk/motions/light-bench/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/data-brief/"><img src="https://visotalk.dev/motions/data-brief/poster.jpg" alt="Data Brief" width="100%"></a><br><b>Data Brief</b> · <sub>report, lesson</sub><br><sub>A statistical brief, one exhibit a scene: real axes, units and sources, and a cobalt guide on the value being said.</sub><br><sub><a href="https://visotalk.dev/motions/data-brief/">▶ sample</a> · <a href="skills/visotalk/motions/data-brief/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/signal-grid/"><img src="https://visotalk.dev/motions/signal-grid/poster.jpg" alt="Signal Grid" width="100%"></a><br><b>Signal Grid</b> · <sub>lesson, report</sub><br><sub>Twelve columns on cool paper: each idea a module, what is said blocked in yellow; the board re-flows instead of cutting.</sub><br><sub><a href="https://visotalk.dev/motions/signal-grid/">▶ sample</a> · <a href="skills/visotalk/motions/signal-grid/MOTION.md">MOTION.md</a></sub></td>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/chalk-hall/"><img src="https://visotalk.dev/motions/chalk-hall/poster.jpg" alt="Chalk Hall" width="100%"></a><br><b>Chalk Hall</b> · <sub>lesson, science</sub><br><sub>A classroom slate chalked as it is said: formulas worked line by line, graphs on hand-drawn axes, a wipe to the next board.</sub><br><sub><a href="https://visotalk.dev/motions/chalk-hall/">▶ sample</a> · <a href="skills/visotalk/motions/chalk-hall/MOTION.md">MOTION.md</a></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><a href="https://visotalk.dev/motions/idea-map/"><img src="https://visotalk.dev/motions/idea-map/poster.jpg" alt="Idea Map" width="100%"></a><br><b>Idea Map</b> · <sub>lesson, report</sub><br><sub>A concept map in type: each term on its own underline, which runs on to the next, and the stroke is the relation.</sub><br><sub><a href="https://visotalk.dev/motions/idea-map/">▶ sample</a> · <a href="skills/visotalk/motions/idea-map/MOTION.md">MOTION.md</a></sub></td>
 <td width="50%" valign="top"></td>
 </tr>
 </table>
@@ -133,6 +141,7 @@ with CSS, SVG, three.js, data tables and loops, driven by the engine's clock.
 
 ## What's new
 
+- **0.8.6** · Four lesson and report motions, twenty-five in all: Data Brief, Signal Grid, Chalk Hall and Idea Map. Chinese handwriting gets stroke data on demand, with its licence and credit; repeated asset credits appear once.
 - **0.8.5** · The built-in motions are listed most used and most general first; Field Atlas has a new sample, and Field Atlas, Depth Stage and Night Diagram have new components. `motion share` is gone: a motion reaches [motionhub.dev](https://motionhub.dev) as a pull request to its repository.
 - **0.8.4** · Catalogue motions go by their author's name: `visotalk motion use @creator/slug doc.tsx`, as `motion search` prints it.
 - **0.8.3** · Four more built-in motions, twenty-one in all: [Night Diagram](skills/visotalk/motions/night-diagram/MOTION.md), [Earth Block](skills/visotalk/motions/earth-block/MOTION.md), [Plumb Line](skills/visotalk/motions/plumb-line/MOTION.md) and [Light Bench](skills/visotalk/motions/light-bench/MOTION.md). A page edited after its build keeps the balance of voice and score.

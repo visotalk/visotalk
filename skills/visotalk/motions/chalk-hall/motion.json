@@ -1,0 +1,77 @@
+{
+  "slug": "chalk-hall",
+  "version": "1",
+  "name": {
+    "en": "Chalk Hall",
+    "zh-CN": "黑板课"
+  },
+  "line": "A green-black classroom slate where the lesson is chalked as it is said, in four chalks that each mean one thing: formulas worked line under line, graphs plotted on hand-drawn axes, labelled diagrams, tables, the result boxed in yellow, the board wiped column by column for the next idea.",
+  "scenarios": ["lesson", "science"],
+  "tags": ["hand-drawn", "dark"],
+  "uses": [
+    "maths worked step by step: equations, formulas, proofs",
+    "functions and data plotted on axes",
+    "physics and electricity: laws, circuits, units",
+    "grammar and language: rules, tenses, words compared",
+    "chemistry and biology: labelled diagrams, reactions, processes",
+    "exam revision and worked examples"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/dark",
+    "tokens": {
+      "colors": {
+        "bg": "#19241F",
+        "panel": "#2B3B34",
+        "panel2": "#101714",
+        "border": "#3A4842",
+        "text": "#EDEBE2",
+        "muted": "#ADB8B0",
+        "faint": "#56645D",
+        "data": "#9FCBE2",
+        "grad": "#F3D57A",
+        "op": "#F2A39E",
+        "good": "#B5DA9C",
+        "bad": "#F2A39E",
+        "warn": "#F3D57A"
+      },
+      "fonts": {
+        "sans": "\"Atkinson Hyperlegible Next\", \"Noto Sans SC\", sans-serif",
+        "mono": "\"JetBrains Mono\", monospace",
+        "display": "\"Patrick Hand\", \"LXGW WenKai\", cursive"
+      },
+      "caption": {
+        "font": "sans",
+        "size": 34,
+        "color": "#EDEBE2",
+        "background": "rgba(12, 18, 16, 0.86)",
+        "radius": 4,
+        "padding": [10, 26],
+        "bottom": 58,
+        "rule": "#F3D57A",
+        "ruleSide": "top"
+      }
+    }
+  },
+  "pacing": {
+    "lead": 0.4,
+    "hold": 0.5,
+    "tail": 1
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "locked": [
+    "theme.tokens.fonts",
+    "theme.tokens.colors"
+  ]
+}

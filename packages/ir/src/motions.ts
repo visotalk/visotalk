@@ -12,7 +12,7 @@ export const MOTION_PURPOSES = ['ground','open','title','data','compare','quote'
  * The order the built-in motions are offered in, everywhere they are listed: the most used and most general first, the narrowest last.
  * A pack not named here comes after these, A to Z.
  */
-const BUILTIN_ORDER = ['stage-light', 'lab-notebook', 'screen-desk', 'riso-pop', 'red-pencil', 'on-air', 'iso-works', 'evidence-board', 'watercolor-tale', 'clay-world', 'marker-margin', 'live-studio', 'field-atlas', 'night-diagram', 'pixel-quest', 'depth-stage', 'drafting-table', 'ink-scroll', 'earth-block', 'plumb-line', 'light-bench'];
+const BUILTIN_ORDER = ['stage-light', 'signal-grid', 'lab-notebook', 'data-brief', 'screen-desk', 'chalk-hall', 'riso-pop', 'red-pencil', 'idea-map', 'on-air', 'iso-works', 'evidence-board', 'watercolor-tale', 'clay-world', 'marker-margin', 'live-studio', 'field-atlas', 'night-diagram', 'pixel-quest', 'depth-stage', 'drafting-table', 'ink-scroll', 'earth-block', 'plumb-line', 'light-bench'];
 const placeOf = (slug: string) => { const i = BUILTIN_ORDER.indexOf(slug); return i < 0 ? BUILTIN_ORDER.length : i; };
 /** The built-in packs (skills/visotalk/motions), by slug, in the order they are offered */
 export const BUILTIN_MOTIONS = Object.keys(BUILTIN_MOTION_FILES).sort((a, b) => placeOf(a) - placeOf(b) || (a < b ? -1 : 1));

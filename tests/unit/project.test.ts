@@ -485,3 +485,17 @@ export default <Doc id="t" title="T" lang="en" theme="visotalk/dark" canvas="16x
   const plain = await js(make(`const Stage = () => <div>plain</div>;`));
   assert.doesNotMatch(plain.app, /RoundedBoxGeometry|WebGLRenderer/, 'a document that does not import three does not carry it');
 });
+
+test('stroke order is fetched for the words a build draws: in an overlay\'s language, the overlay\'s and the parts\', not the source document\'s', async () => {
+  const {strokesText} = await import('../../packages/cli/src/project.ts');
+  const {hanziOf} = await import('../../packages/cli/src/strokes.ts');
+  const NI = '\u4f60', HAO = '\u597d', XIE = '\u659c', LV = '\u7387';
+  const dir = mkdtempSync('/tmp/vt-strokes-'), source = `const title = '${NI}${HAO}';\n${TWO}`;
+  writeFileSync(dir + '/doc.tsx', source);
+  const p = project(dir, source);
+  assert.deepEqual(hanziOf(strokesText(p)), [NI, HAO], 'in its own language the document is read');
+  const en = {...p, overlay: {lang: 'en', file: dir + '/doc.en.json', text: '{"lang": "en", "lines": {"a": {"text": "Hello"}}}', issues: []}};
+  assert.deepEqual(hanziOf(strokesText(en)), [], 'built in English, its Chinese is not fetched');
+  const zh = {...en, overlay: {...en.overlay, lang: 'zh-CN', text: `{"lang": "zh-CN", "texts": {"t": "${XIE}${LV}"}}`}};
+  assert.deepEqual(hanziOf(strokesText(zh)), [XIE, LV], 'an overlay in Chinese is read');
+});

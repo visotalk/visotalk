@@ -395,3 +395,10 @@ test('the terms of the media stay in a player bundle, which does not hold the do
   assert.match(new TextDecoder().decode(entries.get('credits.md')), /A\. Photographer/);
   assert.equal(manifest.captions, undefined, 'no voice was given, so there are no captions to make');
 });
+
+test('a player bundle whose player carries the stroke-order licence credits the data; one without it does not', async () => {
+  const pack = (files: [string, string][]) => packPlayerBundle({player: new Map(files.map(([k, v]) => [k, enc.encode(v)])), docText: DOC(), id: 'x', generator: {name: 'test'}, created: new Date()});
+  const credits = async (files: [string, string][]) => new TextDecoder().decode((await openBundle((await pack(files)).bytes)).entries.get('credits.md'));
+  assert.match(await credits([['index.html', '<html/>'], ['ARPHICPL.txt', 'ARPHIC PUBLIC LICENSE']]), /## Data\n\n- Chinese stroke order: Make Me a Hanzi/);
+  assert.doesNotMatch(await credits([['index.html', '<html/>']]), /## Data/);
+});

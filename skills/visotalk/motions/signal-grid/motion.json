@@ -1,0 +1,88 @@
+{
+  "slug": "signal-grid",
+  "version": "1",
+  "name": {
+    "en": "Signal Grid",
+    "zh-CN": "栅格讲板"
+  },
+  "line": "Twelve numbered columns on cool paper: each idea a module under an ink rule, what is said blocked in signal yellow, and the board re-flows instead of cutting.",
+  "scenarios": [
+    "lesson",
+    "report"
+  ],
+  "tags": [
+    "minimal",
+    "modern",
+    "light"
+  ],
+  "uses": [
+    "lectures and lessons in any subject",
+    "reports, reviews and results with figures",
+    "formulas, code and worked examples",
+    "comparisons, tables and rules",
+    "processes, timelines and histories",
+    "definitions and close reading of a text"
+  ],
+  "basedOn": null,
+  "theme": {
+    "id": "visotalk/light",
+    "tokens": {
+      "colors": {
+        "bg": "#EDEEEB",
+        "panel": "#FBFBFA",
+        "panel2": "#E2E4E1",
+        "border": "#0E0F11",
+        "text": "#0E0F11",
+        "muted": "#5D6166",
+        "faint": "#BFC3C2",
+        "data": "#FFD21F",
+        "grad": "#FFE66E",
+        "op": "#0E0F11",
+        "good": "#1F7A4D",
+        "bad": "#C23A22",
+        "warn": "#FFD21F"
+      },
+      "fonts": {
+        "sans": "\"Hanken Grotesk\", \"Noto Sans SC\", sans-serif",
+        "mono": "\"JetBrains Mono\", \"Noto Sans SC\", monospace",
+        "display": "\"Hanken Grotesk\", \"Noto Sans SC\", sans-serif"
+      },
+      "caption": {
+        "font": "sans",
+        "size": 34,
+        "weight": 600,
+        "color": "#F4F5F2",
+        "background": "#0E0F11",
+        "radius": 0,
+        "padding": [
+          10,
+          26
+        ],
+        "bottom": 58,
+        "rule": "#FFD21F",
+        "ruleSide": "left"
+      }
+    }
+  },
+  "pacing": {
+    "lead": 0.3,
+    "hold": 0.4,
+    "tail": 0.6
+  },
+  "exports": {
+    "captions": "burned"
+  },
+  "canvas": {
+    "presets": [
+      {
+        "id": "16x9",
+        "width": 1920,
+        "height": 1080
+      }
+    ]
+  },
+  "locked": [
+    "theme.tokens.fonts",
+    "theme.tokens.colors"
+  ]
+}
